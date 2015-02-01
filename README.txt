@@ -1,5 +1,5 @@
 
-ccMiner release 1.5.2-tpruvot (SP_MOD) (Jan 2015) - "Happy new Year!"
+ccMiner release 1.0-git(KlausT-MOD) (Feb 1st, 2015)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -19,6 +19,10 @@ sp-hash@github:
 DJM34:
   BTC donation address: 1NENYmxwZGHsKFmyjTc5WferTn5VTFb7Ze
 
+KlausT @github:
+  BTC 1H2BHSyuwLP9vqt2p3bK9G3mDJsAi7qChw
+  DRK XcM9FXrvZS275pGyGmfJmS98tHPZ1rjErM
+  
 cbuchner v1.2:
   LTC donation address: LKS1WDKGED647msBQfLBHV3Ls8sveGncnm
   BTC donation address: 16hJF5mceSojnTD3ZTUDqdRhDyPJzoRakM
@@ -29,6 +33,7 @@ cbuchner v1.2:
 
 This is a CUDA accelerated mining application which handle :
 
+Bitcoin
 HeavyCoin & MjollnirCoin
 FugueCoin
 GroestlCoin & Myriad-Groestl
@@ -180,141 +185,7 @@ features.
 
 >>> RELEASE HISTORY <<<
 
-  Jan.      2015  v1.5.2
-                  Allow per device intensity, example: -i 20,19.5
-                  Add process CPU priority and affinity mask parameters
-                  Intelligent duplicate shares check feature (enabled if needed)
-                  api: Fan RPM (windows), Cuda threads count, linux kernel ver.
-                  More X11 optimisations from sp and KlausT
-                  SM 3.0 enhancements
-
-  Dec. 16th 2014  v1.5.1
-                  Add lyra2RE algo for Vertcoin based on djm34/vtc code
-                  Multiple shares support (2 for the moment)
-                  X11 optimisations (From klaust and sp-hash)
-                  HTML5 WebSocket api compatibility (see api/websocket.htm)
-                  Solo mode height checks with getblocktemplate rpc calls
-
-  Nov. 27th 2014  v1.5.0
-                  Upgrade compat jansson to 2.6 (for windows)
-                  Add pool mining.set_extranonce support
-                  Allow intermediate intensity with decimals
-                  Update prebuilt x86 openssl lib to 1.0.1i
-                  Fix heavy algo on linux (broken since 1.4)
-                  Some internal changes to use the C++ compiler
-                  New API 1.2 with some new commands (read only)
-                  Add some of sp x11/x15 optimisations (and tsiv x13)
-
-  Nov. 15th 2014  v1.4.9
-                  Support of nvml and nvapi(windows) to monitor gpus
-                  Fix (again) displayed hashrate for multi gpus systems
-                    Average is now made by card (30 scans of the card)
-                  Final API v1.1 (new fields + histo command)
-                  Add support of telnet queries "telnet 127.0.0.1 4068"
-                  add histo api command to get performance debug details
-                  Add a rig sample php ui using json wrapper (php)
-                  Restore quark/jackpot previous speed (differently)
-
-  Nov. 12th 2014  v1.4.8
-                  Add a basic API and a sample php json wrapper
-                  Add statsavg (def 20) and api-bind parameters
-
-  Nov. 11th 2014  v1.4.7
-                  Average hashrate (based on the 20 last scans)
-                  Rewrite blake algo
-                  Add the -i (gpu threads/intensity parameter)
-                  Add some X11 optimisations based on sp_ commits
-                  Fix quark reported hashrate and benchmark mode for some algos
-                  Enhance json config file param (int/float/false) (-c config.json)
-                  Update windows prebuilt curl to 7.38.0
-
-  Oct. 26th 2014  v1.4.6
-                  Add S3 algo reusing existing code (onecoin)
-                  Small X11 (simd512) enhancement
-
-  Oct. 20th 2014  v1.4.5
-                  Add keccak algo from djm34 repo (maxcoin)
-                  Curl 7.35 and OpenSSL are now included in the binary (and win tree)
-                  Enhance windows terminal support (--help was broken)
-
-  Sep. 27th 2014  v1.4.4
-                  First SM 5.2 Release (GTX 970 & 980)
-                  CUDA Runtime included in binary
-                  Colors enabled by default
-
-  Sep. 10th 2014  v1.4.3
-                  Add algos from djm34 repo (deep, doom, qubit)
-                  Goalcoin seems to be dead, not imported.
-                  Create also the pentablake algo (5x Blake 512)
-
-  Sept  6th 2014  Almost twice the speed on blake256 algos with the "midstate" cache
-
-  Sep.  1st 2014  add X17, optimized x15 and whirl
-                  add blake (256 variant)
-                  color support on Windows,
-                  remove some dll dependencies (pthreads, msvcp)
-
-  Aug. 18th 2014  add X14, X15, Whirl, and Fresh algos,
-                  also add colors and nvprof cmd line support
-
-  June 15th 2014  add X13 and Diamond Groestl support.
-                  Thanks to tsiv and to Bombadil for the contributions!
-
-  June 14th 2014  released Killer Groestl quad version which I deem
-                  sufficiently hard to port over to AMD. It isn't
-                  the fastest option for Compute 3.5 and 5.0 cards,
-                  but it is still much faster than the table based
-                  versions.
-
-  May 10th 2014   added X11, but without the bells & whistles
-                  (no killer Groestl, SIMD hash quite slow still)
-
-  May 6th 2014    this adds the quark and animecoin algorithms.
-
-  May 3rd 2014    add the MjollnirCoin hash algorithm for the upcomin
-                  MjollnirCoin relaunch.
-
-                  Add the -f (--diff) option to adjust the difficulty
-                  e.g. for the erebor Dwarfpool myr-gr SaffronCoin pool.
-                  Use -f 256 there.
-
-  May 1st 2014    adapt the Jackpot algorithms to changes made by the
-                  coin developers. We keep our unique nVidia advantage
-                  because we have a way to break up the divergence.
-                  NOTE: Jackpot Hash now requires Compute 3.0 or later.
-
-  April, 27 2014  this release adds Myriad-Groestl and Jackpot Coin.
-                  we apply an optimization to Jackpot that turns this
-                  into a Keccak-only CUDA coin ;) Jackpot is tested with
-                  solo--mining only at the moment.
-
-  March, 27 2014  Heavycoin exchange rates soar, and as a result this coin
-                  gets some love: We greatly optimized the Hefty1 kernel
-                  for speed. Expect some hefty gains, especially on 750Ti's!
-
-                  By popular demand, we added the -d option as known from
-                  cudaminer.
-
-                  different compute capability builds are now provided until
-                  we figure out how to pack everything into a single executable
-                  in a Windows build.
-
-  March, 24 2014  fixed Groestl pool support
-
-                  went back to Compute 1.x for cuda_hefty1.cu kernel by
-                  default after numerous reports of ccminer v0.2/v0.3
-                  not working with HeavyCoin for some people.
-
-  March, 23 2014  added Groestlcoin support. stratum status unknown
-                  (the only pool is currently down for fixing issues)
-
-  March, 21 2014  use of shared memory in Fugue256 kernel boosts hash rates
-                  on Fermi and Maxwell devices. Kepler may suffer slightly
-                  (3-5%)
-
-                  Fixed Stratum for Fuguecoin. Tested on dwarfpool.
-
-  March, 18 2014  initial release.
+2015-02-01 Release 1.0, forked from tpruvot and sp-hash
 
 
 >>> AUTHORS <<<
@@ -323,7 +194,7 @@ Notable contributors to this application are:
 
 Christian Buchner, Christian H. (Germany): Initial CUDA implementation
 
-djm34, tsiv, sp for cuda algos implementation and optimisation
+djm34, tsiv, sp and KlausT for cuda algos implementation and optimisation
 
 Tanguy Pruvot : 750Ti tuning, blake, colors, general code cleanup/opts
                 API monitoring, linux Config/Makefile and vstudio stuff...
