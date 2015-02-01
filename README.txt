@@ -62,6 +62,7 @@ its command line interface and options.
 
   -a, --algo=ALGO       specify the algorithm to use
                           anime       use to mine Animecoin
+						  bitcoin     use to mine Bitcoin
                           blake       use to mine NEOS (Blake 256)
                           blakecoin   use to mine Old Blake 256
                           deep        use to mine Deepcoin
