@@ -142,8 +142,11 @@ extern "C" int scanhash_x11(int thr_id, uint32_t *pdata,
     unsigned long *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
-	unsigned int intensity = (device_sm[device_map[thr_id]] >= 500 && !is_windows()) ? 20 : 19;
+
 	int intensity = 256 * 256 * 20;
+	if (device_sm[device_map[thr_id]] == 520)  intensity = 256 * 256 * 32;
+	uint32_t throughput = device_intensity(thr_id, __func__, intensity); // 19=256*256*8;
+
 	throughput = min(throughput, (max_nonce - first_nonce));
 
 	if (opt_benchmark)
