@@ -166,3 +166,35 @@ void from_bitslice_quad(const uint32_t *const __restrict__ input, uint32_t *cons
 	}
 */
 }
+__device__ __forceinline__
+void from_bitslice_quad_final(const uint32_t *const __restrict__ input, uint32_t *const __restrict__ output)
+{
+
+	uint32_t t;
+
+	output[0] = __byte_perm(input[0], input[4], 0x7531);
+	output[2] = __byte_perm(input[1], input[5], 0x7531);
+	output[8] = __byte_perm(input[2], input[6], 0x7531);
+	output[10] = __byte_perm(input[3], input[7], 0x7531);
+
+	SWAP1(output[0], output[2]);
+	SWAP1(output[8], output[10]);
+
+	SWAP2(output[2], output[10]);
+
+	output[6] = __byte_perm(output[2], output[10], 0x5410);
+	output[10] = __byte_perm(output[2], output[10], 0x7632);
+	output[2] = output[6];
+
+	SWAP4(output[2], output[10]);
+
+	output[6] = output[2];
+
+	if (threadIdx.x & 1)
+	{
+		output[6] = __byte_perm(output[2], 0, 0x3232);
+	}
+
+	output[6] = __byte_perm(output[6], __shfl((int)output[6], (threadIdx.x + 1) & 3, 4), 0x7632);
+	output[6 + 1] = __shfl((int)output[6], (threadIdx.x + 2) & 3, 4);
+}

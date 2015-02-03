@@ -22,7 +22,7 @@ __global__ __launch_bounds__(256, 4)
 void groestlcoin_gpu_hash_quad(uint32_t threads, uint32_t startNounce, uint32_t *resNounce)
 {
     // durch 4 dividieren, weil jeweils 4 Threads zusammen ein Hash berechnen
-    uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x) / 4;
+    uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x) >> 2;
     if (thread < threads)
     {
         // GROESTL
@@ -38,52 +38,31 @@ void groestlcoin_gpu_hash_quad(uint32_t threads, uint32_t startNounce, uint32_t 
         to_bitslice_quad(paddedInput, msgBitsliced);
 
         uint32_t state[8];
-        for (int round=0; round<2; round++)
-        {
-            groestl512_progressMessage_quad(state, msgBitsliced);
+		groestl512_progressMessage_quad(state, msgBitsliced);
 
-            if (round < 1)
-            {
-                // Verkettung zweier Runden inclusive Padding.
-                msgBitsliced[ 0] = __byte_perm(state[ 0], 0x00800100, 0x4341 + ((threadIdx.x & 3)==3)*0x2000);
-                msgBitsliced[ 1] = __byte_perm(state[ 1], 0x00800100, 0x4341);
-                msgBitsliced[ 2] = __byte_perm(state[ 2], 0x00800100, 0x4341);
-                msgBitsliced[ 3] = __byte_perm(state[ 3], 0x00800100, 0x4341);
-                msgBitsliced[ 4] = __byte_perm(state[ 4], 0x00800100, 0x4341);
-                msgBitsliced[ 5] = __byte_perm(state[ 5], 0x00800100, 0x4341);
-                msgBitsliced[ 6] = __byte_perm(state[ 6], 0x00800100, 0x4341);
-				msgBitsliced[7] = __byte_perm(state[7], 0x00800100, 0x4341 + ((threadIdx.x & 3) == 0) * 0x0010);
-            }
-        }
+		msgBitsliced[ 0] = __byte_perm(state[ 0], 0x00800100, 0x4341 + ((threadIdx.x & 3)==3)*0x2000);
+		msgBitsliced[ 1] = __byte_perm(state[ 1], 0x00800100, 0x4341);
+		msgBitsliced[ 2] = __byte_perm(state[ 2], 0x00800100, 0x4341);
+		msgBitsliced[ 3] = __byte_perm(state[ 3], 0x00800100, 0x4341);
+		msgBitsliced[ 4] = __byte_perm(state[ 4], 0x00800100, 0x4341);
+		msgBitsliced[ 5] = __byte_perm(state[ 5], 0x00800100, 0x4341);
+		msgBitsliced[ 6] = __byte_perm(state[ 6], 0x00800100, 0x4341);
+		msgBitsliced[7] = __byte_perm(state[7], 0x00800100, 0x4341 + ((threadIdx.x & 3) == 0) * 0x0010);
+		
+		groestl512_progressMessage_quad(state, msgBitsliced);
 
-        // Nur der erste von jeweils 4 Threads bekommt das Ergebns-Hash
-        uint32_t out_state[16];
-        from_bitslice_quad(state, out_state);
+		uint32_t out_state[16];
+        from_bitslice_quad_final(state, out_state);
         
 		if ((threadIdx.x & 3) == 0)
         {
-            int i, position = -1;
-            bool rc = true;
+			if (out_state[7] <= pTarget[7])
+			{
+				uint32_t tmp = atomicExch(resNounce, nounce);
+				if (tmp != 0xffffffff)
+					resNounce[1] = tmp;
+			}
 
-    #pragma unroll 8
-            for (i = 7; i >= 0; i--) {
-                if (out_state[i] > pTarget[i]) {
-                    if(position < i) {
-                        position = i;
-                        rc = false;
-                    }
-                 }
-                 if (out_state[i] < pTarget[i]) {
-                    if(position < i) {
-                        position = i;
-                        rc = true;
-                    }
-                 }
-            }
-
-            if(rc == true)
-                if(resNounce[0] > nounce)
-                    resNounce[0] = nounce;
         }
     }
 }
@@ -94,7 +73,7 @@ __host__ void groestlcoin_cpu_init(int thr_id, uint32_t threads)
     CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 
     // Speicher für Gewinner-Nonce belegen
-    cudaMalloc(&d_resultNonce[thr_id], sizeof(uint32_t)); 
+    cudaMalloc(&d_resultNonce[thr_id], 2 * sizeof(uint32_t)); 
 }
 
 __host__ void groestlcoin_cpu_setBlock(int thr_id, void *data, void *pTargetIn)
@@ -136,8 +115,8 @@ __host__ void groestlcoin_cpu_hash(int thr_id, uint32_t threads, uint32_t startN
     dim3 grid(factor*((threads + threadsperblock-1)/threadsperblock));
     dim3 block(threadsperblock);
 
-    cudaMemset(d_resultNonce[thr_id], 0xFF, sizeof(uint32_t));
+    cudaMemset(d_resultNonce[thr_id], 0xFF, 2 * sizeof(uint32_t));
     groestlcoin_gpu_hash_quad<<<grid, block>>>(threads, startNounce, d_resultNonce[thr_id]);
 
-    cudaMemcpy(nounce, d_resultNonce[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost);
+    cudaMemcpy(nounce, d_resultNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost);
 }

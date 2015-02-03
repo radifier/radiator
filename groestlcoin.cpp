@@ -62,27 +62,48 @@ extern "C" int scanhash_groestlcoin(int thr_id, uint32_t *pdata, const uint32_t 
 
     do {
         // GPU
-        uint32_t foundNounce = 0xFFFFFFFF;
+        uint32_t foundNounce[2];
         const uint32_t Htarg = ptarget[7];
 
-        groestlcoin_cpu_hash(thr_id, throughput, pdata[19], outputHash, &foundNounce);
+        groestlcoin_cpu_hash(thr_id, throughput, pdata[19], outputHash, foundNounce);
 
-        if(foundNounce < 0xffffffff)
+        if(foundNounce[0] < 0xffffffff)
         {
             uint32_t tmpHash[8];
-            endiandata[19] = SWAP32(foundNounce);
+            endiandata[19] = SWAP32(foundNounce[0]);
             groestlhash(tmpHash, endiandata);
 
-            if (tmpHash[7] <= Htarg && fulltest(tmpHash, ptarget)) {
-                pdata[19] = foundNounce;
-                *hashes_done = foundNounce - start_nonce + 1;
-                free(outputHash);
-                return true;
-            } else {
-                applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU!", thr_id, foundNounce);
-            }
+            if (tmpHash[7] <= Htarg && fulltest(tmpHash, ptarget))
+			{
+				int res = 1;
+				// check if there was some other ones...
+				*hashes_done = pdata[19] - start_nonce + throughput;
+				if (foundNounce[1] != 0xffffffff)
+				{
+					endiandata[19] = SWAP32(foundNounce[1]);
+					groestlhash(tmpHash, endiandata);
 
-            foundNounce = 0xffffffff;
+					if (tmpHash[7] <= Htarg && fulltest(tmpHash, ptarget))
+					{
+
+						pdata[21] = foundNounce[1];
+						res++;
+						if (opt_benchmark)
+							applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, foundNounce[1]);
+					}
+				}
+				pdata[19] = foundNounce[0];
+				if (opt_benchmark)
+					applog(LOG_INFO, "GPU #%d Found nounce %08x", thr_id, foundNounce[0]);
+				return res;
+			}
+			else
+			{
+				if (tmpHash[7] != Htarg)
+					{
+						applog(LOG_INFO, "GPU #%d: result for %08x does not validate on CPU!", thr_id, foundNounce[0]);
+					}
+			}
         }
 
 		pdata[19] += throughput;
