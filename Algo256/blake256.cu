@@ -339,7 +339,6 @@ static uint32_t blake256_cpu_hash_16(const int thr_id, const uint32_t threads, c
 		return result;
 
 	blake256_gpu_hash_16 <<<grid, block>>> (threads, startNonce, d_resNonce[thr_id], highTarget, (int) rounds, opt_tracegpu);
-	cudaDeviceSynchronize();
 	if (cudaSuccess == cudaMemcpy(h_resNonce[thr_id], d_resNonce[thr_id], NBN*sizeof(uint32_t), cudaMemcpyDeviceToHost)) {
 		//cudaDeviceSynchronize(); /* seems no more required */
 		result = h_resNonce[thr_id][0];
