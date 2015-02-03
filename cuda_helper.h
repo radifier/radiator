@@ -628,10 +628,10 @@ uint2 SWAPDWORDS2(uint2 value)
 	return make_uint2(value.y, value.x);
 }
 
-static __forceinline__ __device__ uint2 SHL2(uint2 a, int offset)
+static __forceinline__ __device__ uint2 SHL2(const uint2 a, int offset)
 {
-#if __CUDA_ARCH__ > 300
 	uint2 result;
+#if __CUDA_ARCH__ > 300
 	if (offset<32) 
 	{
 		asm("{\n\t"
@@ -647,25 +647,24 @@ static __forceinline__ __device__ uint2 SHL2(uint2 a, int offset)
 			"}\n\t"
 			: "=r"(result.x), "=r"(result.y) : "r"(a.y), "r"(a.x), "r"(offset));
 	}
-	return result;
 #else
 	if (offset<=32) 
 	{
-		a.y = (a.y << offset) | (a.x >> (32 - offset));
-		a.x = (a.x << offset);
+		result.y = (a.y << offset) | (a.x >> (32 - offset));
+		result.x = (a.x << offset);
 	}
 	else
 	{
-		a.y = (a.x << (offset-32));
-		a.x = 0;
+		result.y = (a.x << (offset - 32));
+		result.x = 0;
 	}
-	return a;
 #endif
+	return result;
 }
-static __forceinline__ __device__ uint2 SHR2(uint2 a, int offset)
+static __forceinline__ __device__ uint2 SHR2(const uint2 a, int offset)
 {
-	#if __CUDA_ARCH__ > 300
 	uint2 result;
+#if __CUDA_ARCH__ > 300
 	if (offset<32) {
 		asm("{\n\t"
 			"shf.r.clamp.b32 %0,%2,%3,%4; \n\t"
@@ -680,20 +679,19 @@ static __forceinline__ __device__ uint2 SHR2(uint2 a, int offset)
 			"}\n\t"
 			: "=r"(result.x), "=r"(result.y) : "r"(a.y), "r"(a.x), "r"(offset));
 	}
-	return result;
 	#else
 	if (offset<=32) 
 	{
-		a.x = (a.x >> offset) | (a.y << (32 - offset));
-		a.y = (a.y >> offset);
+		result.x = (a.x >> offset) | (a.y << (32 - offset));
+		result.y = (a.y >> offset);
 	}
 	else
 	{
-		a.x = (a.y >> (offset - 32));
-		a.y = 0;
+		result.x = (a.y >> (offset - 32));
+		result.y = 0;
 	}
-	return a;
-	#endif
+#endif
+	return result;
 }
 
 static __device__ __forceinline__ uint64_t devectorizeswap(uint2 v) { return MAKE_ULONGLONG(cuda_swab32(v.y), cuda_swab32(v.x)); }
