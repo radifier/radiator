@@ -244,9 +244,20 @@ extern "C" int scanhash_quark(int thr_id, uint32_t *pdata,
 				// check if there was some other ones...
 				if (foundnonces[1] != 0xffffffff)
 				{
-					pdata[21] = foundnonces[1];
-					res++;
-					if (opt_benchmark)  applog(LOG_INFO, "GPU #%d: Found second nonce $%08X", thr_id, foundnonces[1]);
+					be32enc(&endiandata[19], foundnonces[1]);
+					quarkhash(vhash64, endiandata);
+
+					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					{
+						pdata[21] = foundnonces[1];
+						res++;
+						if (opt_benchmark)  applog(LOG_INFO, "GPU #%d: Found second nonce $%08X", thr_id, foundnonces[1]);
+					}
+					else
+					{
+						if (vhash64[7] != Htarg) // don't show message if it is equal but fails fulltest
+							applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU!", thr_id, foundnonces[1]);
+					}
 				}
 				pdata[19] = foundnonces[0];
 				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: Found nonce $%08X", thr_id, foundnonces[0]);
