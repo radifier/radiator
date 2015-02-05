@@ -90,7 +90,7 @@ void cuda_checkhash_64(uint32_t threads, uint32_t startNounce, uint32_t *hash, u
 __host__
 uint32_t cuda_check_hash(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_inputHash)
 {
-	cudaMemset(d_resNonces[thr_id], 0xff, sizeof(uint32_t));
+	CUDA_SAFE_CALL(cudaMemset(d_resNonces[thr_id], 0xff, sizeof(uint32_t)));
 
 	const uint32_t threadsperblock = 512;
 
@@ -212,7 +212,7 @@ uint32_t cuda_check_hash_branch(int thr_id, uint32_t threads, uint32_t startNoun
 __host__
 void cuda_check_quarkcoin(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_inputHash, int order, uint32_t *resNonces)
 {
-	cudaMemset(d_resNonces[thr_id], 0xff, 2*sizeof(uint32_t));
+	CUDA_SAFE_CALL(cudaMemset(d_resNonces[thr_id], 0xff, 2*sizeof(uint32_t)));
 
 	const uint32_t threadsperblock = 256;
 

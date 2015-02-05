@@ -121,5 +121,5 @@ __host__ void groestlcoin_cpu_hash(int thr_id, uint32_t threads, uint32_t startN
     cudaMemset(d_resultNonce[thr_id], 0xFF, 2 * sizeof(uint32_t));
     groestlcoin_gpu_hash_quad<<<grid, block>>>(threads, startNounce, d_resultNonce[thr_id]);
 
-    cudaMemcpy(nounce, d_resultNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost);
+    CUDA_SAFE_CALL(cudaMemcpy(nounce, d_resultNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 }

@@ -536,6 +536,6 @@ void quark_skein512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t sta
 	cudaMemset(d_nonce[thr_id], 0xff, 2*sizeof(uint32_t));
 
 	quark_skein512_gpu_hash_64_final<< <grid, block>> >(threads, startNounce, (uint64_t*)d_hash, d_nonceVector, d_nonce[thr_id], target);
-	cudaMemcpy(h_nonce, d_nonce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost);
+	CUDA_SAFE_CALL(cudaMemcpy(h_nonce, d_nonce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost));
 }
 

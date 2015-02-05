@@ -493,7 +493,7 @@ extern "C" int scanhash_pentablake(int thr_id, uint32_t *pdata, const uint32_t *
 		pentablake_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id], order++);
 		pentablake_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id], order++);
 		pentablake_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id], order++);
-
+		CUDA_SAFE_CALL(cudaGetLastError());
 		uint32_t foundNonce = pentablake_check_hash(thr_id, throughput, pdata[19], d_hash[thr_id], order++);
 		if (foundNonce != UINT32_MAX)
 		{

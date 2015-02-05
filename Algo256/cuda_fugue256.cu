@@ -765,5 +765,5 @@ __host__ void fugue256_cpu_hash(int thr_id, uint32_t threads, int startNounce, v
 	fugue256_gpu_hash<<<grid, block>>>(thr_id, threads, startNounce, d_fugue256_hashoutput[thr_id], d_resultNonce[thr_id]);
 
 	//cudaMemcpy(outputHashes, d_fugue256_hashoutput[thr_id], 8 * sizeof(uint32_t), cudaMemcpyDeviceToHost);
-	cudaMemcpy(nounce, d_resultNonce[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost);
+	CUDA_SAFE_CALL(cudaMemcpy(nounce, d_resultNonce[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost));
 }
