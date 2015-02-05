@@ -720,5 +720,5 @@ __host__ void x11_echo512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32
 
 	x11_echo512_gpu_hash_64_final << <grid, block>> >(threads, startNounce, (uint64_t*)d_hash, d_nonceVector, d_found[thr_id], target);
 	//MyStreamSynchronize(NULL, order, thr_id);
-	cudaMemcpy(h_found, d_found[thr_id], 4*sizeof(uint32_t), cudaMemcpyDeviceToHost);
+	CUDA_SAFE_CALL(cudaMemcpy(h_found, d_found[thr_id], 4*sizeof(uint32_t), cudaMemcpyDeviceToHost));
 }
