@@ -20,6 +20,8 @@
 
 #include "cuda_runtime.h"
 
+cudaDeviceProp device_props[MAX_GPUS];
+
 // CUDA Devices on the System
 int cuda_num_devices()
 {
@@ -64,6 +66,7 @@ void cuda_devicenames()
 		cudaDeviceProp props;
 		cudaGetDeviceProperties(&props, device_map[i]);
 
+		device_props[i] = props;
 		device_name[i] = strdup(props.name);
 		device_sm[i] = (props.major * 100 + props.minor * 10);
 	}
