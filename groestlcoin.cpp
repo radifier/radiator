@@ -101,7 +101,7 @@ extern "C" int scanhash_groestlcoin(int thr_id, uint32_t *pdata, const uint32_t 
 			{
 				if (tmpHash[7] != Htarg)
 					{
-						applog(LOG_INFO, "GPU #%d: result for %08x does not validate on CPU!", thr_id, foundNounce[0]);
+						applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, foundNounce[0]);
 					}
 			}
         }

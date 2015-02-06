@@ -99,7 +99,7 @@ extern "C" int scanhash_keccak256(int thr_id, uint32_t *pdata,
 			{
 				if (vhash64[7] != Htarg)
 				{
-					applog(LOG_INFO, "GPU #%d: result for %08x does not validate on CPU!", thr_id, h_nounce[thr_id][0]);
+					applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, h_nounce[thr_id][0]);
 				}
 			}
 		}
