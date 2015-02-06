@@ -164,10 +164,21 @@ int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				if (h_nounce[thr_id][1] != 0xffffffff)
 				{
-					pdata[21] = h_nounce[thr_id][1];
-					res++;
-					if (opt_benchmark)
-						applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, h_nounce[thr_id][1]);
+					bitcoin_hash(vhash64, pdata, h_nounce[thr_id][1], ms);
+					if (vhash64[7] == 0 && fulltest(vhash64, ptarget))
+					{
+						pdata[21] = h_nounce[thr_id][1];
+						res++;
+						if (opt_benchmark)
+							applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, h_nounce[thr_id][1]);
+					}
+					else
+					{
+						if (vhash64[7] > 0)
+						{
+							applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, h_nounce[thr_id][1]);
+						}
+					}
 				}
 				pdata[19] = h_nounce[thr_id][0];
 				if (opt_benchmark)

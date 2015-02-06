@@ -93,25 +93,36 @@ extern "C" int scanhash_whc(int thr_id, uint32_t *pdata,
 			uint32_t vhash64[8];
 			be32enc(&endiandata[19], foundNonce);
 			wcoinhash(vhash64, endiandata);
-
-			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget)) {
+			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+			{
 				int res = 1;
 				*hashes_done = pdata[19] - first_nonce + throughput;
-				#if 0
-				uint32_t secNonce = cuda_check_hash_suppl(thr_id, throughput, pdata[19], d_hash[thr_id], 1);
-				if (secNonce != 0) {
-					pdata[21] = secNonce;
-					res++;
+				uint32_t secNonce = cuda_check_hash_suppl(thr_id, throughput, pdata[19], d_hash[thr_id], foundNonce);
+				if (secNonce != 0)
+				{
+					be32enc(&endiandata[19], secNonce);
+					wcoinhash(vhash64, endiandata);
+					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					{
+
+						if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found second nounce %08x", thr_id, secNonce);
+						pdata[21] = secNonce;
+						res++;
+					}
+					else
+					{
+						if (vhash64[7] != Htarg)
+							applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, secNonce);
+					}
 				}
-				#endif
 				pdata[19] = foundNonce;
+				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nounce %08x", thr_id, foundNonce);
 				return res;
 			}
-			else if (vhash64[7] > Htarg) {
-				applog(LOG_INFO, "GPU #%d: result for %08x is not in range: %x > %x", thr_id, foundNonce, vhash64[7], Htarg);
-			}
-			else {
-				applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, foundNonce);
+			else
+			{
+				if (vhash64[7] != Htarg)
+					applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, foundNonce);
 			}
 		}
 		pdata[19] += throughput;

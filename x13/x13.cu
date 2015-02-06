@@ -220,12 +220,22 @@ extern "C" int scanhash_x13(int thr_id, uint32_t *pdata,
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				if (secNonce != 0) 
 				{
-					if (opt_benchmark) applog(LOG_INFO, "found second nounce", thr_id, foundNonce, vhash64[7], Htarg);
-					pdata[21] = secNonce;
-					res++;
+					be32enc(&endiandata[19], secNonce);
+					x13hash(vhash64, endiandata);
+					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					{
+
+						if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found second nounce", thr_id, secNonce, vhash64[7], Htarg);
+						pdata[21] = secNonce;
+						res++;
+					}
+					else
+					{
+						applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, secNonce);
+					}
 				}
 				pdata[19] = foundNonce;
-				if (opt_benchmark) applog(LOG_INFO, "found nounce", thr_id, foundNonce, vhash64[7], Htarg);
+				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nounce", thr_id, foundNonce, vhash64[7], Htarg);
 				return res;
 			}
 			else

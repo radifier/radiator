@@ -233,11 +233,22 @@ extern "C" int scanhash_x15(int thr_id, uint32_t *pdata,
 				int res = 1;
 				uint32_t secNonce = cuda_check_hash_suppl(thr_id, throughput, pdata[19], d_hash[thr_id], foundNonce);
 				*hashes_done = pdata[19] - first_nonce + throughput;
-				if (secNonce != 0) {
-					pdata[21] = secNonce;
-					res++;
+				if (secNonce != 0)
+				{
+					be32enc(&endiandata[19], secNonce);
+					x15hash(vhash64, endiandata);
+					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					{
+						pdata[21] = secNonce;
+						res++;
+						if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nounce %08x", thr_id, secNonce, vhash64[7]);
+					}
+					else
+					{
+						applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, secNonce);
+					}
 				}
-				if (opt_benchmark) applog(LOG_INFO, "found nounce", thr_id, foundNonce, vhash64[7], Htarg);
+				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nounce %08x", thr_id, foundNonce, vhash64[7]);
 				pdata[19] = foundNonce;
 				return res;
 			}

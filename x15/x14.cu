@@ -219,9 +219,20 @@ extern "C" int scanhash_x14(int thr_id, uint32_t *pdata,
 				int res = 1;
 				uint32_t secNonce = cuda_check_hash_suppl(thr_id, throughput, pdata[19], d_hash[thr_id], foundNonce);
 				*hashes_done = pdata[19] - first_nonce + throughput;
-				if (secNonce != 0) {
-					pdata[21] = secNonce;
-					res++;
+				if (secNonce != 0)
+				{
+					be32enc(&endiandata[19], secNonce);
+					x14hash(vhash64, endiandata);
+
+					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					{
+						pdata[21] = secNonce;
+						res++;
+					}
+					else
+					{
+						applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, secNonce);
+					}
 				}
 				pdata[19] = foundNonce;
 				return res;

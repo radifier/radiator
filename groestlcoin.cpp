@@ -91,6 +91,13 @@ extern "C" int scanhash_groestlcoin(int thr_id, uint32_t *pdata, const uint32_t 
 						if (opt_benchmark)
 							applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, foundNounce[1]);
 					}
+					else
+					{
+						if (tmpHash[7] != Htarg)
+						{
+							applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, foundNounce[1]);
+						}
+					}
 				}
 				pdata[19] = foundNounce[0];
 				if (opt_benchmark)

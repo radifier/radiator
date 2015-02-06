@@ -217,9 +217,20 @@ extern "C" int scanhash_jackpot(int thr_id, uint32_t *pdata,
 				int res = 1;
 				uint32_t secNonce = cuda_check_hash_suppl(thr_id, throughput, pdata[19], d_hash[thr_id], foundNonce);
 				*hashes_done = pdata[19] - first_nonce + throughput;
-				if (secNonce != 0) {
-					pdata[21] = secNonce;
-					res++;
+				if (secNonce != 0)
+				{
+					be32enc(&endiandata[19], secNonce);
+					rounds = jackpothash(vhash64, endiandata);
+
+					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					{
+						pdata[21] = secNonce;
+						res++;
+					}
+					else
+					{
+						applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU (%d rounds)!", thr_id, secNonce, rounds);
+					}
 				}
 				pdata[19] = foundNonce;
 				return res;

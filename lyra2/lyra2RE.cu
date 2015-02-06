@@ -120,18 +120,29 @@ extern "C" int scanhash_lyra2(int thr_id, uint32_t *pdata,
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				if (foundNonce[1] != 0)
 				{
-					pdata[21] = foundNonce[1];
-					res++;
-					if (opt_benchmark)  applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, foundNonce[1], vhash64[7], Htarg);
+					be32enc(&endiandata[19], foundNonce[1]);
+					lyra2_hash(vhash64, endiandata);
+
+					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					{
+						pdata[21] = foundNonce[1];
+						res++;
+						if (opt_benchmark)  applog(LOG_INFO, "GPU #%d: Found second nounce %08x", thr_id, foundNonce[1], vhash64[7], Htarg);
+					}
+					else
+					{
+						if (vhash64[7] != Htarg) // don't show message if it is equal but fails fulltest
+							applog(LOG_WARNING, "GPU #%d: result %08x does not validate on CPU!", thr_id, foundNonce[1]);
+					}
 				}
 				pdata[19] = foundNonce[0];
-				if (opt_benchmark) applog(LOG_INFO, "GPU #%d Found nounce % 08x", thr_id, foundNonce[0], vhash64[7], Htarg);
+				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: Found nounce %08x", thr_id, foundNonce[0], vhash64[7], Htarg);
 				return res;
 			}
 			else
 			{
 				if (vhash64[7] > Htarg) // don't show message if it is equal but fails fulltest
-					applog(LOG_WARNING, "GPU #%d: result does not validate on CPU!", thr_id);
+					applog(LOG_WARNING, "GPU #%d: result %08x does not validate on CPU!", thr_id, foundNonce[0]);
 			}
 		}
 
