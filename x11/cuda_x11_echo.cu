@@ -333,7 +333,7 @@ __device__ __forceinline__
 void echo_gpu_init(uint32_t *const __restrict__ sharedMemory)
 {
 	/* each thread startup will fill a uint32 */
-	if (threadIdx.x < 128) {
+	if (threadIdx.x < 256) {
 		sharedMemory[threadIdx.x] = d_AES0[threadIdx.x];
 		sharedMemory[threadIdx.x + 256] = d_AES1[threadIdx.x];
 		sharedMemory[threadIdx.x + 512] = d_AES2[threadIdx.x];
