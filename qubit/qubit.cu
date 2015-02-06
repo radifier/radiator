@@ -130,14 +130,27 @@ extern "C" int scanhash_qubit(int thr_id, uint32_t *pdata,
 			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 			{
 				int res = 1;
-				// check if there was some other ones...
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				if (h_found[thr_id][1] != 0xffffffff)
 				{
-					pdata[21] = h_found[thr_id][1];
-					res++;
-					if (opt_benchmark)
-						applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, h_found[thr_id][1], vhash64[7], Htarg);
+					be32enc(&endiandata[19], h_found[thr_id][1]);
+					qubithash(vhash64, endiandata);
+					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					{
+
+						pdata[21] = h_found[thr_id][1];
+						res++;
+						if (opt_benchmark)
+							applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, h_found[thr_id][1], vhash64[7], Htarg);
+					}
+					else
+					{
+						if (vhash64[7] != Htarg)
+						{
+							applog(LOG_INFO, "GPU #%d: result for %08x does not validate on CPU!", thr_id, h_found[thr_id][1]);
+						}
+					}
+
 				}
 				pdata[19] = h_found[thr_id][0];
 				if (opt_benchmark)
@@ -152,7 +165,6 @@ extern "C" int scanhash_qubit(int thr_id, uint32_t *pdata,
 				}
 			}
 		}
-
 		pdata[19] += throughput;
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 

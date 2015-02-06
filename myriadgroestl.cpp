@@ -69,33 +69,51 @@ extern "C" int scanhash_myriad(int thr_id, uint32_t *pdata, const uint32_t *ptar
 
 		myriadgroestl_cpu_hash(thr_id, throughput, pdata[19], h_found[thr_id]);
 
-		if (h_found[thr_id][0] < 0xffffffff)
+		if (h_found[thr_id][0] != 0xffffffff)
 		{
-			uint32_t tmpHash[8];
-			endiandata[19] = SWAP32(h_found[thr_id][0]);
-			myriadhash(tmpHash, endiandata);
-			if (tmpHash[7] <= Htarg && fulltest(tmpHash, ptarget))
+			const uint32_t Htarg = ptarget[7];
+			uint32_t vhash64[8];
+			be32enc(&endiandata[19], h_found[thr_id][0]);
+			myriadhash(vhash64, endiandata);
+
+			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 			{
 				int res = 1;
 				*hashes_done = pdata[19] - start_nonce + throughput;
 				if (h_found[thr_id][1] != 0xffffffff)
 				{
-					if (opt_benchmark) applog(LOG_INFO, "found second nounce %08x", thr_id, h_found[thr_id][1]);
-					pdata[21] = h_found[thr_id][1];
-					res++;
+					be32enc(&endiandata[19], h_found[thr_id][1]);
+					myriadhash(vhash64, endiandata);
+					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					{
+
+						pdata[21] = h_found[thr_id][1];
+						res++;
+						if (opt_benchmark)
+							applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, h_found[thr_id][1], vhash64[7], Htarg);
+					}
+					else
+					{
+						if (vhash64[7] != Htarg)
+						{
+							applog(LOG_INFO, "GPU #%d: result for %08x does not validate on CPU!", thr_id, h_found[thr_id][1]);
+						}
+					}
+
 				}
 				pdata[19] = h_found[thr_id][0];
 				if (opt_benchmark)
-					applog(LOG_INFO, "found nounce %08x", thr_id, h_found[thr_id][0]);
+					applog(LOG_INFO, "GPU #%d Found nounce %08x", thr_id, h_found[thr_id][0], vhash64[7], Htarg);
 				return res;
 			}
 			else
 			{
-				if (tmpHash[7] != Htarg) // don't show message if it is equal but fails fulltest
-					applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, h_found[thr_id][0]);
+				if (vhash64[7] != Htarg)
+				{
+					applog(LOG_INFO, "GPU #%d: result for %08x does not validate on CPU!", thr_id, h_found[thr_id][0]);
+				}
 			}
 		}
-
 		pdata[19] += throughput;
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 

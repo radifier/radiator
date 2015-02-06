@@ -123,6 +123,7 @@ extern "C" int scanhash_fresh(int thr_id, uint32_t *pdata,
 
 		if (h_found[thr_id][0] != 0xffffffff)
 		{
+			const uint32_t Htarg = ptarget[7];
 			uint32_t vhash64[8];
 			be32enc(&endiandata[19], h_found[thr_id][0]);
 			fresh_hash(vhash64, endiandata);
@@ -131,20 +132,38 @@ extern "C" int scanhash_fresh(int thr_id, uint32_t *pdata,
 			{
 				int res = 1;
 				*hashes_done = pdata[19] - first_nonce + throughput;
-				if (opt_benchmark)
-					applog(LOG_INFO, "GPU #%d Found nounce %08x", thr_id, h_found[thr_id][0], vhash64[7], Htarg);
-
 				if (h_found[thr_id][1] != 0xffffffff)
 				{
-					pdata[21] =h_found[thr_id][1];
-					res++;
+					be32enc(&endiandata[19], h_found[thr_id][1]);
+					fresh_hash(vhash64, endiandata);
+					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					{
+
+						pdata[21] = h_found[thr_id][1];
+						res++;
+						if (opt_benchmark)
+							applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, h_found[thr_id][1], vhash64[7], Htarg);
+					}
+					else
+					{
+						if (vhash64[7] != Htarg)
+						{
+							applog(LOG_INFO, "GPU #%d: result for %08x does not validate on CPU!", thr_id, h_found[thr_id][1]);
+						}
+					}
+
 				}
 				pdata[19] = h_found[thr_id][0];
+				if (opt_benchmark)
+					applog(LOG_INFO, "GPU #%d Found nounce %08x", thr_id, h_found[thr_id][0], vhash64[7], Htarg);
 				return res;
 			}
 			else
 			{
-				applog(LOG_INFO, "GPU #%d: result for %08x does not validate on CPU!", thr_id, h_found[thr_id][0]);
+				if (vhash64[7] != Htarg)
+				{
+					applog(LOG_INFO, "GPU #%d: result for %08x does not validate on CPU!", thr_id, h_found[thr_id][0]);
+				}
 			}
 		}
 		pdata[19] += throughput;
