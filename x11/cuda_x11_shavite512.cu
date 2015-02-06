@@ -1350,20 +1350,14 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		pE = state[0xE];
 		pF = state[0xF];
 
-		x0 = p4;
-		x1 = p5;
-		x2 = p6;
-		x3 = p7;
-
-
 		rk[0] = msg[0];
-		x0 ^= msg[0];
+		x0 = msg[0] ^ state[0x4];
 		rk[1] = msg[1];
-		x1 ^= msg[1];
+		x1 = msg[1] ^ state[0x5];
 		rk[2] = msg[2];
-		x2 ^= msg[2];
+		x2 = msg[2] ^ state[0x6];
 		rk[3] = msg[3];
-		x3 ^= msg[3];
+		x3 = msg[3] ^ state[0x7];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 
 		rk[4] = msg[4];
@@ -2592,7 +2586,7 @@ void x11_shavite512_gpu_hash_80(uint32_t threads, uint32_t startNounce, void *ou
 		uint32_t msg[32];
 
 		#pragma unroll 32
-		for(int i=0;i<32;i++) {
+		for(int i=0;i<31;i++) {
 			msg[i] = c_PaddedMessage80[i];
 		}
 		msg[19] = cuda_swab32(nounce);
