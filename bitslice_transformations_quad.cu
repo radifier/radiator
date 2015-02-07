@@ -48,7 +48,6 @@ void to_bitslice_quad(uint32_t *const __restrict__ input, uint32_t *const __rest
     #pragma unroll
     for (int i = 0; i < 8; i++) 
 	{
-		const unsigned int n = threadIdx.x & 3;
 		input[i] = __shfl((int)input[i], n ^ (3 * (n >= 1 && n <= 2)), 4);
         other[i] = __shfl((int)input[i], (threadIdx.x + 1) & 3, 4);
         input[i] = __shfl((int)input[i], threadIdx.x & 2, 4);

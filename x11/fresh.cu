@@ -108,9 +108,6 @@ extern "C" int scanhash_fresh(int thr_id, uint32_t *pdata,
 	x11_shavite512_setBlock_80((void*)endiandata);
 
 	do {
-		uint32_t Htarg = ptarget[7];
-
-	//	uint32_t foundNonce;
 		int order = 0;
 
 		// GPU Hash
