@@ -3,6 +3,7 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <stdint.h>
 
 #ifdef __INTELLISENSE__
 /* reduce vstudio warnings (__byteperm, blockIdx...) */
@@ -16,8 +17,6 @@ uint32_t atomicAdd(uint32_t *x, uint32_t y);
 void __syncthreads(void);
 void __threadfence(void);
 #endif
-
-#include <stdint.h>
 
 #ifndef MAX_GPUS
 #define MAX_GPUS 16

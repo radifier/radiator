@@ -588,7 +588,7 @@ int timeval_subtract(struct timeval *result, struct timeval *x,
 	if (start <= end)
 	{
 		uint64_t diff = end - start;
-		result->tv_sec = diff / 1000000;
+		result->tv_sec = (long) (diff / 1000000);
 		result->tv_usec = diff % 1000000;
 	}
 	else

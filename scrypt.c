@@ -702,7 +702,7 @@ int scanhash_scrypt(int thr_id, uint32_t *pdata,
 	uint32_t n = pdata[19] - 1;
 	const uint32_t Htarg = ptarget[7];
 	uint32_t throughput = scrypt_best_throughput();
-	int i;
+	unsigned int i;
 	
 #if HAVE_SHA256_4WAY
 	if (sha256_use_4way())
