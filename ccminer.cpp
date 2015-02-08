@@ -2313,9 +2313,10 @@ int main(int argc, char *argv[])
 	signal(SIGINT, signal_handler);
 #else
 	SetConsoleCtrlHandler((PHANDLER_ROUTINE)ConsoleHandler, TRUE);
-	if (opt_priority > 0) {
+	if (opt_priority > 0)
+	{
 		DWORD prio = NORMAL_PRIORITY_CLASS;
-		SetPriorityClass(NULL, prio);
+//		SetPriorityClass(NULL, prio);
 		switch (opt_priority) {
 		case 1:
 			prio = BELOW_NORMAL_PRIORITY_CLASS;
@@ -2329,7 +2330,35 @@ int main(int argc, char *argv[])
 		case 5:
 			prio = REALTIME_PRIORITY_CLASS;
 		}
-		SetPriorityClass(GetCurrentProcess(), prio);
+		if (SetPriorityClass(GetCurrentProcess(), prio) != 0)
+		{
+			applog(LOG_ERR, "Error %d while trying to set the priority.", GetLastError());
+			prio = GetPriorityClass(GetCurrentProcess());
+			switch (prio)
+			{
+			case NORMAL_PRIORITY_CLASS:
+				applog(LOG_INFO, "Current priority: %s", "normal");
+				break;
+			case BELOW_NORMAL_PRIORITY_CLASS:
+				applog(LOG_INFO, "Current priority: %s", "below normal");
+				break;
+			case ABOVE_NORMAL_PRIORITY_CLASS:
+				applog(LOG_INFO, "Current priority: %s", "above normal");
+				break;
+			case HIGH_PRIORITY_CLASS:
+				applog(LOG_INFO, "Current priority: %s", "high");
+				break;
+			case REALTIME_PRIORITY_CLASS:
+				applog(LOG_INFO, "Current priority: %s", "realtime");
+				break;
+			case IDLE_PRIORITY_CLASS:
+				applog(LOG_INFO, "Current priority: %s", "idle");
+				break;
+			default:
+				applog(LOG_INFO, "Current priority class: %d", prio);
+				break;
+			}
+		}
 	}
 #endif
 	if (opt_affinity != -1) {
