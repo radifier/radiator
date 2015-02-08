@@ -1,5 +1,5 @@
 
-ccMiner release 1.01-git(KlausT-MOD) (Feb 1st, 2015)
+ccMiner release 1.02-git(KlausT-MOD) (Feb 1st, 2015)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -187,6 +187,7 @@ features.
 
 2015-02-01 Release 1.0, forked from tpruvot and sp-hash
 2015-02-03 v1.01: bug fix for cards with compute capability 3.0 (untested)
+2015-02-09 v1.02: various bug fixes and optimizations
 
 >>> AUTHORS <<<
 

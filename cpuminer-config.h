@@ -156,7 +156,7 @@
 #define PACKAGE_NAME "ccminer"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ccminer 1.01-git(KlausT-MOD)"
+#define PACKAGE_STRING "ccminer 1.02-git(KlausT-MOD)"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ccminer"
@@ -165,7 +165,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.01-git(KlausT-MOD)"
+#define PACKAGE_VERSION "1.02-git(KlausT-MOD)"
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
@@ -179,16 +179,16 @@
 #define STDC_HEADERS 1
 
 /* Define to 1 if AVX assembly is available. */
-#define USE_AVX 1
+#define USE_AVX 0
 
 /* Define to 1 if AVX2 assembly is available. */
-#define USE_AVX2 1
+#define USE_AVX2 0
 
 /* Define to 1 if XOP assembly is available. */
 #define USE_XOP 1
 
 /* Version number of package */
-#define VERSION "1.01-git(KlausT-MOD)"
+#define VERSION "1.02-git(KlausT-MOD)"
 
 /* Define curl_free() as free() if our version of curl lacks curl_free. */
 /* #undef curl_free */

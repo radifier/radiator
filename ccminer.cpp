@@ -2223,7 +2223,7 @@ int main(int argc, char *argv[])
 	long flags;
 	int i;
 
-	printf("*** ccminer " PACKAGE_VERSION " for nVidia GPUs by sp-hash@github ***\n");
+	printf("*** ccminer " PACKAGE_VERSION " for nVidia GPUs ***\n");
 #ifdef WIN32
 	printf("\tBuilt with VC++ 2013 and nVidia CUDA SDK 6.5\n\n");
 #else
@@ -2231,7 +2231,7 @@ int main(int argc, char *argv[])
 #endif
 	printf("  Based on pooler cpuminer 2.3.2 and the tpruvot@github fork\n ");
 	printf("  CUDA support by Christian Buchner, Christian H. and DJM34\n");
-	printf("  Includes optimizations implemented by sp , klaust, tpruvot and tsiv. \n\n");
+	printf("  Includes optimizations implemented by sp-hash, klaust, tpruvot and tsiv. \n\n");
 
 	rpc_user = strdup("");
 	rpc_pass = strdup("");
