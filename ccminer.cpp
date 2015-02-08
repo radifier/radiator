@@ -2330,34 +2330,38 @@ int main(int argc, char *argv[])
 		case 5:
 			prio = REALTIME_PRIORITY_CLASS;
 		}
-		if (SetPriorityClass(GetCurrentProcess(), prio) != 0)
+		if (SetPriorityClass(GetCurrentProcess(), prio) == 0)
 		{
-			applog(LOG_ERR, "Error %d while trying to set the priority.", GetLastError());
-			prio = GetPriorityClass(GetCurrentProcess());
-			switch (prio)
-			{
+			LPSTR messageBuffer = nullptr;
+			size_t size = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+				NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+			applog(LOG_ERR, "Error while trying to set the priority:");
+			applog(LOG_ERR, "%s", messageBuffer);
+			LocalFree(messageBuffer);
+		}
+		prio = GetPriorityClass(GetCurrentProcess());
+		switch (prio)
+		{
 			case NORMAL_PRIORITY_CLASS:
-				applog(LOG_INFO, "Current priority: %s", "normal");
+				applog(LOG_INFO, "CPU priority: %s", "normal");
 				break;
 			case BELOW_NORMAL_PRIORITY_CLASS:
-				applog(LOG_INFO, "Current priority: %s", "below normal");
+				applog(LOG_INFO, "CPU priority: %s", "below normal");
 				break;
 			case ABOVE_NORMAL_PRIORITY_CLASS:
-				applog(LOG_INFO, "Current priority: %s", "above normal");
+				applog(LOG_INFO, "CPU priority: %s", "above normal");
 				break;
 			case HIGH_PRIORITY_CLASS:
-				applog(LOG_INFO, "Current priority: %s", "high");
+				applog(LOG_INFO, "CPU priority: %s", "high");
 				break;
 			case REALTIME_PRIORITY_CLASS:
-				applog(LOG_INFO, "Current priority: %s", "realtime");
+				applog(LOG_INFO, "CPU priority: %s", "realtime");
 				break;
 			case IDLE_PRIORITY_CLASS:
-				applog(LOG_INFO, "Current priority: %s", "idle");
+				applog(LOG_INFO, "CPU priority: %s", "idle");
 				break;
 			default:
-				applog(LOG_INFO, "Current priority class: %d", prio);
-				break;
-			}
+				applog(LOG_INFO, "CPU priority class: %d", prio);
 		}
 	}
 #endif
