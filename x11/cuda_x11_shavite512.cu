@@ -2585,7 +2585,7 @@ void x11_shavite512_gpu_hash_80(uint32_t threads, uint32_t startNounce, void *ou
 
 		uint32_t msg[32];
 
-		#pragma unroll 32
+		#pragma unroll
 		for(int i=0;i<31;i++) {
 			msg[i] = c_PaddedMessage80[i];
 		}
