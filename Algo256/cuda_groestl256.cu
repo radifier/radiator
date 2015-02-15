@@ -2,8 +2,8 @@
 
 #include "cuda_helper.h"
 
-uint32_t *d_gnounce[MAX_GPUS];
-uint32_t *d_GNonce[MAX_GPUS];
+static uint32_t *d_gnounce[MAX_GPUS];
+static uint32_t *d_GNonce[MAX_GPUS];
 
 __constant__ uint32_t pTarget[8];
 
