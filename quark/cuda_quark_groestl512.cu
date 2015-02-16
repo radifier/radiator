@@ -30,9 +30,9 @@ void quark_groestl512_gpu_hash_64_quad(uint32_t threads, uint32_t startNounce, u
     if (thread < threads)
     {
         // GROESTL
-        uint32_t nounce = g_nonceVector ? g_nonceVector[thread] : (startNounce + thread);
-		uint32_t hashPosition = nounce - startNounce;
-        uint32_t *inpHash = &g_hash[hashPosition * 16];
+        const uint32_t nounce = g_nonceVector ? g_nonceVector[thread] : (startNounce + thread);
+		const uint32_t hashPosition = nounce - startNounce;
+        uint32_t *const inpHash = &g_hash[hashPosition * 16];
 
         const uint32_t thr = threadIdx.x & (THF-1);
 
@@ -57,7 +57,7 @@ void quark_groestl512_gpu_hash_64_quad(uint32_t threads, uint32_t startNounce, u
 }
 
 __global__ void __launch_bounds__(TPB, THF)
-quark_doublegroestl512_gpu_hash_64_quad(uint32_t threads, uint32_t startNounce, uint32_t * __restrict__ g_hash, uint32_t * __restrict__ g_nonceVector)
+quark_doublegroestl512_gpu_hash_64_quad(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ g_hash, uint32_t *const __restrict__ g_nonceVector)
 {
     uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x)>>2;
     if (thread < threads)
@@ -66,9 +66,9 @@ quark_doublegroestl512_gpu_hash_64_quad(uint32_t threads, uint32_t startNounce, 
         uint32_t message[8];
         uint32_t state[8];
 
-        uint32_t nounce = g_nonceVector ? g_nonceVector[thread] : (startNounce + thread);
+        const uint32_t nounce = g_nonceVector ? g_nonceVector[thread] : (startNounce + thread);
 
-        int hashPosition = nounce - startNounce;
+        const int hashPosition = nounce - startNounce;
         uint32_t * inpHash = &g_hash[hashPosition<<4];
         const uint16_t thr = threadIdx.x & (THF-1);
 

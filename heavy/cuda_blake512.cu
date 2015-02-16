@@ -120,15 +120,15 @@ template <int BLOCKSIZE> __device__ void blake512_compress( uint64_t *h, const u
 
 template <int BLOCKSIZE> __global__ void blake512_gpu_hash(uint32_t threads, uint32_t startNounce, void *outputHash, uint32_t *heftyHashes, uint32_t *nonceVector)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		// bestimme den aktuellen Zähler
-		//uint32_t nounce = startNounce + thread;
-		uint32_t nounce = nonceVector[thread];
+		//const uint32_t nounce = startNounce + thread;
+		const uint32_t nounce = nonceVector[thread];
 
 		// Index-Position des Hashes in den Hash Puffern bestimmen (Hefty1 und outputHash)
-		uint32_t hashPosition = nounce - startNounce;
+		const uint32_t hashPosition = nounce - startNounce;
 
 		// State vorbereiten
 		uint64_t h[8];

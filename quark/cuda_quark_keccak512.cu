@@ -152,15 +152,15 @@ static __device__ __forceinline__ void keccak_block_35_final(uint2 *s)
 }
 
 __global__  __launch_bounds__(192, 4)
-void quark_keccak512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint32_t *g_nonceVector)
+void quark_keccak512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
 {
-    uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+    const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
     {
-        uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
+        const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-        int hashPosition = nounce - startNounce;
-        uint64_t *inpHash = &g_hash[8 * hashPosition];
+        const int hashPosition = nounce - startNounce;
+        uint64_t *const inpHash = &g_hash[8 * hashPosition];
 
         uint2 keccak_gpu_state[25];
 #pragma unroll
@@ -184,15 +184,15 @@ void quark_keccak512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_
 }
 
 __global__  __launch_bounds__(128, 4)
-void quark_keccak512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint32_t *g_nonceVector)
+void quark_keccak512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
+		const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-		int hashPosition = nounce - startNounce;
-		uint64_t *inpHash = &g_hash[8 * hashPosition];
+		const int hashPosition = nounce - startNounce;
+		uint64_t *const inpHash = &g_hash[8 * hashPosition];
 
 		uint2 keccak_gpu_state[25];
 #pragma unroll

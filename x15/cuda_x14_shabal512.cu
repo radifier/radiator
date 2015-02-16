@@ -350,7 +350,7 @@ static const uint32_t C_init_384[] = {
 __global__ __launch_bounds__(256, 4)
 void x14_shabal512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *g_hash)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 
 	const uint32_t d_A512[] = {
 		0x20728DFD, 0x46C0BD53, 0xE782B699,0x55304632,
@@ -374,9 +374,9 @@ void x14_shabal512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t 
 
 	if (thread < threads)
 	{
-		uint32_t nounce =  (startNounce + thread);
-		uint32_t hashPosition = nounce - startNounce;
-		uint32_t *Hash = &g_hash[hashPosition*16]; // [hashPosition * 8]
+		const uint32_t nounce =  (startNounce + thread);
+		const uint32_t hashPosition = nounce - startNounce;
+		uint32_t *const Hash = &g_hash[hashPosition*16]; // [hashPosition * 8]
 		uint32_t tmp;
 		uint32_t A00 = d_A512[0], A01 = d_A512[1], A02 = d_A512[2], A03 = d_A512[3],
 			A04 = d_A512[4], A05 = d_A512[5], A06 = d_A512[6], A07 = d_A512[7],

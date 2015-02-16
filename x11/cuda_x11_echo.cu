@@ -347,12 +347,12 @@ void x11_echo512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *c
 
 	echo_gpu_init(sharedMemory);
 
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
     {
-        uint32_t nounce = (startNounce + thread);
-        int hashPosition = nounce - startNounce;
-        uint32_t *Hash = (uint32_t*)&g_hash[hashPosition<<3];
+        const uint32_t nounce = (startNounce + thread);
+        const int hashPosition = nounce - startNounce;
+        uint32_t *const Hash = (uint32_t*)&g_hash[hashPosition<<3];
 		cuda_echo_round(sharedMemory, Hash);
     }
 }
@@ -450,17 +450,17 @@ void x11_echo512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint6
 		//58-61
 	};
 
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 
 		__shared__ uint32_t sharedMemory[1024];
 		echo_gpu_init(sharedMemory);
 
-		uint32_t nounce = (startNounce + thread);
+		const uint32_t nounce = (startNounce + thread);
 
-		int hashPosition = nounce - startNounce;
-		uint32_t *Hash = (uint32_t*)&g_hash[hashPosition *8];
+		const int hashPosition = nounce - startNounce;
+		const uint32_t *const Hash = (uint32_t*)&g_hash[hashPosition *8];
 
 		uint32_t h[16];
 

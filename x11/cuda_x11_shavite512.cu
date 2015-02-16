@@ -9,7 +9,7 @@ __constant__ uint32_t c_PaddedMessage80[32]; // padded message (80 bytes + paddi
 
 __device__ __forceinline__
 static void AES_ROUND_NOKEY(
-	const uint32_t* __restrict__ sharedMemory,
+	const uint32_t*const __restrict__ sharedMemory,
 	uint32_t &x0, uint32_t &x1, uint32_t &x2, uint32_t &x3)
 {
 	uint32_t y0, y1, y2, y3;
@@ -25,7 +25,7 @@ static void AES_ROUND_NOKEY(
 
 __device__ __forceinline__
 static void KEY_EXPAND_ELT(
-	const uint32_t* __restrict__ sharedMemory,
+	const uint32_t*const __restrict__ sharedMemory,
 	uint32_t &k0, uint32_t &k1, uint32_t &k2, uint32_t &k3)
 {
 	uint32_t y0, y1, y2, y3;
@@ -1307,13 +1307,13 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 
 	shavite_gpu_init(sharedMemory);
 
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = (startNounce + thread);
+		const uint32_t nounce = (startNounce + thread);
 
-		int hashPosition = nounce - startNounce;
-		uint32_t *Hash = (uint32_t*)&g_hash[hashPosition*8];
+		const int hashPosition = nounce - startNounce;
+		uint32_t *const Hash = (uint32_t*)&g_hash[hashPosition*8];
 
 		// kopiere init-state
 
@@ -2570,7 +2570,7 @@ void x11_shavite512_gpu_hash_80(uint32_t threads, uint32_t startNounce, void *ou
 		sharedMemory[threadIdx.x + 64 * 2 + 768] = d_AES3[threadIdx.x + 64 * 2];
 	}
 
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		const uint32_t nounce = startNounce + thread;

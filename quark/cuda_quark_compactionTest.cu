@@ -191,7 +191,7 @@ __global__ void quark_compactTest_gpu_SCATTER(uint32_t *sum, uint32_t *outp, cud
 	uint32_t value;
 	if (id < threads)
 	{
-//		uint32_t nounce = startNounce + id;
+//		const uint32_t nounce = startNounce + id;
 		uint32_t *inpHash;
 		if(d_validNonceTable == NULL)
 		{

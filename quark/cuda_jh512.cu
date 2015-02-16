@@ -245,14 +245,14 @@ static __device__ __forceinline__ void F8(uint32_t x[8][4], const uint32_t buffe
 
 // Die Hash-Funktion
 __global__ __launch_bounds__(256, 4)
-void quark_jh512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *g_hash, uint32_t *g_nonceVector)
+void quark_jh512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
 {
-    uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+    const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
     {
-        uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
-		uint32_t hashPosition = nounce - startNounce;
-		uint32_t *Hash = &g_hash[16 * hashPosition];
+        const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
+		const uint32_t hashPosition = nounce - startNounce;
+		uint32_t *const Hash = &g_hash[16 * hashPosition];
 		uint32_t x[8][4] = {
 				{ 0x964bd16f, 0x17aa003e, 0x052e6a63, 0x43d5157a },
 				{ 0x8d5e228a, 0x0bef970c, 0x591234e9, 0x61c3b3f2 },
@@ -299,13 +299,13 @@ void quark_jh512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *g
 __global__ __launch_bounds__(TPB2, 4)
 void quark_jh512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
+		const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-		int hashPosition = nounce - startNounce;
-		uint32_t *Hash = (uint32_t*)&g_hash[8 * hashPosition];
+		const int hashPosition = nounce - startNounce;
+		uint32_t *const Hash = (uint32_t*)&g_hash[8 * hashPosition];
 
 		uint32_t x[8][4] = {
 			{ 0x964bd16f, 0x17aa003e, 0x052e6a63, 0x43d5157a },

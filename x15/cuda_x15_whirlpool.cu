@@ -2214,7 +2214,7 @@ static uint64_t table_skew(uint64_t val, int num) {
 }
 
 __device__ __forceinline__
-static uint64_t ROUND_ELT(const uint64_t* sharedMemory, uint64_t* __restrict__ in,
+static uint64_t ROUND_ELT(const uint64_t* sharedMemory, uint64_t*const __restrict__ in,
 	int i0,int i1,int i2,int i3,int i4,int i5,int i6,int i7)
 {
 	uint32_t idx0, idx1, idx2, idx3, idx4, idx5, idx6, idx7;
@@ -2242,7 +2242,7 @@ static uint64_t ROUND_ELT(const uint64_t* sharedMemory, uint64_t* __restrict__ i
 #else
 
 __device__ __forceinline__
-static uint64_t ROUND_ELT(const uint64_t* sharedMemory, uint64_t* __restrict__ in,
+static uint64_t ROUND_ELT(const uint64_t* sharedMemory, uint64_t*const __restrict__ in,
 const int i0, const int i1, const int i2, const int i3, const int i4, const int i5, const int i6, const int i7)
 {
 	uint32_t* in32 = (uint32_t*)in;
@@ -2302,10 +2302,10 @@ void oldwhirlpool_gpu_hash_80(uint32_t threads, uint32_t startNounce, void *outp
 		#endif
 	}
 
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = startNounce + thread;
+		const uint32_t nounce = startNounce + thread;
 		union {
 			uint8_t h1[64];
 			uint32_t h4[16];
@@ -2397,10 +2397,10 @@ void x15_whirlpool_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t 
 		#endif
 	}
 
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce =  (startNounce + thread);
+		const uint32_t nounce =  (startNounce + thread);
 		uint32_t hashPosition = (nounce - startNounce) << 3;
 		uint64_t hash[8], state[8], n[8], h[8] = { 0 };
 		uint8_t i;
@@ -2474,12 +2474,12 @@ void oldwhirlpool_gpu_finalhash_64(uint32_t threads, uint32_t startNounce, uint6
 		#endif
 	}
 
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce =  (startNounce + thread);
+		const uint32_t nounce =  (startNounce + thread);
 
-		int hashPosition = nounce - startNounce;
+		const int hashPosition = nounce - startNounce;
 		uint64_t *inpHash = (uint64_t*) &g_hash[8 * hashPosition];
 		uint64_t h8[8];
 

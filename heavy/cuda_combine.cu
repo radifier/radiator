@@ -104,11 +104,11 @@ static void combine_hashes(uint32_t *out, uint32_t *hash1, uint32_t *hash2, uint
 __global__
 void combine_gpu_hash(uint32_t threads, uint32_t startNounce, uint32_t *out, uint32_t *hash2, uint32_t *hash3, uint32_t *hash4, uint32_t *hash5, uint32_t *nonceVector)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = nonceVector[thread];
-		uint32_t hashPosition = nounce - startNounce;
+		const uint32_t nounce = nonceVector[thread];
+		const uint32_t hashPosition = nounce - startNounce;
 		// Die Aufgabe der combine-funktion besteht aus zwei Teilen.
 		// 1) Komprimiere die hashes zu einem kleinen Array
 		// 2) Errechne dort den combines-value

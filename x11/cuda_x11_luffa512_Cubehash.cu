@@ -811,13 +811,13 @@ void __device__ __forceinline__ Final(uint32_t x[2][2][2][2][2], uint32_t *hashv
 __global__
 void x11_luffaCubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash)
 {
-    uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+    const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
     {
-        uint32_t nounce = (startNounce + thread);
+        const uint32_t nounce = (startNounce + thread);
 
-        int hashPosition = nounce - startNounce;
-        uint32_t *Hash = (uint32_t*)&g_hash[8 * hashPosition];
+        const int hashPosition = nounce - startNounce;
+        uint32_t *const Hash = (uint32_t*)&g_hash[8 * hashPosition];
 
         hashState state;
 #pragma unroll 40

@@ -317,12 +317,12 @@ __launch_bounds__(64, 8)
 #endif
 void quark_bmw512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
 {
-    uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+    const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
     {
         const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-        const int hashPosition = nounce - startNounce;
+        const const int hashPosition = nounce - startNounce;
         const uint64_t *const inpHash = &g_hash[8 * hashPosition];
 
         // Init
@@ -383,10 +383,10 @@ void quark_bmw512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *
 __global__ __launch_bounds__(256, 2)
 void quark_bmw512_gpu_hash_80(uint32_t threads, uint32_t startNounce, uint64_t *g_hash)
 {
-    uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+    const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
     {
-        uint32_t nounce = startNounce + thread;
+        const uint32_t nounce = startNounce + thread;
 
         // Init
 		uint2 h[16] = {

@@ -287,9 +287,9 @@ __launch_bounds__(448, 2)
 #else
 __launch_bounds__(128)
 #endif
-void quark_skein512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t * const __restrict__ g_hash, uint32_t *g_nonceVector)
+void quark_skein512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t * const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		// Skein
@@ -297,10 +297,10 @@ void quark_skein512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		uint2 h0, h1, h2, h3, h4, h5, h6, h7, h8;
 		uint2 t0, t1, t2;
 
-		uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
+		const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-		int hashPosition = nounce - startNounce;
-		uint64_t *inpHash = &g_hash[8 * hashPosition];
+		const int hashPosition = nounce - startNounce;
+		const uint64_t *const inpHash = &g_hash[8 * hashPosition];
 
 		h0 = make_uint2(0x749C51CEull, 0x4903ADFF);
 		h1 = make_uint2(0x9746DF03ull, 0x0D95DE39);
@@ -393,7 +393,7 @@ __launch_bounds__(TPBf, 1)
 #endif
 void quark_skein512_gpu_hash_64_final(const uint32_t threads, const uint32_t startNounce, uint64_t * const __restrict__ g_hash, const uint32_t *g_nonceVector, uint32_t *d_nonce, uint32_t target)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		// Skein
@@ -401,10 +401,10 @@ void quark_skein512_gpu_hash_64_final(const uint32_t threads, const uint32_t sta
 		uint2 h0, h1, h2, h3, h4, h5, h6, h7, h8;
 		uint2 t0, t1, t2;
 
-		uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
+		const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-		int hashPosition = nounce - startNounce;
-		uint64_t *inpHash = &g_hash[8 * hashPosition];
+		const int hashPosition = nounce - startNounce;
+		const uint64_t *const inpHash = &g_hash[8 * hashPosition];
 
 		h0 = make_uint2(0x749C51CEull, 0x4903ADFF);
 		h1 = make_uint2(0x9746DF03ull, 0x0D95DE39);

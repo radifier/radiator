@@ -329,13 +329,13 @@ static __device__ __forceinline__ void keccak_block(uint2 *s)
 __global__ __launch_bounds__(256,3)
 void quark_jh512Keccak512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *g_hash)
 {
-    uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+    const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
     {
-        uint32_t nounce =  (startNounce + thread);
+        const uint32_t nounce =  (startNounce + thread);
 
-        int hashPosition = nounce - startNounce;
-        uint32_t *Hash = &g_hash[16 * hashPosition]; 
+        const int hashPosition = nounce - startNounce;
+        uint32_t *const Hash = &g_hash[16 * hashPosition]; 
 		uint32_t x[8][4] = {
 				{ 0x964bd16f, 0x17aa003e, 0x052e6a63, 0x43d5157a },
 				{ 0x8d5e228a, 0x0bef970c, 0x591234e9, 0x61c3b3f2 },

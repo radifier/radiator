@@ -291,11 +291,11 @@ static const uint32_t c_initVector[8] = {
 __global__
 void x17_haval256_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce =  (startNounce + thread);
-		int hashPosition = nounce - startNounce;
+		const uint32_t nounce =  (startNounce + thread);
+		const int hashPosition = nounce - startNounce;
 		uint32_t *inpHash = (uint32_t*)&g_hash[8 * hashPosition];
 		union {
 			uint8_t h1[64];

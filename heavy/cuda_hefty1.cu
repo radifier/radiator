@@ -219,11 +219,11 @@ void hefty_gpu_hash(uint32_t threads, uint32_t startNounce, uint32_t *outputHash
     __syncthreads();
 #endif
 
-    uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+    const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
     {
         // bestimme den aktuellen Zähler
-        uint32_t nounce = startNounce + thread;
+        const uint32_t nounce = startNounce + thread;
 
         // jeder thread in diesem  Block bekommt sein eigenes W Array im Shared memory
         // reduktion von 256 byte auf 128 byte

@@ -546,9 +546,9 @@ x11_simd512_gpu_expand_64(uint32_t threads, uint32_t startNounce, const uint64_t
 	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x)/8;
 	if (thread < threads)
 	{
-		uint32_t nounce = (startNounce + thread);
+		const uint32_t nounce = (startNounce + thread);
 
-		int hashPosition = nounce - startNounce;
+		const int hashPosition = nounce - startNounce;
 
 		uint32_t *inpHash = (uint32_t*)&g_hash[8 * hashPosition];
 
@@ -569,13 +569,13 @@ x11_simd512_gpu_expand_64(uint32_t threads, uint32_t startNounce, const uint64_t
 __global__ void __launch_bounds__(TPB, 1)
 x11_simd512_gpu_compress1_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash,  uint4 *g_fft4, uint32_t *g_state)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = (startNounce + thread);
+		const uint32_t nounce = (startNounce + thread);
 
-		int hashPosition = nounce - startNounce;
-		uint32_t *Hash = (uint32_t*)&g_hash[8 * hashPosition];
+		const int hashPosition = nounce - startNounce;
+		uint32_t *const Hash = (uint32_t*)&g_hash[8 * hashPosition];
 
 		Compression1(Hash, hashPosition, g_fft4, g_state);
 	}
@@ -583,12 +583,12 @@ x11_simd512_gpu_compress1_64(uint32_t threads, uint32_t startNounce, uint64_t *g
 __global__ void __launch_bounds__(TPB, 1)
 x11_simd512_gpu_compress2_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint4 *g_fft4, uint32_t *g_state)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce =  (startNounce + thread);
+		const uint32_t nounce =  (startNounce + thread);
 
-		int hashPosition = nounce - startNounce;
+		const int hashPosition = nounce - startNounce;
 
 		Compression2(hashPosition, g_fft4, g_state);
 	}
@@ -598,13 +598,13 @@ x11_simd512_gpu_compress2_64(uint32_t threads, uint32_t startNounce, uint64_t *g
 __global__ void __launch_bounds__(TPB, 1)
 x11_simd512_gpu_compress_64_maxwell(uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint4 *g_fft4, uint32_t *g_state)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = (startNounce + thread);
+		const uint32_t nounce = (startNounce + thread);
 
-		int hashPosition = nounce - startNounce;
-		uint32_t *Hash = (uint32_t*)&g_hash[8 * hashPosition];
+		const int hashPosition = nounce - startNounce;
+		uint32_t *const Hash = (uint32_t*)&g_hash[8 * hashPosition];
 
 		Compression1(Hash, hashPosition, g_fft4, g_state);
 		Compression2(hashPosition, g_fft4, g_state);
@@ -615,13 +615,13 @@ x11_simd512_gpu_compress_64_maxwell(uint32_t threads, uint32_t startNounce, uint
 __global__ void  __launch_bounds__(TPB, 4)
 x11_simd512_gpu_final_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint4 *g_fft4, uint32_t *g_state)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = (startNounce + thread);
+		const uint32_t nounce = (startNounce + thread);
 
-		int hashPosition = nounce - startNounce;
-		uint32_t *Hash = (uint32_t*)&g_hash[8 * hashPosition];
+		const int hashPosition = nounce - startNounce;
+		uint32_t *const Hash = (uint32_t*)&g_hash[8 * hashPosition];
 
 		Final(Hash, hashPosition, g_fft4, g_state);
 	}

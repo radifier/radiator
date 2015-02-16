@@ -550,10 +550,10 @@ static void keccak_blockv30_80(uint64_t *s, const uint64_t *keccak_round_constan
 __global__ __launch_bounds__(128,4)
 void keccak256_gpu_hash_80(uint32_t threads, uint32_t startNounce, void *outputHash, uint32_t *resNounce)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = startNounce + thread;
+		const uint32_t nounce = startNounce + thread;
 
 #if __CUDA_ARCH__ >= 350
 		uint2 keccak_gpu_state[25];
@@ -614,7 +614,7 @@ void keccak256_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, u
 __global__ __launch_bounds__(256,3)
 void keccak256_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint64_t *outputHash)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 #if __CUDA_ARCH__ >= 350 /* tpr: to double check if faster on SM5+ */

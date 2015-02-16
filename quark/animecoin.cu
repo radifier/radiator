@@ -148,7 +148,7 @@ struct HashPredicate
     __device__
     bool operator()(const uint32_t x)
     {
-        uint32_t *hash = &m_hashes[(x - m_startNonce)*16];
+        uint32_t *const Hash = &m_hashes[(x - m_startNonce)*16];
         return hash[0] & 0x8;
     }
 

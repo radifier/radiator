@@ -30,7 +30,7 @@ void groestlcoin_gpu_hash_quad(uint32_t threads, uint32_t startNounce, uint32_t 
 #pragma unroll 8
         for(int k=0;k<8;k++) paddedInput[k] = groestlcoin_gpu_msg[4*k+(threadIdx.x & 3)];
 
-        uint32_t nounce = startNounce + thread;
+        const uint32_t nounce = startNounce + thread;
         if ((threadIdx.x & 3) == 3)
             paddedInput[4] = SWAB32(nounce);  // 4*4+3 = 19
 

@@ -671,7 +671,7 @@ __device__ void groestl512_perm_Q(uint32_t *a)
 
 template <int BLOCKSIZE> __global__ void groestl512_gpu_hash(uint32_t threads, uint32_t startNounce, void *outputHash, uint32_t *heftyHashes, uint32_t *nonceVector)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		uint32_t message[32];
@@ -687,12 +687,12 @@ template <int BLOCKSIZE> __global__ void groestl512_gpu_hash(uint32_t threads, u
 			message[k] = groestl_gpu_msg[k];
 		}
 
-		uint32_t nounce = nonceVector[thread];
+		const uint32_t nounce = nonceVector[thread];
 		// nounce setzen
 		//message[19] = startNounce + thread;
 		message[19] = nounce;
 
-		uint32_t hashPosition = nounce - startNounce;
+		const uint32_t hashPosition = nounce - startNounce;
 
 		// den richtigen Hefty1 Hash holen
 //			memcpy(&message[21], &heftyHashes[8 * hashPosition], sizeof(uint32_t) * 8);

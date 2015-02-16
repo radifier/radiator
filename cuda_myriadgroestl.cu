@@ -218,7 +218,7 @@ __global__ void __launch_bounds__(256, 4)
 #pragma unroll 8
 		for (int k = 0; k<8; k++) paddedInput[k] = myriadgroestl_gpu_msg[4 * k + (threadIdx.x & 3)];
 
-		uint32_t nounce = startNounce + thread;
+		const uint32_t nounce = startNounce + thread;
 		if ((threadIdx.x & 3) == 3)
 			paddedInput[4] = cuda_swab32(nounce);  // 4*4+3 = 19
 
@@ -244,10 +244,10 @@ __global__ void __launch_bounds__(256, 4)
 __global__ void __launch_bounds__(256, 3)
  myriadgroestl_gpu_hash_quad2(uint32_t threads, uint32_t startNounce, uint32_t *resNounce, uint32_t *hashBuffer)
 {
-    uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+    const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
     {
-        uint32_t nounce = startNounce + thread;
+        const uint32_t nounce = startNounce + thread;
 
         uint32_t out_state[16];
         uint32_t *inpHash = &hashBuffer[16 * thread];

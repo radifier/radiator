@@ -73,7 +73,7 @@ static bool hashbelowtarget(const uint32_t *const __restrict__ hash, const uint3
 __global__ __launch_bounds__(512, 4)
 void cuda_checkhash_64(uint32_t threads, uint32_t startNounce, uint32_t *hash, uint32_t *resNonces)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		// shl 4 = *16 x 4 (uint32) = 64 bytes
@@ -109,7 +109,7 @@ uint32_t cuda_check_hash(int thr_id, uint32_t threads, uint32_t startNounce, uin
 __global__ __launch_bounds__(512, 4)
 void cuda_checkhash_64_suppl(uint32_t startNounce, uint32_t *hash, uint32_t *resNonces)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 
 	uint32_t *inpHash = &hash[thread << 4];
 
@@ -156,12 +156,12 @@ uint32_t cuda_check_hash_suppl(int thr_id, uint32_t threads, uint32_t startNounc
 __global__
 void cuda_check_hash_branch_64(uint32_t threads, uint32_t startNounce, uint32_t *g_nonceVector, uint32_t *g_hash, uint32_t *resNounce)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = g_nonceVector[thread];
+		const uint32_t nounce = g_nonceVector[thread];
 		uint32_t hashPosition = (nounce - startNounce) << 4;
-		uint32_t *inpHash = &g_hash[hashPosition];
+		const uint32_t *const inpHash = &g_hash[hashPosition];
 
 		if (hashbelowtarget(inpHash, pTarget))
 		{
@@ -174,12 +174,12 @@ void cuda_check_hash_branch_64(uint32_t threads, uint32_t startNounce, uint32_t 
 __global__
 void cuda_check_quarkcoin_64(uint32_t threads, uint32_t startNounce, uint32_t *g_nonceVector, uint32_t *g_hash, uint32_t *resNounce)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = g_nonceVector[thread];
+		const uint32_t nounce = g_nonceVector[thread];
 		uint32_t hashPosition = (nounce - startNounce) << 4;
-		uint32_t *inpHash = &g_hash[hashPosition];
+		const uint32_t *const inpHash = &g_hash[hashPosition];
 
 		if (inpHash[7] <= pTarget[7])
 		{

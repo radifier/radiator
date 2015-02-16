@@ -102,12 +102,12 @@ keccak_block(uint64_t *s, const uint32_t *in, const uint64_t *keccak_round_const
 
 __global__ void jackpot_keccak512_gpu_hash(uint32_t threads, uint32_t startNounce, uint64_t *g_hash)
 {
-    uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+    const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
     {
-        uint32_t nounce = startNounce + thread;
+        const uint32_t nounce = startNounce + thread;
 
-        int hashPosition = nounce - startNounce;
+        const int hashPosition = nounce - startNounce;
 
         // Nachricht kopieren
         uint32_t message[18];

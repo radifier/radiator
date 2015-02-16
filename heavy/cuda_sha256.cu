@@ -44,11 +44,11 @@ uint32_t sha256_cpu_constantTable[] = {
 // Die Hash-Funktion
 template <int BLOCKSIZE> __global__ void sha256_gpu_hash(uint32_t threads, uint32_t startNounce, void *outputHash, uint32_t *heftyHashes, uint32_t *nonceVector)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		// bestimme den aktuellen Zähler
-		uint32_t nounce = startNounce + thread;
+		const uint32_t nounce = startNounce + thread;
 		nonceVector[thread] = nounce;
 
 		// jeder thread in diesem  Block bekommt sein eigenes W Array im Shared memory

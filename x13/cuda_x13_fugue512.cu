@@ -564,7 +564,7 @@ void x13_fugue512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *
 {
 	__shared__ uint32_t mixtabs[1024];
 	
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		if (threadIdx.x < 128) 
@@ -578,10 +578,10 @@ void x13_fugue512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *
 			mixtabs[(768 + threadIdx.x)] = mixTab3Tex[threadIdx.x];
 			mixtabs[(768 + threadIdx.x)+128] = mixTab3Tex[threadIdx.x+128];
 		}
-		uint32_t nounce =  (startNounce + thread);
+		const uint32_t nounce =  (startNounce + thread);
 		
-		int hashPosition = nounce - startNounce;
-		uint32_t *Hash = &g_hash[hashPosition*16];
+		const int hashPosition = nounce - startNounce;
+		uint32_t *const Hash = &g_hash[hashPosition*16];
 
 		#pragma unroll 16
 		for (int i = 0; i < 16; i++)
@@ -672,7 +672,7 @@ void x13_fugue512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, cons
 {
 	__shared__ uint32_t mixtabs[1024];
 
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread< threads)
 	{
 		if (threadIdx.x < 128)
@@ -686,9 +686,9 @@ void x13_fugue512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, cons
 			mixtabs[(768 + threadIdx.x)] = mixTab3Tex[threadIdx.x];
 			mixtabs[(768 + threadIdx.x) + 128] = mixTab3Tex[threadIdx.x + 128];
 		}
-			uint32_t nounce =  (startNounce + thread);
+			const uint32_t nounce =  (startNounce + thread);
 
-		int hashPosition = nounce - startNounce;
+		const int hashPosition = nounce - startNounce;
 		const uint32_t *h = &g_hash[hashPosition * 16];
 		uint32_t Hash[16];
 #pragma unroll 16

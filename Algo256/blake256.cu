@@ -185,7 +185,7 @@ __global__
 void blake256_gpu_hash_80(const uint32_t threads, const uint32_t startNonce, uint32_t *resNonce,
 	const uint64_t highTarget, const int crcsum, const int rounds)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		const uint32_t nonce = startNonce + thread;
@@ -280,7 +280,7 @@ __global__
 void blake256_gpu_hash_16(const uint32_t threads, const uint32_t startNonce, uint32_t *resNonce,
 	const uint64_t highTarget, const int rounds, const bool trace)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		const uint32_t nonce = startNonce + thread;

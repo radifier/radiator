@@ -352,10 +352,10 @@ void finalization512(hashState *const __restrict__ state, uint32_t *const __rest
 __global__
 void qubit_luffa512_gpu_hash_80(uint32_t threads, uint32_t startNounce, void *outputHash)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = startNounce + thread;
+		const uint32_t nounce = startNounce + thread;
 		union {
 		uint64_t buf64[16];
 		uint32_t buf32[32];
@@ -382,10 +382,10 @@ void qubit_luffa512_gpu_hash_80(uint32_t threads, uint32_t startNounce, void *ou
 __global__
 void qubit_luffa512_gpu_finalhash_80(uint32_t threads, uint32_t startNounce, void *outputHash, uint32_t *resNounce)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = startNounce + thread;
+		const uint32_t nounce = startNounce + thread;
 		union {
 			uint64_t buf64[16];
 			uint32_t buf32[32];

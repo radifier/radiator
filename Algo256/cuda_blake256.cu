@@ -186,7 +186,7 @@ static void blake256_compress2nd(uint32_t *h, const uint32_t *block, const uint3
 __global__ __launch_bounds__(256,4)
 void blake256_gpu_hash_80(const uint32_t threads, const uint32_t startNonce, uint64_t * Hash)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		const uint32_t nonce = startNonce + thread;

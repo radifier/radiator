@@ -188,7 +188,7 @@ void pentablake_compress(uint64_t *h, const uint64_t *block, const uint32_t T0)
 __global__
 void pentablake_gpu_hash_80(uint32_t threads, uint32_t startNounce, uint32_t *resNounce)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		const uint32_t nounce = startNounce + thread;
@@ -268,12 +268,12 @@ void pentablake_compress(uint64_t *h, const uint64_t *block, const uint64_t T0)
 __global__
 void pentablake_gpu_hash_80(uint32_t threads, const uint32_t startNounce, void *outputHash)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		uint64_t h[8];
 		uint64_t buf[16];
-		uint32_t nounce = startNounce + thread;
+		const uint32_t nounce = startNounce + thread;
 
 		//#pragma unroll 8
 		for(int i=0; i<8; i++)
@@ -320,7 +320,7 @@ void pentablake_cpu_hash_80(int thr_id, uint32_t threads, const uint32_t startNo
 __global__
 void pentablake_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 
 	if (thread < threads)
 	{
@@ -398,11 +398,11 @@ uint32_t pentablake_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNoun
 __global__
 void pentablake_gpu_check_hash(uint32_t threads, uint32_t startNounce, uint32_t *g_hash, uint32_t *resNounce)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = startNounce + thread;
-		uint32_t *inpHash = &g_hash[thread<<4];
+		const uint32_t nounce = startNounce + thread;
+		const uint32_t *const inpHash = &g_hash[thread<<4];
 
 		if (cuda_hashisbelowtarget(inpHash, c_Target))
 		{

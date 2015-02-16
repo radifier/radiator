@@ -199,7 +199,7 @@ __device__ __forceinline__ void reduceDuplexRowSetup(const int rowIn, const int 
 __global__ __launch_bounds__(TPB, 1)
 void lyra2_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint64_t *outputHash)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		uint2 state[16];

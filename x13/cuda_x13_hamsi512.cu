@@ -520,7 +520,7 @@ static __constant__ uint32_t d_T512[4096/4] = {
 __global__ __launch_bounds__(512,2)
 void x13_hamsi512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *g_hash )
 {
-    uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+    const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
     {
 		const uint32_t d_alpha_n[32] = 
@@ -553,10 +553,10 @@ void x13_hamsi512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *
 		0xcaf9f9c0, 0x0ff0639c
 		};
 
-		uint32_t nounce = (startNounce + thread);
+		const uint32_t nounce = (startNounce + thread);
 
-		uint32_t hashPosition = nounce - startNounce;
-        uint32_t *Hash = &g_hash[hashPosition*16];
+		const uint32_t hashPosition = nounce - startNounce;
+        uint32_t *const Hash = &g_hash[hashPosition*16];
 		uint8_t *h1 = (uint8_t *)Hash;
 
         uint32_t c0 = 0x73746565, c1 = 0x6c706172, c2 = 0x6b204172, c3 = 0x656e6265;

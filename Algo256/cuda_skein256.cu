@@ -100,7 +100,7 @@ void Round_8_512v35(uint2 *ks, uint2 *ts,
 __global__ __launch_bounds__(256,3)
 void skein256_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint64_t *outputHash)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		uint2 h[9];

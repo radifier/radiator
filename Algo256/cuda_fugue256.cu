@@ -561,7 +561,7 @@ fugue256_gpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, void *outp
 //	__syncthreads();
 #endif
 
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		/* Nimm den State und verarbeite das letztenByte (die Nounce) */
@@ -571,7 +571,7 @@ fugue256_gpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, void *outp
 		for(int i=0;i<30;i++)
 			sc[i] = GPUstate[i];
 
-		uint32_t nounce = startNounce + thread; // muss noch ermittelt werden
+		const uint32_t nounce = startNounce + thread; // muss noch ermittelt werden
 		uint32_t q;
 
 
