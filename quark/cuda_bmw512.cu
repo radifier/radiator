@@ -311,19 +311,19 @@ __device__ void Compression512(uint2 *msg, uint2 *hash)
 
 __global__
 #if __CUDA_ARCH__ > 500
-__launch_bounds__(32, 16)
+__launch_bounds__(64, 16)
 #else
 __launch_bounds__(64, 8)
 #endif
-void quark_bmw512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint32_t *g_nonceVector)
+void quark_bmw512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
 {
     uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
     {
-        uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
+        const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-        int hashPosition = nounce - startNounce;
-        uint64_t *inpHash = &g_hash[8 * hashPosition];
+        const int hashPosition = nounce - startNounce;
+        const uint64_t *const inpHash = &g_hash[8 * hashPosition];
 
         // Init
 		uint2 h[16] = {
@@ -460,7 +460,7 @@ __host__ void quark_bmw512_cpu_setBlock_80(void *pdata)
 
 __host__ void quark_bmw512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash)
 {
-    const uint32_t threadsperblock = 32;
+	const uint32_t threadsperblock = 64;
 
     // berechne wie viele Thread Blocks wir brauchen
     dim3 grid((threads + threadsperblock-1)/threadsperblock);
