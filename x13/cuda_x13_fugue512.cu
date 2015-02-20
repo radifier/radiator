@@ -498,6 +498,55 @@ __constant__ uint32_t mixTab3Tex[] = {
 		tmp= __byte_perm((c1 ^ r2),(c2 ^ r3), 0x1414); \
 		x3 = __byte_perm(tmp2,tmp, 0x3254);\
 		}
+#define SMIX0(x0, x1, x2, x3) { \
+		uint32_t tmp = mixtab0(__byte_perm(x0, 0, 0x4443)); \
+		uint32_t c0 = tmp; \
+		tmp = mixtab1(__byte_perm(x0, 0, 0x4442)); \
+		c0 ^= tmp; \
+		uint32_t r1 = tmp; \
+		tmp = mixtab2(__byte_perm(x0, 0, 0x4441)); \
+		c0 ^= tmp; \
+		uint32_t r2= tmp; \
+		tmp = mixtab3(__byte_perm(x0, 0, 0x4440)); \
+		c0 ^= tmp; \
+		uint32_t r3= tmp; \
+		tmp = mixtab0(__byte_perm(x1, 0, 0x4443)); \
+		uint32_t c1 = tmp; \
+		uint32_t r0 = tmp; \
+		tmp = mixtab1(__byte_perm(x1, 0, 0x4442)); \
+		c1 ^= tmp; \
+		tmp = mixtab2(__byte_perm(x1, 0, 0x4441)); \
+		c1 ^= tmp; \
+		r2 ^= tmp; \
+		tmp = mixtab3(__byte_perm(x1, 0, 0x4440)); \
+		c1 ^= tmp; \
+		r3 ^= tmp; \
+		tmp = mixtab0(__byte_perm(x2, 0, 0x4443)); \
+		uint32_t c2 = tmp; \
+		r0 ^= tmp; \
+		tmp = mixtab1(__byte_perm(x2, 0, 0x4442)); \
+		c2 ^= tmp; \
+		r1 ^= tmp; \
+		tmp = mixtab2(__byte_perm(x2, 0, 0x4441)); \
+		c2 ^= tmp; \
+		tmp = mixtab3(__byte_perm(x2, 0, 0x4440)); \
+		c2 ^= tmp; \
+		r3 ^= tmp; \
+		tmp = mixtab0(__byte_perm(x3, 0, 0x4443)); \
+		uint32_t c3 = tmp; \
+		r0 ^= tmp; \
+		tmp = mixtab1(__byte_perm(x3, 0, 0x4442)); \
+		c3 ^= tmp; \
+		r1 ^= tmp; \
+		tmp = mixtab2(__byte_perm(x3, 0, 0x4441)); \
+		c3 ^= tmp; \
+		r2 ^= tmp; \
+		tmp = mixtab3(__byte_perm(x3, 0, 0x4440)); \
+		c3 ^= tmp; \
+		uint32_t tmp2 = __byte_perm((c0 ^ r0),(c1 ^ r1), 0x3636);\
+		tmp= __byte_perm((c2 ^ r2),(c3 ^ r3), 0x1414); \
+		x0 = __byte_perm(tmp2,tmp, 0x3254);\
+		}
 
 #define ROR3 { \
 	B33 = S33, B34 = S34, B35 = S35; \
@@ -507,20 +556,13 @@ __constant__ uint32_t mixTab3Tex[] = {
 	S08 = S05; S07 = S04; S06 = S03; S05 = S02; S04 = S01; S03 = S00; S02 = B35; S01 = B34; S00 = B33; \
 	}
 
-#define ROR8 { \
-	B28 = S28, B29 = S29, B30 = S30, B31 = S31, B32 = S32, B33 = S33, B34 = S34, B35 = S35; \
-    S35 = S27; S34 = S26; S33 = S25; S32 = S24; S31 = S23; S30 = S22; S29 = S21; S28 = S20; S27 = S19; \
-	S26 = S18; S25 = S17; S24 = S16; S23 = S15; S22 = S14; S21 = S13; S20 = S12; S19 = S11; S18 = S10; \
-	S17 = S09; S16 = S08; S15 = S07; S14 = S06; S13 = S05; S12 = S04; S11 = S03; S10 = S02; S09 = S01; \
-	S08 = S00; S07 = B35; S06 = B34; S05 = B33; S04 = B32; S03 = B31; S02 = B30; S01 = B29; S00 = B28; \
-	}
-
-#define ROR9 { \
-	B27 = S27, B28 = S28, B29 = S29, B30 = S30, B31 = S31, B32 = S32, B33 = S33, B34 = S34, B35 = S35; \
-    S35 = S26; S34 = S25; S33 = S24; S32 = S23; S31 = S22; S30 = S21; S29 = S20; S28 = S19; S27 = S18; \
-	S26 = S17; S25 = S16; S24 = S15; S23 = S14; S22 = S13; S21 = S12; S20 = S11; S19 = S10; S18 = S09; \
-	S17 = S08; S16 = S07; S15 = S06; S14 = S05; S13 = S04; S12 = S03; S11 = S02; S10 = S01; S09 = S00; \
-	S08 = B35; S07 = B34; S06 = B33; S05 = B32; S04 = B31; S03 = B30; S02 = B29; S01 = B28; S00 = B27; \
+#define ROL1 { \
+			B35 = S00; \
+			S00 = S01; S01 = S02; S02 = S03; S03 = S04; S04 = S05; S05 = S06; S06 = S07; S07 = S08; S08 = S09; S09 = S10; \
+			S10 = S11; S11 = S12; S12 = S13; S13 = S14; S14 = S15; S15 = S16; S16 = S17; S17 = S18; S18 = S19; S19 = S20; \
+			S20 = S21; S21 = S22; S22 = S23; S23 = S24; S24 = S25; S25 = S26; S26 = S27; S27 = S28; S28 = S29; S29 = S30; \
+			S30 = S31; S31 = S32; S32 = S33; S33 = S34; S34 = S35; \
+			S35 = B35; \
 	}
 
 #define FUGUE512_3(x, y, z) {  \
@@ -588,7 +630,7 @@ void x13_fugue512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *
 		uint32_t S20, S21, S22, S23, S24, S25, S26, S27, S28, S29;
 		uint32_t S30, S31, S32, S33, S34, S35;
 
-		uint32_t B27, B28, B29, B30, B31, B32, B33, B34, B35;
+		uint32_t B33, B34, B35;
 		uint32_t bclo = 64 << 3;
 		uint32_t bchi = 0;
 
@@ -618,26 +660,23 @@ void x13_fugue512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *
 			S09 ^= S00;
 			S18 ^= S00;
 			S27 ^= S00;
-			ROR9;
-			SMIX(S00, S01, S02, S03);
-			S04 ^= S00;
-			S10 ^= S00;
-			S18 ^= S00;
-			S27 ^= S00;
-			ROR9;
-			SMIX(S00, S01, S02, S03);
-			S04 ^= S00;
-			S10 ^= S00;
-			S19 ^= S00;
-			S27 ^= S00;
-			ROR9;
-			SMIX(S00, S01, S02, S03);
-			S04 ^= S00;
-			S10 ^= S00;
-			S19 ^= S00;
-			S28 ^= S00;
-			ROR8;
-			SMIX(S00, S01, S02, S03);
+			SMIX(S27, S28, S29, S30);
+			S31 ^= S27;
+			S01 ^= S27;
+			S09 ^= S27;
+			S18 ^= S27;
+			SMIX(S18, S19, S20, S21);
+			S22 ^= S18;
+			S28 ^= S18;
+			S01 ^= S18;
+			S09 ^= S18;
+			SMIX(S09, S10, S11, S12);
+			S13 ^= S09;
+			S19 ^= S09;
+			S28 ^= S09;
+			S01 ^= S09;
+			SMIX(S01, S02, S03, S04);
+			ROL1;
 		}
 		S04 ^= S00;
 		S09 ^= S00;
@@ -696,7 +735,7 @@ void x13_fugue512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, cons
 		uint32_t S20, S21, S22, S23, S24, S25, S26, S27, S28, S29;
 		uint32_t S30, S31, S32, S33, S34, S35;
 
-		uint32_t B27, B28, B29, B30, B31, B32, B33, B34, B35;
+		uint32_t B33, B34, B35;
 		uint32_t bclo = 64 << 3;
 		uint32_t bchi = 0;
 
@@ -725,62 +764,55 @@ void x13_fugue512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, cons
 			S09 ^= S00;
 			S18 ^= S00;
 			S27 ^= S00;
-			ROR9;
-			SMIX(S00, S01, S02, S03);
-			S04 ^= S00;
-			S10 ^= S00;
-			S18 ^= S00;
-			S27 ^= S00;
-			ROR9;
-			SMIX(S00, S01, S02, S03);
-			S04 ^= S00;
-			S10 ^= S00;
-			S19 ^= S00;
-			S27 ^= S00;
-			ROR9;
-			SMIX(S00, S01, S02, S03);
-			S04 ^= S00;
-			S10 ^= S00;
-			S19 ^= S00;
-			S28 ^= S00;
-			ROR8;
-			SMIX(S00, S01, S02, S03);
+			SMIX(S27, S28, S29, S30);
+			S31 ^= S27; 
+			S01 ^= S27;
+			S09 ^= S27; 
+			S18 ^= S27;
+			SMIX(S18, S19, S20, S21);
+			S22 ^= S18;
+			S28 ^= S18;
+			S01 ^= S18;
+			S09 ^= S18;
+			SMIX(S09, S10, S11, S12);
+			S13 ^= S09;
+			S19 ^= S09;
+			S28 ^= S09;
+			S01 ^= S09; 
+			SMIX(S01, S02, S03, S04);
+			ROL1;
 		}
 		S04 ^= S00;
 		S09 ^= S00;
 		S18 ^= S00;
 		S27 ^= S00;
-		ROR9;
-		SMIX(S00, S01, S02, S03);
-		S04 ^= S00;
-		S10 ^= S00;
-		S18 ^= S00;
-		S27 ^= S00;
-		ROR9;
-		SMIX(S00, S01, S02, S03);
-		S04 ^= S00;
-		S10 ^= S00;
-		S19 ^= S00;
-		S27 ^= S00;
-		ROR9;
-		SMIX(S00, S01, S02, S03);
-		S04 ^= S00;
-		S10 ^= S00;
-		S19 ^= S00;
-		S28 ^= S00;
-		SMIX(S28, S29, S30, S31);
-		S01 ^= S28;
+		SMIX(S27, S28, S29, S30);
+		S31 ^= S27;
+		S01 ^= S27;
+		S09 ^= S27;
+		S18 ^= S27;
+		SMIX(S18, S19, S20, S21);
+		S22 ^= S18;
+		S28 ^= S18;
+		S01 ^= S18;
+		S09 ^= S18;
+		SMIX(S09, S10, S11, S12);
+		S13 ^= S09;
+		S19 ^= S09;
+		S28 ^= S09;
+		S01 ^= S09;
+		SMIX0(S01, S02, S03, S04);
+		S10 ^= S01;
+		S19 ^= S01;
+		S28 ^= S01;
+		SMIX0(S28, S29, S30, S31);
 		S10 ^= S28;
 		S19 ^= S28;
-		SMIX(S19, S20, S21, S22);
-		S01 ^= S19;
+		SMIX0(S19, S20, S21, S22);
 		S10 ^= S19;
-		SMIX(S10, S11, S12, S13);
-		S01 ^= S10;
-		SMIX(S01, S02, S03, S04);
-
-		S05 ^= S01;
-		if (cuda_swab32(S05) <= pTarget[7])
+		SMIX0(S10, S11, S12, S13);
+		S14 ^= S10;
+		if (cuda_swab32(S14) <= pTarget[7])
 		{
 			uint32_t tmp = atomicExch(d_nonce, nounce);
 			if (tmp != 0xffffffff)
