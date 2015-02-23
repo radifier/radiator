@@ -322,7 +322,7 @@ void quark_bmw512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *
     {
         const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-        const const int hashPosition = nounce - startNounce;
+        const int hashPosition = nounce - startNounce;
         const uint64_t *const inpHash = &g_hash[8 * hashPosition];
 
         // Init

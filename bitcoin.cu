@@ -125,15 +125,15 @@ void bitcoin_hash(uint32_t *output, const uint32_t *data, uint32_t nonce, const 
 static bool init[MAX_GPUS] = { 0 };
 
 int scanhash_bitcoin(int thr_id, uint32_t *pdata,
-	const uint32_t *ptarget, uint32_t max_nonce,
-	unsigned long *hashes_done)
+	uint32_t *ptarget, uint32_t max_nonce,
+	uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
 	uint32_t throughput = device_intensity(thr_id, __func__, 1U << 28);
 	throughput = min(throughput, (max_nonce - first_nonce));
 
 	if (opt_benchmark)
-		((uint32_t*)ptarget)[7] = 0x0005;
+		ptarget[7] = 0x0005;
 
 	if (!init[thr_id])
 	{

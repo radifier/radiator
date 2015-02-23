@@ -150,8 +150,8 @@ extern "C" void x13hash(void *output, const void *input)
 }
 
 extern "C" int scanhash_x13(int thr_id, uint32_t *pdata,
-	const uint32_t *ptarget, uint32_t max_nonce,
-	unsigned long *hashes_done)
+	uint32_t *ptarget, uint32_t max_nonce,
+	uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
 	static bool init[MAX_GPUS] = { 0 };
@@ -162,7 +162,7 @@ extern "C" int scanhash_x13(int thr_id, uint32_t *pdata,
 	throughput = min(throughput, (max_nonce - first_nonce));
 
 	if (opt_benchmark)
-		((uint32_t*)ptarget)[7] = 0xff;
+		ptarget[7] = 0xff;
 
 	if (!init[thr_id])
 	{

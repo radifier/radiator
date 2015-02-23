@@ -1162,7 +1162,7 @@ static void *miner_thread(void *userdata)
 			work.data[21] = work.data[21] & 0xfffffffU;
 		}
 		struct timeval tv_start, tv_end, diff;
-		unsigned long hashes_done=0;
+		uint32_t hashes_done=0;
 		uint32_t start_nonce;
 		uint32_t scan_time = have_longpoll ? LP_SCANTIME : opt_scantime;
 		uint64_t max64, minmax = 0x100000;

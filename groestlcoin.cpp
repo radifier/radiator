@@ -33,8 +33,8 @@ extern "C" void groestlhash(void *state, const void *input)
 
 static bool init[MAX_GPUS] = { 0 };
 
-extern "C" int scanhash_groestlcoin(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
-    uint32_t max_nonce, unsigned long *hashes_done)
+extern "C" int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
+    uint32_t max_nonce, uint32_t *hashes_done)
 {
     uint32_t start_nonce = pdata[19]++;
     uint32_t throughput = device_intensity(thr_id, __func__, 1 << 19); // 256*256*8
@@ -43,7 +43,7 @@ extern "C" int scanhash_groestlcoin(int thr_id, uint32_t *pdata, const uint32_t 
     uint32_t *outputHash = (uint32_t*)malloc(throughput * 16 * sizeof(uint32_t));
 
     if (opt_benchmark)
-        ((uint32_t*)ptarget)[7] = 0x000000ff;
+        ptarget[7] = 0x000000ff;
 
     // init
     if(!init[thr_id])

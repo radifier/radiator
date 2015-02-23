@@ -1,10 +1,6 @@
 #include "miner.h"
-
-extern "C" {
 #include <stdint.h>
 #include <memory.h>
-}
-
 #include "cuda_helper.h"
 
 #define UINT2(x,y) make_uint2(x,y)

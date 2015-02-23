@@ -8,9 +8,10 @@
 
 extern "C" {
 #include "sph/sph_blake.h"
+}
 #include <stdint.h>
 #include <memory.h>
-}
+
 
 /* threads per block */
 #define TPB 192
@@ -455,8 +456,8 @@ void pentablake_cpu_setBlock_80(uint32_t *pdata, const uint32_t *ptarget)
 
 static bool init[MAX_GPUS] = { 0 };
 
-extern "C" int scanhash_pentablake(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
-	uint32_t max_nonce, unsigned long *hashes_done)
+extern "C" int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
+	uint32_t max_nonce, uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
 	uint32_t endiandata[20];
@@ -465,7 +466,7 @@ extern "C" int scanhash_pentablake(int thr_id, uint32_t *pdata, const uint32_t *
 	throughput = min(throughput, (max_nonce - first_nonce));
 
 	if (opt_benchmark)
-		((uint32_t*)ptarget)[7] = 0x000F;
+		ptarget[7] = 0x000F;
 
 	if (!init[thr_id]) {
 		if (active_gpus > 1) {

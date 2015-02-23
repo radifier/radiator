@@ -69,7 +69,7 @@ static uint32_t bitsset( uint32_t x )
 #endif
 
 // Finde das high bit in einem Multiword-Integer.
-static int findhighbit(const uint32_t *ptarget, int words)
+static int findhighbit(uint32_t *ptarget, int words)
 {
     int i;
     int highbit = 0;
@@ -131,8 +131,8 @@ static bool init[MAX_GPUS] = { 0 };
 
 __host__
 int scanhash_heavy(int thr_id, uint32_t *pdata,
-    const uint32_t *ptarget, uint32_t max_nonce,
-    unsigned long *hashes_done, uint32_t maxvote, int blocklen)
+    uint32_t *ptarget, uint32_t max_nonce,
+    uint32_t *hashes_done, uint32_t maxvote, int blocklen)
 {
     const uint32_t first_nonce = pdata[19];
     // CUDA will process thousands of threads.
@@ -149,7 +149,7 @@ int scanhash_heavy(int thr_id, uint32_t *pdata,
     memset(nrmCalls, 0, sizeof(int) * 6);
 
     if (opt_benchmark)
-        ((uint32_t*)ptarget)[7] = 0x00ff;
+        ptarget[7] = 0x00ff;
 
     // für jeden Hash ein individuelles Target erstellen basierend
     // auf dem höchsten Bit, das in ptarget gesetzt ist.
