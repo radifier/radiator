@@ -58,7 +58,7 @@ extern "C" int scanhash_whc(int thr_id, uint32_t *pdata,
 {
 	const uint32_t first_nonce = pdata[19];
 	uint32_t endiandata[20];
-	uint32_t throughput = device_intensity(thr_id, __func__, 1U << 19); // 19=256*256*8;
+	uint32_t throughput = device_intensity(thr_id, __func__, 1U << 20); // 19=256*256*8;
 	throughput = min(throughput, (max_nonce - first_nonce));
 
 	if (opt_benchmark)
@@ -117,6 +117,7 @@ extern "C" int scanhash_whc(int thr_id, uint32_t *pdata,
 				}
 				pdata[19] = foundNonce;
 				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nounce %08x", thr_id, foundNonce);
+
 				return res;
 			}
 			else
