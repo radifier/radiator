@@ -14,7 +14,7 @@
 __constant__ uint64_t c_PaddedMessage80[16]; // padded message (80 bytes + padding)
 __constant__ uint32_t pTarget[8];
 
-static uint32_t *d_wnounce[MAX_GPUS];
+static uint32_t *h_wnounce[MAX_GPUS];
 static uint32_t *d_WNonce[MAX_GPUS];
 
 #define USE_ALL_TABLES 0
@@ -2187,14 +2187,18 @@ static const uint64_t plain_T7[256] = {
 #if !USE_ALL_TABLES
 
 __device__ __forceinline__
-static uint2 ROUND_ELT(const uint2* sharedMemory, uint2* __restrict__ in,
-const int i0,const int i1,const int i2,const int i3,const int i4,const int i5,const int i6,const int i7)
+static uint2 ROUND_ELT(const uint2*const __restrict__ sharedMemory, const uint2*const __restrict__ in,
+const int i0, const int i1, const int i2, const int i3, const int i4, const int i5, const int i6, const int i7)
 {
-	uint32_t* in32 = (uint32_t*)in;
-	return(
-		sharedMemory[__byte_perm(in32[(i0 << 1)], 0, 0x4440)] ^ ROL2(sharedMemory[__byte_perm(in32[(i1 << 1)], 0, 0x4441)], 8) ^ ROL2(sharedMemory[__byte_perm(in32[(i2 << 1)], 0, 0x4442)], 16) ^
-		ROL2(sharedMemory[__byte_perm(in32[(i3 << 1)], 0, 0x4443)], 24) ^ SWAPDWORDS2(sharedMemory[__byte_perm(in32[(i4 << 1) + 1], 0, 0x4440)]) ^ ROL2(sharedMemory[__byte_perm(in32[(i5 << 1) + 1], 0, 0x4441)], 40) ^
-		ROL2(sharedMemory[__byte_perm(in32[(i6 << 1) + 1], 0, 0x4442)], 48) ^ ROL2(sharedMemory[__byte_perm(in32[(i7 << 1) + 1], 0, 0x4443)], 56));
+	const uint32_t* in32 = (uint32_t*)in;
+	return(sharedMemory[__byte_perm(in32[(i0 << 1)], 0, 0x4440)]
+		   ^ ROL2(sharedMemory[__byte_perm(in32[(i1 << 1)], 0, 0x4441)], 8)
+		   ^ ROL2(sharedMemory[__byte_perm(in32[(i2 << 1)], 0, 0x4442)], 16)
+		   ^ ROL2(sharedMemory[__byte_perm(in32[(i3 << 1)], 0, 0x4443)], 24)
+		   ^ SWAPDWORDS2(sharedMemory[__byte_perm(in32[(i4 << 1) + 1], 0, 0x4440)])
+		   ^ ROL2(sharedMemory[__byte_perm(in32[(i5 << 1) + 1], 0, 0x4441)], 40)
+		   ^ ROL2(sharedMemory[__byte_perm(in32[(i6 << 1) + 1], 0, 0x4442)], 48)
+		   ^ ROL2(sharedMemory[__byte_perm(in32[(i7 << 1) + 1], 0, 0x4443)], 56));
 }
 #else
 __device__ __forceinline__
@@ -2412,7 +2416,7 @@ void x15_whirlpool_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t 
 		const uint32_t nounce =  (startNounce + thread);
 		uint32_t hashPosition = (nounce - startNounce) << 3;
 		uint2 hash[8], state[8], n[8], h[8] = { 0 };
-		uint8_t i;
+		int i;
 
 		const uint2 InitVector_RC[10] =
 		{
@@ -2604,7 +2608,7 @@ void oldwhirlpool_gpu_finalhash_64(uint32_t threads, uint32_t startNounce, uint6
 		}
 
 		#pragma unroll 10
-		for (unsigned r=0; r < 10; r++) {
+		for (int r=0; r < 10; r++) {
 			uint2 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
 			tmp0 = ROUND_ELT(sharedMemory, h, 0, 7, 6, 5, 4, 3, 2, 1)^ InitVector_RC[r];
 			tmp1 = ROUND_ELT(sharedMemory, h, 1, 0, 7, 6, 5, 4, 3, 2);
@@ -2660,7 +2664,7 @@ void oldwhirlpool_gpu_finalhash_64(uint32_t threads, uint32_t startNounce, uint6
 		n[7] = vectorize(0x2000000000000)^state[7];
 
 		#pragma unroll 9
-		for (unsigned r=0; r < 9; r++) 
+		for (int r=0; r < 9; r++) 
 		{
 			uint2 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
 			tmp0 = ROUND_ELT(sharedMemory, h, 0, 7, 6, 5, 4, 3, 2, 1)^InitVector_RC[r];
@@ -2704,9 +2708,13 @@ void oldwhirlpool_gpu_finalhash_64(uint32_t threads, uint32_t startNounce, uint6
 
 		state[3] = state[3] ^ n[3];
 
-		bool rc = devectorize(state[3]) <= target;
-		if (rc && resNounce[0] > nounce)
-			resNounce[0] = nounce;
+		if(devectorize(state[3]) <= target)
+		{
+			uint32_t tmp = atomicExch(resNounce, nounce);
+			if (tmp != 0xffffffff)
+				resNounce[1] = tmp;
+
+		}
 	}
 }
 
@@ -2738,8 +2746,8 @@ extern void x15_whirlpool_cpu_init(int thr_id, uint32_t threads, int mode)
 		cudaMemcpyToSymbol(mixTob6Tox, old1_T6, (256*8), 0, cudaMemcpyHostToDevice);
 		cudaMemcpyToSymbol(mixTob7Tox, old1_T7, (256*8), 0, cudaMemcpyHostToDevice);
 #endif
-		cudaMalloc(&d_WNonce[thr_id], sizeof(uint32_t));
-		cudaMallocHost(&d_wnounce[thr_id], sizeof(uint32_t));
+		cudaMalloc(&d_WNonce[thr_id], 2*sizeof(uint32_t));
+		cudaMallocHost(&h_wnounce[thr_id], 2*sizeof(uint32_t));
 		break;
 	}
 }
@@ -2748,7 +2756,7 @@ __host__
 extern void x15_whirlpool_cpu_free(int thr_id)
 {
 	cudaFree(d_WNonce[thr_id]);
-	cudaFreeHost(d_wnounce[thr_id]);
+	cudaFreeHost(h_wnounce[thr_id]);
 }
 
 __host__
@@ -2762,21 +2770,18 @@ extern void x15_whirlpool_cpu_hash_64(int thr_id, uint32_t threads, uint32_t sta
 }
 
 __host__
-extern uint32_t whirlpool512_cpu_finalhash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash)
+extern uint32_t* whirlpool512_cpu_finalhash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash)
 {
-	uint32_t result = 0xffffffff;
-
 	dim3 grid((threads + threadsperblock-1) / threadsperblock);
 	dim3 block(threadsperblock);
 
-	cudaMemset(d_WNonce[thr_id], 0xff, sizeof(uint32_t));
+	cudaMemset(d_WNonce[thr_id], 0xff, 2*sizeof(uint32_t));
 
 	oldwhirlpool_gpu_finalhash_64<<<grid, block>>>(threads, startNounce, (uint64_t*)d_hash,d_WNonce[thr_id]);
 	//MyStreamSynchronize(NULL, order, thr_id);
 
-	CUDA_SAFE_CALL(cudaMemcpy(d_wnounce[thr_id], d_WNonce[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost));
-	result = *d_wnounce[thr_id];
-	return result;
+	CUDA_SAFE_CALL(cudaMemcpy(h_wnounce[thr_id], d_WNonce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost));
+	return h_wnounce[thr_id];
 }
 
 __host__
