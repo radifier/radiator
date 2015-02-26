@@ -632,7 +632,7 @@ void x13_fugue512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *
 
 		uint32_t B33, B34, B35;
 
-		S00 = S02 = S03 = S05 = S06 = S08 = S09 = S10 = S11 = S12 = S13 = S14 = S16 = S17 = S18 = S19 = 0;
+		S02 = S03 = S05 = S06 = S09 = S10 = S11 = S12 = S13 = S14 = S16 = S17 = S18 = S19 = 0;
 		S20 = 0x8807a57eUL; S21 = 0xe616af75UL; S22 = 0xc5d3e4dbUL; S23 = 0xac9ab027UL;
 		S24 = 0xd915f117UL; S25 = 0xb6eecc54UL; S26 = 0x06e8020bUL; S27 = 0x4a92efd1UL;
 		S28 = 0xaac6e2c9UL; S29 = 0xddb21398UL; S30 = 0xcae65838UL; S31 = 0x437f203fUL;
@@ -642,32 +642,37 @@ void x13_fugue512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *
 		S04 = 0x4a92efd1UL;
 		S07 = 0xcae65838UL;
 		S15 = 0xd915f117UL;
-		S00 = (Hash[0]);
-		S08 ^= S00;
+		S00 = Hash[0];
+		S08 = Hash[0];
 
 		uint32_t c0 = 0x9ae23283UL;
 		uint32_t c1 = 0x0361b92dUL;
 		uint32_t c2 = 0x4c92d8edUL;
-		uint32_t r0 = 0xafaf608aUL;
-		uint32_t r1 = 0x79d5d51dUL;
-		uint32_t r2 = 0xf6274f4fUL;
-		uint32_t r3 = 0x59947f59UL;
+		uint32_t r0, r1, r2;
+		uint32_t tmp, tmp2, c3;
 
-		uint32_t tmp = (*((mixtabs)+__byte_perm(S00, 0, 17475)));
-		uint32_t c3 = tmp; r0 ^= tmp; tmp = (*((mixtabs)+((256) + __byte_perm(S00, 0, 17474))));
-		c3 ^= tmp; r1 ^= tmp; tmp = (*((mixtabs)+((512) + __byte_perm(S00, 0, 17473))));
-		//r1r2
-		c3 ^= tmp; r2 ^= tmp; tmp = (*((mixtabs)+((768) + __byte_perm(S00, 0, 17472))));
-		c3 ^= tmp; uint32_t tmp2 = __byte_perm(c0 ^ r0, c1 ^ r1, 13878); tmp = __byte_perm(c2 ^ r2, c3 ^ r3, 5140);
-		S33 = __byte_perm(tmp2, tmp, 12884); r0 = ((r0 << 8) | (r0 >> (32 - 8))); r1 = ((r1 << 8) | (r1 >> (32 - 8)));
-		r2 = ((r2 << 8) | (r2 >> (32 - 8))); r3 = ((r3 << 8) | (r3 >> (32 - 8))); tmp2 = __byte_perm(c1 ^ r0, c2 ^ r1, 13878);
-		tmp = __byte_perm(c3 ^ r2, c0 ^ r3, 5140); S34 = __byte_perm(tmp2, tmp, 12884); r0 = ((r0 << 8) | (r0 >> (32 - 8)));
-		r1 = ((r1 << 8) | (r1 >> (32 - 8))); r2 = ((r2 << 8) | (r2 >> (32 - 8))); r3 = ((r3 << 8) | (r3 >> (32 - 8)));
-		tmp2 = __byte_perm(c2 ^ r0, c3 ^ r1, 13878); tmp = __byte_perm(c0 ^ r2, c1 ^ r3, 5140);
-		S35 = __byte_perm(tmp2, tmp, 12884); r0 = ((r0 << 8) | (r0 >> (32 - 8)));
-		r1 = ((r1 << 8) | (r1 >> (32 - 8))); r2 = ((r2 << 8) | (r2 >> (32 - 8)));
-		r3 = ((r3 << 8) | (r3 >> (32 - 8))); tmp2 = __byte_perm(c3 ^ r0, c0 ^ r1, 13878);
-		tmp = __byte_perm(c1 ^ r2, c2 ^ r3, 5140); S00 = __byte_perm(tmp2, tmp, 12884);
+		tmp = mixtabs[__byte_perm(S00, 0, 17475)]; c3 = tmp; r0 = 0xafaf608aUL ^ tmp;
+		tmp = mixtabs[256 + __byte_perm(S00, 0, 17474)]; c3 ^= tmp; r1 = 0x79d5d51dUL ^ tmp;
+		tmp = mixtabs[512 + __byte_perm(S00, 0, 17473)]; c3 ^= tmp; r2 = 0xf6274f4fUL ^ tmp;
+		tmp = mixtabs[768 + __byte_perm(S00, 0, 17472)]; c3 ^= tmp;
+		tmp2 = __byte_perm(c0 ^ r0, c1 ^ r1, 13878);
+		tmp = __byte_perm(c2 ^ r2, c3 ^ 0x59947f59UL, 5140);
+		S33 = __byte_perm(tmp2, tmp, 12884);
+		r0 = ROTL32(r0, 8); r1 = ROTL32(r1, 8);
+		r2 = ROTL32(r2, 8);
+		tmp2 = __byte_perm(c1 ^ r0, c2 ^ r1, 13878);
+		tmp = __byte_perm(c3 ^ r2, c0 ^ 0x947f5959UL, 5140);
+		S34 = __byte_perm(tmp2, tmp, 12884);
+		r0 = ROTL32(r0, 8); r1 = ROTL32(r1, 8);
+		r2 = ROTL32(r2, 8);
+		tmp2 = __byte_perm(c2 ^ r0, c3 ^ r1, 13878);
+		tmp = __byte_perm(c0 ^ r2, c1 ^ 0x7f595994UL, 5140);
+		S35 = __byte_perm(tmp2, tmp, 12884);
+		r0 = ROTL32(r0, 8); r1 = ROTL32(r1, 8);
+		r2 = ROTL32(r2, 8);
+		tmp2 = __byte_perm(c3 ^ r0, c0 ^ r1, 13878);
+		tmp = __byte_perm(c1 ^ r2, c2 ^ 0x5959947fUL, 5140);
+		S00 = __byte_perm(tmp2, tmp, 12884);
 
 		CMIX36(S30, S31, S32, S34, S35, S00, S12, S13, S14);
 		SMIX(S30, S31, S32, S33);
@@ -788,7 +793,7 @@ void x13_fugue512_gpu_hash_64_final(const uint32_t threads, const uint32_t start
 
 		uint32_t B33, B34, B35;
 
-		S00 = S02 = S03 = S05 = S06 = S08 = S09 = S10 = S11 = S12 = S13 = S14 = S16 = S17 = S18 = S19 = 0;
+		S02 = S03 = S05 = S06 = S09 = S10 = S11 = S12 = S13 = S14 = S16 = S17 = S18 = S19 = 0;
 		S20 = 0x8807a57eUL; S21 = 0xe616af75UL; S22 = 0xc5d3e4dbUL; S23 = 0xac9ab027UL;
 		S24 = 0xd915f117UL; S25 = 0xb6eecc54UL; S26 = 0x06e8020bUL; S27 = 0x4a92efd1UL;
 		S28 = 0xaac6e2c9UL; S29 = 0xddb21398UL; S30 = 0xcae65838UL; S31 = 0x437f203fUL;
@@ -798,33 +803,37 @@ void x13_fugue512_gpu_hash_64_final(const uint32_t threads, const uint32_t start
 		S04 = 0x4a92efd1UL;
 		S07 = 0xcae65838UL;
 		S15 = 0xd915f117UL;
-		S00 = (Hash[0]);
-		S08 ^= S00;
+		S00 = Hash[0];
+		S08 = Hash[0];
 
 		uint32_t c0 = 0x9ae23283UL;
 		uint32_t c1 = 0x0361b92dUL;
 		uint32_t c2 = 0x4c92d8edUL;
-		uint32_t r0 = 0xafaf608aUL;
-		uint32_t r1 = 0x79d5d51dUL;
-		uint32_t r2 = 0xf6274f4fUL;
-		uint32_t r3 = 0x59947f59UL;
+		uint32_t r0, r1, r2;
+		uint32_t tmp, tmp2, c3;
 
-		uint32_t tmp = (*((mixtabs)+__byte_perm(S00, 0, 17475)));
-		uint32_t c3 = tmp; r0 ^= tmp; tmp = (*((mixtabs)+((256) + __byte_perm(S00, 0, 17474))));
-		//r3c3r0
-		c3 ^= tmp; r1 ^= tmp; tmp = (*((mixtabs)+((512) + __byte_perm(S00, 0, 17473))));
-		//r1r2
-		c3 ^= tmp; r2 ^= tmp; tmp = (*((mixtabs)+((768) + __byte_perm(S00, 0, 17472))));
-		c3 ^= tmp; uint32_t tmp2 = __byte_perm(c0 ^ r0, c1 ^ r1, 13878); tmp = __byte_perm(c2 ^ r2, c3 ^ r3, 5140);
-		S33 = __byte_perm(tmp2, tmp, 12884); r0 = ((r0 << 8) | (r0 >> (32 - 8))); r1 = ((r1 << 8) | (r1 >> (32 - 8)));
-		r2 = ((r2 << 8) | (r2 >> (32 - 8))); r3 = ((r3 << 8) | (r3 >> (32 - 8))); tmp2 = __byte_perm(c1 ^ r0, c2 ^ r1, 13878);
-		tmp = __byte_perm(c3 ^ r2, c0 ^ r3, 5140); S34 = __byte_perm(tmp2, tmp, 12884); r0 = ((r0 << 8) | (r0 >> (32 - 8)));
-		r1 = ((r1 << 8) | (r1 >> (32 - 8))); r2 = ((r2 << 8) | (r2 >> (32 - 8))); r3 = ((r3 << 8) | (r3 >> (32 - 8)));
-		tmp2 = __byte_perm(c2 ^ r0, c3 ^ r1, 13878); tmp = __byte_perm(c0 ^ r2, c1 ^ r3, 5140);
-		S35 = __byte_perm(tmp2, tmp, 12884); r0 = ((r0 << 8) | (r0 >> (32 - 8)));
-		r1 = ((r1 << 8) | (r1 >> (32 - 8))); r2 = ((r2 << 8) | (r2 >> (32 - 8)));
-		r3 = ((r3 << 8) | (r3 >> (32 - 8))); tmp2 = __byte_perm(c3 ^ r0, c0 ^ r1, 13878);
-		tmp = __byte_perm(c1 ^ r2, c2 ^ r3, 5140); S00 = __byte_perm(tmp2, tmp, 12884);
+		tmp = mixtabs[__byte_perm(S00, 0, 17475)]; c3 = tmp; r0 = 0xafaf608aUL ^ tmp;
+		tmp = mixtabs[256 + __byte_perm(S00, 0, 17474)]; c3 ^= tmp; r1 = 0x79d5d51dUL ^ tmp;
+		tmp = mixtabs[512 + __byte_perm(S00, 0, 17473)]; c3 ^= tmp; r2 = 0xf6274f4fUL ^ tmp;
+		tmp = mixtabs[768 + __byte_perm(S00, 0, 17472)]; c3 ^= tmp;
+		tmp2 = __byte_perm(c0 ^ r0, c1 ^ r1, 13878);
+		tmp = __byte_perm(c2 ^ r2, c3 ^ 0x59947f59UL, 5140);
+		S33 = __byte_perm(tmp2, tmp, 12884);
+		r0 = ROTL32(r0,8); r1 = ROTL32(r1,8);
+		r2 = ROTL32(r2, 8);
+		tmp2 = __byte_perm(c1 ^ r0, c2 ^ r1, 13878);
+		tmp = __byte_perm(c3 ^ r2, c0 ^ 0x947f5959UL, 5140);
+		S34 = __byte_perm(tmp2, tmp, 12884);
+		r0 = ROTL32(r0, 8); r1 = ROTL32(r1, 8);
+		r2 = ROTL32(r2, 8);
+		tmp2 = __byte_perm(c2 ^ r0, c3 ^ r1, 13878);
+		tmp = __byte_perm(c0 ^ r2, c1 ^ 0x7f595994UL, 5140);
+		S35 = __byte_perm(tmp2, tmp, 12884);
+		r0 = ROTL32(r0, 8); r1 = ROTL32(r1, 8);
+		r2 = ROTL32(r2, 8);
+		tmp2 = __byte_perm(c3 ^ r0, c0 ^ r1, 13878);
+		tmp = __byte_perm(c1 ^ r2, c2 ^ 0x5959947fUL, 5140);
+		S00 = __byte_perm(tmp2, tmp, 12884);
 
 		CMIX36(S30, S31, S32, S34, S35, S00, S12, S13, S14);
 		SMIX(S30, S31, S32, S33);
