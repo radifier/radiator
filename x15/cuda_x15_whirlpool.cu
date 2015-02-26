@@ -2584,7 +2584,7 @@ void oldwhirlpool_gpu_finalhash_64(uint32_t threads, uint32_t startNounce, uint6
 			vectorize(SPH_C64(0x9E4717DD667CEEFB)),
 			vectorize(SPH_C64(0x33835AAD07BF2DCA))
 		};
-
+		const uint32_t hashPosition = nounce - startNounce;
 		uint64_t *inpHash = (uint64_t*) &g_hash[8 * hashPosition];
 		uint2 h8[8];
 

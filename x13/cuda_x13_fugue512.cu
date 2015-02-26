@@ -773,7 +773,7 @@ void x13_fugue512_gpu_hash_64_final(const uint32_t threads, const uint32_t start
 			mixtabs[(512 + threadIdx.x)] = mixTab2Tex[threadIdx.x];
 			mixtabs[(768 + threadIdx.x)] = mixTab3Tex[threadIdx.x];
 		}
-			const uint32_t nounce =  (startNounce + thread);
+		const uint32_t nounce =  (startNounce + thread);
 		const int hashPosition = nounce - startNounce;
 		const uint32_t *h = &g_hash[hashPosition * 16];
 		uint32_t Hash[16];
@@ -787,7 +787,6 @@ void x13_fugue512_gpu_hash_64_final(const uint32_t threads, const uint32_t start
 		uint32_t S30, S31, S32, S33, S34, S35;
 
 		uint32_t B33, B34, B35;
-		uint32_t backup = pTarget[7];
 
 		S00 = S02 = S03 = S05 = S06 = S08 = S09 = S10 = S11 = S12 = S13 = S14 = S16 = S17 = S18 = S19 = 0;
 		S20 = 0x8807a57eUL; S21 = 0xe616af75UL; S22 = 0xc5d3e4dbUL; S23 = 0xac9ab027UL;
