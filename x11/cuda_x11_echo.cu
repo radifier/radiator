@@ -341,7 +341,7 @@ void echo_gpu_init(uint32_t *const __restrict__ sharedMemory)
 
 
 __global__	__launch_bounds__(256, 4)
-void x11_echo512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash)
+void x11_echo512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ g_hash)
 {
 	__shared__ uint32_t sharedMemory[1024];
 
@@ -352,7 +352,7 @@ void x11_echo512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *c
     {
         const uint32_t nounce = (startNounce + thread);
         const int hashPosition = nounce - startNounce;
-        uint32_t *const Hash = (uint32_t*)&g_hash[hashPosition<<3];
+        uint32_t *const Hash = &g_hash[hashPosition<<4];
 		cuda_echo_round(sharedMemory, Hash);
     }
 }
@@ -372,7 +372,7 @@ __host__ void x11_echo512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t sta
     dim3 grid((threads + threadsperblock-1)/threadsperblock);
     dim3 block(threadsperblock);
 
-    x11_echo512_gpu_hash_64<<<grid, block>>>(threads, startNounce, (uint64_t*)d_hash);
+    x11_echo512_gpu_hash_64<<<grid, block>>>(threads, startNounce, d_hash);
 	//MyStreamSynchronize(NULL, order, thr_id);
 }
 
