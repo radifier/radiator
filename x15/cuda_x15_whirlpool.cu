@@ -2388,7 +2388,7 @@ void oldwhirlpool_gpu_hash_80(uint32_t threads, uint32_t startNounce, void *outp
 			outHash[i] = hash.h4[i];
 	} // thread < threads
 }
-__global__ __launch_bounds__(256,2)
+__global__ __launch_bounds__(threadsperblock, 2)
 void x15_whirlpool_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash)
 {
 #if USE_ALL_TABLES

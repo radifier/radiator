@@ -5,7 +5,11 @@
 //
 // STEP8_IF and STEP8_MAJ beinhalten je 2x 8-fach parallel Operations
 
+#if __CUDA_ARCH__ <= 500
 #define TPB 256
+#else
+#define TPB 224
+#endif
 
 #include "cuda_helper.h"
 #include <stdio.h>
@@ -596,7 +600,7 @@ x11_simd512_gpu_compress2_64(uint32_t threads, uint32_t startNounce, uint64_t *g
 
 
 __global__ void __launch_bounds__(TPB, 1)
-x11_simd512_gpu_compress_64_maxwell(uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint4 *g_fft4, uint32_t *g_state)
+x11_simd512_gpu_compress_64_maxwell(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, const uint4 *const __restrict__ g_fft4, uint32_t *const __restrict__ g_state)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
@@ -649,13 +653,19 @@ void x11_simd512_cpu_free(int thr_id)
 __host__
 void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash)
 {
-	dim3 block(TPB);
-	dim3 grid8(((threads + TPB-1)/TPB)*8);
+	int tpb;
+	if (device_sm[device_map[thr_id]] == 520)
+		tpb = 224;
+	else
+		tpb = 256;
+
+	dim3 block(tpb);
+	dim3 grid8(((threads + tpb-1)/tpb)*8);
 
 	x11_simd512_gpu_expand_64 <<<grid8, block>>> (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id]);
 	//MyStreamSynchronize(NULL, order, thr_id);
 
-	dim3 grid((threads + TPB-1)/TPB);
+	dim3 grid((threads + tpb-1)/tpb);
 
 	if (device_sm[device_map[thr_id]] >= 500) 
 	{

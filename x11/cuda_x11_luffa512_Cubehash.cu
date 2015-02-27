@@ -808,23 +808,24 @@ void __device__ __forceinline__ Final(uint32_t x[2][2][2][2][2], uint32_t *hashv
 
 /***************************************************/
 // Die Hash-Funktion
-__global__
+__global__ __launch_bounds__(256, 3)
 void x11_luffaCubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash)
 {
-    const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-    if (thread < threads)
-    {
-        const uint32_t nounce = (startNounce + thread);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	if (thread < threads)
+	{
+		const uint32_t nounce = (startNounce + thread);
 
-        const int hashPosition = nounce - startNounce;
-        uint32_t *const Hash = (uint32_t*)&g_hash[8 * hashPosition];
+		const int hashPosition = nounce - startNounce;
+		uint32_t *const Hash = (uint32_t*)&g_hash[8 * hashPosition];
 
-        hashState state;
+		hashState state;
 #pragma unroll 40
-        for(int i=0;i<40;i++) state.chainv[i] = c_IV[i];
+		for (int i = 0; i<40; i++)
+			state.chainv[i] = c_IV[i];
 
 		Update512(&state, Hash);
-        finalization512(&state, Hash);
+		finalization512(&state, Hash);
 		//Cubehash
 
 		uint32_t x[2][2][2][2][2];
@@ -837,9 +838,10 @@ void x11_luffaCubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, ui
 		uint32_t last[8];
 		last[0] = 0x80;
 #pragma unroll 7
-		for (int i = 1; i < 8; i++) last[i] = 0;
+		for (int i = 1; i < 8; i++)
+			last[i] = 0;
 		Update32(x, last);
-		Final(x, Hash);	
+		Final(x, Hash);
 	}
 }
 
