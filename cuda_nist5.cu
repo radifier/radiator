@@ -133,7 +133,7 @@ extern "C" int scanhash_nist5(int thr_id, uint32_t *pdata,
 						pdata[21] = h_found[thr_id][1];
 						res++;
 						if (opt_benchmark)
-							applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, h_found[thr_id][1], vhash64[7], Htarg);
+							applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, h_found[thr_id][1]);
 					}
 					else
 					{
@@ -146,7 +146,7 @@ extern "C" int scanhash_nist5(int thr_id, uint32_t *pdata,
 				}
 				pdata[19] = h_found[thr_id][0];
 				if (opt_benchmark)
-					applog(LOG_INFO, "GPU #%d Found nounce %08x", thr_id, h_found[thr_id][0], vhash64[7], Htarg);
+					applog(LOG_INFO, "GPU #%d Found nounce %08x", thr_id, h_found[thr_id][0]);
 				return res;
 			}
 			else

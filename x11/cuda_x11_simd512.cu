@@ -30,14 +30,6 @@ __constant__ uint8_t c_perm5[8] = { 6, 7, 2, 3, 0, 1, 4, 5 };
 __constant__ uint8_t c_perm6[8] = { 6, 7, 0, 1, 4, 5, 2, 3 };
 __constant__ uint8_t c_perm7[8] = { 4, 5, 2, 3, 6, 7, 0, 1 };
 
-
-__constant__ uint32_t c_IV_512[32] = {
-	0x0ba16b95, 0x72f999ad, 0x9fecc2ae, 0xba3264fc, 0x5e894929, 0x8e9f30e5, 0x2f1daa37, 0xf0f2c558,
-	0xac506643, 0xa90635a5, 0xe25b878b, 0xaab7878f, 0x88817f7a, 0x0a02892b, 0x559a7550, 0x598f657e,
-	0x7eef60a1, 0x6b70e3e8, 0x9c1714d1, 0xb958e2a8, 0xab02675e, 0xed1c014f, 0xcd8d65bb, 0xfdb7a257,
-	0x09254899, 0xd699c7bc, 0x9019b6dc, 0x2b9022e4, 0x8fa14956, 0x21bf9bd3, 0xb94d0943, 0x6ffddc22
-};
-
 __constant__ short c_FFT128_8_16_Twiddle[128] = {
 	1,   1,   1,   1,   1,    1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
 	1,  60,   2, 120,   4,  -17,   8, -34,  16, -68,  32, 121,  64, -15, 128, -30,

@@ -258,7 +258,7 @@ extern "C" int scanhash_x17(int thr_id, uint32_t *pdata,
 					pdata[21] = secNonce;
 					res++;
 				}
-				if (opt_benchmark) applog(LOG_INFO, "found nounce", thr_id, foundNonce, vhash64[7], Htarg);
+				if (opt_benchmark) applog(LOG_INFO, "found nounce", thr_id, foundNonce);
 				pdata[19] = foundNonce;
 				return res;
 			}
