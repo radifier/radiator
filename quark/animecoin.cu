@@ -281,7 +281,7 @@ extern "C" int scanhash_anime(int thr_id, uint32_t *pdata,
 					applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU!", thr_id, foundnonces[0]);
 			}
 		}
-		pdata[19] += throughput;
+		pdata[19] += throughput; CUDA_SAFE_CALL(cudaGetLastError());
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 
 	*hashes_done = pdata[19] - first_nonce + 1;

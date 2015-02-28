@@ -287,7 +287,7 @@ int scanhash_heavy(int thr_id, uint32_t *pdata,
 
 emptyNonceVector:
 
-        pdata[19] += throughput;
+        pdata[19] += throughput; CUDA_SAFE_CALL(cudaGetLastError());
 
     } while (pdata[19] < max_nonce && !work_restart[thr_id].restart);
     *hashes_done = pdata[19] - first_nonce;

@@ -128,7 +128,7 @@ extern "C" int scanhash_whc(int thr_id, uint32_t *pdata,
 					applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, foundNonce[0]);
 			}
 		}
-		pdata[19] += throughput;
+		pdata[19] += throughput; CUDA_SAFE_CALL(cudaGetLastError());
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 
 	*hashes_done = pdata[19] - first_nonce;

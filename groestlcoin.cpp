@@ -7,6 +7,7 @@
 #include "cuda_groestlcoin.h"
 
 #include "miner.h"
+#include <cuda_runtime.h>
 
 #define SWAP32(x) \
     ((((x) << 24) & 0xff000000u) | (((x) << 8) & 0x00ff0000u)   | \
@@ -114,6 +115,12 @@ extern "C" int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarg
         }
 
 		pdata[19] += throughput;
+		cudaError_t err = cudaGetLastError();
+		if (err != cudaSuccess)
+		{
+			applog(LOG_ERR, "GPU #%d: %s", thr_id, cudaGetErrorString(err));
+			exit(EXIT_FAILURE);
+		}
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 
     *hashes_done = pdata[19] - start_nonce + 1;
