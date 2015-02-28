@@ -40,7 +40,7 @@ extern "C" int scanhash_myriad(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t max_nonce, uint32_t *hashes_done)
 {
 	uint32_t start_nonce = pdata[19]++;
-	uint32_t throughput = device_intensity(thr_id, __func__, 1 << 17);
+	uint32_t throughput = device_intensity(thr_id, __func__, 1 << 20);
 	throughput = min(throughput, max_nonce - start_nonce);
 
 	if (opt_benchmark)
