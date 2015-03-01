@@ -1,11 +1,12 @@
 /*
- * whirlpool routine (djm)
+ * whirlpool routine djm&SP
  */
 extern "C"
 {
 #include "sph/sph_whirlpool.h"
 }
 #include "miner.h"
+
 
 
 #include "cuda_helper.h"
