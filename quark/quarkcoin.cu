@@ -148,6 +148,7 @@ extern "C" int scanhash_quark(int thr_id, uint32_t *pdata,
 		cudaDeviceReset();
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		get_cuda_arch(&cuda_arch[thr_id]);
 
 		// Konstanten kopieren, Speicher belegen
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));

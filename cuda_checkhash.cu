@@ -5,7 +5,6 @@
 #include <memory.h>
 
 #include "miner.h"
-
 #include "cuda_helper.h"
 
 __constant__ uint32_t pTarget[8]; // 32 bytes
@@ -222,4 +221,21 @@ void cuda_check_quarkcoin(int thr_id, uint32_t threads, uint32_t startNounce, ui
 	cuda_check_quarkcoin_64 << <grid, block >> > (threads, startNounce, d_nonceVector, d_inputHash, d_resNonces[thr_id]);
 
 	cudaMemcpy(resNonces, d_resNonces[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost);
+}
+
+int cuda_arch[MAX_GPUS];
+__global__ void get_cuda_arch_gpu(int *d_version)
+{
+#ifdef __CUDA_ARCH__
+	*d_version = __CUDA_ARCH__;
+#endif
+}
+
+__host__ void get_cuda_arch(int *version)
+{
+	int *d_version;
+	cudaMalloc(&d_version, sizeof(int));
+	get_cuda_arch_gpu << < 1, 1 >> > (d_version);
+	cudaMemcpy(version, d_version, sizeof(int), cudaMemcpyDeviceToHost);
+	cudaFree(d_version);
 }

@@ -720,6 +720,8 @@ __device__ __forceinline__ ushort2 vectorize16(uint32_t x)
 	return result;
 }
 
+extern int cuda_arch[MAX_GPUS];
+extern void get_cuda_arch(int *);
 
 #endif // #ifndef CUDA_HELPER_H
 

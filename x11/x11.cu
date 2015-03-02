@@ -157,6 +157,7 @@ extern "C" int scanhash_x11(int thr_id, uint32_t *pdata,
 		cudaDeviceReset();
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		get_cuda_arch(&cuda_arch[thr_id]);
 		quark_groestl512_cpu_init(thr_id, throughput);
 		quark_bmw512_cpu_init(thr_id, throughput);
 		x11_echo512_cpu_init(thr_id, throughput);

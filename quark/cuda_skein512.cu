@@ -520,7 +520,8 @@ void quark_skein512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNoun
 	int t = 128;
 	if (device_sm[device_map[thr_id]] > 500)
 	{
-		t = 448;
+		if (cuda_arch[thr_id]>500)
+			t = 448;
 	}
 	dim3 grid((threads + t - 1) / t);
 	dim3 block(t);

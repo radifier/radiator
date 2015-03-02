@@ -84,6 +84,7 @@ extern "C" int scanhash_nist5(int thr_id, uint32_t *pdata,
 		cudaDeviceReset();
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		get_cuda_arch(&cuda_arch[thr_id]);
 
 		// Konstanten kopieren, Speicher belegen
 		quark_groestl512_cpu_init(thr_id, throughput);

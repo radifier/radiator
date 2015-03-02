@@ -176,6 +176,7 @@ extern "C" int scanhash_anime(int thr_id, uint32_t *pdata,
 		cudaDeviceReset();
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		get_cuda_arch(&cuda_arch[thr_id]);
 
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
 
