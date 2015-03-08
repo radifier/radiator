@@ -1855,12 +1855,20 @@ static void parse_arg(int key, char *arg)
 		if (v < 0 || v > 31)
 			show_usage_and_exit(1);
 		{
-			int n = 0, adds = 0;
+			int n = 0;
+			uint32_t adds = 0;
 			int ngpus = cuda_num_devices();
 			char * pch = strtok(arg,",");
-			if (pch == NULL) {
+			if (!pch || pch == arg) {
+				// single value, set intensity for all cards
+				uint32_t adds = 0;
+				if ((d - v) > 0.0) {
+					adds = (uint32_t)floor((d - v) * (1 << (v - 8))) * 256;
+				}
 				for (n=0; n < ngpus; n++)
-					gpus_intensity[n] = (1 << v);
+					gpus_intensity[n] = (1 << v) + adds;
+				applog(LOG_INFO, "Intensity set to %.1f, %u cuda threads",
+					d, gpus_intensity[0]);
 				break;
 			}
 			while (pch != NULL) {
