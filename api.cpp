@@ -90,7 +90,7 @@ static time_t startup = 0;
 static int bye = 0;
 
 extern char *opt_api_allow;
-extern int opt_api_listen; /* port */
+extern uint16_t opt_api_listen; /* port */
 extern uint32_t accepted_count;
 extern uint32_t rejected_count;
 extern int num_cpus;
@@ -676,7 +676,7 @@ static bool check_connect(struct sockaddr_in *cli, char **connectaddr, char *gro
 static void api()
 {
 	const char *addr = opt_api_allow;
-	short int port = opt_api_listen; // 4068
+	uint16_t port = opt_api_listen; // 4068
 	char buf[MYBUFSIZ];
 	int c, n, bound;
 	char *connectaddr;
