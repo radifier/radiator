@@ -188,6 +188,7 @@ features.
 2015-02-01 Release 1.0, forked from tpruvot and sp-hash
 2015-02-03 v1.01: bug fix for cards with compute capability 3.0 (untested)
 2015-02-09 v1.02: various bug fixes and optimizations
+2015-03-08 v2.00: added whirlpoolx algo (Vanillacoin), also various optimizations and bug fixes
 
 >>> AUTHORS <<<
 

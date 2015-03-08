@@ -185,7 +185,7 @@
       <GPUDebugInfo>false</GPUDebugInfo>
     </CudaLink>
     <CudaLink>
-      <Optimization>O2</Optimization>
+      <Optimization>O3</Optimization>
       <PerformDeviceLink>false</PerformDeviceLink>
     </CudaLink>
   </ItemDefinitionGroup>
