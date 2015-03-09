@@ -10,10 +10,10 @@ extern "C"
 
 #include "cuda_helper.h"
 
-extern void whirlpoolx_cpu_init(int thr_id, int threads);
+extern void whirlpoolx_cpu_init(int thr_id, uint32_t threads);
 extern void whirlpoolx_setBlock_80(void *pdata, const void *ptarget);
 extern void cpu_whirlpoolx(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *foundNonce);
-extern void whirlpoolx_precompute();
+extern void whirlpoolx_precompute(int thr_id);
 
 // CPU Hash function
 extern "C" void whirlxHash(void *state, const void *input)
@@ -24,7 +24,7 @@ extern "C" void whirlxHash(void *state, const void *input)
 	unsigned char hash[64];
 	unsigned char hash_xored[32];
 
-	memset(hash, 0, sizeof hash);
+	memset(hash, 0, sizeof(hash));
 
 	sph_whirlpool_init(&ctx_whirlpool);
 	sph_whirlpool(&ctx_whirlpool, input, 80);
@@ -44,7 +44,7 @@ int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t
 	const uint32_t first_nonce = pdata[19];
 	uint32_t endiandata[20];
 
-	uint32_t throughput = device_intensity(thr_id, __func__, 1 << 26); // 256*4096
+	uint32_t throughput = device_intensity(thr_id, __func__, 1 << 24); // 256*4096
 	throughput = min(throughput, max_nonce - first_nonce);
 
 	if (opt_benchmark)
@@ -62,11 +62,11 @@ int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t
 
 	for (int k=0; k < 20; k++)
 	{
-		be32enc(&endiandata[k], ((uint32_t*)pdata)[k]);
+		be32enc(&endiandata[k], pdata[k]);
 	}
 
 	whirlpoolx_setBlock_80((void*)endiandata, &ptarget[6]);
-	whirlpoolx_precompute();
+	whirlpoolx_precompute(thr_id);
 	do {
 		uint32_t foundNonce[2];
 		cpu_whirlpoolx(thr_id, throughput, pdata[19], foundNonce);
