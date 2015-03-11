@@ -794,7 +794,7 @@ static bool get_mininginfo(CURL *curl, struct work *work)
 	if (!val && curl_err == -1) {
 		allow_mininginfo = false;
 		if (opt_debug) {
-				applog(LOG_DEBUG, "getinfo not supported");
+				applog(LOG_DEBUG, "getmininginfo not supported");
 		}
 		return false;
 	} else {
@@ -806,20 +806,16 @@ static bool get_mininginfo(CURL *curl, struct work *work)
 			json_t *key = json_object_get(res, "difficulty");
 			if (key && json_is_real(key)) {
 				global_diff = json_real_value(key);
-				json_decref(key);
 			}
 			key = json_object_get(res, "networkhashps");
 			if (key && json_is_integer(key)) {
 				net_hashrate = json_integer_value(key);
-				json_decref(key);
 			}
 			key = json_object_get(res, "blocks");
 			if (key && json_is_integer(key)) {
 				net_blocks = json_integer_value(key);
-				json_decref(key);
 			}
 		}
-		json_decref(res);
 	}
 	json_decref(val);
 	return true;
@@ -1170,7 +1166,7 @@ static void *miner_thread(void *userdata)
 	struct work work;
 	uint64_t loopcnt = 0;
 	uint32_t max_nonce;
-	uint32_t end_nonce = 0xffffffffU / opt_n_threads * (thr_id + 1) - (thr_id + 1);
+	uint32_t end_nonce = UINT32_MAX / opt_n_threads * (thr_id + 1) - (thr_id + 1);
 	bool work_done = false;
 	bool extrajob = false;
 	char s[16];
@@ -1178,41 +1174,40 @@ static void *miner_thread(void *userdata)
 
 	memset(&work, 0, sizeof(work)); // prevent work from being used uninitialized
 
-	/* Set worker threads to nice 19 and then preferentially to SCHED_IDLE
-	 * and if that fails, then SCHED_BATCH. No need for this to be an
-	 * error if it fails */
-	if (!opt_benchmark && opt_priority == 0) {
-		setpriority(PRIO_PROCESS, 0, 18);
-		drop_policy();
-	} else {
-		int prio = 0;
+	if (opt_priority > 0)
+	{
+		int prio = 2; // default to normal
 #ifndef WIN32
-		prio = 18;
+		prio = 0;
 		// note: different behavior on linux (-19 to 19)
-		switch (opt_priority) {
-			case 1:
-				prio = 5;
-				break;
-			case 2:
-				prio = 0;
-				break;
-			case 3:
-				prio = -5;
-				break;
-			case 4:
-				prio = -10;
-				break;
-			case 5:
-				prio = -15;
+		switch (opt_priority)
+		{
+		case 0:
+			prio = 15;
+			break;
+		case 1:
+			prio = 5;
+			break;
+		case 2:
+			prio = 0; // normal process
+			break;
+		case 3:
+			prio = -1; // above
+			break;
+		case 4:
+			prio = -10;
+			break;
+		case 5:
+			prio = -15;
 		}
-		applog(LOG_DEBUG, "Thread %d priority %d (set to %d)", thr_id,
-			opt_priority, prio);
+		if (opt_debug)
+			applog(LOG_DEBUG, "Thread %d priority %d (nice %d)",
+			thr_id,	opt_priority, prio);
 #endif
-		int ret = setpriority(PRIO_PROCESS, 0, prio);
-		if (opt_priority == 0) {
-			drop_policy();
-		}
+		setpriority(PRIO_PROCESS, 0, prio);
+		drop_policy();
 	}
+
 
 	/* Cpu thread affinity */
 	if (num_cpus > 1) {
