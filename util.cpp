@@ -462,21 +462,24 @@ json_t *json_rpc_call(CURL *curl, const char *url,
 	err_val = json_object_get(val, "error");
 
 	if (!res_val || json_is_null(res_val) ||
-	    (err_val && !json_is_null(err_val))) {
-		char *s;
+		(err_val && !json_is_null(err_val)))
+	{
+		char *s = NULL;
 
-		if (err_val) {
+		if (err_val)
+		{
+			s = json_dumps(err_val, 0);
 			json_t *msg = json_object_get(err_val, "message");
 			json_t *err_code = json_object_get(err_val, "code");
 			if (curl_err && json_integer_value(err_code))
-				*curl_err = (int) json_integer_value(err_code);
-			json_decref(err_code);
+				*curl_err = (int)json_integer_value(err_code);
 
-			s = json_dumps(err_val, 0);
-			if (json_is_string(msg)) {
+			if (json_is_string(msg))
+			{
 				free(s);
 				s = strdup(json_string_value(msg));
-				if (have_longpoll && s && !strcmp(s, "method not getwork")) {
+				if (have_longpoll && s && !strcmp(s, "method not getwork"))
+				{
 					json_decref(err_val);
 					free(s);
 					goto err_out;
@@ -487,7 +490,8 @@ json_t *json_rpc_call(CURL *curl, const char *url,
 		else
 			s = strdup("(unknown reason)");
 
-		applog(LOG_ERR, "JSON-RPC call failed: %s", s);
+		if (!curl_err || opt_debug)
+			applog(LOG_ERR, "JSON-RPC call failed: %s", s);
 
 		free(s);
 
