@@ -3,7 +3,11 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
+#ifdef __cplusplus
+#include <cstdint>
+#else
 #include <stdint.h>
+#endif
 
 #ifdef __INTELLISENSE__
 /* reduce vstudio warnings (__byteperm, blockIdx...) */

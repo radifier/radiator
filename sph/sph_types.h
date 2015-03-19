@@ -816,7 +816,7 @@ static inline void sph_enc64be_aligned(void *dst, sph_u64 val);
 #undef SPH_64
 #undef SPH_64_TRUE
 
-#if defined __STDC__ && __STDC_VERSION__ >= 199901L
+#if 1 // defined __STDC__ && __STDC_VERSION__ >= 199901L
 
 /*
  * On C99 implementations, we can use <stdint.h> to get an exact 64-bit
@@ -824,7 +824,11 @@ static inline void sph_enc64be_aligned(void *dst, sph_u64 val);
  * C99 conformance).
  */
 
+#ifdef __cplusplus
+#include <cstdint>
+#else
 #include <stdint.h>
+#endif
 
 #ifdef UINT32_MAX
 typedef uint32_t sph_u32;
@@ -1001,7 +1005,7 @@ typedef long long sph_s64;
 
 #define SPH_DETECT_UNALIGNED         1
 #define SPH_DETECT_LITTLE_ENDIAN     1
-#define SPH_DETECT_UPTR              sph_u32
+#define SPH_DETECT_UPTR              uintptr_t
 #ifdef __GNUC__
 #define SPH_DETECT_I386_GCC          1
 #endif
@@ -1016,7 +1020,7 @@ typedef long long sph_s64;
 
 #define SPH_DETECT_UNALIGNED         1
 #define SPH_DETECT_LITTLE_ENDIAN     1
-#define SPH_DETECT_UPTR              sph_u64
+#define SPH_DETECT_UPTR              uintptr_t
 #ifdef __GNUC__
 #define SPH_DETECT_AMD64_GCC         1
 #endif

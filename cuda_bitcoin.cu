@@ -1,7 +1,11 @@
 // Original version written by Schleicher (KlausT @github)
 // Redistribution and use in source and binary forms, with or without modification, are permitted
 
+#ifdef __cplusplus
+#include <cstdint>
+#else
 #include <stdint.h>
+#endif
 #include "miner.h"
 #include "cuda_helper.h"
 

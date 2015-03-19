@@ -10,16 +10,15 @@
 
 #include "cpuminer-config.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <inttypes.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cinttypes>
 #include <unistd.h>
-#include <math.h>
+#include <cmath>
 #include <sys/time.h>
-#include <time.h>
-#include <signal.h>
+#include <ctime>
+#include <csignal>
 
 #include <curl/curl.h>
 #include <jansson.h>
@@ -27,7 +26,7 @@
 
 #ifdef WIN32
 #include <windows.h>
-#include <stdint.h>
+#include <cstdint>
 #else
 #include <errno.h>
 #include <sys/resource.h>
@@ -39,6 +38,7 @@
 #include <sys/sysctl.h>
 #endif
 #endif
+using namespace std;
 
 #include "miner.h"
 

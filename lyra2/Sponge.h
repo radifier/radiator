@@ -22,7 +22,11 @@
 #ifndef SPONGE_H_
 #define SPONGE_H_
 
+#ifdef __cplusplus
+#include <cstdint>
+#else
 #include <stdint.h>
+#endif
 
 #if defined(__GNUC__)
 #define ALIGN __attribute__ ((aligned(32)))

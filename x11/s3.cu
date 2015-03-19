@@ -11,7 +11,11 @@ extern "C" {
 #include "miner.h"
 #include "cuda_helper.h"
 
+#ifdef __cplusplus
+#include <cstdint>
+#else
 #include <stdint.h>
+#endif
 
 static uint32_t *d_hash[MAX_GPUS];
 

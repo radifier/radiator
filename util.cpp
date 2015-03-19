@@ -12,16 +12,16 @@
 //#define _GNU_SOURCE
 #include "cpuminer-config.h"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <ctype.h>
-#include <stdarg.h>
-#include <string.h>
-#include <inttypes.h>
+#include <cstdarg>
+#include <cstring>
+#include <cinttypes>
 #include <unistd.h>
 #include <jansson.h>
 #include <curl/curl.h>
-#include <time.h>
+#include <ctime>
 #ifdef WIN32
 #include "compat/winansi.h"
 #include <winsock2.h>
@@ -34,6 +34,7 @@
 #endif
 #include "miner.h"
 #include "elist.h"
+using namespace std;
 
 bool opt_tracegpu = false;
 

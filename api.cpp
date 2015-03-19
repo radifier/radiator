@@ -15,19 +15,18 @@
 //# include <winsock2.h>
 #endif
 
-#include <stdio.h>
+#include <cstdio>
 #include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
+#include <cstdlib>
+#include <cstring>
 #include <inttypes.h>
 #include <unistd.h>
 #include <sys/time.h>
-#include <time.h>
-#include <math.h>
-#include <stdarg.h>
-#include <assert.h>
-
+#include <ctime>
+#include <cmath>
+#include <cstdarg>
+#include <cassert>
+using namespace std;
 #include <sys/stat.h>
 #include <sys/types.h>
 

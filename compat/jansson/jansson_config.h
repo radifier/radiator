@@ -22,7 +22,9 @@
    supported. */
 
 #ifdef _MSC_VER
+#ifndef __cplusplus
 #define inline __inline
+#endif
 #endif
 
 #ifdef __cplusplus

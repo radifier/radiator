@@ -15,13 +15,13 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #ifndef _MSC_VER
 #include <libgen.h>
 #endif
-
+using namespace std;
 #include "miner.h"
 #include "nvml.h"
 #include "cuda_runtime.h"

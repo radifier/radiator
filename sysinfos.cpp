@@ -6,11 +6,11 @@
  * tpruvot 2014
  */
 
-#include <stdio.h>
+#include <cstdio>
 #include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
-
+#include <cstdlib>
+#include <cstring>
+using namespace std;
 #include "miner.h"
 
 #ifndef WIN32

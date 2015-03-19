@@ -1,5 +1,9 @@
 #include <string.h>
+#ifdef __cplusplus
+#include <cstdint>
+#else
 #include <stdint.h>
+#endif
 #include <openssl/sha.h>
 
 #include "uint256.h"

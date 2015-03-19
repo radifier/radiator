@@ -9,7 +9,11 @@
 extern "C" {
 #include "sph/sph_blake.h"
 }
+#ifdef __cplusplus
+#include <cstdint>
+#else
 #include <stdint.h>
+#endif
 #include <memory.h>
 
 

@@ -1,5 +1,11 @@
-#include <stdio.h>
+#ifdef __cplusplus
+#include <cstdint>
+#include <cstdio>
+using namespace std;
+#else
 #include <stdint.h>
+#include <stdio.h>
+#endif
 #include <memory.h>
 
 #include "cuda_helper.h" 

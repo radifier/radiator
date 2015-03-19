@@ -40,8 +40,13 @@
  * CRC32 code derived from work by Gary S. Brown.
  */
 
-#include <stdlib.h>
+#ifdef __cplusplus
+#include <cstdint>
+#include <cstdlib>
+#else
 #include <stdint.h>
+#include <stdlib.h>
+#endif
 
 static uint32_t crc32_tab[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,

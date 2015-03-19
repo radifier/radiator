@@ -1,8 +1,8 @@
-﻿#include <stdio.h>
+﻿#include <cstdio>
 #include <memory.h>
-#include <string.h>
+#include <cstring>
 #include <map>
-
+using namespace std;
 #ifndef _WIN32
 #include <unistd.h>
 #endif

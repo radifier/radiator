@@ -1,5 +1,9 @@
 #include "miner.h"
+#ifdef __cplusplus
+#include <cstdint>
+#else
 #include <stdint.h>
+#endif
 #include <memory.h>
 #include "cuda_helper.h"
 

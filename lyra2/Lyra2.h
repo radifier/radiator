@@ -20,7 +20,11 @@
 #ifndef LYRA2_H_
 #define LYRA2_H_
 
+#ifdef __cplusplus
+#include <cstdint>
+#else
 #include <stdint.h>
+#endif
 
 typedef unsigned char byte;
 
