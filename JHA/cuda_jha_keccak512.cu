@@ -12,22 +12,20 @@ __constant__ uint32_t c_PaddedMessage[18];
 #define U64TO32_LE(p, v) \
     *p = (uint32_t)((v)); *(p+1) = (uint32_t)((v) >> 32);
 
-static const uint64_t host_keccak_round_constants[24] = {
-    0x0000000000000001ull, 0x0000000000008082ull,
-    0x800000000000808aull, 0x8000000080008000ull,
-    0x000000000000808bull, 0x0000000080000001ull,
-    0x8000000080008081ull, 0x8000000000008009ull,
-    0x000000000000008aull, 0x0000000000000088ull,
-    0x0000000080008009ull, 0x000000008000000aull,
-    0x000000008000808bull, 0x800000000000008bull,
-    0x8000000000008089ull, 0x8000000000008003ull,
-    0x8000000000008002ull, 0x8000000000000080ull,
-    0x000000000000800aull, 0x800000008000000aull,
-    0x8000000080008081ull, 0x8000000000008080ull,
-    0x0000000080000001ull, 0x8000000080008008ull
+__constant__ uint64_t c_keccak_round_constants[24] = {
+	0x0000000000000001ull, 0x0000000000008082ull,
+	0x800000000000808aull, 0x8000000080008000ull,
+	0x000000000000808bull, 0x0000000080000001ull,
+	0x8000000080008081ull, 0x8000000000008009ull,
+	0x000000000000008aull, 0x0000000000000088ull,
+	0x0000000080008009ull, 0x000000008000000aull,
+	0x000000008000808bull, 0x800000000000008bull,
+	0x8000000000008089ull, 0x8000000000008003ull,
+	0x8000000000008002ull, 0x8000000000000080ull,
+	0x000000000000800aull, 0x800000008000000aull,
+	0x8000000080008081ull, 0x8000000000008080ull,
+	0x0000000080000001ull, 0x8000000080008008ull
 };
-
-__constant__ uint64_t c_keccak_round_constants[24];
 
 static __device__ __forceinline__ void
 keccak_block(uint64_t *s, const uint32_t *in, const uint64_t *keccak_round_constants) {
@@ -147,11 +145,6 @@ __global__ void jackpot_keccak512_gpu_hash(uint32_t threads, uint32_t startNounc
 // Setup-Funktionen
 __host__ void jackpot_keccak512_cpu_init(int thr_id, uint32_t threads)
 {
-    // Kopiere die Hash-Tabellen in den GPU-Speicher
-    cudaMemcpyToSymbol( c_keccak_round_constants,
-                        host_keccak_round_constants,
-                        sizeof(host_keccak_round_constants),
-                        0, cudaMemcpyHostToDevice);
 }
 
 #define cKeccakB    1600
