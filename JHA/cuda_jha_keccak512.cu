@@ -161,7 +161,7 @@ __host__ void jackpot_keccak512_cpu_init(int thr_id, uint32_t threads)
 #define crypto_hash_BYTES 64
 
 #if     (cKeccakB   == 1600)
-    typedef unsigned long long  UINT64;
+    typedef uint64_t  UINT64;
     typedef UINT64 tKeccakLane;
     #define cKeccakNumberOfRounds   24
 #endif
