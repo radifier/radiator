@@ -106,7 +106,6 @@ static uint32_t extra_results[2] = { UINT32_MAX, UINT32_MAX };
 	b0 ^= c1;
 
 /* initial values of chaining variables */
-
 __constant__ uint32_t c_CNS[80] = {
 	0x303994a6,0xe0337818,0xc0e65299,0x441ba90d,
 	0x6cc33a12,0x7f34d442,0xdc56983e,0x9389217f,
@@ -216,21 +215,24 @@ void rnd512(uint32_t *statebuffer, uint32_t *statechainv)
 		chainv[i] = statechainv[i];
 	}
 
-#pragma unroll 8
-	for (i = 0; i<8; i++) {
+#pragma unroll 1
+	for (i = 0; i<8; i++) 
+	{
 		STEP(c_CNS[(2 * i)], c_CNS[(2 * i) + 1]);
 	}
 
 #pragma unroll 8
-	for (i = 0; i<8; i++) {
+	for (i = 0; i<8; i++) 
+	{
 		statechainv[i] = chainv[i];
 		chainv[i] = statechainv[i + 8];
 	}
 
 	TWEAK(chainv[4], chainv[5], chainv[6], chainv[7], 1);
 
-#pragma unroll 8
-	for (i = 0; i<8; i++) {
+#pragma unroll 1
+	for (i = 0; i<8; i++) 
+	{
 		STEP(c_CNS[(2 * i) + 16], c_CNS[(2 * i) + 16 + 1]);
 	}
 
@@ -242,8 +244,9 @@ void rnd512(uint32_t *statebuffer, uint32_t *statechainv)
 
 	TWEAK(chainv[4], chainv[5], chainv[6], chainv[7], 2);
 
-#pragma unroll 8
-	for (i = 0; i<8; i++) {
+#pragma unroll 1
+	for (i = 0; i<8; i++) 
+	{
 		STEP(c_CNS[(2 * i) + 32], c_CNS[(2 * i) + 32 + 1]);
 	}
 
@@ -255,21 +258,24 @@ void rnd512(uint32_t *statebuffer, uint32_t *statechainv)
 
 	TWEAK(chainv[4], chainv[5], chainv[6], chainv[7], 3);
 
-#pragma unroll 8
-	for (i = 0; i<8; i++) {
+#pragma unroll 1
+	for (i = 0; i<8; i++) 
+	{
 		STEP(c_CNS[(2 * i) + 48], c_CNS[(2 * i) + 48 + 1]);
 	}
 
 #pragma unroll 8
-	for (i = 0; i<8; i++) {
+	for (i = 0; i<8; i++) 
+	{
 		statechainv[i + 24] = chainv[i];
 		chainv[i] = statechainv[i + 32];
 	}
 
 	TWEAK(chainv[4], chainv[5], chainv[6], chainv[7], 4);
 
-#pragma unroll 8
-	for (i = 0; i<8; i++) {
+#pragma unroll 1
+	for (i = 0; i<8; i++)
+	{
 		STEP(c_CNS[(2 * i) + 64], c_CNS[(2 * i) + 64 + 1]);
 	}
 
