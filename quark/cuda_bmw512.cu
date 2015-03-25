@@ -311,9 +311,9 @@ __device__ void Compression512(uint2 *msg, uint2 *hash)
 
 __global__
 #if __CUDA_ARCH__ > 500
-__launch_bounds__(64, 16)
+__launch_bounds__(32, 16)
 #else
-__launch_bounds__(64, 8)
+__launch_bounds__(32, 8)
 #endif
 void quark_bmw512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
 {
@@ -460,7 +460,7 @@ __host__ void quark_bmw512_cpu_setBlock_80(void *pdata)
 
 __host__ void quark_bmw512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash)
 {
-	const uint32_t threadsperblock = 64;
+	const uint32_t threadsperblock = 32;
 
     // berechne wie viele Thread Blocks wir brauchen
     dim3 grid((threads + threadsperblock-1)/threadsperblock);
