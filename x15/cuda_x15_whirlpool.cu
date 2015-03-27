@@ -1427,7 +1427,6 @@ void x15_whirlpool_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t 
 	{
 		const uint32_t nounce =  (startNounce + thread);
 
-
 		const uint2 InitVector_RC[10] =
 		{
 			{ 0xE8C62318UL, 0x4F01B887UL },
@@ -1442,13 +1441,9 @@ void x15_whirlpool_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t 
 			{ 0x07BF2DCAUL, 0x33835AADUL }
 		};
 
-
-		uint32_t nounce = (startNounce + thread);
 		uint32_t hashPosition = (nounce - startNounce) << 3;
 		uint2 hash[8], state[8], n[8], h[8];
 		int i;
-
-
 
 #pragma unroll 8
 		for (i = 0; i < 8; i++)
