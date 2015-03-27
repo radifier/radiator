@@ -1,6 +1,7 @@
 ﻿/*
  * Copyright 2010 Jeff Garzik
  * Copyright 2012-2014 pooler
+ * Copyright 2014-2015 tpruvot
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -59,6 +60,7 @@ int cuda_num_devices();
 void cuda_devicenames();
 void cuda_devicereset();
 int cuda_finddevice(char *name);
+void cuda_print_devices();
 
 #include "nvml.h"
 #ifdef USE_WRAPNVML
@@ -278,6 +280,7 @@ Options:\n\
   -T, --timeout=N       network timeout, in seconds (default: 270)\n\
   -s, --scantime=N      upper bound on time spent scanning current work when\n\
                           long polling is unavailable, in seconds (default: 5)\n\
+  -n, --ndevs           list cuda devices\n\
   -N, --statsavg        number of samples used to display hashrate (default: 30)\n\
       --no-gbt          disable getblocktemplate support (height check in solo)\n\
       --no-longpoll     disable X-Long-Polling support\n\
@@ -314,7 +317,7 @@ static char const short_options[] =
 #ifdef HAVE_SYSLOG_H
 	"S"
 #endif
-	"a:c:i:Dhp:Px:qr:R:s:t:T:o:u:O:Vd:f:mv:N:b:";
+	"a:c:i:Dhp:Px:mnqr:R:s:t:T:o:u:O:Vd:f:v:N:b:";
 
 static struct option const options[] = {
 	{ "algo", 1, NULL, 'a' },
@@ -331,6 +334,7 @@ static struct option const options[] = {
 	{ "debug", 0, NULL, 'D' },
 	{ "help", 0, NULL, 'h' },
 	{ "intensity", 1, NULL, 'i' },
+	{ "ndevs", 0, NULL, 'n' },
 	{ "no-color", 0, NULL, 1002 },
 	{ "no-gbt", 0, NULL, 1011 },
 	{ "no-longpoll", 0, NULL, 1003 },
@@ -1963,6 +1967,10 @@ static void parse_arg(int key, char *arg)
 		if (v < 1)
 			opt_statsavg = INT_MAX;
 		opt_statsavg = v;
+		break;
+	case 'n': /* --ndevs */
+		cuda_print_devices();
+		proper_exit(0);
 		break;
 	case 'q':
 		opt_quiet = true;
