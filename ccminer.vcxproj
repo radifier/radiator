@@ -449,7 +449,6 @@
     <CudaCompile Include="x11\cuda_x11_cubehash512.cu" />
     <CudaCompile Include="x11\cuda_x11_echo.cu">
     </CudaCompile>
-    <CudaCompile Include="x11\cuda_x11_luffa512.cu" />
     <CudaCompile Include="x11\cuda_x11_luffa512_Cubehash.cu">
       <MaxRegCount>80</MaxRegCount>
     </CudaCompile>
