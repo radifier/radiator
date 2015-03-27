@@ -102,6 +102,7 @@ enum sha_algos {
 	ALGO_PENTABLAKE,
 	ALGO_QUARK,
 	ALGO_QUBIT,
+	ALGO_SKEIN,
 	ALGO_S3,
 	ALGO_SPREADX11,
 	ALGO_WHC,
@@ -135,6 +136,7 @@ static const char *algo_names[] = {
 	"penta",
 	"quark",
 	"qubit",
+	"skein",
 	"s3",
 	"spread",
 	"whirl",
@@ -249,6 +251,7 @@ Options:\n\
 			penta       Pentablake hash (5x Blake 512)\n\
 			quark       Quark\n\
 			qubit       Qubit\n\
+			skein       Skein SHA2 (Skeincoin)\n\
 			s3          S3 (1Coin)\n\
 			spread      Spread\n\
 			x11         X11 (DarkCoin)\n\
@@ -1482,6 +1485,11 @@ static void *miner_thread(void *userdata)
 			                      max_nonce, &hashes_done);
 			break;
 
+			                      max_nonce, &hashes_done);
+			break;
+
+		case ALGO_SKEIN:
+			rc = scanhash_skeincoin(thr_id, work.data, work.target,
 		case ALGO_S3:
 			rc = scanhash_s3(thr_id, work.data, work.target,
 			                      max_nonce, &hashes_done);

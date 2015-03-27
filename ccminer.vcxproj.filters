@@ -561,5 +561,8 @@
     </CudaCompile>
     <CudaCompile Include="x15\cuda_whirlpoolx.cu" />
     <CudaCompile Include="x15\whirlpoolx.cu" />
+    <CudaCompile Include="skein.cu">
+      <Filter>Source Files\CUDA</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

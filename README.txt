@@ -43,10 +43,11 @@ TalkCoin
 DarkCoin and other X11 coins
 NEOS blake (256 14-rounds)
 BlakeCoin (256 8-rounds)
-Keccak (Maxcoin)
 Deep, Doom and Qubit
+Keccak (Maxcoin)
 Pentablake (Blake 512 x5)
 S3 (OneCoin)
+Skein (Skein + SHA)
 Lyra2RE (new VertCoin algo)
 
 where some of these coins have a VERY NOTABLE nVidia advantage
@@ -87,6 +88,7 @@ its command line interface and options.
                           quark       use to mine Quarkcoin
                           qubit       use to mine Qubit Algo
                           s3          use to mine 1coin
+                          skein       use to mine Skeincoin
                           whirl       use to mine Whirlcoin
                           x11         use to mine DarkCoin
                           x14         use to mine X14Coin
