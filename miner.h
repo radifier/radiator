@@ -637,6 +637,7 @@ extern void tq_freeze(struct thread_q *tq);
 extern void tq_thaw(struct thread_q *tq);
 
 void proper_exit(int reason);
+void restart_threads(void);
 
 size_t time2str(char* buf, time_t timer);
 char* atime2str(time_t timer);
