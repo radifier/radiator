@@ -1,7 +1,7 @@
 /**
- * SKEIN512 80 + SHA256 64
- * by tpruvot@github - 2015
- */
+* SKEIN512 80 + SHA256 64
+* by tpruvot@github - 2015
+*/
 
 extern "C" {
 #include "sph/sph_skein.h"
@@ -9,7 +9,7 @@ extern "C" {
 
 #include "miner.h"
 #include "cuda_helper.h"
-
+#define ROTR32(x, i) ROTL32(x, 32-i)
 #include <openssl/sha.h>
 
 static uint32_t *d_hash[MAX_GPUS];
@@ -66,7 +66,7 @@ static __device__ __constant__ uint32_t sha256_endingTable[] = {
 		t1 = S0(a) + Maj(a, b, c); \
 		d += t0; \
 		h  = t0 + t1; \
-	} while (0)
+		} while (0)
 
 /* Adjusted round function for rotating state */
 #define RNDr(S, W, i) \
@@ -87,15 +87,18 @@ void sha256_transform_gpu(uint32_t *state, uint32_t *message)
 	uint32_t t0, t1;
 
 	/* Initialize work variables. */
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < 8; i++)
+	{
 		S[i] = state[i];
 	}
 
-	for (int i = 0; i < 16; i++) {
+	for (int i = 0; i < 16; i++)
+	{
 		W[i] = message[i];
 	}
 
-	for (int i = 16; i < 64; i += 2) {
+	for (int i = 16; i < 64; i += 2)
+	{
 		W[i] = s1(W[i - 2]) + W[i - 7] + s0(W[i - 15]) + W[i - 16];
 		W[i + 1] = s1(W[i - 1]) + W[i - 6] + s0(W[i - 14]) + W[i - 15];
 	}
@@ -182,24 +185,25 @@ void skeincoin_gpu_sha256(uint32_t *message)
 	uint32_t hash[8];
 
 	// Init with Hash-Table
-	#pragma unroll 8
-	for (int k=0; k < 8; k++) {
+#pragma unroll 8
+	for (int k = 0; k < 8; k++)
+	{
 		hash[k] = regs[k] = sha256_hashTable[k];
 	}
 
-	#pragma unroll 16
+#pragma unroll 16
 	for (int k = 0; k<16; k++)
 		W1[k] = SWAB32(message[k]);
 
 	// Progress W1
-	#pragma unroll 16
+#pragma unroll 16
 	for (int j = 0; j<16; j++)
 	{
 		uint32_t T1, T2;
 		T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j] + W1[j];
 		T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-		#pragma unroll 7
+#pragma unroll 7
 		for (int k = 6; k >= 0; k--) regs[k + 1] = regs[k];
 		regs[0] = T1 + T2;
 		regs[4] += T1;
@@ -208,92 +212,92 @@ void skeincoin_gpu_sha256(uint32_t *message)
 	// Progress W2...W3
 
 	////// PART 1
-	#pragma unroll 2
+#pragma unroll 2
 	for (int j = 0; j<2; j++)
 		W2[j] = s1(W1[14 + j]) + W1[9 + j] + s0(W1[1 + j]) + W1[j];
-	#pragma unroll 5
+#pragma unroll 5
 	for (int j = 2; j<7; j++)
 		W2[j] = s1(W2[j - 2]) + W1[9 + j] + s0(W1[1 + j]) + W1[j];
 
-	#pragma unroll 8
+#pragma unroll 8
 	for (int j = 7; j<15; j++)
 		W2[j] = s1(W2[j - 2]) + W2[j - 7] + s0(W1[1 + j]) + W1[j];
 
 	W2[15] = s1(W2[13]) + W2[8] + s0(W2[0]) + W1[15];
 
 	// Round function
-	#pragma unroll 16
+#pragma unroll 16
 	for (int j = 0; j<16; j++)
 	{
 		uint32_t T1, T2;
 		T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j + 16] + W2[j];
 		T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-		#pragma unroll 7
+#pragma unroll 7
 		for (int l = 6; l >= 0; l--) regs[l + 1] = regs[l];
 		regs[0] = T1 + T2;
 		regs[4] += T1;
 	}
 
 	////// PART 2
-	#pragma unroll 2
+#pragma unroll 2
 	for (int j = 0; j<2; j++)
 		W1[j] = s1(W2[14 + j]) + W2[9 + j] + s0(W2[1 + j]) + W2[j];
 
-	#pragma unroll 5
+#pragma unroll 5
 	for (int j = 2; j<7; j++)
 		W1[j] = s1(W1[j - 2]) + W2[9 + j] + s0(W2[1 + j]) + W2[j];
 
-	#pragma unroll 8
+#pragma unroll 8
 	for (int j = 7; j<15; j++)
 		W1[j] = s1(W1[j - 2]) + W1[j - 7] + s0(W2[1 + j]) + W2[j];
 
 	W1[15] = s1(W1[13]) + W1[8] + s0(W1[0]) + W2[15];
 
 	// Round function
-	#pragma unroll 16
+#pragma unroll 16
 	for (int j = 0; j<16; j++)
 	{
 		uint32_t T1, T2;
 		T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j + 32] + W1[j];
 		T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-		#pragma unroll 7
+#pragma unroll 7
 		for (int l = 6; l >= 0; l--) regs[l + 1] = regs[l];
 		regs[0] = T1 + T2;
 		regs[4] += T1;
 	}
 
 	////// PART 3
-	#pragma unroll 2
+#pragma unroll 2
 	for (int j = 0; j<2; j++)
 		W2[j] = s1(W1[14 + j]) + W1[9 + j] + s0(W1[1 + j]) + W1[j];
 
-	#pragma unroll 5
+#pragma unroll 5
 	for (int j = 2; j<7; j++)
 		W2[j] = s1(W2[j - 2]) + W1[9 + j] + s0(W1[1 + j]) + W1[j];
 
-	#pragma unroll 8
+#pragma unroll 8
 	for (int j = 7; j<15; j++)
 		W2[j] = s1(W2[j - 2]) + W2[j - 7] + s0(W1[1 + j]) + W1[j];
 
 	W2[15] = s1(W2[13]) + W2[8] + s0(W2[0]) + W1[15];
 
 	// Round function
-	#pragma unroll 16
+#pragma unroll 16
 	for (int j = 0; j<16; j++)
 	{
 		uint32_t T1, T2;
 		T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j + 48] + W2[j];
 		T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-		#pragma unroll 7
+#pragma unroll 7
 		for (int l = 6; l >= 0; l--) regs[l + 1] = regs[l];
 		regs[0] = T1 + T2;
 		regs[4] += T1;
 	}
 
-	#pragma unroll 8
+#pragma unroll 8
 	for (int k = 0; k<8; k++)
 		hash[k] += regs[k];
 
@@ -301,35 +305,35 @@ void skeincoin_gpu_sha256(uint32_t *message)
 	/////
 	///// Second Pass (ending)
 	/////
-	#pragma unroll 8
+#pragma unroll 8
 	for (int k = 0; k<8; k++)
 		regs[k] = hash[k];
 
 	// Progress W1
-	#pragma unroll 64
+#pragma unroll 64
 	for (int j = 0; j<64; j++)
 	{
 		uint32_t T1, T2;
 		T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j] + sha256_endingTable[j];
 		T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-		#pragma unroll 7
+#pragma unroll 7
 		for (int k = 6; k >= 0; k--) regs[k + 1] = regs[k];
 		regs[0] = T1 + T2;
 		regs[4] += T1;
 	}
 
-	#pragma unroll 8
+#pragma unroll 8
 	for (int k = 0; k<8; k++)
 		hash[k] += regs[k];
 
 	// Final Hash
-	#pragma unroll 8
+#pragma unroll 8
 	for (int k = 0; k<8; k++)
 		message[k] = SWAB32(hash[k]);
 #else
 	// sha256_transform only, require an additional sha256_transform_gpu() call
-	#pragma unroll 8
+#pragma unroll 8
 	for (int k = 0; k<8; k++)
 		message[k] = hash[k];
 #endif
@@ -348,18 +352,18 @@ void sha2_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *hashBuff
 #else
 		uint32_t state[16];
 		uint32_t msg[16];
-		#pragma unroll
+#pragma unroll
 		for (int i = 0; i < 8; i++)
 			state[i] = sha256_hashTable[i];
 
-		#pragma unroll
+#pragma unroll
 		for (int i = 0; i < 16; i++)
 			msg[i] = SWAB32(hash[i]);
 
 		sha256_transform_gpu(state, msg);
 		sha256_transform_gpu(state, sha256_ending);
 
-		#pragma unroll
+#pragma unroll
 		for (int i = 0; i < 8; i++)
 			hash[i] = SWAB32(state[i]);
 #endif
@@ -373,7 +377,7 @@ void sha2_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32
 	dim3 block(threadsperblock);
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	//cudaMemset(d_outputHashes, 0, 64 * threads);
-	sha2_gpu_hash_64 <<< grid, block >>>(threads, startNounce, d_outputHashes);
+	sha2_gpu_hash_64 << < grid, block >> >(threads, startNounce, d_outputHashes);
 	MyStreamSynchronize(NULL, 0, thr_id);
 }
 
@@ -395,28 +399,33 @@ extern "C" void skeincoinhash(void *output, const void *input)
 	memcpy(output, hash, 32);
 }
 
-static __inline uint32_t swab32_if(uint32_t val, bool iftrue) {
+static __inline uint32_t swab32_if(uint32_t val, bool iftrue)
+{
 	return iftrue ? swab32(val) : val;
 }
 
 static bool init[MAX_GPUS] = { 0 };
 
-extern "C" int scanhash_skeincoin(int thr_id, uint32_t *pdata,
-    const uint32_t *ptarget, uint32_t max_nonce,
-    unsigned long *hashes_done)
+int scanhash_skeincoin(int thr_id, uint32_t *pdata,
+								  const uint32_t *ptarget, uint32_t max_nonce,
+								  uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
 	const int swap = 1;
 
-	uint32_t throughput =  device_intensity(thr_id, __func__, 1 << 19); // 256*256*8
-	throughput = min(throughput,  (max_nonce - first_nonce));
+	uint32_t throughput = device_intensity(thr_id, __func__, 1 << 19); // 256*256*8
+	throughput = min(throughput, (max_nonce - first_nonce));
 
 	if (opt_benchmark)
-		((uint32_t*)ptarget)[7] = 0x0FFF;
+		((uint32_t*)ptarget)[7] = 0x008F;
 
 	if (!init[thr_id])
 	{
-		cudaSetDevice(device_map[thr_id]);
+		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+		cudaDeviceReset();
+		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 64 * throughput));
 
 		cuda_check_cpu_init(thr_id, throughput);
@@ -424,13 +433,14 @@ extern "C" int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 	}
 
 	uint32_t endiandata[20];
-	for (int k=0; k < 20; k++)
+	for (int k = 0; k < 20; k++)
 		be32enc(&endiandata[k], pdata[k]);
 
 	skein512_cpu_setBlock_80((void*)endiandata);
 	cuda_check_cpu_setTarget(ptarget);
 
-	do {
+	do
+	{
 		int order = 0;
 		*hashes_done = pdata[19] - first_nonce + throughput;
 
@@ -446,31 +456,38 @@ extern "C" int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 			endiandata[19] = swab32_if(foundNonce, swap);
 			skeincoinhash(vhash64, endiandata);
 
-			if (vhash64[7] <= ptarget[7] && fulltest(vhash64, ptarget)) {
+			if (vhash64[7] <= ptarget[7] && fulltest(vhash64, ptarget))
+			{
 				int res = 1;
-				uint8_t num = res;
-				uint32_t secNonce = cuda_check_hash_suppl(thr_id, throughput, pdata[19], d_hash[thr_id], num);
-				while (secNonce != 0 && res < 6)
+				if (opt_debug || opt_benchmark)
+					applog(LOG_INFO, "GPU #%d: found nonce $%08X", thr_id, foundNonce);
+				uint32_t secNonce = cuda_check_hash_suppl(thr_id, throughput, pdata[19], d_hash[thr_id], foundNonce);
+				if(secNonce != 0)
 				{
 					endiandata[19] = swab32_if(secNonce, swap);
 					skeincoinhash(vhash64, endiandata);
-					if (vhash64[7] <= ptarget[7] && fulltest(vhash64, ptarget)) {
-						pdata[19+res] = swab32_if(secNonce, !swap);
+					if (vhash64[7] <= ptarget[7] && fulltest(vhash64, ptarget))
+					{
+						if (opt_debug || opt_benchmark)
+							applog(LOG_INFO, "GPU #%d: found nonce $%08X", thr_id, secNonce);
+						pdata[19 + res] = swab32_if(secNonce, !swap);
 						res++;
 					}
-					num++;
-					secNonce = cuda_check_hash_suppl(thr_id, throughput, pdata[19], d_hash[thr_id], num);
+					else
+					{
+						applog(LOG_WARNING, "GPU #%d: result for nonce $%08X does not validate on CPU!", thr_id, secNonce);
+					}
 				}
-				if (res > 1 && opt_debug)
-					applog(LOG_BLUE, "GPU #%d: %d/%d valid nonces !!!", device_map[thr_id], res, (int)num);
 				pdata[19] = swab32_if(foundNonce, !swap);
 				return res;
 			}
-			else {
-				applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU!", thr_id, foundNonce);
+			else
+			{
+				applog(LOG_WARNING, "GPU #%d: result for nonce $%08X does not validate on CPU!", thr_id, foundNonce);
 				pdata[19]++;
 			}
-		} else
+		}
+		else
 			pdata[19] += throughput;
 
 	} while (pdata[19] < max_nonce && !work_restart[thr_id].restart);

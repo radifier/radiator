@@ -1485,11 +1485,11 @@ static void *miner_thread(void *userdata)
 			                      max_nonce, &hashes_done);
 			break;
 
-			                      max_nonce, &hashes_done);
-			break;
-
 		case ALGO_SKEIN:
 			rc = scanhash_skeincoin(thr_id, work.data, work.target,
+									max_nonce, &hashes_done);
+			break;
+
 		case ALGO_S3:
 			rc = scanhash_s3(thr_id, work.data, work.target,
 			                      max_nonce, &hashes_done);

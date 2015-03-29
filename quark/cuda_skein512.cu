@@ -289,6 +289,53 @@ static uint32_t *d_nonce[MAX_GPUS];
 		TFBIG_MIX8(p[6], p[1], p[0], p[7], p[2], p[5], p[4], p[3],  8, 35, 56, 22); \
 	}
 
+/* uint2 variant for SM3.2+ */
+
+#define TFBIG_KINIT_UI2(k0, k1, k2, k3, k4, k5, k6, k7, k8, t0, t1, t2) { \
+		k8 = ((k0 ^ k1) ^ (k2 ^ k3)) ^ ((k4 ^ k5) ^ (k6 ^ k7)) \
+			^ vectorize(SPH_C64(0x1BD11BDAA9FC1A22)); \
+		t2 = t0 ^ t1; \
+		}
+
+#define TFBIG_ADDKEY_UI2(w0, w1, w2, w3, w4, w5, w6, w7, k, t, s) { \
+		w0 = (w0 + SKBI(k, s, 0)); \
+		w1 = (w1 + SKBI(k, s, 1)); \
+		w2 = (w2 + SKBI(k, s, 2)); \
+		w3 = (w3 + SKBI(k, s, 3)); \
+		w4 = (w4 + SKBI(k, s, 4)); \
+		w5 = (w5 + SKBI(k, s, 5) + SKBT(t, s, 0)); \
+		w6 = (w6 + SKBI(k, s, 6) + SKBT(t, s, 1)); \
+		w7 = (w7 + SKBI(k, s, 7) + vectorize(s)); \
+		}
+
+#define TFBIG_MIX_UI2(x0, x1, rc) { \
+		x0 = x0 + x1; \
+		x1 = ROL2(x1, rc) ^ x0; \
+		}
+
+#define TFBIG_MIX8_UI2(w0, w1, w2, w3, w4, w5, w6, w7, rc0, rc1, rc2, rc3) { \
+		TFBIG_MIX_UI2(w0, w1, rc0); \
+		TFBIG_MIX_UI2(w2, w3, rc1); \
+		TFBIG_MIX_UI2(w4, w5, rc2); \
+		TFBIG_MIX_UI2(w6, w7, rc3); \
+		}
+
+#define TFBIG_4e_UI2(s)  { \
+		TFBIG_ADDKEY_UI2(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], h, t, s); \
+		TFBIG_MIX8_UI2(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], 46, 36, 19, 37); \
+		TFBIG_MIX8_UI2(p[2], p[1], p[4], p[7], p[6], p[5], p[0], p[3], 33, 27, 14, 42); \
+		TFBIG_MIX8_UI2(p[4], p[1], p[6], p[3], p[0], p[5], p[2], p[7], 17, 49, 36, 39); \
+		TFBIG_MIX8_UI2(p[6], p[1], p[0], p[7], p[2], p[5], p[4], p[3], 44,  9, 54, 56); \
+		}
+
+#define TFBIG_4o_UI2(s)  { \
+		TFBIG_ADDKEY_UI2(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], h, t, s); \
+		TFBIG_MIX8_UI2(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], 39, 30, 34, 24); \
+		TFBIG_MIX8_UI2(p[2], p[1], p[4], p[7], p[6], p[5], p[0], p[3], 13, 50, 10, 17); \
+		TFBIG_MIX8_UI2(p[4], p[1], p[6], p[3], p[0], p[5], p[2], p[7], 25, 29, 39, 43); \
+		TFBIG_MIX8_UI2(p[6], p[1], p[0], p[7], p[2], p[5], p[4], p[3],  8, 35, 56, 22); \
+		}
+
 __global__
 #if __CUDA_ARCH__ > 500
 __launch_bounds__(448, 2)
@@ -723,11 +770,12 @@ void quark_skein512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t sta
 	dim3 grid((threads + TPBf - 1) / TPBf);
 	dim3 block(TPBf);
 
-	cudaMemset(d_nonce[thr_id], 0xff, 2*sizeof(uint32_t));
+	cudaMemset(d_nonce[thr_id], 0xff, 2 * sizeof(uint32_t));
 
-	quark_skein512_gpu_hash_64_final<< <grid, block>> >(threads, startNounce, (uint64_t*)d_hash, d_nonceVector, d_nonce[thr_id], target);
-	CUDA_SAFE_CALL(cudaMemcpy(h_nonce, d_nonce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost));
-/* skeincoin */
+	quark_skein512_gpu_hash_64_final << <grid, block >> >(threads, startNounce, (uint64_t*)d_hash, d_nonceVector, d_nonce[thr_id], target);
+	CUDA_SAFE_CALL(cudaMemcpy(h_nonce, d_nonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
+	/* skeincoin */
+}
 
 __host__
 void skein512_cpu_setBlock_80(void *pdata)
