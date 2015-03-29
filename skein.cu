@@ -378,7 +378,7 @@ void sha2_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	//cudaMemset(d_outputHashes, 0, 64 * threads);
 	sha2_gpu_hash_64 << < grid, block >> >(threads, startNounce, d_outputHashes);
-	MyStreamSynchronize(NULL, 0, thr_id);
+//	MyStreamSynchronize(NULL, 0, thr_id);
 }
 
 extern "C" void skeincoinhash(void *output, const void *input)
