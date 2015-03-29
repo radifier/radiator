@@ -1,5 +1,5 @@
 
-ccMiner release 1.02-git(KlausT-MOD) (Feb 1st, 2015)
+ccMiner release 3.0-git(KlausT-MOD) (Feb 1st, 2015)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -191,6 +191,7 @@ features.
 2015-02-03 v1.01: bug fix for cards with compute capability 3.0 (untested)
 2015-02-09 v1.02: various bug fixes and optimizations
 2015-03-08 v2.00: added whirlpoolx algo (Vanillacoin), also various optimizations and bug fixes
+2015-03-30 v3.00: added skein (for Myriadcoin for example)
 
 >>> AUTHORS <<<
 
