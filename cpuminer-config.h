@@ -188,7 +188,7 @@
 #define USE_XOP 1
 
 /* Version number of package */
-#define VERSION "1.02-git(KlausT-MOD)"
+#define VERSION "2.00-git(KlausT-MOD)"
 
 /* Define curl_free() as free() if our version of curl lacks curl_free. */
 /* #undef curl_free */

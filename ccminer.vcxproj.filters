@@ -559,5 +559,7 @@
     <CudaCompile Include="bitcoin.cu">
       <Filter>Source Files\CUDA</Filter>
     </CudaCompile>
+    <CudaCompile Include="x15\cuda_whirlpoolx.cu" />
+    <CudaCompile Include="x15\whirlpoolx.cu" />
   </ItemGroup>
 </Project>
