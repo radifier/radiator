@@ -279,9 +279,22 @@ void aes_gpu_init(uint32_t *const sharedMemory)
 }
 
 __device__ __forceinline__
-uint32_t bfe(uint32_t x, uint32_t bit, uint32_t numBits) {
+uint32_t bfe(uint32_t x, uint8_t bit, uint8_t numBits)
+{
 	uint32_t ret;
-	asm ("bfe.u32 %0, %1, %2, %3;" : "=r"(ret) : "r"(x), "r"(bit), "r"(numBits));
+#ifndef NOASM
+	asm ("bfe.u32 %0, %1, %2, %3;" : "=r"(ret) : "r"(x), "r"((uint32_t)bit), "r"((uint32_t)numBits));
+#else
+	ret = 0;
+	uint32_t mask = 1;
+	for (int i=0; i<bit+numBits; i++)
+	{
+		if (i>=bit)
+			ret |= x & mask;
+		mask<<=1;
+	}
+	ret >>= bit;
+#endif
 	return ret;
 }
 __device__ __forceinline__
