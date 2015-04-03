@@ -60,7 +60,7 @@ extern void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t start
 
 extern void x11_echo512_cpu_init(int thr_id, uint32_t threads);
 extern void x11_echo512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
-extern void x11_echo512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash, uint32_t target, uint32_t *h_found);
+extern void x11_echo512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, const uint32_t *d_hash, uint32_t target, uint32_t *h_found);
 extern void x11_echo512_cpu_init(int thr_id, uint32_t threads);
 
 extern void quark_compactTest_cpu_init(int thr_id, uint32_t threads);
@@ -134,7 +134,7 @@ extern "C" void x11hash(void *output, const void *input)
 	memcpy(output, hash, 32);
 }
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 
 extern "C" int scanhash_x11(int thr_id, uint32_t *pdata,
     uint32_t *ptarget, uint32_t max_nonce,
@@ -144,9 +144,7 @@ extern "C" int scanhash_x11(int thr_id, uint32_t *pdata,
 
 	int intensity = 256 * 256 * 10;
 	if (device_sm[device_map[thr_id]] == 520)  intensity = 256 * 256 * 21*(1);
-	uint32_t throughput = device_intensity(thr_id, __func__, intensity); // 19=256*256*8;
-
-	throughput = min(throughput, (max_nonce - first_nonce));
+	const uint32_t throughput = min(device_intensity(thr_id, __func__, intensity), (max_nonce - first_nonce)); // 19=256*256*8;
 
 	if (opt_benchmark)
 		ptarget[7] = 0xf;
@@ -164,8 +162,8 @@ extern "C" int scanhash_x11(int thr_id, uint32_t *pdata,
 		if (x11_simd512_cpu_init(thr_id, throughput) != 0) {
 			return 0;
 		}
-		CUDA_CALL_OR_RET_X(cudaMalloc(&d_hash[thr_id], 64 * throughput), 0); // why 64 ?
-		CUDA_CALL_OR_RET_X(cudaMallocHost(&(h_found[thr_id]), 4 * sizeof(uint32_t)), 0);
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 64 * throughput)); // why 64 ?
+		CUDA_SAFE_CALL(cudaMallocHost(&(h_found[thr_id]), 4 * sizeof(uint32_t)));
 		cuda_check_cpu_init(thr_id, throughput);
 		init[thr_id] = true;
 	}

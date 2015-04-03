@@ -5,7 +5,6 @@
 
 #include "cuda_x11_aes.cu"
 
-static uint2 *d_nonce[MAX_GPUS];
 static uint32_t *d_found[MAX_GPUS];
 
 __device__ __forceinline__ void AES_2ROUND(
@@ -360,7 +359,6 @@ void x11_echo512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *c
 // Setup-Funktionen
 __host__ void x11_echo512_cpu_init(int thr_id, uint32_t threads)
 {
-	cudaMalloc(&d_nonce[thr_id], sizeof(uint2));
 	CUDA_SAFE_CALL(cudaMalloc(&(d_found[thr_id]), 4 * sizeof(uint32_t)));
 }
 
@@ -378,11 +376,10 @@ __host__ void x11_echo512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t sta
 
 __host__ void x11_echo512_cpu_free(int32_t thr_id)
 {
-	cudaFreeHost(&d_nonce[thr_id]);
 }
 
 __global__ __launch_bounds__(256, 4)
-void x11_echo512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, uint32_t *const __restrict__ d_found, uint32_t target)
+void x11_echo512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, const uint64_t *const __restrict__ g_hash, uint32_t *const __restrict__ d_found, uint32_t target)
 {
 	const uint32_t P[48] = {
 		0xe7e9f5f5,
@@ -689,7 +686,7 @@ void x11_echo512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint6
 		}
 	}
 }
-__host__ void x11_echo512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash, uint32_t target, uint32_t *h_found)
+__host__ void x11_echo512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, const uint32_t *d_hash, uint32_t target, uint32_t *h_found)
 {
 	const uint32_t threadsperblock = 256;
 
