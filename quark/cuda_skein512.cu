@@ -12,6 +12,7 @@ using namespace std;
 #define TPBf 128
 
 static __constant__ uint64_t c_PaddedMessage80[16]; // padded message (80 bytes + padding)
+__constant__ uint64_t precalcvalues[9];
 
 // Take a look at: https://www.schneier.com/skein1.3.pdf
 
@@ -308,10 +309,26 @@ static uint32_t *d_nonce[MAX_GPUS];
 		w7 = (w7 + SKBI(k, s, 7) + vectorize(s)); \
 		}
 
+#define TFBIG_ADDKEY_PRE(w0, w1, w2, w3, w4, w5, w6, w7, k, t, s) { \
+		w0 = (w0 + SKBI(k, s, 0)); \
+		w1 = (w1 + SKBI(k, s, 1)); \
+		w2 = (w2 + SKBI(k, s, 2)); \
+		w3 = (w3 + SKBI(k, s, 3)); \
+		w4 = (w4 + SKBI(k, s, 4)); \
+		w5 = (w5 + SKBI(k, s, 5) + SKBT(t, s, 0)); \
+		w6 = (w6 + SKBI(k, s, 6) + SKBT(t, s, 1)); \
+		w7 = (w7 + SKBI(k, s, 7) + (s)); \
+				}
+
 #define TFBIG_MIX_UI2(x0, x1, rc) { \
 		x0 = x0 + x1; \
 		x1 = ROL2(x1, rc) ^ x0; \
 		}
+
+#define TFBIG_MIX_PRE(x0, x1, rc) { \
+		x0 = x0 + x1; \
+		x1 = ROTL64(x1, rc) ^ x0; \
+				}
 
 #define TFBIG_MIX8_UI2(w0, w1, w2, w3, w4, w5, w6, w7, rc0, rc1, rc2, rc3) { \
 		TFBIG_MIX_UI2(w0, w1, rc0); \
@@ -319,6 +336,13 @@ static uint32_t *d_nonce[MAX_GPUS];
 		TFBIG_MIX_UI2(w4, w5, rc2); \
 		TFBIG_MIX_UI2(w6, w7, rc3); \
 		}
+
+#define TFBIG_MIX8_PRE(w0, w1, w2, w3, w4, w5, w6, w7, rc0, rc1, rc2, rc3) { \
+		TFBIG_MIX_PRE(w0, w1, rc0); \
+		TFBIG_MIX_PRE(w2, w3, rc1); \
+		TFBIG_MIX_PRE(w4, w5, rc2); \
+		TFBIG_MIX_PRE(w6, w7, rc3); \
+				}
 
 #define TFBIG_4e_UI2(s)  { \
 		TFBIG_ADDKEY_UI2(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], h, t, s); \
@@ -328,12 +352,28 @@ static uint32_t *d_nonce[MAX_GPUS];
 		TFBIG_MIX8_UI2(p[6], p[1], p[0], p[7], p[2], p[5], p[4], p[3], 44,  9, 54, 56); \
 		}
 
+#define TFBIG_4e_PRE(s)  { \
+		TFBIG_ADDKEY_PRE(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], h, t, s); \
+		TFBIG_MIX8_PRE(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], 46, 36, 19, 37); \
+		TFBIG_MIX8_PRE(p[2], p[1], p[4], p[7], p[6], p[5], p[0], p[3], 33, 27, 14, 42); \
+		TFBIG_MIX8_PRE(p[4], p[1], p[6], p[3], p[0], p[5], p[2], p[7], 17, 49, 36, 39); \
+		TFBIG_MIX8_PRE(p[6], p[1], p[0], p[7], p[2], p[5], p[4], p[3], 44,  9, 54, 56); \
+				}
+
 #define TFBIG_4o_UI2(s)  { \
 		TFBIG_ADDKEY_UI2(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], h, t, s); \
 		TFBIG_MIX8_UI2(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], 39, 30, 34, 24); \
 		TFBIG_MIX8_UI2(p[2], p[1], p[4], p[7], p[6], p[5], p[0], p[3], 13, 50, 10, 17); \
 		TFBIG_MIX8_UI2(p[4], p[1], p[6], p[3], p[0], p[5], p[2], p[7], 25, 29, 39, 43); \
 		TFBIG_MIX8_UI2(p[6], p[1], p[0], p[7], p[2], p[5], p[4], p[3],  8, 35, 56, 22); \
+		}
+
+#define TFBIG_4o_PRE(s)  { \
+		TFBIG_ADDKEY_PRE(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], h, t, s); \
+		TFBIG_MIX8_PRE(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], 39, 30, 34, 24); \
+		TFBIG_MIX8_PRE(p[2], p[1], p[4], p[7], p[6], p[5], p[0], p[3], 13, 50, 10, 17); \
+		TFBIG_MIX8_PRE(p[4], p[1], p[6], p[3], p[0], p[5], p[2], p[7], 25, 29, 39, 43); \
+		TFBIG_MIX8_PRE(p[6], p[1], p[0], p[7], p[2], p[5], p[4], p[3],  8, 35, 56, 22); \
 		}
 
 __global__
@@ -629,59 +669,19 @@ void skein512_gpu_hash_80(uint32_t threads, uint32_t startNounce, uint64_t *outp
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		// Skein
 		uint2 h0, h1, h2, h3, h4, h5, h6, h7, h8;
 		uint2 t0, t1, t2;
-
-		// Init
-		h0 = vectorize(0x4903ADFF749C51CEull);
-		h1 = vectorize(0x0D95DE399746DF03ull);
-		h2 = vectorize(0x8FD1934127C79BCEull);
-		h3 = vectorize(0x9A255629FF352CB1ull);
-		h4 = vectorize(0x5DB62599DF6CA7B0ull);
-		h5 = vectorize(0xEABE394CA9D5C3F4ull);
-		h6 = vectorize(0x991112C71A75B523ull);
-		h7 = vectorize(0xAE18A40B660FCC33ull);
-
-		// 1st step -> etype = 0xE0, ptr = 64, bcount = 0, extra = 0
-		t0 = vectorize(64); // ptr
-		//t1 = vectorize(0xE0ull << 55); // etype
-		t1 = vectorize(0x7000000000000000ull);
-		TFBIG_KINIT_UI2(h0, h1, h2, h3, h4, h5, h6, h7, h8, t0, t1, t2);
-
 		uint2 p[8];
-		#pragma unroll 8
-		for (int i = 0; i<8; i++)
-			p[i] = vectorize(c_PaddedMessage80[i]);
 
-		TFBIG_4e_UI2(0);
-		TFBIG_4o_UI2(1);
-		TFBIG_4e_UI2(2);
-		TFBIG_4o_UI2(3);
-		TFBIG_4e_UI2(4);
-		TFBIG_4o_UI2(5);
-		TFBIG_4e_UI2(6);
-		TFBIG_4o_UI2(7);
-		TFBIG_4e_UI2(8);
-		TFBIG_4o_UI2(9);
-		TFBIG_4e_UI2(10);
-		TFBIG_4o_UI2(11);
-		TFBIG_4e_UI2(12);
-		TFBIG_4o_UI2(13);
-		TFBIG_4e_UI2(14);
-		TFBIG_4o_UI2(15);
-		TFBIG_4e_UI2(16);
-		TFBIG_4o_UI2(17);
-		TFBIG_ADDKEY_UI2(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], h, t, 18);
-
-		h0 = vectorize(c_PaddedMessage80[0]) ^ p[0];
-		h1 = vectorize(c_PaddedMessage80[1]) ^ p[1];
-		h2 = vectorize(c_PaddedMessage80[2]) ^ p[2];
-		h3 = vectorize(c_PaddedMessage80[3]) ^ p[3];
-		h4 = vectorize(c_PaddedMessage80[4]) ^ p[4];
-		h5 = vectorize(c_PaddedMessage80[5]) ^ p[5];
-		h6 = vectorize(c_PaddedMessage80[6]) ^ p[6];
-		h7 = vectorize(c_PaddedMessage80[7]) ^ p[7];
+		h0 = vectorize(precalcvalues[0]);
+		h1 = vectorize(precalcvalues[1]);
+		h2 = vectorize(precalcvalues[2]);
+		h3 = vectorize(precalcvalues[3]);
+		h4 = vectorize(precalcvalues[4]);
+		h5 = vectorize(precalcvalues[5]);
+		h6 = vectorize(precalcvalues[6]);
+		h7 = vectorize(precalcvalues[7]);
+		t2 = vectorize(precalcvalues[8]);
 
 		const uint2 nounce2 = make_uint2(_LOWORD(c_PaddedMessage80[9]), cuda_swab32(startNounce + thread));
 
@@ -766,15 +766,75 @@ void quark_skein512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t sta
 	/* skeincoin */
 }
 
+static uint64_t PaddedMessage[16];
+
+static void precalc()
+{
+	uint64_t h0, h1, h2, h3, h4, h5, h6, h7, h8;
+	uint64_t t0, t1, t2;
+
+	h0 = 0x4903ADFF749C51CEull;
+	h1 = 0x0D95DE399746DF03ull;
+	h2 = 0x8FD1934127C79BCEull;
+	h3 = 0x9A255629FF352CB1ull;
+	h4 = 0x5DB62599DF6CA7B0ull;
+	h5 = 0xEABE394CA9D5C3F4ull;
+	h6 = 0x991112C71A75B523ull;
+	h7 = 0xAE18A40B660FCC33ull;
+	h8 = h0 ^ h1 ^ h2 ^ h3 ^ h4 ^ h5 ^ h6 ^ h7 ^ SPH_C64(0x1BD11BDAA9FC1A22);
+
+	t0 = 64; // ptr
+	t1 = 0x7000000000000000ull;
+	t2 = 0x7000000000000040ull;
+
+	uint64_t p[8];
+	for (int i = 0; i<8; i++)
+		p[i] = PaddedMessage[i];
+
+	TFBIG_4e_PRE(0);
+	TFBIG_4o_PRE(1);
+	TFBIG_4e_PRE(2);
+	TFBIG_4o_PRE(3);
+	TFBIG_4e_PRE(4);
+	TFBIG_4o_PRE(5);
+	TFBIG_4e_PRE(6);
+	TFBIG_4o_PRE(7);
+	TFBIG_4e_PRE(8);
+	TFBIG_4o_PRE(9);
+	TFBIG_4e_PRE(10);
+	TFBIG_4o_PRE(11);
+	TFBIG_4e_PRE(12);
+	TFBIG_4o_PRE(13);
+	TFBIG_4e_PRE(14);
+	TFBIG_4o_PRE(15);
+	TFBIG_4e_PRE(16);
+	TFBIG_4o_PRE(17);
+	TFBIG_ADDKEY_PRE(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], h, t, 18);
+
+	uint64_t buffer[9];
+
+	buffer[0] = PaddedMessage[0] ^ p[0];
+	buffer[1] = PaddedMessage[1] ^ p[1];
+	buffer[2] = PaddedMessage[2] ^ p[2];
+	buffer[3] = PaddedMessage[3] ^ p[3];
+	buffer[4] = PaddedMessage[4] ^ p[4];
+	buffer[5] = PaddedMessage[5] ^ p[5];
+	buffer[6] = PaddedMessage[6] ^ p[6];
+	buffer[7] = PaddedMessage[7] ^ p[7];
+	buffer[8] = t2;
+
+	CUDA_SAFE_CALL(cudaMemcpyToSymbol(precalcvalues, buffer, sizeof(buffer), 0, cudaMemcpyHostToDevice));
+}
 __host__
 void skein512_cpu_setBlock_80(void *pdata)
 {
-	uint32_t PaddedMessage[32] = { 0 };
 	memcpy(&PaddedMessage[0], pdata, 80);
+	memset(PaddedMessage + 10, 0, 48);
 
 	CUDA_SAFE_CALL(
 		cudaMemcpyToSymbol(c_PaddedMessage80, PaddedMessage, sizeof(PaddedMessage), 0, cudaMemcpyHostToDevice)
 	);
+	precalc();
 }
 
 __host__
