@@ -624,9 +624,9 @@ void skein512_gpu_hash_close(uint32_t threads, uint32_t startNounce, uint64_t *g
 }
 
 __global__ __launch_bounds__(128,5)
-void skein512_gpu_hash_80(uint32_t threads, uint32_t startNounce, uint64_t *output64, int swap)
+void skein512_gpu_hash_80(uint32_t threads, uint32_t startNounce, uint64_t *output64)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		// Skein
@@ -683,8 +683,7 @@ void skein512_gpu_hash_80(uint32_t threads, uint32_t startNounce, uint64_t *outp
 		h6 = vectorize(c_PaddedMessage80[6]) ^ p[6];
 		h7 = vectorize(c_PaddedMessage80[7]) ^ p[7];
 
-		uint32_t nonce = swap ? cuda_swab32(startNounce + thread) : startNounce + thread;
-		uint2 nounce2 = make_uint2(_LOWORD(c_PaddedMessage80[9]), nonce);
+		const uint2 nounce2 = make_uint2(_LOWORD(c_PaddedMessage80[9]), cuda_swab32(startNounce + thread));
 
 		// skein_big_close -> etype = 0x160, ptr = 16, bcount = 1, extra = 16
 		p[0] = vectorize(c_PaddedMessage80[8]);
@@ -717,25 +716,15 @@ void skein512_gpu_hash_80(uint32_t threads, uint32_t startNounce, uint64_t *outp
 		TFBIG_4o_UI2(17);
 		TFBIG_ADDKEY_UI2(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], h, t, 18);
 
-		h0 = vectorize(c_PaddedMessage80[8]) ^ p[0];
-		h1 = nounce2 ^ p[1];
-		h2 = p[2];
-		h3 = p[3];
-		h4 = p[4];
-		h5 = p[5];
-		h6 = p[6];
-		h7 = p[7];
-
-		// skein_big_close 2nd loop -> etype = 0x1fe, ptr = 8, bcount = 0
 		uint64_t *outpHash = &output64[thread * 8];
-		outpHash[0] = devectorize(h0);
-		outpHash[1] = devectorize(h1);
-		outpHash[2] = devectorize(h2);
-		outpHash[3] = devectorize(h3);
-		outpHash[4] = devectorize(h4);
-		outpHash[5] = devectorize(h5);
-		outpHash[6] = devectorize(h6);
-		outpHash[7] = devectorize(h7);
+		outpHash[0] = c_PaddedMessage80[8] ^ devectorize(p[0]);
+		outpHash[1] = devectorize(nounce2 ^ p[1]);
+		outpHash[2] = devectorize(p[2]);
+		outpHash[3] = devectorize(p[3]);
+		outpHash[4] = devectorize(p[4]);
+		outpHash[5] = devectorize(p[5]);
+		outpHash[6] = devectorize(p[6]);
+		outpHash[7] = devectorize(p[7]);
 	}
 }
 
@@ -797,7 +786,7 @@ void skein512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, ui
 	dim3 block(threadsperblock);
 
 	// hash function is cut in 2 parts
-	skein512_gpu_hash_80 <<< grid, block >>> (threads, startNounce, (uint64_t*)d_hash, swap);
+	skein512_gpu_hash_80 <<< grid, block >>> (threads, startNounce, (uint64_t*)d_hash);
 	skein512_gpu_hash_close <<< grid, block >>> (threads, startNounce, (uint64_t*)d_hash);
 }
 

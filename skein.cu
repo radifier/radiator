@@ -407,7 +407,7 @@ static __inline uint32_t swab32_if(uint32_t val, bool iftrue)
 static bool init[MAX_GPUS] = { 0 };
 
 int scanhash_skeincoin(int thr_id, uint32_t *pdata,
-								  const uint32_t *ptarget, uint32_t max_nonce,
+								  uint32_t *ptarget, uint32_t max_nonce,
 								  uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
@@ -417,7 +417,7 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 	throughput = min(throughput, (max_nonce - first_nonce));
 
 	if (opt_benchmark)
-		((uint32_t*)ptarget)[7] = 0x008F;
+		ptarget[7] = 0x0000001F;
 
 	if (!init[thr_id])
 	{
