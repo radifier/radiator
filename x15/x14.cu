@@ -168,7 +168,7 @@ extern "C" int scanhash_x14(int thr_id, uint32_t *pdata,
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaDeviceReset();
-		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+		cudaSetDeviceFlags(cudaDeviceBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		get_cuda_arch(&cuda_arch[thr_id]);
 

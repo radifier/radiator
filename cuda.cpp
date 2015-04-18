@@ -61,10 +61,10 @@ void cuda_devicenames()
 		exit(1);
 	}
 
-	for (int i=0; i < GPU_N; i++)
+	for (int i = 0; i < GPU_N*opt_n_gputhreads; i++)
 	{
 		cudaDeviceProp props;
-		cudaGetDeviceProperties(&props, device_map[i]);
+		cudaGetDeviceProperties(&props, device_map[i / opt_n_gputhreads]);
 
 		device_props[i] = props;
 		device_name[i] = strdup(props.name);
@@ -128,7 +128,8 @@ int cuda_finddevice(char *name)
 uint32_t device_intensity(int thr_id, const char *func, uint32_t defcount)
 {
 	uint32_t throughput = gpus_intensity[thr_id] ? gpus_intensity[thr_id] : defcount;
-	api_set_throughput(thr_id, throughput);
+	api_set_throughput(thr_id%active_gpus, throughput);
+	throughput /= opt_n_gputhreads;
 	return throughput;
 }
 

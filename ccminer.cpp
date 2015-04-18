@@ -171,6 +171,7 @@ static json_t *opt_config;
 static const bool opt_time = true;
 static enum sha_algos opt_algo = ALGO_X11;
 int opt_n_threads = 0;
+int opt_n_gputhreads = 1;
 int opt_affinity = -1;
 int opt_priority = 0;
 static double opt_difficulty = 1; // CH
@@ -179,7 +180,7 @@ uint16_t opt_vote = 9999;
 int num_cpus;
 int active_gpus;
 char * device_name[MAX_GPUS];
-int device_map[MAX_GPUS] = { 0, 1, 2, 3, 4, 5, 6, 7,8,9,10,11,12,13,14,15 };
+int device_map[MAX_GPUS] = { 0, 1, 2, 3, 4, 5, 6, 7,8,9,10,11,12,13,14,15,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31 };
 long  device_sm[MAX_GPUS] = { 0 };
 uint32_t gpus_intensity[MAX_GPUS] = { 0 };
 char *rpc_user = NULL;
@@ -277,6 +278,7 @@ Options:\n\
       --cert=FILE       certificate for mining server using SSL\n\
   -x, --proxy=[PROTOCOL://]HOST[:PORT]  connect through a proxy\n\
   -t, --threads=N       number of miner threads (default: number of nVidia GPUs)\n\
+  -g, --gputhreads=N    number of threads per gpu (default: 1)\n\
   -r, --retries=N       number of times to retry if a network call fails\n\
                           (default: retry indefinitely)\n\
   -R, --retry-pause=N   time to pause between retries, in seconds (default: 30)\n\
@@ -320,7 +322,7 @@ static char const short_options[] =
 #ifdef HAVE_SYSLOG_H
 	"S"
 #endif
-	"a:c:i:Dhp:Px:mnqr:R:s:t:T:o:u:O:Vd:f:v:N:b:";
+	"a:c:i:Dhp:Px:mnqr:R:s:t:T:o:u:O:Vd:f:mv:N:b:g:";
 
 static struct option const options[] = {
 	{ "algo", 1, NULL, 'a' },
@@ -355,6 +357,7 @@ static struct option const options[] = {
 	{ "syslog-prefix", 1, NULL, 1008 },
 #endif
 	{ "threads", 1, NULL, 't' },
+	{ "gputhreads", 1, NULL, 'g' },
 	{ "vote", 1, NULL, 'v' },
 	{ "trust-pool", 0, NULL, 'm' },
 	{ "timeout", 1, NULL, 'T' },
@@ -1216,13 +1219,16 @@ static void *miner_thread(void *userdata)
 
 
 	/* Cpu thread affinity */
-	if (num_cpus > 1) {
-		if (opt_affinity == -1 && opt_n_threads > 1) {
+	if (num_cpus > 1) 
+	{
+		if (opt_affinity == -1) 
+		{
 			if (!opt_quiet)
 				applog(LOG_DEBUG, "Binding thread %d to cpu %d (mask %x)", thr_id,
-						thr_id % num_cpus, (1 << (thr_id % num_cpus)));
-			affine_to_cpu_mask(thr_id, 1 << (thr_id % num_cpus));
-		} else if (opt_affinity != -1) {
+						thr_id, (1 << (thr_id)));
+			affine_to_cpu_mask(thr_id, 1 << (thr_id));
+		} else if (opt_affinity != -1) 
+		{
 			if (!opt_quiet)
 				applog(LOG_DEBUG, "Binding thread %d to cpu mask %x", thr_id,
 						opt_affinity);
@@ -1232,11 +1238,12 @@ static void *miner_thread(void *userdata)
 
 	while (1) 
 	{
-		if (opt_benchmark)
-		{
-			work.data[19] = work.data[19] & 0xfffffffU;	//reset Hashcounters
-			work.data[21] = work.data[21] & 0xfffffffU;
-		}
+//		if (opt_benchmark)
+//		{
+//			work.data[19] = work.data[19] & 0xfffffffU;	//reset Hashcounters
+//			work.data[21] = work.data[21] & 0xfffffffU;
+//		}
+
 		struct timeval tv_start, tv_end, diff;
 		uint32_t hashes_done=0;
 		uint32_t start_nonce;
@@ -1580,11 +1587,33 @@ static void *miner_thread(void *userdata)
 		if (check_dups)
 			hashlog_remember_scan_range(&work);
 
-		/* output */
-		if (!opt_quiet && (loopcnt > 0)) {
-			format_hashrate(thr_hashrates[thr_id], s);
-			applog(LOG_INFO, "GPU #%d: %s, %s",
-				device_map[thr_id], device_name[device_map[thr_id]], s);
+		if (!opt_quiet && (loopcnt > 0)  ) 
+			double hashrate = 0;
+		
+			if (opt_n_gputhreads != 1)
+			{
+				if (thr_id<active_gpus)
+				{
+
+					for (int i = 0; i < opt_n_gputhreads; i++)
+					{
+						hashrate += thr_hashrates[(thr_id%active_gpus) + active_gpus*i];
+					}
+					format_hashrate(thr_hashrates[thr_id], s);
+
+					applog(LOG_INFO, "GPU #%d: %s, %s kH/s",
+						device_map[thr_id], device_name[device_map[thr_id]], s);
+				}
+			}
+			else
+			{
+				hashrate = thr_hashrates[thr_id];
+				sprintf(s, hashrate >= 1e6 ? "%.0f" : "%.2f",
+					1e-3 * hashrate);
+				applog(LOG_INFO, "GPU #%d: %s, %s kH/s",
+					device_map[thr_id], device_name[device_map[thr_id]], s);
+			}
+
 		}
 
 		/* loopcnt: ignore first loop hashrate */
@@ -2020,6 +2049,13 @@ static void parse_arg(int key, char *arg)
 			show_usage_and_exit(1);
 		opt_n_threads = v;
 		break;
+	case 'g':
+		v = atoi(arg);
+		if (v < 1 || v > 9999)	/* sanity check */
+			show_usage_and_exit(1);
+		opt_n_gputhreads = v;
+		opt_n_threads = opt_n_gputhreads*active_gpus;
+		break;
 	case 'v':
 		v = atoi(arg);
 		if (v < 0 || v > 8192)	/* sanity check */
@@ -2344,20 +2380,22 @@ int main(int argc, char *argv[])
 #elif defined(CTL_HW) && defined(HW_NCPU)
 	int req[] = { CTL_HW, HW_NCPU };
 	size_t len = sizeof(num_cpus);
-	sysctl(req, 2, &num_cpus, &len, NULL, 0);
+	sysc tl(req, 2, &num_cpus, &len, NULL, 0);
 #else
 	num_cpus = 1;
 #endif
-	if (num_cpus < 1)
-		num_cpus = 1;
-
-	// default thread to device map
-	for (i = 0; i < MAX_GPUS; i++) {
-		device_map[i] = i;
-	}
-
 	// number of gpus
 	active_gpus = cuda_num_devices();
+
+	if (active_gpus > 1)
+	{
+		// default thread to device map
+		for (i = 0; i < MAX_GPUS; i++)
+		{
+			device_map[i] = i % (active_gpus);
+		}
+	}
+
 	cuda_devicenames();
 
 	/* parse command line */
@@ -2471,7 +2509,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	if (!opt_n_threads)
-		opt_n_threads = active_gpus;
+		opt_n_threads = active_gpus*opt_n_gputhreads;
 
 #ifdef HAVE_SYSLOG_H
 	if (use_syslog)

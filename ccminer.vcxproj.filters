@@ -460,9 +460,6 @@
     <CudaCompile Include="x11\cuda_x11_echo.cu">
       <Filter>Source Files\CUDA\x11</Filter>
     </CudaCompile>
-    <CudaCompile Include="x11\cuda_x11_luffa512.cu">
-      <Filter>Source Files\CUDA\x11</Filter>
-    </CudaCompile>
     <CudaCompile Include="x11\cuda_x11_luffa512_Cubehash.cu">
       <Filter>Source Files\CUDA\x11</Filter>
     </CudaCompile>

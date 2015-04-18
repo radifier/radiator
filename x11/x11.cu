@@ -142,8 +142,8 @@ extern "C" int scanhash_x11(int thr_id, uint32_t *pdata,
 {
 	const uint32_t first_nonce = pdata[19];
 
-	int intensity = 256 * 256 * 10;
-	if (device_sm[device_map[thr_id]] == 520)  intensity = 256 * 256 * 21*(1);
+	int intensity = (device_sm[device_map[thr_id]] > 500) ? 256 * 256 * 21 : 256 * 256 * 10;
+	uint32_t throughput = device_intensity(thr_id, __func__, intensity);
 	const uint32_t throughput = min(device_intensity(thr_id, __func__, intensity), (max_nonce - first_nonce)); // 19=256*256*8;
 
 	if (opt_benchmark)
@@ -153,7 +153,7 @@ extern "C" int scanhash_x11(int thr_id, uint32_t *pdata,
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaDeviceReset();
-		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+		cudaSetDeviceFlags(cudaDeviceBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		get_cuda_arch(&cuda_arch[thr_id]);
 		quark_groestl512_cpu_init(thr_id, throughput);
@@ -225,6 +225,7 @@ extern "C" int scanhash_x11(int thr_id, uint32_t *pdata,
 				if (vhash64[7] != Htarg)
 					{
 						applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, h_found[thr_id][0]);
+						pdata[19] -= throughput;
 					}
 			}
 		}
