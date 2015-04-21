@@ -180,7 +180,7 @@ uint16_t opt_vote = 9999;
 int num_cpus;
 int active_gpus;
 char * device_name[MAX_GPUS];
-int device_map[MAX_GPUS] = { 0, 1, 2, 3, 4, 5, 6, 7,8,9,10,11,12,13,14,15,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31 };
+int device_map[MAX_GPUS] = { 0 };
 long  device_sm[MAX_GPUS] = { 0 };
 uint32_t gpus_intensity[MAX_GPUS] = { 0 };
 char *rpc_user = NULL;
@@ -1587,9 +1587,10 @@ static void *miner_thread(void *userdata)
 		if (check_dups)
 			hashlog_remember_scan_range(&work);
 
-		if (!opt_quiet && (loopcnt > 0)  ) 
-			double hashrate = 0;
-		
+		if (!opt_quiet && (loopcnt > 0))
+		{
+			double hashrate = 0.0;
+
 			if (opt_n_gputhreads != 1)
 			{
 				if (thr_id<active_gpus)
@@ -1601,17 +1602,14 @@ static void *miner_thread(void *userdata)
 					}
 					format_hashrate(thr_hashrates[thr_id], s);
 
-					applog(LOG_INFO, "GPU #%d: %s, %s kH/s",
-						device_map[thr_id], device_name[device_map[thr_id]], s);
+					applog(LOG_INFO, "GPU #%d: %s, %s kH/s", device_map[thr_id], device_name[device_map[thr_id]], s);
 				}
 			}
 			else
 			{
 				hashrate = thr_hashrates[thr_id];
-				sprintf(s, hashrate >= 1e6 ? "%.0f" : "%.2f",
-					1e-3 * hashrate);
-				applog(LOG_INFO, "GPU #%d: %s, %s kH/s",
-					device_map[thr_id], device_name[device_map[thr_id]], s);
+				format_hashrate(thr_hashrates[thr_id], s);
+				applog(LOG_INFO, "GPU #%d: %s, %s kH/s", device_map[thr_id], device_name[device_map[thr_id]], s);
 			}
 
 		}
