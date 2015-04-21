@@ -256,7 +256,7 @@ extern "C" int scanhash_x15(int thr_id, uint32_t *pdata,
 					}
 					else
 					{
-						applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, secNonce);
+						applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], secNonce);
 					}
 				}
 				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nounce %08x", thr_id, foundNonce, vhash64[7]);
@@ -266,7 +266,7 @@ extern "C" int scanhash_x15(int thr_id, uint32_t *pdata,
 			}
 			else
 			{
-				applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, foundNonce);
+				applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], foundNonce);
 			}
 		}
 

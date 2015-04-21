@@ -268,17 +268,17 @@ extern "C" int scanhash_anime(int thr_id, uint32_t *pdata,
 
 						pdata[21] = foundnonces[1];
 						res++;
-						if (opt_benchmark)  applog(LOG_INFO, "GPU #%d: Found second nonce $%08X", thr_id, foundnonces[1]);
+						if (opt_benchmark)  applog(LOG_INFO, "GPU #%d: Found second nonce $%08X", device_map[thr_id], foundnonces[1]);
 					}
 				}
 				pdata[19] = foundnonces[0];
-				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: Found nonce $%08X", thr_id, foundnonces[0]);
+				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: Found nonce $%08X", device_map[thr_id], foundnonces[0]);
 				return res;
 			}
 			else
 			{
 				if (vhash64[7] != Htarg) // don't show message if it is equal but fails fulltest
-					applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU!", thr_id, foundnonces[0]);
+					applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU!", device_map[thr_id], foundnonces[0]);
 			}
 		}
 		pdata[19] += throughput; CUDA_SAFE_CALL(cudaGetLastError());

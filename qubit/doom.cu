@@ -83,7 +83,7 @@ extern "C" int scanhash_doom(int thr_id, uint32_t *pdata,
 				return 1;
 			}
 			else {
-				applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU!", thr_id, foundNonce);
+				applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU!", device_map[thr_id], foundNonce);
 			}
 		}
 

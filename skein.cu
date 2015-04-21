@@ -428,7 +428,7 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 			{
 				int res = 1;
 				if (opt_debug || opt_benchmark)
-					applog(LOG_INFO, "GPU #%d: found nonce $%08X", thr_id, foundNonce);
+					applog(LOG_INFO, "GPU #%d: found nonce $%08X", device_map[thr_id], foundNonce);
 				uint32_t secNonce = cuda_check_hash_suppl(thr_id, throughput, pdata[19], d_hash[thr_id], foundNonce);
 				if(secNonce != 0)
 				{
@@ -437,13 +437,13 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 					if (vhash64[7] <= ptarget[7] && fulltest(vhash64, ptarget))
 					{
 						if (opt_debug || opt_benchmark)
-							applog(LOG_INFO, "GPU #%d: found nonce $%08X", thr_id, secNonce);
+							applog(LOG_INFO, "GPU #%d: found nonce $%08X", device_map[thr_id], secNonce);
 						pdata[19 + res] = swab32_if(secNonce, !swap);
 						res++;
 					}
 					else
 					{
-						applog(LOG_WARNING, "GPU #%d: result for nonce $%08X does not validate on CPU!", thr_id, secNonce);
+						applog(LOG_WARNING, "GPU #%d: result for nonce $%08X does not validate on CPU!", device_map[thr_id], secNonce);
 					}
 				}
 				pdata[19] = swab32_if(foundNonce, !swap);
@@ -452,7 +452,7 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 			}
 			else
 			{
-				applog(LOG_WARNING, "GPU #%d: result for nonce $%08X does not validate on CPU!", thr_id, foundNonce);
+				applog(LOG_WARNING, "GPU #%d: result for nonce $%08X does not validate on CPU!", device_map[thr_id], foundNonce);
 				pdata[19]++;
 			}
 		}

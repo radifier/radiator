@@ -239,7 +239,7 @@ extern "C" int scanhash_x14(int thr_id, uint32_t *pdata,
 					}
 					else
 					{
-						applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, secNonce);
+						applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], secNonce);
 					}
 				}
 				pdata[19] = foundNonce;
@@ -248,7 +248,7 @@ extern "C" int scanhash_x14(int thr_id, uint32_t *pdata,
 			}
 			else
 			{
-				applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, foundNonce);
+				applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], foundNonce);
 			}
 		}
 		pdata[19] += throughput; CUDA_SAFE_CALL(cudaGetLastError());

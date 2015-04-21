@@ -100,7 +100,7 @@ int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t
 					else
 					{
 						if (vhash64[7] != Htarg)
-							applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, foundNonce[1]);
+							applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], foundNonce[1]);
 					}
 				}
 				if (opt_benchmark)
@@ -112,7 +112,7 @@ int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t
 			else
 			{
 				if(vhash64[7] != Htarg)
-					applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, foundNonce[0]);
+					applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], foundNonce[0]);
 			}
 		}
 		pdata[19] += throughput;

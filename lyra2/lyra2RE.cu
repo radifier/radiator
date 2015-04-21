@@ -136,7 +136,7 @@ extern "C" int scanhash_lyra2(int thr_id, uint32_t *pdata,
 					else
 					{
 						if (vhash64[7] != Htarg) // don't show message if it is equal but fails fulltest
-							applog(LOG_WARNING, "GPU #%d: result %08x does not validate on CPU!", thr_id, foundNonce[1]);
+							applog(LOG_WARNING, "GPU #%d: result %08x does not validate on CPU!", device_map[thr_id], foundNonce[1]);
 					}
 				}
 				pdata[19] = foundNonce[0];
@@ -147,7 +147,7 @@ extern "C" int scanhash_lyra2(int thr_id, uint32_t *pdata,
 			else
 			{
 				if (vhash64[7] > Htarg) // don't show message if it is equal but fails fulltest
-					applog(LOG_WARNING, "GPU #%d: result %08x does not validate on CPU!", thr_id, foundNonce[0]);
+					applog(LOG_WARNING, "GPU #%d: result %08x does not validate on CPU!", device_map[thr_id], foundNonce[0]);
 			}
 		}
 

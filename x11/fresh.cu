@@ -149,7 +149,7 @@ extern "C" int scanhash_fresh(int thr_id, uint32_t *pdata,
 					{
 						if (vhash64[7] != Htarg)
 						{
-							applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, h_found[thr_id][1]);
+							applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], h_found[thr_id][1]);
 						}
 					}
 
@@ -163,7 +163,7 @@ extern "C" int scanhash_fresh(int thr_id, uint32_t *pdata,
 			{
 				if (vhash64[7] != Htarg)
 				{
-					applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", thr_id, h_found[thr_id][0]);
+					applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], h_found[thr_id][0]);
 				}
 			}
 		}
