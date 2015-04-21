@@ -399,7 +399,7 @@ static char const scrypt_usage[] = "\n\
 									";
 
 static struct work _ALIGN(64) g_work;
-static time_t g_work_time;
+time_t g_work_time;
 static pthread_mutex_t g_work_lock;
 
 

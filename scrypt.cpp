@@ -687,8 +687,8 @@ static int lastFactor = 0;
 // a salsa core implementation on GPU with CUDA
 //
 
-int scanhash_scrypt(int thr_id, uint32_t *pdata, const uint32_t *ptarget, unsigned char *scratchbuf,
-	uint32_t max_nonce, unsigned long *hashes_done, struct timeval *tv_start, struct timeval *tv_end)
+int scanhash_scrypt(int thr_id, uint32_t *pdata, uint32_t *ptarget, unsigned char *scratchbuf,
+	uint32_t max_nonce, uint32_t *hashes_done, struct timeval *tv_start, struct timeval *tv_end)
 {
 	int result = 0;
 	int throughput = cuda_throughput(thr_id);

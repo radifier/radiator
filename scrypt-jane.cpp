@@ -430,8 +430,8 @@ unsigned char GetNfactor(unsigned int nTimestamp) {
 
 static int s_Nfactor = 0;
 
-int scanhash_scrypt_jane(int thr_id, uint32_t *pdata, const uint32_t *ptarget, unsigned char *scratchbuf,
-	uint32_t max_nonce, unsigned long *hashes_done, struct timeval *tv_start, struct timeval *tv_end)
+int scanhash_scrypt_jane(int thr_id, uint32_t *pdata, uint32_t *ptarget, unsigned char *scratchbuf,
+	uint32_t max_nonce, uint32_t *hashes_done, struct timeval *tv_start, struct timeval *tv_end)
 {
 	const uint32_t Htarg = ptarget[7];
 

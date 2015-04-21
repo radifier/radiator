@@ -176,7 +176,7 @@
       <MaxRegCount>80</MaxRegCount>
       <PtxAsOptionV>true</PtxAsOptionV>
       <Keep>true</Keep>
-      <CodeGeneration>compute_50,sm_50</CodeGeneration>
+      <CodeGeneration>compute_52,sm_52;compute_50,sm_50</CodeGeneration>
       <AdditionalOptions>--ptxas-options="-O2" %(AdditionalOptions)</AdditionalOptions>
       <Defines>
       </Defines>
@@ -255,7 +255,7 @@
     <CudaCompile Include="cuda_bitcoin.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
-	<ClCompile Include="scrypt-jane.cpp" />
+    <ClCompile Include="scrypt-jane.cpp" />
     <ClCompile Include="scrypt.cpp" />
     <ClCompile Include="util.cpp" />
     <ClCompile Include="fuguecoin.cpp" />
@@ -323,7 +323,7 @@
     <ClInclude Include="hefty1.h" />
     <ClInclude Include="miner.h" />
     <ClInclude Include="nvml.h" />
-	<ClInclude Include="scrypt\salsa_kernel.h" />
+    <ClInclude Include="scrypt\salsa_kernel.h" />
     <ClInclude Include="sph\sph_blake.h" />
     <ClInclude Include="sph\sph_bmw.h" />
     <ClInclude Include="sph\sph_cubehash.h" />
@@ -359,7 +359,7 @@
     </CudaCompile>
     <CudaCompile Include="cuda_nist5.cu">
     </CudaCompile>
-    <CudaCompile Include="scrypt\blake.cu" /> 
+    <CudaCompile Include="scrypt\blake.cu" />
     <CudaCompile Include="scrypt\fermi_kernel.cu">
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">compute_20,sm_21;compute_30,sm_30;compute_35,sm_35;compute_50,sm_50;compute_52,sm_52</CodeGeneration>
     </CudaCompile>
