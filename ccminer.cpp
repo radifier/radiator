@@ -1379,13 +1379,13 @@ static void *miner_thread(void *userdata)
 				break;
 			case ALGO_BITCOIN:
 			case ALGO_KECCAK:
-			case ALGO_SKEIN:
 			case ALGO_WHCX:
 				minmax = 0x40000000U;
 				break;
 			case ALGO_DOOM:
 			case ALGO_JACKPOT:
 			case ALGO_LUFFA_DOOM:
+			case ALGO_SKEIN:
 				minmax = 0x2000000;
 				break;
 			case ALGO_QUARK:
