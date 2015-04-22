@@ -124,8 +124,8 @@ extern "C" int scanhash_qubit(int thr_id, uint32_t *pdata,
 		x11_simd512_cpu_init(thr_id, throughput);
 		x11_echo512_cpu_init(thr_id, throughput);
 
-		CUDA_CALL_OR_RET_X(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput), 0);
-		CUDA_CALL_OR_RET_X(cudaMallocHost(&(h_found[thr_id]), 4 * sizeof(uint32_t)), 0);
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
+		CUDA_SAFE_CALL(cudaMallocHost(&(h_found[thr_id]), 4 * sizeof(uint32_t)));
 
 		cuda_check_cpu_init(thr_id, throughput);
 

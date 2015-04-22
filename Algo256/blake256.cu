@@ -410,9 +410,9 @@ extern "C" int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 
 	if (!init[thr_id]) 
 	{
-		CUDA_CALL_OR_RET_X(cudaSetDevice(device_map[thr_id]),0);
-		CUDA_CALL_OR_RET_X(cudaMallocHost(&h_resNonce[thr_id], NBN * sizeof(uint32_t)), 0);
-		CUDA_CALL_OR_RET_X(cudaMalloc(&d_resNonce[thr_id], NBN * sizeof(uint32_t)), 0);
+		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+		CUDA_SAFE_CALL(cudaMallocHost(&h_resNonce[thr_id], NBN * sizeof(uint32_t)));
+		CUDA_SAFE_CALL(cudaMalloc(&d_resNonce[thr_id], NBN * sizeof(uint32_t)));
 		if (opt_n_gputhreads == 1)
 		{
 			cudaSetDeviceFlags(cudaDeviceBlockingSync);

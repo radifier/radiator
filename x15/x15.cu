@@ -202,7 +202,7 @@ extern "C" int scanhash_x15(int thr_id, uint32_t *pdata,
 		x13_fugue512_cpu_init(thr_id, throughput);
 		x15_whirlpool_cpu_init(thr_id, throughput, 0);
 
-		CUDA_CALL_OR_RET_X(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput), 0);
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
 
 		cuda_check_cpu_init(thr_id, throughput);
 		init[thr_id] = true;

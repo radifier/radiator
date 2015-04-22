@@ -209,7 +209,7 @@ extern "C" int scanhash_x17(int thr_id, uint32_t *pdata,
 		x17_sha512_cpu_init(thr_id, throughput);
 		x17_haval256_cpu_init(thr_id, throughput);
 
-		CUDA_CALL_OR_RET_X(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput), 0);
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
 
 		cuda_check_cpu_init(thr_id, throughput);
 

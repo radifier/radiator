@@ -474,7 +474,7 @@ extern "C" int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarge
 
 	if (!init[thr_id]) 
 	{
-		CUDA_CALL_OR_RET_X(cudaSetDevice(device_map[thr_id]), 0);
+		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		if (opt_n_gputhreads == 1)
 		{
 			cudaSetDeviceFlags(cudaDeviceBlockingSync);

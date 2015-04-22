@@ -186,7 +186,7 @@ extern "C" int scanhash_x14(int thr_id, uint32_t *pdata,
 		x13_hamsi512_cpu_init(thr_id, throughput);
 		x13_fugue512_cpu_init(thr_id, throughput);
 
-		CUDA_CALL_OR_RET_X(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput), 0);
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
 
 		cuda_check_cpu_init(thr_id, throughput);
 		init[thr_id] = true;

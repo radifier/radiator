@@ -80,7 +80,7 @@ extern "C" int scanhash_deep(int thr_id, uint32_t *pdata,
 
 		qubit_luffa512_cpu_init(thr_id, throughput);
 		x11_echo512_cpu_init(thr_id, throughput);
-		CUDA_CALL_OR_RET_X(cudaMallocHost(&(h_found[thr_id]), 4 * sizeof(uint32_t)), 0);
+		CUDA_SAFE_CALL(cudaMallocHost(&(h_found[thr_id]), 4 * sizeof(uint32_t)));
 
 		cuda_check_cpu_init(thr_id, throughput);
 

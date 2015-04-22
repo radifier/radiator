@@ -97,7 +97,7 @@ extern "C" int scanhash_nist5(int thr_id, uint32_t *pdata,
 		quark_skein512_cpu_init(thr_id);
 
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
-		CUDA_CALL_OR_RET_X(cudaMallocHost(&(h_found[thr_id]), 2 * sizeof(uint32_t)), 0);
+		CUDA_SAFE_CALL(cudaMallocHost(&(h_found[thr_id]), 2 * sizeof(uint32_t)));
 
 		cuda_check_cpu_init(thr_id, throughput);
 		init[thr_id] = true;

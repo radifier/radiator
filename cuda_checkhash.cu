@@ -16,8 +16,8 @@ static uint32_t* d_resNonces[MAX_GPUS];
 __host__
 void cuda_check_cpu_init(int thr_id, uint32_t threads)
 {
-    CUDA_CALL_OR_RET(cudaMallocHost(&h_resNonces[thr_id], 8*sizeof(uint32_t)));
-	CUDA_CALL_OR_RET(cudaMalloc(&d_resNonces[thr_id], 8 * sizeof(uint32_t)));
+    CUDA_SAFE_CALL(cudaMallocHost(&h_resNonces[thr_id], 8*sizeof(uint32_t)));
+	CUDA_SAFE_CALL(cudaMalloc(&d_resNonces[thr_id], 8 * sizeof(uint32_t)));
 }
 
 // Target Difficulty
