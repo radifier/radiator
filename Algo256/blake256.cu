@@ -418,6 +418,10 @@ extern "C" int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 			cudaSetDeviceFlags(cudaDeviceBlockingSync);
 			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		}
+		else
+		{
+			MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
+		}
 		init[thr_id] = true;
 	}
 
@@ -471,6 +475,7 @@ extern "C" int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 #endif
 				//applog_hash((uint8_t*)ptarget);
 				//applog_compare_hash((uint8_t*)vhashcpu,(uint8_t*)ptarget);
+				MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 				return rc;
 			}
 			else if (opt_debug) {
@@ -485,5 +490,6 @@ extern "C" int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 
 	*hashes_done = pdata[19] - first_nonce;
 
+	MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 	return rc;
 }

@@ -184,6 +184,10 @@ extern "C" int scanhash_x15(int thr_id, uint32_t *pdata,
 			cudaSetDeviceFlags(cudaDeviceBlockingSync);
 			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		}
+		else
+		{
+			MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
+		}
 
 		cudaSetDeviceFlags(cudaDeviceBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
@@ -257,6 +261,7 @@ extern "C" int scanhash_x15(int thr_id, uint32_t *pdata,
 				}
 				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nounce %08x", thr_id, foundNonce, vhash64[7]);
 				pdata[19] = foundNonce;
+				MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 				return res;
 			}
 			else
@@ -270,5 +275,6 @@ extern "C" int scanhash_x15(int thr_id, uint32_t *pdata,
 
 	*hashes_done = pdata[19] - first_nonce + 1;
 
+	MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 	return 0;
 }

@@ -81,8 +81,15 @@ extern "C" int scanhash_nist5(int thr_id, uint32_t *pdata,
 	if (!init[thr_id])
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		if (opt_n_gputhreads == 1)
+		{
+			cudaSetDeviceFlags(cudaDeviceBlockingSync);
+			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		}
+		else
+		{
+			MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
+		}
 		get_cuda_arch(&cuda_arch[thr_id]);
 
 		// Konstanten kopieren, Speicher belegen
@@ -147,6 +154,7 @@ extern "C" int scanhash_nist5(int thr_id, uint32_t *pdata,
 				pdata[19] = h_found[thr_id][0];
 				if (opt_benchmark)
 					applog(LOG_INFO, "GPU #%d Found nounce %08x", thr_id, h_found[thr_id][0]);
+				MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 				return res;
 			}
 			else
@@ -161,5 +169,6 @@ extern "C" int scanhash_nist5(int thr_id, uint32_t *pdata,
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 
 	*hashes_done = pdata[19] - first_nonce + 1;
+	MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 	return 0;
 }
