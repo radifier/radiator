@@ -57,7 +57,7 @@ static uint64_t __align__(32) c_data[32];
 static uint32_t *d_hash[MAX_GPUS];
 static uint32_t *d_resNounce[MAX_GPUS];
 static uint32_t *h_resNounce[MAX_GPUS];
-static uint32_t extra_results[2] = { UINT32_MAX, UINT32_MAX };
+static uint32_t extra_results[MAX_GPUS][2] = { UINT32_MAX };
 
 /* prefer uint32_t to prevent size conversions = speed +5/10 % */
 __constant__
@@ -394,7 +394,7 @@ uint32_t pentablake_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNoun
 	cudaDeviceSynchronize();
 	if (cudaSuccess == cudaMemcpy(h_resNounce[thr_id], d_resNounce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost)) {
 		result = h_resNounce[thr_id][0];
-		extra_results[0] = h_resNounce[thr_id][1];
+		extra_results[thr_id][0] = h_resNounce[thr_id][1];
 	}
 	return result;
 }
@@ -434,7 +434,7 @@ uint32_t pentablake_check_hash(int thr_id, uint32_t threads, uint32_t startNounc
 
 	if (cudaSuccess == cudaMemcpy(h_resNounce[thr_id], d_resNounce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost)) {
 		result = h_resNounce[thr_id][0];
-		extra_results[0] = h_resNounce[thr_id][1];
+		extra_results[thr_id][0] = h_resNounce[thr_id][1];
 	}
 	return result;
 }
@@ -518,11 +518,11 @@ extern "C" int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarge
 			if (vhashcpu[7] <= Htarg && fulltest(vhashcpu, ptarget)) {
 				rc = 1;
 				*hashes_done = pdata[19] - first_nonce + throughput;
-				if (extra_results[0] != UINT32_MAX) {
+				if (extra_results[thr_id][0] != UINT32_MAX) {
 					// Rare but possible if the throughput is big
 					applog(LOG_NOTICE, "GPU found more than one result yippee!");
-					pdata[21] = extra_results[0];
-					extra_results[0] = UINT32_MAX;
+					pdata[21] = extra_results[thr_id][0];
+					extra_results[thr_id][0] = UINT32_MAX;
 					rc++;
 				}
 				pdata[19] = foundNonce;

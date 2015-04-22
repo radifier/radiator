@@ -59,7 +59,7 @@ static uint32_t *h_resNonce[MAX_GPUS];
 
 /* max count of found nonces in one call */
 #define NBN 2
-static uint32_t extra_results[NBN] = { UINT32_MAX };
+static uint32_t extra_results[MAX_GPUS][NBN] = { UINT32_MAX };
 
 /* prefer uint32_t to prevent size conversions = speed +5/10 % */
 __constant__
@@ -264,7 +264,7 @@ uint32_t blake256_cpu_hash_80(const int thr_id, const uint32_t threads, const ui
 		//cudaDeviceSynchronize(); /* seems no more required */
 		result = h_resNonce[thr_id][0];
 		for (int n=0; n < (NBN-1); n++)
-			extra_results[n] = h_resNonce[thr_id][n+1];
+			extra_results[thr_id][n] = h_resNonce[thr_id][n+1];
 	}
 	return result;
 }
@@ -347,7 +347,7 @@ static uint32_t blake256_cpu_hash_16(const int thr_id, const uint32_t threads, c
 	CUDA_SAFE_CALL(cudaMemcpy(h_resNonce[thr_id], d_resNonce[thr_id], NBN*sizeof(uint32_t), cudaMemcpyDeviceToHost));
 	result = h_resNonce[thr_id][0];
 	for (int n=0; n < (NBN-1); n++)
-		extra_results[n] = h_resNonce[thr_id][n+1];
+		extra_results[thr_id][n] = h_resNonce[thr_id][n + 1];
 	return result;
 }
 
@@ -462,15 +462,15 @@ extern "C" int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				pdata[19] = foundNonce;
 #if NBN > 1
-				if (extra_results[0] != UINT32_MAX) {
-					be32enc(&endiandata[19], extra_results[0]);
+				if (extra_results[thr_id][0] != UINT32_MAX) {
+					be32enc(&endiandata[19], extra_results[thr_id][0]);
 					blake256hash(vhashcpu, endiandata, blakerounds);
 					if (vhashcpu[6] <= Htarg /* && fulltest(vhashcpu, ptarget) */) {
-						pdata[21] = extra_results[0];
-						applog(LOG_BLUE, "1:%x 2:%x", foundNonce, extra_results[0]);
+						pdata[21] = extra_results[thr_id][0];
+						applog(LOG_BLUE, "1:%x 2:%x", foundNonce, extra_results[thr_id][0]);
 						rc = 2;
 					}
-					extra_results[0] = UINT32_MAX;
+					extra_results[thr_id][0] = UINT32_MAX;
 				}
 #endif
 				//applog_hash((uint8_t*)ptarget);
