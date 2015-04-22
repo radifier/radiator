@@ -227,7 +227,7 @@ pthread_mutex_t applog_lock;
 static pthread_mutex_t stats_lock;
 uint32_t accepted_count = 0L;
 uint32_t rejected_count = 0L;
-static double *thr_hashrates;
+static double thr_hashrates[MAX_GPUS];
 uint64_t global_hashrate = 0;
 double   global_diff = 0.0;
 uint64_t net_hashrate = 0;
@@ -1645,28 +1645,19 @@ static void *miner_thread(void *userdata)
 			double hashrate = 0.0;
 
 			if (opt_n_gputhreads != 1)
-			{			
-				int index = (thr_id)/opt_n_gputhreads;
-
-				if (index*opt_n_gputhreads == thr_id)
+			{
+				int index = thr_id / opt_n_gputhreads;
+				for (int i = 0; i < opt_n_gputhreads; i++)
 				{
-
-					for (int i = 0; i < opt_n_gputhreads;i++)
-					{
-						hashrate += thr_hashrates[(index*opt_n_gputhreads) + i];
-					}		
-					format_hashrate(thr_hashrates[thr_id], s);
-
-					applog(LOG_INFO, "GPU #%d: %s, %s kH/s", device_map[thr_id], device_name[device_map[thr_id]], s);
+					hashrate += thr_hashrates[(index*opt_n_gputhreads) + i];
 				}
 			}
 			else
 			{
 				hashrate = thr_hashrates[thr_id];
-				format_hashrate(thr_hashrates[thr_id], s);
-				applog(LOG_INFO, "GPU #%d: %s, %s kH/s", device_map[thr_id], device_name[device_map[thr_id]], s);
 			}
-
+			format_hashrate(hashrate, s);
+			applog(LOG_INFO, "GPU #%d: %s, %s", device_map[thr_id], device_name[device_map[thr_id]], s);
 		}
 
 		/* loopcnt: ignore first loop hashrate */
@@ -2657,10 +2648,6 @@ int main(int argc, char *argv[])
 
 	thr_info = (struct thr_info *)calloc(opt_n_threads + 4, sizeof(*thr));
 	if (!thr_info)
-		return 1;
-
-	thr_hashrates = (double *) calloc(opt_n_threads, sizeof(double));
-	if (!thr_hashrates)
 		return 1;
 
 	/* init workio thread info */
