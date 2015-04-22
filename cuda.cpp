@@ -87,6 +87,7 @@ void cuda_print_devices()
 // Can't be called directly in cpu-miner.c
 void cuda_devicereset()
 {
+	cudaDeviceSynchronize();
 	cudaDeviceReset();
 }
 
@@ -128,7 +129,7 @@ int cuda_finddevice(char *name)
 uint32_t device_intensity(int thr_id, const char *func, uint32_t defcount)
 {
 	uint32_t throughput = gpus_intensity[thr_id] ? gpus_intensity[thr_id] : defcount;
-	api_set_throughput(thr_id%active_gpus, throughput);
+	api_set_throughput(thr_id, throughput);
 	throughput /= opt_n_gputhreads;
 	return throughput;
 }

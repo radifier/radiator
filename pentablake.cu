@@ -472,10 +472,9 @@ extern "C" int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarge
 	if (opt_benchmark)
 		ptarget[7] = 0x000F;
 
-	if (!init[thr_id]) {
-		if (active_gpus > 1) {
-			CUDA_CALL_OR_RET_X(cudaSetDevice(device_map[thr_id]), 0);
-		}
+	if (!init[thr_id]) 
+	{
+		CUDA_CALL_OR_RET_X(cudaSetDevice(device_map[thr_id]), 0);
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 64 * throughput));
 		CUDA_SAFE_CALL(cudaMallocHost(&h_resNounce[thr_id], 2*sizeof(uint32_t)));
 		CUDA_SAFE_CALL(cudaMalloc(&d_resNounce[thr_id], 2*sizeof(uint32_t)));
