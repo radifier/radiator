@@ -76,8 +76,11 @@ extern "C" int scanhash_s3(int thr_id, uint32_t *pdata,
 	if (!init[thr_id])
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		if (opt_n_gputhreads == 1)
+		{
+			cudaSetDeviceFlags(cudaDeviceBlockingSync);
+			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		}
 		get_cuda_arch(&cuda_arch[thr_id]);
 
 		x11_simd512_cpu_init(thr_id, throughput);
