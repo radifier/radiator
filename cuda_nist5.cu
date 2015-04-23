@@ -13,7 +13,8 @@ extern "C"
 
 static uint32_t *d_hash[MAX_GPUS];
 
-extern void quark_blake512_cpu_setBlock_80(void *pdata);
+extern void quark_blake512_cpu_init(int thr_id);
+extern void quark_blake512_cpu_setBlock_80(int thr_id, void *pdata);
 extern void quark_blake512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 
 extern void quark_groestl512_cpu_init(int thr_id, uint32_t threads);
@@ -93,6 +94,7 @@ extern "C" int scanhash_nist5(int thr_id, uint32_t *pdata,
 		get_cuda_arch(&cuda_arch[thr_id]);
 
 		// Konstanten kopieren, Speicher belegen
+		quark_blake512_cpu_init(thr_id);
 		quark_groestl512_cpu_init(thr_id, throughput);
 		quark_skein512_cpu_init(thr_id);
 
@@ -107,7 +109,7 @@ extern "C" int scanhash_nist5(int thr_id, uint32_t *pdata,
 	for (int k=0; k < 20; k++)
 		be32enc(&endiandata[k], pdata[k]);
 
-	quark_blake512_cpu_setBlock_80((void*)endiandata);
+	quark_blake512_cpu_setBlock_80(thr_id, (void*)endiandata);
 	cuda_check_cpu_setTarget(ptarget);
 
 	do {
