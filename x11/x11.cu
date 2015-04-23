@@ -151,17 +151,20 @@ extern "C" int scanhash_x11(int thr_id, uint32_t *pdata,
 
 	if (!init[thr_id])
 	{
-		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-		if (opt_n_gputhreads == 1)
+		if (thr_id%opt_n_gputhreads == 0)
 		{
+			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+			cudaDeviceReset();
 			cudaSetDeviceFlags(cudaDeviceBlockingSync);
 			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
-		} else
-		{
-			MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 		}
-
-		//		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		else
+		{
+			while (!init[thr_id - thr_id%opt_n_gputhreads])
+			{
+			}
+			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+		}
 		get_cuda_arch(&cuda_arch[thr_id]);
 		quark_blake512_cpu_init(thr_id);
 		quark_groestl512_cpu_init(thr_id, throughput);

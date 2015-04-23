@@ -72,15 +72,19 @@ extern "C" int scanhash_lyra2(int thr_id, uint32_t *pdata,
 
 	if (!init[thr_id])
 	{
-		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-		if (opt_n_gputhreads == 1)
+		if (thr_id%opt_n_gputhreads == 0)
 		{
+			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+			cudaDeviceReset();
 			cudaSetDeviceFlags(cudaDeviceBlockingSync);
 			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		}
 		else
 		{
-			MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
+			while (!init[thr_id - thr_id%opt_n_gputhreads])
+			{
+			}
+			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
 		blake256_cpu_init(thr_id, throughput);
 		keccak256_cpu_init(thr_id,throughput);

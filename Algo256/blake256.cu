@@ -410,18 +410,22 @@ extern "C" int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 
 	if (!init[thr_id]) 
 	{
-		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-		CUDA_SAFE_CALL(cudaMallocHost(&h_resNonce[thr_id], NBN * sizeof(uint32_t)));
-		CUDA_SAFE_CALL(cudaMalloc(&d_resNonce[thr_id], NBN * sizeof(uint32_t)));
-		if (opt_n_gputhreads == 1)
+		if (thr_id%opt_n_gputhreads == 0)
 		{
+			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+			cudaDeviceReset();
 			cudaSetDeviceFlags(cudaDeviceBlockingSync);
 			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		}
 		else
 		{
-			MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
+			while (!init[thr_id - thr_id%opt_n_gputhreads])
+			{
+			}
+			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
+		CUDA_SAFE_CALL(cudaMallocHost(&h_resNonce[thr_id], NBN * sizeof(uint32_t)));
+		CUDA_SAFE_CALL(cudaMalloc(&d_resNonce[thr_id], NBN * sizeof(uint32_t)));
 		init[thr_id] = true;
 	}
 
