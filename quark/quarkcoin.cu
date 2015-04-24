@@ -20,8 +20,10 @@ static uint32_t *d_branch2Nonces[MAX_GPUS];
 static uint32_t *d_branch3Nonces[MAX_GPUS];
 
 extern void quark_blake512_cpu_init(int thr_id);
-extern void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata);
+extern void quark_blake512_cpu_setBlock_80(uint64_t *pdata);
+extern void quark_blake512_cpu_setBlock_80_multi(uint32_t thr_id, uint64_t *pdata);
 extern void quark_blake512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
+extern void quark_blake512_cpu_hash_80_multi(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 extern void quark_blake512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash);
 
 extern void quark_bmw512_cpu_init(int thr_id, uint32_t threads);
@@ -184,16 +186,27 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 	for (int k=0; k < 20; k++)
 		be32enc(&endiandata[k], pdata[k]);
 	cuda_check_cpu_setTarget(ptarget);
-	quark_blake512_cpu_setBlock_80(thr_id, (uint64_t*)endiandata);
+	if (opt_n_gputhreads > 1)
+	{
+		quark_blake512_cpu_setBlock_80_multi(thr_id, (uint64_t *)endiandata[thr_id]);
+	}
+	else
+	{
+		quark_blake512_cpu_setBlock_80((uint64_t *)endiandata[thr_id]);
+	}
 
 	do {
 
 		uint32_t nrm1 = 0, nrm2 = 0, nrm3 = 0;
 
-		// erstes Blake512 Hash mit CUDA
-		quark_blake512_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id]);
-
-		// das ist der unbedingte Branch für BMW512
+		if (opt_n_gputhreads > 1)
+		{
+			quark_blake512_cpu_hash_80_multi(thr_id, throughput, pdata[19], d_hash[thr_id]);
+		}
+		else
+		{
+			quark_blake512_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id]);
+		}
 		quark_bmw512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash[thr_id]);
 
 		quark_compactTest_single_false_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id], NULL,
