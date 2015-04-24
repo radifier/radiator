@@ -597,7 +597,7 @@ static int share_result(int result, const char *reason)
 	for (int i = 0; i < opt_n_threads; i++) {
 		hashrate += stats_get_speed(i, thr_hashrates[i]);
 	}
-
+	hashrate /= opt_n_gputhreads;
 	result ? accepted_count++ : rejected_count++;
 	pthread_mutex_unlock(&stats_lock);
 
