@@ -103,8 +103,6 @@ enum sha_algos {
 	ALGO_PENTABLAKE,
 	ALGO_QUARK,
 	ALGO_QUBIT,
-	ALGO_SCRYPT,
-	ALGO_SCRYPT_JANE, 
 	ALGO_SKEIN,
 	ALGO_S3,
 	ALGO_SPREADX11,
@@ -139,8 +137,6 @@ static const char *algo_names[] = {
 	"penta",
 	"quark",
 	"qubit",
-	"scrypt",
-	"scrypt-jane",
 	"skein",
 	"s3",
 	"spread",
@@ -188,23 +184,6 @@ char * device_name[MAX_GPUS];
 int device_map[MAX_GPUS] = { 0 };
 long  device_sm[MAX_GPUS] = { 0 };
 uint32_t gpus_intensity[MAX_GPUS] = { 0 };
-int device_interactive[MAX_GPUS] = { 0 };
-int device_batchsize[MAX_GPUS] = { 0 };
-int device_backoff[MAX_GPUS] = { 0 };
-int device_lookup_gap[MAX_GPUS] = { 0 };
-int device_texturecache[MAX_GPUS] = { 0 };
-int device_singlememory[MAX_GPUS] = { 0 };
-
-
-char *device_config[MAX_GPUS] = { 0 };
-int opt_nfactor = 0;
-int parallel = 2;
-bool autotune = true;
-bool opt_autotune = true;
-
-bool abort_flag = false;
-char *jane_params = NULL;
-
 char *rpc_user = NULL;
 static char *rpc_url;
 static char *rpc_userpass;
@@ -274,9 +253,7 @@ Options:\n\
 			penta       Pentablake hash (5x Blake 512)\n\
 			quark       Quark\n\
 			qubit       Qubit\n\
-			scrypt      Scrypt\n\
-			scrypt-jane Scrypt-jane Chacha\n\
-			skein       Skein\n\
+			skein       Skein SHA2 (Skeincoin)\n\
 			s3          S3 (1Coin)\n\
 			spread      Spread\n\
 			x11         X11 (DarkCoin)\n\
@@ -325,6 +302,7 @@ Options:\n\
   --syslog - prefix = ... allow to change syslog tool name\n\
    -B, --background      run the miner in the background\n\
 		--benchmark       run in offline benchmark mode\n\
+      --benchmark       run in offline benchmark mode\n\
       --cputest         debug hashes from cpu algorithms\n\
   -c, --config=FILE     load a JSON-format configuration file\n\
   -V, --version         display version information and exit\n\
@@ -338,7 +316,7 @@ static char const short_options[] =
 #ifdef HAVE_SYSLOG_H
 	"S"
 #endif
-	"a:c:i:Dhp:Px:mnqr:R:s:t:T:o:u:O:Vd:f:mv:N:b:g:l:L:";
+	"a:c:i:Dhp:Px:mnqr:R:s:t:T:o:u:O:Vd:f:mv:N:b:g:";
 
 static struct option const options[] = {
 	{ "algo", 1, NULL, 'a' },
@@ -360,9 +338,6 @@ static struct option const options[] = {
 	{ "no-gbt", 0, NULL, 1011 },
 	{ "no-longpoll", 0, NULL, 1003 },
 	{ "no-stratum", 0, NULL, 1007 },
-	{ "no-autotune", 0, NULL, 1004 },  // scrypt
-	{ "launch-config", 0, NULL, 'l' }, // scrypt
-	{ "lookup-gap", 0, NULL, 'L' },    // scrypt
 	{ "pass", 1, NULL, 'p' },
 	{ "protocol-dump", 0, NULL, 'P' },
 	{ "proxy", 1, NULL, 'x' },
@@ -389,19 +364,10 @@ static struct option const options[] = {
 	{ 0, 0, 0, 0 }
 };
 
-static char const scrypt_usage[] = "\n\
-									Scrypt specific options:\n\
-									  -l, --launch-config   gives the launch configuration for each kernel\n\
-									                        in a comma separated list, one per device.\n\
-									  -L, --lookup-gap      Divides the per-hash memory requirement by this factor\n\
-									                        by storing only every N'th value in the scratchpad.\n\
-									                        Default is 1.\n\
-									      --no-autotune     disable auto-tuning of kernel launch parameters\n\
-									";
-
-static struct work _ALIGN(64) g_work;
+struct work _ALIGN(64) g_work;
 time_t g_work_time;
-static pthread_mutex_t g_work_lock;
+pthread_mutex_t g_work_lock;
+static time_t g_work_time;
 
 
 #ifdef __linux /* Linux specific policy and affinity management */
@@ -464,7 +430,6 @@ void get_currentalgo(char* buf, int sz)
  */
 void proper_exit(int reason)
 {
-	abort_flag = true;
 #ifdef WIN32
 	timeEndPeriod(1); // else never executed
 #endif
@@ -1170,8 +1135,6 @@ static void stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 
 	switch (opt_algo) {
 		case ALGO_JACKPOT:
-		case ALGO_SCRYPT:
-		case ALGO_SCRYPT_JANE:
 			diff_to_target(work->target, sctx->job.diff / (65536.0 * opt_difficulty));
 			break;
 		case ALGO_DMD_GR:
@@ -1379,7 +1342,6 @@ static void *miner_thread(void *userdata)
 				break;
 			case ALGO_BITCOIN:
 			case ALGO_KECCAK:
-			case ALGO_WHCX:
 				minmax = 0x40000000U;
 				break;
 			case ALGO_DOOM:
@@ -1400,7 +1362,6 @@ static void *miner_thread(void *userdata)
 				minmax = 0x300000;
 				break;
 			case ALGO_LYRA2:
-			case ALGO_SCRYPT:
 				minmax = 0x100000;
 				break;
 			case ALGO_SCRYPT_JANE:
@@ -1494,15 +1455,6 @@ static void *miner_thread(void *userdata)
 		case ALGO_QUBIT:
 			rc = scanhash_qubit(thr_id, work.data, work.target,
 			                      max_nonce, &hashes_done);
-			break;
-		case ALGO_SCRYPT:
-			rc = scanhash_scrypt(thr_id, work.data, work.target, NULL,
-			max_nonce, &hashes_done, &tv_start, &tv_end);
-			break;
-			
-		case ALGO_SCRYPT_JANE:
-			rc = scanhash_scrypt_jane(thr_id, work.data, work.target, NULL,
-			max_nonce, &hashes_done, &tv_start, &tv_end);
 			break;
 
 		case ALGO_ANIME:
@@ -1941,10 +1893,6 @@ static void show_usage_and_exit(int status)
 		fprintf(stderr, "Try `" PROGRAM_NAME " --help' for more information.\n");
 	else
 		printf(usage);
-	if (opt_algo == ALGO_SCRYPT || opt_algo == ALGO_SCRYPT_JANE) 
-	{
-		printf(scrypt_usage);	
-	}
 	proper_exit(status);
 }
 
@@ -1956,34 +1904,15 @@ static void parse_arg(int key, char *arg)
 
 	switch(key) {
 	case 'a':
-		p = strstr(arg, ":"); // optional factor
-		if (p) *p = '\0';
 		for (i = 0; i < ARRAY_SIZE(algo_names); i++) {
-			if (algo_names[i] && !strcasecmp(arg, algo_names[i])) {
+			if (algo_names[i] &&
+			    !strcmp(arg, algo_names[i])) {
 				opt_algo = (enum sha_algos)i;
 				break;
 			}
 		}
 		if (i == ARRAY_SIZE(algo_names))
 			show_usage_and_exit(1);
-
-		if (p) 
-		{
-			opt_nfactor = atoi(p + 1);
-			if (opt_algo == ALGO_SCRYPT_JANE) 
-			{
-				free(jane_params);
-				jane_params = strdup(p + 1);				
-			}			
-		}
-		if (!opt_nfactor) 
-		{
-			switch (opt_algo) 
-			{
-				case ALGO_SCRYPT:      opt_nfactor = 9;  break;
-				case ALGO_SCRYPT_JANE: opt_nfactor = 14; break;				
-			}
-		}
 		break;
 	case 'b':
 		p = strstr(arg, ":");
@@ -2206,35 +2135,6 @@ static void parse_arg(int key, char *arg)
 		break;
 	case 1002:
 		use_colors = false;
-		break;
-	case 1004:
-		opt_autotune = false;
-		break;
-		case 'l': /* scrypt --launch-config */
-		{
-				char *last = NULL, *pch = strtok(arg, ",");
-				int n = 0;
-				while (pch != NULL) {
-					device_config[n++] = last = strdup(pch);
-					pch = strtok(NULL, ",");
-					
-				}
-				while (n < MAX_GPUS)
-				device_config[n++] = last;
-		}
-		break;
-		case 'L': /* scrypt --lookup-gap */
-		{
-			char *pch = strtok(arg, ",");
-			int n = 0, last = 0;
-			while (pch != NULL) 
-			{
-				device_lookup_gap[n++] = last = atoi(pch);
-				pch = strtok(NULL, ",");				
-			}
-			while (n < MAX_GPUS)
-				 device_lookup_gap[n++] = last;
-		}
 		break;
 	case 1005:
 		opt_benchmark = true;
@@ -2480,7 +2380,6 @@ int main(int argc, char *argv[])
 
 	rpc_user = strdup("");
 	rpc_pass = strdup("");
-	jane_params = strdup("");
 
 	pthread_mutex_init(&applog_lock, NULL);
 
@@ -2513,15 +2412,6 @@ int main(int argc, char *argv[])
 		for (i = 0; i < MAX_GPUS; i++)
 		{
 			device_map[i] = i;
-			device_name[i] = NULL;
-					// for future use, maybe
-			device_interactive[i] = -1;
-			device_batchsize[i] = 1024;
-			device_backoff[i] = is_windows() ? 12 : 2;
-			device_lookup_gap[i] = 1;
-			device_texturecache[i] = -1;
-			device_singlememory[i] = -1;
-			device_config[i] = NULL;
 		}
 	}
 
