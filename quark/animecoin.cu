@@ -157,7 +157,7 @@ struct HashPredicate
 };
 */
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 
 extern int scanhash_anime(int thr_id, uint32_t *pdata,
     uint32_t *ptarget, uint32_t max_nonce,

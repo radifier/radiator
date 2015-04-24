@@ -155,7 +155,7 @@ extern int scanhash_x13(int thr_id, uint32_t *pdata,
 	uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
-	static bool init[MAX_GPUS] = { 0 };
+	static bool init[MAX_GPUS] = { false };
 	uint32_t endiandata[20];
 	int intensity = (device_sm[device_map[thr_id]] > 500) ? 256 * 256 * 20 : 256 * 256 * 10;
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity);
@@ -240,7 +240,7 @@ extern int scanhash_x13(int thr_id, uint32_t *pdata,
 						pdata[21] = h_found[thr_id][1];
 						res++;
 						if (opt_benchmark)
-							applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, h_found[thr_id][1]);
+							applog(LOG_INFO, "GPU #%d Found second nounce %08x", device_map[thr_id], h_found[thr_id][1]);
 					}
 					else
 					{
@@ -253,7 +253,7 @@ extern int scanhash_x13(int thr_id, uint32_t *pdata,
 				}
 				pdata[19] = h_found[thr_id][0];
 				if (opt_benchmark)
-					applog(LOG_INFO, "GPU #%d Found nounce %08x", thr_id, h_found[thr_id][0]);
+					applog(LOG_INFO, "GPU #%d Found nounce %08x", device_map[thr_id], h_found[thr_id][0]);
 				MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 				return res;
 			}

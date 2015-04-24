@@ -176,7 +176,7 @@ extern "C" void x17hash(void *output, const void *input)
 	memcpy(output, hash, 32);
 }
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 
 extern int scanhash_x17(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
@@ -260,7 +260,7 @@ extern int scanhash_x17(int thr_id, uint32_t *pdata,
 					pdata[21] = secNonce;
 					res++;
 				}
-				if (opt_benchmark) applog(LOG_INFO, "found nounce", thr_id, foundNonce);
+				if (opt_benchmark) applog(LOG_INFO, "found nounce", device_map[thr_id], foundNonce);
 				pdata[19] = foundNonce;
 				return res;
 			}

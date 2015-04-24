@@ -160,7 +160,7 @@ extern "C" void x15hash(void *output, const void *input)
 	memcpy(output, hash, 32);
 }
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 
 extern int scanhash_x15(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
@@ -255,14 +255,14 @@ extern int scanhash_x15(int thr_id, uint32_t *pdata,
 					{
 						pdata[21] = secNonce;
 						res++;
-						if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nounce %08x", thr_id, secNonce, vhash64[7]);
+						if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nounce %08x", device_map[thr_id], secNonce, vhash64[7]);
 					}
 					else
 					{
 						applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], secNonce);
 					}
 				}
-				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nounce %08x", thr_id, foundNonce, vhash64[7]);
+				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nounce %08x", device_map[thr_id], foundNonce, vhash64[7]);
 				pdata[19] = foundNonce;
 				MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 				return res;

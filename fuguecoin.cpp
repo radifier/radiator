@@ -24,7 +24,7 @@ extern "C" void my_fugue256_addbits_and_close(void *cc, unsigned ub, unsigned n,
     ((((x) << 24) & 0xff000000u) | (((x) << 8) & 0x00ff0000u)   | \
       (((x) >> 8) & 0x0000ff00u) | (((x) >> 24) & 0x000000ffu))
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 
 extern int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t max_nonce, uint32_t *hashes_done)
@@ -82,7 +82,7 @@ extern int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		cudaError_t err = cudaGetLastError();
 		if (err != cudaSuccess)
 		{
-			applog(LOG_ERR, "GPU #%d: %s", thr_id, cudaGetErrorString(err));
+			applog(LOG_ERR, "GPU #%d: %s", device_map[thr_id], cudaGetErrorString(err));
 			exit(EXIT_FAILURE);
 		}
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));

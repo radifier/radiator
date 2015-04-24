@@ -122,7 +122,7 @@ void bitcoin_hash(uint32_t *output, const uint32_t *data, uint32_t nonce, const 
 	be32enc(&output[7], h + hc[7]);
 }
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 
 int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
@@ -169,7 +169,7 @@ int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 						pdata[21] = h_nounce[thr_id][1];
 						res++;
 						if (opt_benchmark)
-							applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, h_nounce[thr_id][1]);
+							applog(LOG_INFO, "GPU #%d Found second nounce %08x", device_map[thr_id], h_nounce[thr_id][1]);
 					}
 					else
 					{
@@ -181,7 +181,7 @@ int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 				}
 				pdata[19] = h_nounce[thr_id][0];
 				if (opt_benchmark)
-					applog(LOG_INFO, "GPU #%d Found nounce %08x", thr_id, h_nounce[thr_id][0]);
+					applog(LOG_INFO, "GPU #%d Found nounce %08x", device_map[thr_id], h_nounce[thr_id][0]);
 				return res;
 			}
 			else

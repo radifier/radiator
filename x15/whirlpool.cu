@@ -51,7 +51,7 @@ extern "C" void wcoinhash(void *state, const void *input)
 	memcpy(state, hash, 32);
 }
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 
 extern int scanhash_whc(int thr_id, uint32_t *pdata,
     uint32_t *ptarget, uint32_t max_nonce,
@@ -107,7 +107,7 @@ extern int scanhash_whc(int thr_id, uint32_t *pdata,
 					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 					{
 
-						if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found second nounce %08x", thr_id, foundNonce[1]);
+						if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found second nounce %08x", device_map[thr_id], foundNonce[1]);
 						pdata[21] = foundNonce[1];
 						res++;
 					}
@@ -118,7 +118,7 @@ extern int scanhash_whc(int thr_id, uint32_t *pdata,
 					}
 				}
 				pdata[19] = foundNonce[0];
-				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nounce %08x", thr_id, foundNonce[0]);
+				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nounce %08x", device_map[thr_id], foundNonce[0]);
 
 				return res;
 			}

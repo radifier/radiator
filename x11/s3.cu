@@ -53,7 +53,7 @@ extern "C" void s3hash(void *output, const void *input)
 	memcpy(output, hash, 32);
 }
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 static uint32_t *h_found[MAX_GPUS];
 
 /* Main S3 entry point */
@@ -136,7 +136,7 @@ extern int scanhash_s3(int thr_id, uint32_t *pdata,
 						pdata[21] = h_found[thr_id][1];
 						res++;
 						if (opt_benchmark)
-							applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, h_found[thr_id][1]);
+							applog(LOG_INFO, "GPU #%d Found second nounce %08x", device_map[thr_id], h_found[thr_id][1]);
 					}
 					else
 					{
@@ -149,7 +149,7 @@ extern int scanhash_s3(int thr_id, uint32_t *pdata,
 				}
 				pdata[19] = h_found[thr_id][0];
 				if (opt_benchmark)
-					applog(LOG_INFO, "GPU #%d Found nounce %08x", thr_id, h_found[thr_id][0]);
+					applog(LOG_INFO, "GPU #%d Found nounce %08x", device_map[thr_id], h_found[thr_id][0]);
 				MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 				return res;
 			}

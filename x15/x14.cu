@@ -148,7 +148,7 @@ extern "C" void x14hash(void *output, const void *input)
 	memcpy(output, hash, 32);
 }
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 
 extern int scanhash_x14(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,

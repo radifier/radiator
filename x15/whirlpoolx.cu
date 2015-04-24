@@ -37,7 +37,7 @@ extern "C" void whirlxHash(void *state, const void *input)
 	memcpy(state, hash_xored, 32);
 }
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 
 int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_nonce, uint32_t *hashes_done)
 {
@@ -99,7 +99,7 @@ int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t
 					{
 						pdata[21] = foundNonce[1];
 						res++;
-						if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nonce %08x", thr_id, foundNonce[1]);
+						if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nonce %08x", device_map[thr_id], foundNonce[1]);
 					}
 					else
 					{
@@ -108,7 +108,7 @@ int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t
 					}
 				}
 				if (opt_benchmark)
-					applog(LOG_INFO, "GPU #%d: found nonce %08x", thr_id, foundNonce[0], vhash64[7]);
+					applog(LOG_INFO, "GPU #%d: found nonce %08x", device_map[thr_id], foundNonce[0], vhash64[7]);
 				pdata[19] = foundNonce[0];
 				MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 				return res;

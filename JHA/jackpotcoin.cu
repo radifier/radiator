@@ -82,7 +82,7 @@ extern "C" unsigned int jackpothash(void *state, const void *input)
     return round;
 }
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 
 extern int scanhash_jackpot(int thr_id, uint32_t *pdata,
     uint32_t *ptarget, uint32_t max_nonce,
@@ -234,14 +234,14 @@ extern int scanhash_jackpot(int thr_id, uint32_t *pdata,
 					}
 					else
 					{
-						applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU (%d rounds)!", thr_id, secNonce, rounds);
+						applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU (%d rounds)!", device_map[thr_id], secNonce, rounds);
 					}
 				}
 				pdata[19] = foundNonce;
 				return res;
 			}
 			else {
-				applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU (%d rounds)!", thr_id, foundNonce, rounds);
+				applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU (%d rounds)!", device_map[thr_id], foundNonce, rounds);
 			}
 		}
 

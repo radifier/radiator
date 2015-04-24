@@ -56,7 +56,7 @@ extern "C" void lyra2_hash(void *state, const void *input)
 	memcpy(state, hashA, 32);
 }
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 
 extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
@@ -135,7 +135,7 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 					{
 						pdata[21] = foundNonce[1];
 						res++;
-						if (opt_benchmark)  applog(LOG_INFO, "GPU #%d: Found second nounce %08x", thr_id, foundNonce[1]);
+						if (opt_benchmark)  applog(LOG_INFO, "GPU #%d: Found second nounce %08x", device_map[thr_id], foundNonce[1]);
 					}
 					else
 					{
@@ -144,7 +144,7 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 					}
 				}
 				pdata[19] = foundNonce[0];
-				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: Found nounce %08x", thr_id, foundNonce[0]);
+				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: Found nounce %08x", device_map[thr_id], foundNonce[0]);
 				MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 				return res;
 			}

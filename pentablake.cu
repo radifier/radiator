@@ -458,7 +458,7 @@ void pentablake_cpu_setBlock_80(uint32_t *pdata, const uint32_t *ptarget)
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(c_Target, ptarget, 32, 0, cudaMemcpyHostToDevice));
 }
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 
 extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t max_nonce, uint32_t *hashes_done)
@@ -534,7 +534,7 @@ extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 				return rc;
 			}
 			else if (vhashcpu[7] > Htarg) {
-				applog(LOG_WARNING, "GPU #%d: result for nounce %08x is not in range: %x > %x", thr_id, foundNonce, vhashcpu[7], Htarg);
+				applog(LOG_WARNING, "GPU #%d: result for nounce %08x is not in range: %x > %x", device_map[thr_id], foundNonce, vhashcpu[7], Htarg);
 			}
 			else {
 				applog(LOG_WARNING, "GPU #%d: result for nounce %08x does not validate on CPU!", device_map[thr_id], foundNonce);

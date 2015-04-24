@@ -12,7 +12,7 @@
 #include "miner.h"
 #include <cuda_runtime.h>
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 static uint32_t *h_found[MAX_GPUS];
 
 void myriadgroestl_cpu_init(int thr_id, uint32_t threads);
@@ -97,7 +97,7 @@ extern int scanhash_myriad(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 						pdata[21] = h_found[thr_id][1];
 						res++;
 						if (opt_benchmark)
-							applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, h_found[thr_id][1]);
+							applog(LOG_INFO, "GPU #%d Found second nounce %08x", device_map[thr_id], h_found[thr_id][1]);
 					}
 					else
 					{
@@ -110,7 +110,7 @@ extern int scanhash_myriad(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 				}
 				pdata[19] = h_found[thr_id][0];
 				if (opt_benchmark)
-					applog(LOG_INFO, "GPU #%d Found nounce %08x", thr_id, h_found[thr_id][0]);
+					applog(LOG_INFO, "GPU #%d Found nounce %08x", device_map[thr_id], h_found[thr_id][0]);
 				return res;
 			}
 			else
@@ -125,7 +125,7 @@ extern int scanhash_myriad(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		cudaError_t err = cudaGetLastError();
 		if (err != cudaSuccess)
 		{
-			applog(LOG_ERR, "GPU #%d: %s", thr_id, cudaGetErrorString(err));
+			applog(LOG_ERR, "GPU #%d: %s", device_map[thr_id], cudaGetErrorString(err));
 			exit(EXIT_FAILURE);
 		}
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));

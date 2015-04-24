@@ -367,7 +367,7 @@ static __inline uint32_t swab32_if(uint32_t val, bool iftrue)
 	return iftrue ? swab32(val) : val;
 }
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 
 int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 								  uint32_t *ptarget, uint32_t max_nonce,

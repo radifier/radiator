@@ -414,7 +414,7 @@ __global__ void cuda_blake256_hash( uint64_t *g_out, uint32_t nonce, uint32_t *g
 	}
 }
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 static std::map<int, uint32_t *> context_good[2];
 
 bool default_prepare_blake256(int thr_id, const uint32_t host_pdata[20], const uint32_t host_ptarget[8])
