@@ -460,7 +460,7 @@ void pentablake_cpu_setBlock_80(uint32_t *pdata, const uint32_t *ptarget)
 
 static bool init[MAX_GPUS] = { 0 };
 
-extern "C" int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
+extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t max_nonce, uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];

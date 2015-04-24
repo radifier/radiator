@@ -150,7 +150,7 @@ extern "C" void x13hash(void *output, const void *input)
 	memcpy(output, hash, 32);
 }
 
-extern "C" int scanhash_x13(int thr_id, uint32_t *pdata,
+extern int scanhash_x13(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
 	uint32_t *hashes_done)
 {

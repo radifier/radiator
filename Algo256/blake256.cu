@@ -379,7 +379,7 @@ void blake256_cpu_setBlock_16(uint32_t *penddata, const uint32_t *midstate, cons
 
 static bool init[MAX_GPUS] = { 0 };
 
-extern "C" int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
+extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t max_nonce, uint32_t *hashes_done, int8_t blakerounds=14)
 {
 	const uint32_t first_nonce = pdata[19];

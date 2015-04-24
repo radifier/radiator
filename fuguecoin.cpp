@@ -26,7 +26,7 @@ extern "C" void my_fugue256_addbits_and_close(void *cc, unsigned ub, unsigned n,
 
 static bool init[MAX_GPUS] = { 0 };
 
-extern "C" int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
+extern int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t max_nonce, uint32_t *hashes_done)
 {
 	uint32_t start_nonce = pdata[19]++;
