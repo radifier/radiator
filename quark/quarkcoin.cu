@@ -188,11 +188,11 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 	cuda_check_cpu_setTarget(ptarget);
 	if (opt_n_gputhreads > 1)
 	{
-		quark_blake512_cpu_setBlock_80_multi(thr_id, (uint64_t *)endiandata[thr_id]);
+		quark_blake512_cpu_setBlock_80_multi(thr_id, (uint64_t *)endiandata);
 	}
 	else
 	{
-		quark_blake512_cpu_setBlock_80((uint64_t *)endiandata[thr_id]);
+		quark_blake512_cpu_setBlock_80((uint64_t *)endiandata);
 	}
 
 	do {

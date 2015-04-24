@@ -197,7 +197,8 @@ extern int scanhash_x15(int thr_id, uint32_t *pdata,
 		}
 		get_cuda_arch(&cuda_arch[thr_id]);
 
-		quark_blake512_cpu_init(thr_id);
+		if (opt_n_gputhreads > 1)
+			quark_blake512_cpu_init(thr_id);
 		quark_groestl512_cpu_init(thr_id, throughput);
 		quark_skein512_cpu_init(thr_id);
 		quark_bmw512_cpu_init(thr_id, throughput);
@@ -218,11 +219,11 @@ extern int scanhash_x15(int thr_id, uint32_t *pdata,
 
 	if (opt_n_gputhreads > 1)
 	{
-		quark_blake512_cpu_setBlock_80_multi(thr_id, (uint64_t *)endiandata[thr_id]);
+		quark_blake512_cpu_setBlock_80_multi(thr_id, (uint64_t *)endiandata);
 	}
 	else
 	{
-		quark_blake512_cpu_setBlock_80( (uint64_t *)endiandata[thr_id]);
+		quark_blake512_cpu_setBlock_80( (uint64_t *)endiandata);
 	}
 	cuda_check_cpu_setTarget(ptarget);
 
@@ -256,8 +257,8 @@ extern int scanhash_x15(int thr_id, uint32_t *pdata,
 			const uint32_t Htarg = ptarget[7];
 			uint32_t vhash64[8];
 			/* check now with the CPU to confirm */
-			be32enc(&endiandata[thr_id][19], foundNonce);
-			x15hash(vhash64, endiandata[thr_id]);
+			be32enc(&endiandata[19], foundNonce);
+			x15hash(vhash64, endiandata);
 
 			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget)) {
 				int res = 1;

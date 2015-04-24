@@ -100,7 +100,8 @@ extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 		get_cuda_arch(&cuda_arch[thr_id]);
 
 		// Konstanten kopieren, Speicher belegen
-		quark_blake512_cpu_init(thr_id);
+		if (opt_n_gputhreads > 1)
+			quark_blake512_cpu_init(thr_id);
 		quark_groestl512_cpu_init(thr_id, throughput);
 		quark_skein512_cpu_init(thr_id);
 
@@ -117,11 +118,11 @@ extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 
 	if (opt_n_gputhreads > 1)
 	{
-		quark_blake512_cpu_setBlock_80_multi(thr_id, (uint64_t *)endiandata[thr_id]);
+		quark_blake512_cpu_setBlock_80_multi(thr_id, (uint64_t *)endiandata);
 	}
 	else
 	{
-		quark_blake512_cpu_setBlock_80((uint64_t *)endiandata[thr_id]);
+		quark_blake512_cpu_setBlock_80((uint64_t *)endiandata);
 	}
 	cuda_check_cpu_setTarget(ptarget);
 
