@@ -255,38 +255,42 @@ void quark_bmw512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *
 		};
 
 		uint2 q[32];
+		uint2 mxh[16];
+#pragma unroll
+		for (int i = 0; i < 16; i++)
+			mxh[i] = msg[i] ^ hash[i];
 		uint2 tmp;
-		tmp = (msg[5] ^ hash[5]) - (msg[7] ^ hash[7]) + (hash[10]) + (hash[13]) + (hash[14]);
+		tmp = (mxh[5]) - (mxh[7]) + (hash[10]) + (hash[13]) + (hash[14]);
 		q[0] = (SHR(tmp, 1) ^ SHL(tmp, 3) ^ ROTL64(tmp, 4) ^ ROTL64(tmp, 37)) + hash[1];
-		tmp = (msg[6] ^ hash[6]) - (msg[8] ^ hash[8]) + (hash[11]) + (hash[14]) - (msg[15] ^ hash[15]);
+		tmp = (mxh[6]) - (mxh[8]) + (hash[11]) + (hash[14]) - (mxh[15]);
 		q[1] = (SHR(tmp, 1) ^ SHL(tmp, 2) ^ ROTL64(tmp, 13) ^ ROTL64(tmp, 43)) + hash[2];
-		tmp = (msg[0] ^ hash[0]) + (msg[7] ^ hash[7]) + (hash[9]) - (hash[12]) + (msg[15] ^ hash[15]);
+		tmp = (mxh[0]) + (mxh[7]) + (hash[9]) - (hash[12]) + (mxh[15]);
 		q[2] = (SHR(tmp, 2) ^ SHL(tmp, 1) ^ ROTL64(tmp, 19) ^ ROTL64(tmp, 53)) + hash[3];
-		tmp = (msg[0] ^ hash[0]) - (msg[1] ^ hash[1]) + (msg[8] ^ hash[8]) - (hash[10]) + (hash[13]);
+		tmp = (mxh[0]) - (mxh[1]) + (mxh[8]) - (hash[10]) + (hash[13]);
 		q[3] = (SHR(tmp, 2) ^ SHL(tmp, 2) ^ ROTL64(tmp, 28) ^ ROTL64(tmp, 59)) + hash[4];
-		tmp = (msg[1] ^ hash[1]) + (msg[2] ^ hash[2]) + (hash[9]) - (hash[11]) - (hash[14]);
+		tmp = (mxh[1]) + (mxh[2]) + (hash[9]) - (hash[11]) - (hash[14]);
 		q[4] = (SHR(tmp, 1) ^ tmp) + hash[5];
-		tmp = (msg[3] ^ hash[3]) - (msg[2] ^ hash[2]) + (hash[10]) - (hash[12]) + (msg[15] ^ hash[15]);
+		tmp = (mxh[3]) - (mxh[2]) + (hash[10]) - (hash[12]) + (mxh[15]);
 		q[5] = (SHR(tmp, 1) ^ SHL(tmp, 3) ^ ROTL64(tmp, 4) ^ ROTL64(tmp, 37)) + hash[6];
-		tmp = (msg[4] ^ hash[4]) - (msg[0] ^ hash[0]) - (msg[3] ^ hash[3]) - (hash[11]) + (hash[13]);
+		tmp = (mxh[4]) - (mxh[0]) - (mxh[3]) - (hash[11]) + (hash[13]);
 		q[6] = (SHR(tmp, 1) ^ SHL(tmp, 2) ^ ROTL64(tmp, 13) ^ ROTL64(tmp, 43)) + hash[7];
-		tmp = (msg[1] ^ hash[1]) - (msg[4] ^ hash[4]) - (msg[5] ^ hash[5]) - (hash[12]) - (hash[14]);
+		tmp = (mxh[1]) - (mxh[4]) - (mxh[5]) - (hash[12]) - (hash[14]);
 		q[7] = (SHR(tmp, 2) ^ SHL(tmp, 1) ^ ROTL64(tmp, 19) ^ ROTL64(tmp, 53)) + hash[8];
-		tmp = (msg[2] ^ hash[2]) - (msg[5] ^ hash[5]) - (msg[6] ^ hash[6]) + (hash[13]) - (msg[15] ^ hash[15]);
+		tmp = (mxh[2]) - (mxh[5]) - (mxh[6]) + (hash[13]) - (mxh[15]);
 		q[8] = (SHR(tmp, 2) ^ SHL(tmp, 2) ^ ROTL64(tmp, 28) ^ ROTL64(tmp, 59)) + hash[9];
-		tmp = (msg[0] ^ hash[0]) - (msg[3] ^ hash[3]) + (msg[6] ^ hash[6]) - (msg[7] ^ hash[7]) + (hash[14]);
+		tmp = (mxh[0]) - (mxh[3]) + (mxh[6]) - (mxh[7]) + (hash[14]);
 		q[9] = (SHR(tmp, 1) ^ tmp) + hash[10];
-		tmp = (msg[8] ^ hash[8]) - (msg[1] ^ hash[1]) - (msg[4] ^ hash[4]) - (msg[7] ^ hash[7]) + (msg[15] ^ hash[15]);
+		tmp = (mxh[8]) - (mxh[1]) - (mxh[4]) - (mxh[7]) + (mxh[15]);
 		q[10] = (SHR(tmp, 1) ^ SHL(tmp, 3) ^ ROTL64(tmp, 4) ^ ROTL64(tmp, 37)) + hash[11];
-		tmp = (msg[8] ^ hash[8]) - (msg[0] ^ hash[0]) - (msg[2] ^ hash[2]) - (msg[5] ^ hash[5]) + (hash[9]);
+		tmp = (mxh[8]) - (mxh[0]) - (mxh[2]) - (mxh[5]) + (hash[9]);
 		q[11] = (SHR(tmp, 1) ^ SHL(tmp, 2) ^ ROTL64(tmp, 13) ^ ROTL64(tmp, 43)) + hash[12];
-		tmp = (msg[1] ^ hash[1]) + (msg[3] ^ hash[3]) - (msg[6] ^ hash[6]) - (hash[9]) + (hash[10]);
+		tmp = (mxh[1]) + (mxh[3]) - (mxh[6]) - (hash[9]) + (hash[10]);
 		q[12] = (SHR(tmp, 2) ^ SHL(tmp, 1) ^ ROTL64(tmp, 19) ^ ROTL64(tmp, 53)) + hash[13];
-		tmp = (msg[2] ^ hash[2]) + (msg[4] ^ hash[4]) + (msg[7] ^ hash[7]) + (hash[10]) + (hash[11]);
+		tmp = (mxh[2]) + (mxh[4]) + (mxh[7]) + (hash[10]) + (hash[11]);
 		q[13] = (SHR(tmp, 2) ^ SHL(tmp, 2) ^ ROTL64(tmp, 28) ^ ROTL64(tmp, 59)) + hash[14];
-		tmp = (msg[3] ^ hash[3]) - (msg[5] ^ hash[5]) + (msg[8] ^ hash[8]) - (hash[11]) - (hash[12]);
+		tmp = (mxh[3]) - (mxh[5]) + (mxh[8]) - (hash[11]) - (hash[12]);
 		q[14] = (SHR(tmp, 1) ^ tmp) + hash[15];
-		tmp = (msg[12] ^ hash[12]) - (msg[4] ^ hash[4]) - (msg[6] ^ hash[6]) - (hash[9]) + (hash[13]);
+		tmp = (mxh[12]) - (mxh[4]) - (mxh[6]) - (hash[9]) + (hash[13]);
 		q[15] = (SHR(tmp, 1) ^ SHL(tmp, 3) ^ ROTL64(tmp, 4) ^ ROTL64(tmp, 37)) + hash[0];
 
 		q[0 + 16] =
