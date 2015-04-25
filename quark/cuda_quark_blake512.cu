@@ -245,9 +245,9 @@ void quark_blake512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t
 
 __global__ 
 #if __CUDA_ARCH__ > 500
-__launch_bounds__(256, 4)
+__launch_bounds__(256, 1)
 #else
-__launch_bounds__(32, 32)
+__launch_bounds__(32, 16)
 #endif
 void quark_blake512_gpu_hash_80(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ outputHash, const uint2*const __restrict__ c_PaddedMessage)
 {
