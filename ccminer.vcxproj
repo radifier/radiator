@@ -270,10 +270,6 @@
     <ClCompile Include="crc32.c" />
     <ClCompile Include="hefty1.c" />
     <ClCompile Include="myriadgroestl.cpp" />
-    <ClCompile Include="scrypt.c">
-      <Optimization Condition="'$(Configuration)'=='Release'">Full</Optimization>
-      <AdditionalOptions>/Tp %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
     <ClCompile Include="lyra2\Lyra2.c" />
     <ClCompile Include="lyra2\Sponge.c" />
     <ClCompile Include="sph\aes_helper.c" />

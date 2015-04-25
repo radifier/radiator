@@ -87,8 +87,15 @@ void cuda_print_devices()
 // Can't be called directly in cpu-miner.c
 void cuda_devicereset()
 {
-	cudaDeviceSynchronize();
-	cudaDeviceReset();
+	for (int i = 0; i < active_gpus; i++)
+	{
+		if (i%opt_n_gputhreads == 0)
+		{
+			cudaSetDevice(device_map[i]);
+			cudaDeviceSynchronize();
+			cudaDeviceReset();
+		}
+	}
 }
 
 static bool substringsearch(const char *haystack, const char *needle, int &match)

@@ -365,9 +365,8 @@ static struct option const options[] = {
 };
 
 struct work _ALIGN(64) g_work;
-time_t g_work_time;
 pthread_mutex_t g_work_lock;
-static time_t g_work_time;
+time_t g_work_time;
 
 
 #ifdef __linux /* Linux specific policy and affinity management */
@@ -430,10 +429,6 @@ void get_currentalgo(char* buf, int sz)
  */
 void proper_exit(int reason)
 {
-#ifdef WIN32
-	timeEndPeriod(1); // else never executed
-#endif
-
 #ifdef USE_WRAPNVML
 	if (hnvml)
 		nvml_destroy(hnvml);
@@ -443,21 +438,19 @@ void proper_exit(int reason)
 	pthread_mutex_lock(&g_work_lock);	//freeze stratum
 	pthread_mutex_lock(&stats_lock);	//hack. Freeze all the gputhreads when they finnish
 
+	cuda_devicereset();
+
 	free(opt_syslog_pfx);
 	free(opt_api_allow);
 	hashlog_purge_all();
 	stats_purge_all();
-	cuda_devicereset();
 
-	try
-	{
-		sleep(10);			//make sure that the gpu threads are stopped when updating the stats.
-		exit(0);
-	}
-	catch (...)
-	{
-		int t = 0;
-	}
+#ifdef WIN32
+	timeEndPeriod(1); // else never executed
+#endif
+
+//	sleep(4);
+	exit(0);
 }
 
 static bool jobj_binary(const json_t *obj, const char *key,
@@ -1363,9 +1356,6 @@ static void *miner_thread(void *userdata)
 				break;
 			case ALGO_LYRA2:
 				minmax = 0x100000;
-				break;
-			case ALGO_SCRYPT_JANE:
-				minmax = 0x80000;
 				break;
 			}
 			max64 = max(minmax-1, max64);

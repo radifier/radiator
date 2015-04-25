@@ -216,8 +216,6 @@
     <ClCompile Include="lyra2\Sponge.c">
       <Filter>Source Files\sph</Filter>
     </ClCompile>
-    <ClCompile Include="scrypt-jane.cpp" />
-    <ClCompile Include="scrypt.cpp" />
     <ClCompile Include="api.cpp">
       <Filter>Source Files\CUDA</Filter>
     </ClCompile>
@@ -361,7 +359,6 @@
     <ClInclude Include="lyra2\Sponge.h">
       <Filter>Header Files\lyra2</Filter>
     </ClInclude>
-    <ClInclude Include="scrypt\salsa_kernel.h" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="cuda.cpp">
@@ -561,15 +558,5 @@
     <CudaCompile Include="skein.cu">
       <Filter>Source Files\CUDA</Filter>
     </CudaCompile>
-    <CudaCompile Include="scrypt\blake.cu" />
-    <CudaCompile Include="scrypt\fermi_kernel.cu" />
-    <CudaCompile Include="scrypt\keccak.cu" />
-    <CudaCompile Include="scrypt\kepler_kernel.cu" />
-    <CudaCompile Include="scrypt\nv_kernel.cu" />
-    <CudaCompile Include="scrypt\nv_kernel2.cu" />
-    <CudaCompile Include="scrypt\salsa_kernel.cu" />
-    <CudaCompile Include="scrypt\sha256.cu" />
-    <CudaCompile Include="scrypt\test_kernel.cu" />
-    <CudaCompile Include="scrypt\titan_kernel.cu" />
   </ItemGroup>
 </Project>
