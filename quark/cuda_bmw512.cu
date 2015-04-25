@@ -192,11 +192,7 @@ __device__ __forceinline__ void Compression512(const uint2 *msg, uint2 *hash)
 }
 
 __global__
-#if __CUDA_ARCH__ > 500
-__launch_bounds__(32, 16)
-#else
 __launch_bounds__(64, 8)
-#endif
 void quark_bmw512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
 {
     const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
