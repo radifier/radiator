@@ -21,7 +21,7 @@ __constant__ uint64_t c_PaddedMessage80[16]; // padded message (80 bytes + paddi
                     q[i+8] + ROTL64(q[i+9], 37) + q[i+10] + ROTL64(q[i+11], 43) + \
                     q[i+12] + ROTL64(q[i+13], 53) + (SHR(q[i+14],1) ^ q[i+14]) + (SHR(q[i+15],2) ^ q[i+15])
 
-__device__ __forceinline__ void Compression512(uint2 *msg, uint2 *hash)
+__device__ __forceinline__ void Compression512(const uint2 *msg, uint2 *hash)
 {
 
 	const uint2 precalc[16] =
@@ -195,7 +195,7 @@ __global__
 #if __CUDA_ARCH__ > 500
 __launch_bounds__(32, 16)
 #else
-__launch_bounds__(32, 8)
+__launch_bounds__(64, 8)
 #endif
 void quark_bmw512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
 {
@@ -205,7 +205,7 @@ void quark_bmw512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *
         const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
         const int hashPosition = nounce - startNounce;
-        const uint64_t *const inpHash = &g_hash[8 * hashPosition];
+        uint64_t *const inpHash = &g_hash[8 * hashPosition];
 
 		uint2 msg[16];
 		uint2 h[16];
@@ -334,13 +334,13 @@ void quark_bmw512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *
 
 		q[2 + 16] = CONST_EXP2(2) +
 			((precalcf[2] + ROTL64(msg[2], 2 + 1) +
-			ROTL64(msg[2 + 3], 2 + 4) - ROTL64(msg[2 + 10], 2 + 11)) ^ hash[2 + 7]);
+			ROTL64(msg[2 + 3], 2 + 4)) ^ hash[2 + 7]);
 		q[3 + 16] = CONST_EXP2(3) +
 			((precalcf[3] + ROTL64(msg[3], 3 + 1) +
-			ROTL64(msg[3 + 3], 3 + 4) - ROTL64(msg[3 + 10], 3 + 11)) ^ hash[3 + 7]);
+			ROTL64(msg[3 + 3], 3 + 4)) ^ hash[3 + 7]);
 		q[4 + 16] = CONST_EXP2(4) +
 			((precalcf[4] + ROTL64(msg[4], 4 + 1) +
-			ROTL64(msg[4 + 3], 4 + 4) - ROTL64(msg[4 + 10], 4 + 11)) ^ hash[4 + 7]);
+			ROTL64(msg[4 + 3], 4 + 4)) ^ hash[4 + 7]);
 		q[5 + 16] = CONST_EXP2(5) +
 			((precalcf[5] + ROTL64(msg[5], 5 + 1) +
 			ROTL64(msg[5 + 3], 5 + 4) - ROTL64(msg[5 + 10], 5 + 11)) ^ hash[5 + 7]);
@@ -353,22 +353,24 @@ void quark_bmw512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *
 				ROTL64(msg[i - 6], (i - 6) + 1)) ^ hash[i + 7]);
 		}
 
-		//#pragma unroll 4
-		for (int i = 9; i < 13; i++) {
-			q[i + 16] = CONST_EXP2(i) +
-				((vectorize((i + 16)*(0x0555555555555555ull)) +
-				ROTL64(msg[i + 3], i + 4) - ROTL64(msg[i - 6], (i - 6) + 1)) ^ hash[i - 9]);
-		}
+		q[25] = CONST_EXP2(9) +
+			((vectorize((25)*(0x0555555555555555ull)) - ROTL64(msg[3], 4)) ^ hash[0]);
+		q[26] = CONST_EXP2(10) +
+			((vectorize((26)*(0x0555555555555555ull)) - ROTL64(msg[4], 5)) ^ hash[1]);
+		q[27] = CONST_EXP2(11) +
+			((vectorize((27)*(0x0555555555555555ull)) - ROTL64(msg[5], 6)) ^ hash[2]);
+		q[28] = CONST_EXP2(12) +
+			((vectorize((28)*(0x0555555555555555ull)) +	ROTL64(msg[15], 16) - ROTL64(msg[6], 7)) ^ hash[3]);
 
 		q[13 + 16] = CONST_EXP2(13) +
-			((precalcf[6] + ROTL64(msg[13], 13 + 1) +
+			((precalcf[6] + 
 			ROTL64(msg[13 - 13], (13 - 13) + 1) - ROTL64(msg[13 - 6], (13 - 6) + 1)) ^ hash[13 - 9]);
 		q[14 + 16] = CONST_EXP2(14) +
-			((precalcf[7] + ROTL64(msg[14], 14 + 1) +
+			((precalcf[7] + 
 			ROTL64(msg[14 - 13], (14 - 13) + 1) - ROTL64(msg[14 - 6], (14 - 6) + 1)) ^ hash[14 - 9]);
 		q[15 + 16] = CONST_EXP2(15) +
 			((precalcf[8] + ROTL64(msg[15], 15 + 1) +
-			ROTL64(msg[15 - 13], (15 - 13) + 1) - ROTL64(msg[15 - 6], (15 - 6) + 1)) ^ hash[15 - 9]);
+			ROTL64(msg[15 - 13], (15 - 13) + 1)) ^ hash[15 - 9]);
 
 		uint2 XL64 = q[16] ^ q[17] ^ q[18] ^ q[19] ^ q[20] ^ q[21] ^ q[22] ^ q[23];
 		uint2 XH64 = XL64^q[24] ^ q[25] ^ q[26] ^ q[27] ^ q[28] ^ q[29] ^ q[30] ^ q[31];
@@ -488,7 +490,7 @@ __host__ void quark_bmw512_cpu_setBlock_80(void *pdata)
 
 __host__ void quark_bmw512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash)
 {
-	const uint32_t threadsperblock = 32;
+	const uint32_t threadsperblock = 64;
 
     // berechne wie viele Thread Blocks wir brauchen
     dim3 grid((threads + threadsperblock-1)/threadsperblock);
