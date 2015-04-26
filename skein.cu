@@ -57,7 +57,7 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 
 	if (opt_benchmark)
 	{
-		((uint64_t*)ptarget)[3] = 0xf00000000;
+		((uint64_t*)ptarget)[3] = 0x3000f0000;
 	}
 	uint64_t target = ((uint64_t*)ptarget)[3];
 	if (!init[thr_id])
@@ -112,7 +112,8 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 				{
 					endiandata[19] = swab32_if(foundnonces[thr_id][1], swap);
 					skeincoinhash(vhash64, endiandata);
-					if (vhash64[7] <= ptarget[7] && fulltest(vhash64, ptarget))
+					uint64_t test2 = ((uint64_t*)vhash64)[3];
+					if (test2 <= target && fulltest(vhash64, ptarget))
 					{
 						if (opt_debug || opt_benchmark)
 							applog(LOG_INFO, "GPU #%d: found nonce $%08X", device_map[thr_id], foundnonces[thr_id][1]);
@@ -121,7 +122,7 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 					}
 					else
 					{
-						applog(LOG_WARNING, "GPU #%d: result for nonce $%08X does not validate on CPU!", device_map[thr_id], foundnonces[thr_id][1]);
+						if (test2 != target) applog(LOG_WARNING, "GPU #%d: result for nonce $%08X does not validate on CPU!", device_map[thr_id], foundnonces[thr_id][1]);
 					}
 				}
 				pdata[19] = swab32_if(foundnonces[thr_id][0], !swap);
@@ -130,7 +131,7 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 			else 
 			{
 				if (test != target)
-					applog(LOG_WARNING, "GPU #%d: result for nonce $%08X does not validate on CPU!", devicemap[thr_id], foundnonces[thr_id][0]);
+					applog(LOG_WARNING, "GPU #%d: result for nonce $%08X does not validate on CPU!", device_map[thr_id], foundnonces[thr_id][0]);
 				else
 					applog(LOG_WARNING, "Lost work: #%d", test);
 
