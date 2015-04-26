@@ -2069,7 +2069,7 @@ __constant__ uint32_t sha256_constantTable[64] = {
 
 __global__
 __launch_bounds__(1024)
-void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ d_found, uint32_t target)
+void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ d_found, uint64_t target)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
@@ -2297,7 +2297,7 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 
 		// Progress W1
 #pragma unroll 
-		for (int j = 0; j<61; j++)
+		for (int j = 0; j<62; j++)
 		{
 			uint32_t T1, T2;
 			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j] + sha256_endingTable[j];
@@ -2310,7 +2310,10 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 		}
 
 
-		if (SWAB32(hash[7] + regs[4]) <= target)
+		uint64_t test = SWAB32(hash[7] + regs[5]);
+		test <<= 32;
+		test |= SWAB32(hash[6] + regs[4]);
+		if (test <= target)
 		{
 			uint32_t tmp = atomicExch(&(d_found[0]), nounce);
 			if (tmp != 0xffffffff)
@@ -2319,7 +2322,7 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 	}
 }
 __global__
-void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ d_found, uint32_t target)
+void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ d_found, uint64_t target)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
@@ -2547,7 +2550,7 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 
 		// Progress W1
 #pragma unroll 
-		for (int j = 0; j<61; j++)
+		for (int j = 0; j<62; j++)
 		{
 			uint32_t T1, T2;
 			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j] + sha256_endingTable[j];
@@ -2558,9 +2561,10 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 			regs[0] = T1 + T2;
 			regs[4] += T1;
 		}
-
-
-		if (SWAB32(hash[7] + regs[4]) <= target)
+		uint64_t test = SWAB32(hash[7] + regs[5]);
+		test <<= 32;
+		test|= SWAB32(hash[6] + regs[4]);
+		if (test <= target)
 		{
 			uint32_t tmp = atomicExch(&(d_found[0]), nounce);
 			if (tmp != 0xffffffff)
@@ -2672,7 +2676,7 @@ void skein512_cpu_setBlock_80(uint32_t thr_id, void *pdata)
 }
 
 __host__
-void skein512_cpu_hash_80_52(int thr_id, uint32_t threads, uint32_t startNounce, int swapu,int32_t target, uint32_t *h_found)
+void skein512_cpu_hash_80_52(int thr_id, uint32_t threads, uint32_t startNounce, int swapu,uint64_t target, uint32_t *h_found)
 {
 	dim3 grid((threads + 1024 - 1) / 1024);
 	dim3 block(1024);
@@ -2681,7 +2685,7 @@ void skein512_cpu_hash_80_52(int thr_id, uint32_t threads, uint32_t startNounce,
 	cudaMemcpy(h_found, d_found[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost);
 }
 __host__
-void skein512_cpu_hash_80_50(int thr_id, uint32_t threads, uint32_t startNounce, int swapu, int32_t target, uint32_t *h_found)
+void skein512_cpu_hash_80_50(int thr_id, uint32_t threads, uint32_t startNounce, int swapu, uint64_t target, uint32_t *h_found)
 {
 	dim3 grid((threads + 256 - 1) / 256);
 	dim3 block(256);
