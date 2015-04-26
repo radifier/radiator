@@ -2124,7 +2124,6 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 
 		t0 = vectorizelow(8); // extra
 		t1 = vectorize(0xFF00000000000000ull); // etype
-		t2 = vectorize(0xB000000000000050ull);
 
 		h0 = vectorize(c_PaddedMessage80[0]) ^ p[0];
 		h1 = nounce2 ^ p[1];
@@ -2135,7 +2134,8 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 		h6 = p[6];
 		h7 = p[7];
 
-		TFBIG_KINIT_UI2(h0, h1, h2, h3, h4, h5, h6, h7, h8, t0, t1, t2);
+		h8 = h0 ^ h1 ^ p[2] ^ p[3] ^ p[4] ^ p[5] ^ p[6] ^ p[7] ^ vectorize(0x1BD11BDAA9FC1A22);
+		t2 = vectorize(0xFF00000000000008ull);
 
 		// p[8] = { 0 };
 		#pragma unroll 8
@@ -2162,7 +2162,6 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 		TFBIG_4o_UI2(17);
 		TFBIG_ADDKEY_UI2(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], h, t, 18);
 
-		uint32_t nounce = (startNounce + thread);
 		uint32_t *message = (uint32_t *)p;	
 
 		uint32_t W1[16];
@@ -2296,26 +2295,40 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 			regs[k] = hash[k];
 
 		// Progress W1
+		uint32_t T1, T2;
 #pragma unroll 
-		for (int j = 0; j<62; j++)
+		for (int j = 0; j<56; j++)
 		{
-			uint32_t T1, T2;
 			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j] + sha256_endingTable[j];
 			T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
 #pragma unroll 7
-			for (int k = 6; k >= 0; k--) regs[k + 1] = regs[k];
+			for (int k = 6; k >= 0; k--)
+				regs[k + 1] = regs[k];
 			regs[0] = T1 + T2;
 			regs[4] += T1;
 		}
+		T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[56] + sha256_endingTable[56];
+		T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
+		regs[7] = T1 + T2;
+		regs[3] += T1;
 
+		T1 = regs[6] + S1(regs[3]) + Ch(regs[3], regs[4], regs[5]) + sha256_constantTable[57] + sha256_endingTable[57];
+		T2 = S0(regs[7]) + Maj(regs[7], regs[0], regs[1]);
+		regs[6] = T1 + T2;
+		regs[2] += T1;
+		//************
+		regs[1] += regs[5] + S1(regs[2]) + Ch(regs[2], regs[3], regs[4]) + sha256_constantTable[58] + sha256_endingTable[58];
+		regs[0] += regs[4] + S1(regs[1]) + Ch(regs[1], regs[2], regs[3]) + sha256_constantTable[59] + sha256_endingTable[59];
+		regs[7] += regs[3] + S1(regs[0]) + Ch(regs[0], regs[1], regs[2]) + sha256_constantTable[60] + sha256_endingTable[60];
+		regs[6] += regs[2] + S1(regs[7]) + Ch(regs[7], regs[0], regs[1]) + sha256_constantTable[61] + sha256_endingTable[61];
 
-		uint64_t test = SWAB32(hash[7] + regs[5]);
+		uint64_t test = SWAB32(hash[7] + regs[7]);
 		test <<= 32;
-		test |= SWAB32(hash[6] + regs[4]);
+		test |= SWAB32(hash[6] + regs[6]);
 		if (test <= target)
 		{
-			uint32_t tmp = atomicExch(&(d_found[0]), nounce);
+			uint32_t tmp = atomicExch(&(d_found[0]), startNounce + thread);
 			if (tmp != 0xffffffff)
 				d_found[1] = tmp;
 		}
@@ -2377,7 +2390,6 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 
 		t0 = vectorizelow(8); // extra
 		t1 = vectorize(0xFF00000000000000ull); // etype
-		t2 = vectorize(0xB000000000000050ull);
 
 		h0 = vectorize(c_PaddedMessage80[0]) ^ p[0];
 		h1 = nounce2 ^ p[1];
@@ -2388,7 +2400,8 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 		h6 = p[6];
 		h7 = p[7];
 
-		TFBIG_KINIT_UI2(h0, h1, h2, h3, h4, h5, h6, h7, h8, t0, t1, t2);
+		h8 = h0 ^ h1 ^ p[2] ^ p[3] ^ p[4] ^ p[5] ^ p[6] ^ p[7] ^ vectorize(0x1BD11BDAA9FC1A22);
+		t2 = vectorize(0xFF00000000000008ull);
 
 		// p[8] = { 0 };
 #pragma unroll 8
@@ -2415,7 +2428,6 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 		TFBIG_4o_UI2(17);
 		TFBIG_ADDKEY_UI2(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], h, t, 18);
 
-		uint32_t nounce = (startNounce + thread);
 		uint32_t *message = (uint32_t *)p;
 
 		uint32_t W1[16];
@@ -2549,24 +2561,40 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 			regs[k] = hash[k];
 
 		// Progress W1
+		uint32_t T1, T2;
 #pragma unroll 
-		for (int j = 0; j<62; j++)
+		for (int j = 0; j<56; j++)//62
 		{
-			uint32_t T1, T2;
 			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j] + sha256_endingTable[j];
 			T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
 #pragma unroll 7
-			for (int k = 6; k >= 0; k--) regs[k + 1] = regs[k];
+			for (int k = 6; k >= 0; k--)
+				regs[k + 1] = regs[k];
 			regs[0] = T1 + T2;
 			regs[4] += T1;
 		}
-		uint64_t test = SWAB32(hash[7] + regs[5]);
+		T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[56] + sha256_endingTable[56];
+		T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
+		regs[7] = T1 + T2;
+		regs[3] += T1;
+
+		T1 = regs[6] + S1(regs[3]) + Ch(regs[3], regs[4], regs[5]) + sha256_constantTable[57] + sha256_endingTable[57];
+		T2 = S0(regs[7]) + Maj(regs[7], regs[0], regs[1]);
+		regs[6] = T1 + T2;
+		regs[2] += T1;
+		//************
+		regs[1] += regs[5] + S1(regs[2]) + Ch(regs[2], regs[3], regs[4]) + sha256_constantTable[58] + sha256_endingTable[58];
+		regs[0] += regs[4] + S1(regs[1]) + Ch(regs[1], regs[2], regs[3]) + sha256_constantTable[59] + sha256_endingTable[59];
+		regs[7] += regs[3] + S1(regs[0]) + Ch(regs[0], regs[1], regs[2]) + sha256_constantTable[60] + sha256_endingTable[60];
+		regs[6] += regs[2] + S1(regs[7]) + Ch(regs[7], regs[0], regs[1]) + sha256_constantTable[61] + sha256_endingTable[61];
+
+		uint64_t test = SWAB32(hash[7] + regs[7]);
 		test <<= 32;
-		test|= SWAB32(hash[6] + regs[4]);
+		test|= SWAB32(hash[6] + regs[6]);
 		if (test <= target)
 		{
-			uint32_t tmp = atomicExch(&(d_found[0]), nounce);
+			uint32_t tmp = atomicExch(&(d_found[0]), startNounce + thread);
 			if (tmp != 0xffffffff)
 				d_found[1] = tmp;
 		}
