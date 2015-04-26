@@ -14,12 +14,11 @@ extern "C"
 
 #include "cuda_helper.h"
 
-static uint32_t *d_hash[MAX_GPUS];
-static uint32_t *h_nounce[MAX_GPUS];
+static uint32_t h_nounce[MAX_GPUS][2];
 
 extern void keccak256_cpu_init(int thr_id, uint32_t threads);
 extern void keccak256_setBlock_80(void *pdata,const void *ptarget);
-extern void keccak256_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash,uint32_t *h_nounce);
+extern void keccak256_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *h_nounce);
 
 // CPU Hash
 extern "C" void keccak256_hash(void *state, const void *input)
@@ -42,8 +41,10 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 	uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1U << 21); // 256*256*8*4
-	throughput = min(throughput, (max_nonce - first_nonce));
+	uint32_t intensity = (device_sm[device_map[thr_id]] > 500) ? 1 << 28 : 1 << 27;;
+	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity); // 256*4096
+	throughput = min(throughput, max_nonce - first_nonce);
+
 
 	if (opt_benchmark)
 		ptarget[7] = 0x0002;
@@ -63,10 +64,8 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
-
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
 		keccak256_cpu_init(thr_id, (int)throughput);
-		CUDA_SAFE_CALL(cudaMallocHost(&h_nounce[thr_id], 4 * sizeof(uint32_t)));
+//		CUDA_SAFE_CALL(cudaMallocHost(&h_nounce[thr_id], 2 * sizeof(uint32_t)));
 		init[thr_id] = true;
 	}
 
@@ -79,7 +78,7 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 
 	do {
 
-		keccak256_cpu_hash_80(thr_id, (int) throughput, pdata[19], d_hash[thr_id], h_nounce[thr_id]);
+		keccak256_cpu_hash_80(thr_id, (int) throughput, pdata[19], h_nounce[thr_id]);
 		if (h_nounce[thr_id][0] != UINT32_MAX)
 		{
 			uint32_t Htarg = ptarget[7];
@@ -115,7 +114,6 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 				pdata[19] = h_nounce[thr_id][0];
 				if (opt_benchmark)
 					applog(LOG_INFO, "GPU #%d Found nounce %08x", device_map[thr_id], h_nounce[thr_id][0]);
-				MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 				return res;
 			}
 			else
@@ -129,8 +127,6 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 
 		pdata[19] += throughput; CUDA_SAFE_CALL(cudaGetLastError());
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
-
 	*hashes_done = pdata[19] - first_nonce;
-	MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 	return 0;
 }
