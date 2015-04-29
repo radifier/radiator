@@ -2339,11 +2339,11 @@ BOOL WINAPI ConsoleHandler(DWORD dwType)
 	switch (dwType) {
 	case CTRL_C_EVENT:
 		applog(LOG_INFO, "CTRL_C_EVENT received, exiting");
-		exit(EXIT_SUCCESS);
+		proper_exit(0);
 		break;
 	case CTRL_BREAK_EVENT:
 		applog(LOG_INFO, "CTRL_BREAK_EVENT received, exiting");
-		exit(EXIT_SUCCESS);
+		proper_exit(0);
 		break;
 	default:
 		return false;
