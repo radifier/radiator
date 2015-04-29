@@ -103,8 +103,8 @@ static __device__ __forceinline__ void Sbox_and_MDS_layer(uint32_t x[8][4], uint
 	//Sbox and MDS layer
 #pragma unroll 4
 	for (int i = 0; i < 4; i++) {
-		cc0 = ((uint32_t*)c_E8_bitslice_roundconstant[roundnumber])[i];
-		cc1 = ((uint32_t*)c_E8_bitslice_roundconstant[roundnumber])[i + 4];
+		cc0 = c_E8_bitslice_roundconstant[roundnumber][i];
+		cc1 = c_E8_bitslice_roundconstant[roundnumber][i + 4];
 		Sbox(x[0][i], x[2][i], x[4][i], x[6][i], cc0);
 		Sbox(x[1][i], x[3][i], x[5][i], x[7][i], cc1);
 		L(x[0][i], x[2][i], x[4][i], x[6][i], x[1][i], x[3][i], x[5][i], x[7][i]);
@@ -245,14 +245,14 @@ static __device__ __forceinline__ void F8(uint32_t x[8][4], const uint32_t buffe
 
 // Die Hash-Funktion
 __global__ __launch_bounds__(256, 4)
-void quark_jh512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
+void quark_jh512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *g_hash, uint32_t *g_nonceVector)
 {
-    const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+    uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
     {
-        const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
-		const uint32_t hashPosition = nounce - startNounce;
-		uint32_t *const Hash = &g_hash[16 * hashPosition];
+        uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
+		uint32_t hashPosition = nounce - startNounce;
+		uint32_t *Hash = &g_hash[16 * hashPosition];
 		uint32_t x[8][4] = {
 				{ 0x964bd16f, 0x17aa003e, 0x052e6a63, 0x43d5157a },
 				{ 0x8d5e228a, 0x0bef970c, 0x591234e9, 0x61c3b3f2 },
@@ -295,17 +295,17 @@ void quark_jh512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *c
 }
 
 // Die Hash-Funktion
-#define TPB2 512
-__global__ __launch_bounds__(TPB2, 2)
+#define TPB2 256
+__global__ __launch_bounds__(TPB2, 4)
 void quark_jh512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
 {
-	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
+		uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-		const int hashPosition = nounce - startNounce;
-		uint32_t *const Hash = (uint32_t*)&g_hash[8 * hashPosition];
+		int hashPosition = nounce - startNounce;
+		uint32_t *Hash = (uint32_t*)&g_hash[8 * hashPosition];
 
 		uint32_t x[8][4] = {
 			{ 0x964bd16f, 0x17aa003e, 0x052e6a63, 0x43d5157a },
@@ -322,7 +322,7 @@ void quark_jh512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint6
 		x[0][0] ^= 0x80U;
 		x[3][3] ^= 0x00020000U;
 
-		for (int i = 0; i < 35; i += 7)
+		for (int i = 0; i < 42; i += 7)
 		{
 			RoundFunction0(x, i);
 			RoundFunction1(x, i + 1);
@@ -332,13 +332,6 @@ void quark_jh512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint6
 			RoundFunction5(x, i + 5);
 			RoundFunction6(x, i + 6);
 		}
-		RoundFunction0(x, 35);
-		RoundFunction1(x, 35 + 1);
-		RoundFunction2(x, 35 + 2);
-		RoundFunction3(x, 35 + 3);
-		RoundFunction4(x, 35 + 4);
-		RoundFunction5(x, 35 + 5);
-		RoundFunction6(x, 35 + 6);
 
 		Hash[7] = x[5][3];
 	}
