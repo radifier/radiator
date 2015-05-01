@@ -317,8 +317,6 @@ void pentablake_cpu_hash_80(int thr_id, uint32_t threads, const uint32_t startNo
 	dim3 block(TPB);
 
 	pentablake_gpu_hash_80 <<<grid, block>>> (threads, startNounce, d_outputHash);
-
-	//MyStreamSynchronize(NULL, thr_id);
 }
 
 
@@ -372,8 +370,6 @@ void pentablake_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, 
 	dim3 block(TPB);
 
 	pentablake_gpu_hash_64 <<<grid, block>>> (threads, startNounce, (uint64_t*)d_outputHash);
-
-	//MyStreamSynchronize(NULL, thr_id);
 }
 
 #if 0
@@ -530,7 +526,6 @@ extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 					rc++;
 				}
 				pdata[19] = foundNonce;
-				MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 				return rc;
 			}
 			else if (vhashcpu[7] > Htarg) {
@@ -545,6 +540,5 @@ extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 
 	*hashes_done = pdata[19] - first_nonce + 1;
-	MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 	return rc;
 }

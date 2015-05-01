@@ -111,7 +111,6 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 		keccak256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		lyra2_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		skein256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		//MyStreamSynchronize(NULL, 2, thr_id);
 		groestl256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id], foundNonce);
 		if (foundNonce[0] != 0)
 		{
@@ -145,7 +144,6 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 				}
 				pdata[19] = foundNonce[0];
 				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: Found nounce %08x", device_map[thr_id], foundNonce[0]);
-				MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 				return res;
 			}
 			else
@@ -159,6 +157,5 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 
 	*hashes_done = pdata[19] - first_nonce + 1;
-	MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 	return 0;
 }
