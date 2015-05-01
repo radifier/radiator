@@ -1226,11 +1226,11 @@ static void *miner_thread(void *userdata)
 
 	while (1) 
 	{
-//		if (opt_benchmark)
-//		{
-//			work.data[19] = work.data[19] & 0xfffffffU;	//reset Hashcounters
-//			work.data[21] = work.data[21] & 0xfffffffU;
-//		}
+		if (opt_benchmark)
+		{
+			work.data[19] = work.data[19] & 0xfffffffU;	//reset Hashcounters
+			work.data[21] = work.data[21] & 0xfffffffU;
+		}
 
 		struct timeval tv_start, tv_end, diff;
 		uint32_t hashes_done=0;
