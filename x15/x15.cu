@@ -29,7 +29,6 @@ extern "C" {
 
 // Memory for the hash functions
 static uint32_t *d_hash[MAX_GPUS];
-static uint32_t endiandata[MAX_GPUS][20];
 
 extern void quark_blake512_cpu_init(int thr_id);
 extern void quark_blake512_cpu_setBlock_80(uint64_t *pdata);
@@ -213,7 +212,8 @@ extern int scanhash_x15(int thr_id, uint32_t *pdata,
 		cuda_check_cpu_init(thr_id, throughput);
 		init[thr_id] = true;
 	}
-
+	
+	uint32_t endiandata[20];
 	for (int k=0; k < 20; k++)
 		be32enc(&endiandata[k], pdata[k]);
 
@@ -272,14 +272,16 @@ extern int scanhash_x15(int thr_id, uint32_t *pdata,
 					{
 						pdata[21] = secNonce;
 						res++;
-						if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nounce %08x", device_map[thr_id], secNonce, vhash64[7]);
+						if (opt_benchmark)
+							applog(LOG_INFO, "GPU #%d: found nounce %08x", device_map[thr_id], secNonce);
 					}
 					else
 					{
 						applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], secNonce);
 					}
 				}
-				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found nounce %08x", device_map[thr_id], foundNonce, vhash64[7]);
+				if (opt_benchmark)
+					applog(LOG_INFO, "GPU #%d: found nounce %08x", device_map[thr_id], foundNonce);
 				pdata[19] = foundNonce;
 				MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 				return res;
