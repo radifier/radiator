@@ -1,6 +1,8 @@
 #include "cuda_helper.h"
 #include <memory.h> // memcpy()
 
+
+
 #define TPB 320
 
 __constant__ uint32_t c_PaddedMessage80[32]; // padded message (80 bytes + padding)
@@ -2560,7 +2562,7 @@ __host__ void x11_shavite512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t 
 	dim3 grid((threads + TPB-1)/TPB);
 	dim3 block(TPB);
 
-	x11_shavite512_gpu_hash_64<<<grid, block>>>(threads, startNounce, (uint64_t*)d_hash);
+	x11_shavite512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash);
 }
 
 __host__ void x11_shavite512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_outputHash)
@@ -2570,10 +2572,10 @@ __host__ void x11_shavite512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t 
 	dim3 grid((threads + TPB-1)/TPB);
 	dim3 block(TPB);
 
-	x11_shavite512_gpu_hash_80<<<grid, block>>>(threads, startNounce, d_outputHash);
+	x11_shavite512_gpu_hash_80<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_outputHash);
 }
 
-__host__ void x11_shavite512_setBlock_80(void *pdata)
+__host__ void x11_shavite512_setBlock_80(int thr_id, void *pdata)
 {
 	// Message mit Padding bereitstellen
 	// lediglich die korrekte Nonce ist noch ab Byte 76 einzusetzen.
@@ -2581,6 +2583,6 @@ __host__ void x11_shavite512_setBlock_80(void *pdata)
 	memcpy(PaddedMessage, pdata, 80);
 	memset(PaddedMessage+80, 0, 48);
 
-	cudaMemcpyToSymbol(c_PaddedMessage80, PaddedMessage, 32*sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(c_PaddedMessage80, PaddedMessage, 32 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }
 

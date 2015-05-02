@@ -279,7 +279,7 @@ __host__ void quark_keccak512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t
     dim3 grid((threads + threadsperblock-1)/threadsperblock);
     dim3 block(threadsperblock);
 
-    quark_keccak512_gpu_hash_64<<<grid, block>>>(threads, startNounce, (uint2 *)d_hash, d_nonceVector);
+    quark_keccak512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint2 *)d_hash, d_nonceVector);
 }
 
 __host__ void quark_keccak512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash)
@@ -290,5 +290,5 @@ __host__ void quark_keccak512_cpu_hash_64_final(int thr_id, uint32_t threads, ui
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
 
-	quark_keccak512_gpu_hash_64_final << <grid, block >> >(threads, startNounce, (uint2 *)d_hash, d_nonceVector);
+	quark_keccak512_gpu_hash_64_final << <grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint2 *)d_hash, d_nonceVector);
 }

@@ -2,9 +2,9 @@
 
 #include "cuda_helper.h"
 
+
+
 #define TPB 160
-
-
 
 static __device__ __forceinline__
 void Gfunc_v35(uint2 & a, uint2 &b, uint2 &c, uint2 &d)
@@ -195,7 +195,7 @@ void lyra2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint6
 	dim3 grid((threads + TPB - 1) / TPB);
 	dim3 block(TPB);
 
-	lyra2_gpu_hash_32 <<<grid, block>>> (threads, startNounce, d_outputHash);
+	lyra2_gpu_hash_32 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_outputHash);
 
 	//MyStreamSynchronize(NULL, order, thr_id);
 }

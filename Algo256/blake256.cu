@@ -258,7 +258,7 @@ uint32_t blake256_cpu_hash_80(const int thr_id, const uint32_t threads, const ui
 	if (cudaMemset(d_resNonce[thr_id], 0xff, NBN*sizeof(uint32_t)) != cudaSuccess)
 		return result;
 
-	blake256_gpu_hash_80<<<grid, block>>>(threads, startNonce, d_resNonce[thr_id], highTarget, crcsum, (int) rounds);
+	blake256_gpu_hash_80<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNonce, d_resNonce[thr_id], highTarget, crcsum, (int) rounds);
 	cudaDeviceSynchronize();
 	if (cudaSuccess == cudaMemcpy(h_resNonce[thr_id], d_resNonce[thr_id], NBN*sizeof(uint32_t), cudaMemcpyDeviceToHost)) {
 		//cudaDeviceSynchronize(); /* seems no more required */
@@ -270,11 +270,11 @@ uint32_t blake256_cpu_hash_80(const int thr_id, const uint32_t threads, const ui
 }
 
 __host__
-void blake256_cpu_setBlock_80(uint32_t *pdata, const uint32_t *ptarget)
+void blake256_cpu_setBlock_80(int thr_id, uint32_t *pdata, const uint32_t *ptarget)
 {
 	uint32_t data[20];
 	memcpy(data, pdata, 80);
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(c_data, data, sizeof(data), 0, cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_data, data, sizeof(data), 0, cudaMemcpyHostToDevice));
 }
 #else
 
@@ -340,10 +340,10 @@ static uint32_t blake256_cpu_hash_16(const int thr_id, const uint32_t threads, c
 	dim3 block(TPB);
 
 	/* Check error on Ctrl+C or kill to prevent segfaults on exit */
-	if (cudaMemset(d_resNonce[thr_id], 0xff, NBN*sizeof(uint32_t)) != cudaSuccess)
+	if (cudaMemsetAsync(d_resNonce[thr_id], 0xff, NBN*sizeof(uint32_t), gpustream[thr_id]) != cudaSuccess)
 		return result;
 
-	blake256_gpu_hash_16 <<<grid, block>>> (threads, startNonce, d_resNonce[thr_id], highTarget, (int) rounds, opt_tracegpu);
+	blake256_gpu_hash_16 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNonce, d_resNonce[thr_id], highTarget, (int) rounds, opt_tracegpu);
 	CUDA_SAFE_CALL(cudaMemcpy(h_resNonce[thr_id], d_resNonce[thr_id], NBN*sizeof(uint32_t), cudaMemcpyDeviceToHost));
 	result = h_resNonce[thr_id][0];
 	for (int n=0; n < (NBN-1); n++)
@@ -366,14 +366,14 @@ static void blake256mid(uint32_t *output, const uint32_t *input, int8_t rounds =
 }
 
 __host__
-void blake256_cpu_setBlock_16(uint32_t *penddata, const uint32_t *midstate, const uint32_t *ptarget)
+void blake256_cpu_setBlock_16(int thr_id, uint32_t *penddata, const uint32_t *midstate, const uint32_t *ptarget)
 {
 	uint32_t _ALIGN(64) data[11];
 	memcpy(data, midstate, 32);
 	data[8] = penddata[0];
 	data[9] = penddata[1];
 	data[10]= penddata[2];
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(d_data, data, 32 + 12, 0, cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(d_data, data, 32 + 12, 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }
 #endif
 
@@ -424,6 +424,7 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMallocHost(&h_resNonce[thr_id], NBN * sizeof(uint32_t)));
 		CUDA_SAFE_CALL(cudaMalloc(&d_resNonce[thr_id], NBN * sizeof(uint32_t)));
 		init[thr_id] = true;
@@ -433,9 +434,9 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	for (int k = 0; k < 16; k++)
 		be32enc(&endiandata[k], pdata[k]);
 	blake256mid(midstate, endiandata, blakerounds);
-	blake256_cpu_setBlock_16(&pdata[16], midstate, ptarget);
+	blake256_cpu_setBlock_16(thr_id, &pdata[16], midstate, ptarget);
 #else
-	blake256_cpu_setBlock_80(pdata, ptarget);
+	blake256_cpu_setBlock_80(thr_id, pdata, ptarget);
 	crcsum = crc32_u32t(pdata, 64);
 #endif /* PRECALC64 */
 

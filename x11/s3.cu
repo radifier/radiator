@@ -20,7 +20,7 @@ extern "C" {
 static uint32_t *d_hash[MAX_GPUS];
 
 extern void x11_shavite512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
-extern void x11_shavite512_setBlock_80(void *pdata);
+extern void x11_shavite512_setBlock_80(int thr_id, void *pdata);
 
 extern int  x11_simd512_cpu_init(int thr_id, uint32_t threads);
 extern void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
@@ -89,6 +89,7 @@ extern int scanhash_s3(int thr_id, uint32_t *pdata,
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		get_cuda_arch(&cuda_arch[thr_id]);
 
 		x11_simd512_cpu_init(thr_id, throughput);
@@ -106,8 +107,8 @@ extern int scanhash_s3(int thr_id, uint32_t *pdata,
 	for (int k=0; k < 20; k++)
 		be32enc(&endiandata[k], pdata[k]);
 
-	x11_shavite512_setBlock_80((void*)endiandata);
-	cuda_check_cpu_setTarget(ptarget);
+	x11_shavite512_setBlock_80(thr_id, (void*)endiandata);
+	cuda_check_cpu_setTarget(ptarget, thr_id);
 
 	do {
 

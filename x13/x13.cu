@@ -27,8 +27,8 @@ static uint32_t *d_hash[MAX_GPUS];
 static uint32_t *h_found[MAX_GPUS];
 
 extern void quark_blake512_cpu_init(int thr_id);
-extern void quark_blake512_cpu_setBlock_80(uint64_t *pdata);
-extern void quark_blake512_cpu_setBlock_80_multi(uint32_t thr_id, uint64_t *pdata);
+extern void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata);
+extern void quark_blake512_cpu_setBlock_80_multi(int thr_id, uint64_t *pdata);
 extern void quark_blake512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 extern void quark_blake512_cpu_hash_80_multi(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 
@@ -65,7 +65,7 @@ extern void x13_fugue512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t star
 //extern uint32_t cuda_check_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash);
 extern uint32_t cuda_check_hash(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_inputHash);
 
-extern void x13_fugue512_cpu_setTarget(const void *ptarget);
+extern void x13_fugue512_cpu_setTarget(int thr_id, const void *ptarget);
 extern void  x13_fugue512_cpu_free(int32_t thr_id);
 //extern void  cuda_check_cpu_free(int32_t thr_id);
 extern void  x11_simd512_cpu_free(int32_t thr_id);
@@ -183,6 +183,7 @@ extern int scanhash_x13(int thr_id, uint32_t *pdata,
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		get_cuda_arch(&cuda_arch[thr_id]);
 
 		if (opt_n_gputhreads > 1)
@@ -210,10 +211,10 @@ extern int scanhash_x13(int thr_id, uint32_t *pdata,
 	}
 	else
 	{
-		quark_blake512_cpu_setBlock_80( (uint64_t *)endiandata);
+		quark_blake512_cpu_setBlock_80(thr_id, (uint64_t *)endiandata);
 	}
-	//	cuda_check_cpu_setTarget(ptarget);
-	x13_fugue512_cpu_setTarget(ptarget);
+	//	cuda_check_cpu_setTarget(ptarget, thr_id);
+	x13_fugue512_cpu_setTarget(thr_id, ptarget);
 
 	do {
 		if (opt_n_gputhreads > 1)

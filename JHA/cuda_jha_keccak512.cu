@@ -3,6 +3,7 @@
 
 #include "cuda_helper.h"
 
+
 __constant__ uint64_t c_State[25];
 __constant__ uint32_t c_PaddedMessage[18];
 
@@ -480,7 +481,7 @@ void KeccakF( tKeccakLane * state, const tKeccakLane *in, int laneCount )
 }
 
 // inlen kann 72...143 betragen
-__host__ void jackpot_keccak512_cpu_setBlock(void *pdata, size_t inlen)
+__host__ void jackpot_keccak512_cpu_setBlock(int thr_id, void *pdata, size_t inlen)
 {
     const unsigned char *in = (const unsigned char*)pdata;
 
@@ -496,10 +497,10 @@ __host__ void jackpot_keccak512_cpu_setBlock(void *pdata, size_t inlen)
 
     // Kopiere den state nach der ersten Runde (nach Absorption von 72 Bytes Inputdaten)
     // ins Constant Memory
-    cudaMemcpyToSymbol( c_State,
+    cudaMemcpyToSymbolAsync( c_State,
                         state,
                         sizeof(state),
-                        0, cudaMemcpyHostToDevice);
+						0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 
     //    padding
     memcpy( temp, in, (size_t)inlen );
@@ -509,10 +510,10 @@ __host__ void jackpot_keccak512_cpu_setBlock(void *pdata, size_t inlen)
 
 
     // Kopiere den Rest der Message und das Padding ins Constant Memory
-    cudaMemcpyToSymbol( c_PaddedMessage,
+    cudaMemcpyToSymbolAsync( c_PaddedMessage,
                         temp,
                         cKeccakR_SizeInBytes,
-                        0, cudaMemcpyHostToDevice);
+						0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }
 
 __host__ void jackpot_keccak512_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash)
@@ -523,5 +524,5 @@ __host__ void jackpot_keccak512_cpu_hash(int thr_id, uint32_t threads, uint32_t 
     dim3 grid((threads + threadsperblock-1)/threadsperblock);
     dim3 block(threadsperblock);
 
-    jackpot_keccak512_gpu_hash<<<grid, block>>>(threads, startNounce, (uint64_t*)d_hash);
+    jackpot_keccak512_gpu_hash<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash);
 }

@@ -13,7 +13,7 @@ static _ALIGN(64) uint64_t *d_hash[MAX_GPUS];
 
 extern void blake256_cpu_init(int thr_id, uint32_t threads);
 extern void blake256_cpu_hash_80(const int thr_id, const uint32_t threads, const uint32_t startNonce, uint64_t *Hash);
-extern void blake256_cpu_setBlock_80(uint32_t *pdata);
+extern void blake256_cpu_setBlock_80(int thr_id, uint32_t *pdata);
 extern void keccak256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNonce, uint64_t *d_outputHash);
 extern void keccak256_cpu_init(int thr_id, uint32_t threads);
 extern void skein256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNonce, uint64_t *d_outputHash);
@@ -22,7 +22,7 @@ extern void skein256_cpu_init(int thr_id, uint32_t threads);
 extern void lyra2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNonce, uint64_t *d_outputHash);
 extern void lyra2_cpu_init(int thr_id, uint32_t threads);
 
-extern void groestl256_setTarget(const void *ptarget);
+extern void groestl256_setTarget(int thr_id, const void *ptarget);
 extern void groestl256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint64_t *d_outputHash, uint32_t *resultnonces);
 extern void groestl256_cpu_init(int thr_id, uint32_t threads);
 
@@ -86,6 +86,7 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		blake256_cpu_init(thr_id, throughput);
 		keccak256_cpu_init(thr_id,throughput);
 		skein256_cpu_init(thr_id, throughput);
@@ -101,8 +102,8 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 	for (int k=0; k < 20; k++)
 		be32enc(&endiandata[k], pdata[k]);
 
-	blake256_cpu_setBlock_80(pdata);
-	groestl256_setTarget(ptarget);
+	blake256_cpu_setBlock_80(thr_id, pdata);
+	groestl256_setTarget(thr_id, ptarget);
 
 	do {
 		uint32_t foundNonce[2] = { 0, 0 };

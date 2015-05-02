@@ -20,7 +20,7 @@ static uint32_t *d_branch3Nonces[MAX_GPUS];
 extern void quark_blake512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash);
 
 extern void quark_bmw512_cpu_init(int thr_id, uint32_t threads);
-extern void quark_bmw512_cpu_setBlock_80(void *pdata);
+extern void quark_bmw512_cpu_setBlock_80(int thr_id, void *pdata);
 extern void quark_bmw512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_outputHash);
 extern void quark_bmw512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_outputHash);
 
@@ -175,6 +175,7 @@ extern int scanhash_anime(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		get_cuda_arch(&cuda_arch[thr_id]);
 
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
@@ -196,8 +197,8 @@ extern int scanhash_anime(int thr_id, uint32_t *pdata,
 	for (int k=0; k < 20; k++)
 		be32enc(&endiandata[k], pdata[k]);
 
-	quark_bmw512_cpu_setBlock_80((void*)endiandata);
-	cuda_check_cpu_setTarget(ptarget);
+	quark_bmw512_cpu_setBlock_80(thr_id, (void*)endiandata);
+	cuda_check_cpu_setTarget(ptarget, thr_id);
 
 	do {
 		uint32_t nrm1=0, nrm2=0, nrm3=0;

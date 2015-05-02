@@ -29,6 +29,8 @@ using namespace std;
 
 #include "cuda_helper.h"
 
+
+
 #ifndef UINT32_MAX
 #define UINT32_MAX UINT_MAX
 #endif
@@ -640,13 +642,13 @@ __host__
 uint32_t qubit_luffa512_cpu_finalhash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_outputHash)
 {
 	uint32_t result = UINT32_MAX;
-	cudaMemset(d_resNounce[thr_id], 0xff, NBN * sizeof(uint32_t));
+	cudaMemsetAsync(d_resNounce[thr_id], 0xff, NBN * sizeof(uint32_t), gpustream[thr_id]);
 	const uint32_t threadsperblock = 256;
 
 	dim3 grid((threads + threadsperblock-1)/threadsperblock);
 	dim3 block(threadsperblock);
 
-	qubit_luffa512_gpu_finalhash_80 <<<grid, block>>> (threads, startNounce, d_outputHash, d_resNounce[thr_id]);
+	qubit_luffa512_gpu_finalhash_80 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_outputHash, d_resNounce[thr_id]);
 	//MyStreamSynchronize(NULL, order, thr_id);
 	if (cudaSuccess == cudaMemcpy(h_resNounce[thr_id], d_resNounce[thr_id], NBN * sizeof(uint32_t), cudaMemcpyDeviceToHost)) {
 		result = h_resNounce[thr_id][0];
@@ -657,7 +659,7 @@ uint32_t qubit_luffa512_cpu_finalhash_80(int thr_id, uint32_t threads, uint32_t 
 	return result;
 }
 
-__host__ void qubit_cpu_precalc()
+__host__ void qubit_cpu_precalc(int thr_id)
 {
 	uint32_t statebuffer[8];
 	uint32_t statechainv[40] =
@@ -683,8 +685,8 @@ __host__ void qubit_cpu_precalc()
 
 	rnd512cpu(statebuffer, statechainv);
 
-	cudaMemcpyToSymbol(statebufferpre, statebuffer, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(statechainvpre, statechainv, 40 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(statebufferpre, statebuffer, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(statechainvpre, statechainv, 40 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }
 
 __host__
@@ -695,11 +697,11 @@ void qubit_luffa512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNoun
 	dim3 grid((threads + threadsperblock-1)/threadsperblock);
 	dim3 block(threadsperblock);
 
-	qubit_luffa512_gpu_hash_80 <<<grid, block>>> (threads, startNounce, d_outputHash);
+	qubit_luffa512_gpu_hash_80 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_outputHash);
 }
 
 __host__
-void qubit_luffa512_cpu_setBlock_80(void *pdata)
+void qubit_luffa512_cpu_setBlock_80(int thr_id, void *pdata)
 {
 	memcpy(PaddedMessage, pdata, 80);
 	memset(PaddedMessage+80, 0, 48);
@@ -708,12 +710,12 @@ void qubit_luffa512_cpu_setBlock_80(void *pdata)
 	PaddedMessage[126] = 0x02;
 	PaddedMessage[127] = 0x80;
 
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol( c_PaddedMessage80, PaddedMessage, 16*sizeof(uint64_t), 0, cudaMemcpyHostToDevice));
-	qubit_cpu_precalc();
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedMessage80, PaddedMessage, 16 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+	qubit_cpu_precalc(thr_id);
 }
 
 __host__
-void qubit_luffa512_cpufinal_setBlock_80(void *pdata, const void *ptarget)
+void qubit_luffa512_cpufinal_setBlock_80(int thr_id, void *pdata, const void *ptarget)
 {
 	unsigned char PaddedMessage[128];
 
@@ -724,6 +726,6 @@ void qubit_luffa512_cpufinal_setBlock_80(void *pdata, const void *ptarget)
 	PaddedMessage[126] = 0x02;
 	PaddedMessage[127] = 0x80;
 
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(c_Target, ptarget, 8*sizeof(uint32_t), 0, cudaMemcpyHostToDevice));
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(c_PaddedMessage80, PaddedMessage, 16*sizeof(uint64_t), 0, cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_Target, ptarget, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedMessage80, PaddedMessage, 16 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }

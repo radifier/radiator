@@ -14,7 +14,7 @@ extern "C" {
 
 static uint32_t foundnonces[MAX_GPUS][2];
 
-extern void skein512_cpu_setBlock_80(uint32_t thr_id,void *pdata);
+extern void skein512_cpu_setBlock_80(int thr_id,void *pdata);
 extern void skein512_cpu_hash_80_50(int thr_id, uint32_t threads, uint32_t startNounce, int swapu, uint64_t target, uint32_t *h_found);
 extern void skein512_cpu_hash_80_52(int thr_id, uint32_t threads, uint32_t startNounce, int swapu, uint64_t target, uint32_t *h_found);
 
@@ -75,6 +75,7 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		cuda_check_cpu_init(thr_id, throughput);
 		init[thr_id] = true;
 	}

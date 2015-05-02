@@ -17,7 +17,7 @@ extern "C"
 static uint32_t h_nounce[MAX_GPUS][2];
 
 extern void keccak256_cpu_init(int thr_id, uint32_t threads);
-extern void keccak256_setBlock_80(void *pdata,const void *ptarget);
+extern void keccak256_setBlock_80(int thr_id, void *pdata,const void *ptarget);
 extern void keccak256_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *h_nounce);
 
 // CPU Hash
@@ -64,6 +64,7 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		keccak256_cpu_init(thr_id, (int)throughput);
 //		CUDA_SAFE_CALL(cudaMallocHost(&h_nounce[thr_id], 2 * sizeof(uint32_t)));
 		init[thr_id] = true;
@@ -74,7 +75,7 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 		be32enc(&endiandata[k], pdata[k]);
 	}
 
-	keccak256_setBlock_80((void*)endiandata, ptarget);
+	keccak256_setBlock_80(thr_id, (void*)endiandata, ptarget);
 
 	do {
 

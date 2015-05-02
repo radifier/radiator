@@ -7,6 +7,7 @@
 #include "cuda_helper.h"
 
 
+
 #if __CUDA_ARCH__ > 500
 #define TPB 1024
 #else
@@ -565,27 +566,27 @@ void whirlpoolx(uint32_t threads, uint32_t startNounce, uint32_t *resNounce)
 __host__ extern void whirlpoolx_cpu_init(int thr_id, uint32_t threads)
 {
 	uint64_t t1[256];
-	cudaMemcpyToSymbol(mixTob0Tox, hmixTob0Tox, sizeof(hmixTob0Tox), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(mixTob0Tox, hmixTob0Tox, sizeof(hmixTob0Tox), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 
 	for (int i = 0; i < 256; i++)
 	{
 		t1[i] = ROTL64(hmixTob0Tox[i], 8);
 	}
-	cudaMemcpyToSymbol(mixTob1Tox, t1, sizeof(hmixTob0Tox), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(mixTob1Tox, t1, sizeof(hmixTob0Tox), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 	cudaMalloc(&d_WXNonce[thr_id], 2 * sizeof(uint32_t));
 	cudaMallocHost(&h_wxnounce[thr_id], 2 * sizeof(uint32_t));
 	cudaMalloc((void **)&d_xtra[thr_id], 2 * sizeof(uint64_t));
 	cudaMalloc((void **)&d_tmp[thr_id], 8 * 9 * sizeof(uint64_t));
 }
 
-__host__ void whirlpoolx_setBlock_80(void *pdata, const void *ptarget)
+__host__ void whirlpoolx_setBlock_80(int thr_id, void *pdata, const void *ptarget)
 {
 	uint64_t PaddedMessage[16];
 	memcpy(PaddedMessage, pdata, 80);
 	memset((uint8_t*)&PaddedMessage + 80, 0, 48);
 	*(uint8_t*)(&PaddedMessage + 80) = 0x80; /* ending */
-	cudaMemcpyToSymbol(pTarget, ptarget, 1 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(c_PaddedMessage80, PaddedMessage, 16 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(pTarget, ptarget, 1 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(c_PaddedMessage80, PaddedMessage, 16 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }
 
 __host__ void whirlpoolx_precompute(int thr_id)
@@ -593,9 +594,9 @@ __host__ void whirlpoolx_precompute(int thr_id)
 	dim3 grid(1);
 	dim3 block(256);
 
-	precomputeX <<<grid, block >>>(8, d_xtra[thr_id], d_tmp[thr_id]);
-	cudaMemcpyToSymbol(c_xtra, d_xtra[thr_id], 2 * sizeof(uint64_t), 0, cudaMemcpyDeviceToDevice);
-	cudaMemcpyToSymbol(c_tmp, d_tmp[thr_id], 8 * 9 * sizeof(uint64_t), 0, cudaMemcpyDeviceToDevice);
+	precomputeX <<<grid, block , 0, gpustream[thr_id]>>>(8, d_xtra[thr_id], d_tmp[thr_id]);
+	cudaMemcpyToSymbolAsync(c_xtra, d_xtra[thr_id], 2 * sizeof(uint64_t), 0, cudaMemcpyDeviceToDevice, gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(c_tmp, d_tmp[thr_id], 8 * 9 * sizeof(uint64_t), 0, cudaMemcpyDeviceToDevice, gpustream[thr_id]);
 }
 
 __host__ void cpu_whirlpoolx(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *foundnonce)
@@ -603,8 +604,8 @@ __host__ void cpu_whirlpoolx(int thr_id, uint32_t threads, uint32_t startNounce,
 	dim3 grid((threads + TPB*NONCES_PER_THREAD - 1) / TPB / NONCES_PER_THREAD);
 	dim3 block(TPB);
 
-	cudaMemset(d_WXNonce[thr_id], 0xff, 2 * sizeof(uint32_t));
-	whirlpoolx <<<grid, block >>>(threads, startNounce, d_WXNonce[thr_id]);
+	cudaMemsetAsync(d_WXNonce[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
+	whirlpoolx <<<grid, block , 0, gpustream[thr_id]>>>(threads, startNounce, d_WXNonce[thr_id]);
 
 	cudaMemcpy(h_wxnounce[thr_id], d_WXNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost);
 	foundnonce[0] = h_wxnounce[thr_id][0];

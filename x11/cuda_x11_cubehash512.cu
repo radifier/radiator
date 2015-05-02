@@ -1,5 +1,7 @@
 #include "cuda_helper.h"
 
+
+
 typedef unsigned char BitSequence;
 
 #define CUBEHASH_ROUNDS 16 /* this is r for CubeHashr/b */
@@ -247,6 +249,6 @@ void x11_cubehash512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNou
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
 
-	x11_cubehash512_gpu_hash_64 <<<grid, block >>>(threads, startNounce, d_hash);
+	x11_cubehash512_gpu_hash_64 <<<grid, block , 0, gpustream[thr_id]>>>(threads, startNounce, d_hash);
 }
 

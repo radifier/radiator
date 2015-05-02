@@ -21,6 +21,7 @@ using namespace std;
 #include "cuda_runtime.h"
 
 cudaDeviceProp device_props[MAX_GPUS];
+cudaStream_t gpustream[MAX_GPUS] = { 0 };
 
 // CUDA Devices on the System
 int cuda_num_devices()

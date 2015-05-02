@@ -7,7 +7,8 @@
 
 #define USE_SHUFFLE 0
 
-// die Message it Padding zur Berechnung auf der GPU
+
+
 static uint2* c_PaddedMessage80[MAX_GPUS]; // padded message (80 bytes + padding)
 __constant__ uint2 c_PaddedM[16];
 
@@ -687,20 +688,20 @@ __host__ void quark_blake512_cpu_init(int thr_id)
 	CUDA_SAFE_CALL(cudaMalloc(&c_PaddedMessage80[thr_id], 10 * sizeof(uint2)));
 }
 
-__host__ void quark_blake512_cpu_setBlock_80_multi(uint32_t thr_id, uint64_t *pdata)
+__host__ void quark_blake512_cpu_setBlock_80_multi(int thr_id, uint64_t *pdata)
 {
 	uint64_t PaddedMessage[10];
 	for (int i = 0; i < 10; i++)
 		PaddedMessage[i] = cuda_swab64(pdata[i]);
-	CUDA_SAFE_CALL(cudaMemcpy(c_PaddedMessage80[thr_id], PaddedMessage, 10 * sizeof(uint64_t), cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpyAsync(c_PaddedMessage80[thr_id], PaddedMessage, 10 * sizeof(uint64_t), cudaMemcpyHostToDevice, gpustream[thr_id]));
 }
 
-__host__ void quark_blake512_cpu_setBlock_80(uint64_t *pdata)
+__host__ void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata)
 {
 	uint64_t PaddedMessage[10];
 	for (int i = 0; i < 10; i++)
 		PaddedMessage[i] = cuda_swab64(pdata[i]);
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(c_PaddedM, PaddedMessage, 10 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedM, PaddedMessage, 10 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 
 }
 
@@ -711,7 +712,7 @@ __host__ void quark_blake512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t 
 	// berechne wie viele Thread Blocks wir brauchen
 	dim3 grid((threads + threadsperblock-1)/threadsperblock);
 	dim3 block(threadsperblock);
-	quark_blake512_gpu_hash_64<<<grid, block>>>(threads, startNounce, d_nonceVector, (uint64_t*)d_outputHash);
+	quark_blake512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_nonceVector, (uint64_t*)d_outputHash);
 }
 
 __host__ void quark_blake512_cpu_hash_80_multi(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_outputHash)
@@ -722,7 +723,7 @@ __host__ void quark_blake512_cpu_hash_80_multi(int thr_id, uint32_t threads, uin
 	dim3 grid((threads + threadsperblock-1)/threadsperblock);
 	dim3 block(threadsperblock);
 
-	quark_blake512_gpu_hash_80_multi << <grid, block >> >(threads, startNounce, d_outputHash, c_PaddedMessage80[thr_id]);
+	quark_blake512_gpu_hash_80_multi << <grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_outputHash, c_PaddedMessage80[thr_id]);
 //	MyStreamSynchronize(NULL, order, thr_id);
 }
 __host__ void quark_blake512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_outputHash)
@@ -733,6 +734,6 @@ __host__ void quark_blake512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t 
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
 
-	quark_blake512_gpu_hash_80 << <grid, block >> >(threads, startNounce, d_outputHash);
+	quark_blake512_gpu_hash_80 << <grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_outputHash);
 	//	MyStreamSynchronize(NULL, order, thr_id);
 }

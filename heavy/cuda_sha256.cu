@@ -3,6 +3,7 @@
 
 #include "cuda_helper.h"
 
+
 // globaler Speicher für alle HeftyHashes aller Threads
 extern uint32_t *heavy_heftyHashes[MAX_GPUS];
 extern uint32_t *heavy_nonceVector[MAX_GPUS];
@@ -164,7 +165,7 @@ template <int BLOCKSIZE> __global__ void sha256_gpu_hash(uint32_t threads, uint3
 __host__ void sha256_cpu_init(int thr_id, uint32_t threads)
 {
 	// Kopiere die Hash-Tabellen in den GPU-Speicher
-	cudaMemcpyToSymbol(	sha256_gpu_constantTable,
+	cudaMemcpyToSymbolAsync(	sha256_gpu_constantTable,
 						sha256_cpu_constantTable,
 						sizeof(uint32_t) * 64 );
 
@@ -174,7 +175,7 @@ __host__ void sha256_cpu_init(int thr_id, uint32_t threads)
 
 static int BLOCKSIZE = 84;
 
-__host__ void sha256_cpu_setBlock(void *data, int len)
+__host__ void sha256_cpu_setBlock(int thr_id, void *data, int len)
 	// data muss 80/84-Byte haben!
 	// heftyHash hat 32-Byte
 {
@@ -236,14 +237,14 @@ __host__ void sha256_cpu_setBlock(void *data, int len)
 		hash[k] += regs[k];
 
 	// hash speichern
-	cudaMemcpyToSymbol(	sha256_gpu_register,
+	cudaMemcpyToSymbolAsync(	sha256_gpu_register,
 						hash,
-						sizeof(uint32_t) * 8 );
+						sizeof(uint32_t) * 8, 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 
 	// Blockheader setzen (korrekte Nonce und Hefty Hash fehlen da drin noch)
-	cudaMemcpyToSymbol(	sha256_gpu_blockHeader,
+	cudaMemcpyToSymbolAsync(	sha256_gpu_blockHeader,
 						&msgBlock[16],
-						64);
+						64, 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 
 	BLOCKSIZE = len;
 }
@@ -252,7 +253,7 @@ __host__ void sha256_cpu_copyHeftyHash(int thr_id, uint32_t threads, void *hefty
 {
 	// Hefty1 Hashes kopieren
 	if (copy)
-		CUDA_SAFE_CALL(cudaMemcpy(heavy_heftyHashes[thr_id], heftyHashes, 8 * sizeof(uint32_t) * threads, cudaMemcpyHostToDevice));
+		CUDA_SAFE_CALL(cudaMemcpyAsync(heavy_heftyHashes[thr_id], heftyHashes, 8 * sizeof(uint32_t) * threads, cudaMemcpyHostToDevice, gpustream[thr_id]));
 	//else cudaDeviceSynchronize();
 }
 
@@ -265,8 +266,8 @@ __host__ void sha256_cpu_hash(int thr_id, uint32_t threads, int startNounce)
 	dim3 block(threadsperblock);
 
 	if (BLOCKSIZE == 84)
-		sha256_gpu_hash<84><<<grid, block>>>(threads, startNounce, d_hash2output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
+		sha256_gpu_hash<84><<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash2output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
 	else if (BLOCKSIZE == 80) {
-		sha256_gpu_hash<80><<<grid, block>>>(threads, startNounce, d_hash2output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
+		sha256_gpu_hash<80><<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash2output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
 	}
 }

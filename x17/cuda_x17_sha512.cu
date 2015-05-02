@@ -40,6 +40,8 @@
 
 #include "cuda_helper.h"
 
+
+
 #define SWAP64(u64) cuda_swab64(u64)
 
 #define SPH_ROTL32(x, n)  ((x) << (n)) | ((x) >> (32 - (n)))
@@ -217,8 +219,8 @@ void x17_sha512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_
 __host__
 void x17_sha512_cpu_init(int thr_id, uint32_t threads)
 {
-	cudaMemcpyToSymbol(K_512,K512,80*sizeof(uint64_t),0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(H_512,H512,sizeof(H512),0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(K_512, K512, 80 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(H_512, H512, sizeof(H512), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }
 
 __host__
@@ -228,5 +230,5 @@ void x17_sha512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, 
 
 	dim3 grid((threads + threadsperblock-1)/threadsperblock);
 	dim3 block(threadsperblock);
-	x17_sha512_gpu_hash_64<<<grid, block>>>(threads, startNounce, (uint64_t*)d_hash );
+	x17_sha512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash );
 }

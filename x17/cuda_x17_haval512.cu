@@ -43,6 +43,8 @@
 
 #include "cuda_helper.h"
 
+
+
 #define SPH_ROTL32(x, n)   (((x) << (n)) | ((x) >> (32 - (n))))
 #define SPH_ROTR32(x, n)   SPH_ROTL32(x, (32 - (n)))
 
@@ -377,7 +379,7 @@ void x17_haval256_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *
 __host__
 void x17_haval256_cpu_init(int thr_id, uint32_t threads)
 {
-	cudaMemcpyToSymbol(initVector,c_initVector,sizeof(c_initVector),0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(initVector, c_initVector, sizeof(c_initVector), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }
 
 __host__
@@ -389,6 +391,6 @@ void x17_haval256_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce
 	dim3 grid((threads + threadsperblock-1)/threadsperblock);
 	dim3 block(threadsperblock);
 
-	x17_haval256_gpu_hash_64<<<grid, block>>>(threads, startNounce, (uint64_t*)d_hash);
+	x17_haval256_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash);
 
 }

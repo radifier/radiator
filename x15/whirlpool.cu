@@ -16,7 +16,7 @@ static uint32_t *d_hash[MAX_GPUS];
 extern void x15_whirlpool_cpu_init(int thr_id, uint32_t threads, int mode);
 extern void x15_whirlpool_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce,  uint32_t *d_hash);
 
-extern void whirlpool512_setBlock_80(void *pdata, const void *ptarget);
+extern void whirlpool512_setBlock_80(int thr_id, void *pdata, const void *ptarget);
 extern void whirlpool512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 extern uint32_t* whirlpool512_cpu_finalhash_64(int thr_id, uint32_t threads, uint32_t startNounce,  uint32_t *d_hash);
 
@@ -69,6 +69,7 @@ extern int scanhash_whc(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
 		cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput);
 		x15_whirlpool_cpu_init(thr_id, throughput, 1 /* old whirlpool */);
@@ -80,7 +81,7 @@ extern int scanhash_whc(int thr_id, uint32_t *pdata,
 		be32enc(&endiandata[k], pdata[k]);
 	}
 
-	whirlpool512_setBlock_80((void*)endiandata, ptarget);
+	whirlpool512_setBlock_80(thr_id, (void*)endiandata, ptarget);
 
 	do {
 		uint32_t* foundNonce;

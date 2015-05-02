@@ -11,6 +11,8 @@ extern "C" {
 
 #include <memory.h>
 
+
+
 static __device__ uint64_t cuda_swab32ll(uint64_t x) {
 	return MAKE_ULONGLONG(cuda_swab32(_LOWORD(x)), cuda_swab32(_HIWORD(x)));
 }
@@ -217,11 +219,11 @@ void blake256_cpu_hash_80(const int thr_id, const uint32_t threads, const uint32
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
 
-	blake256_gpu_hash_80 <<<grid, block>>> (threads, startNonce, Hash);
+	blake256_gpu_hash_80 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNonce, Hash);
 }
 
 __host__
-void blake256_cpu_setBlock_80(uint32_t *pdata)
+void blake256_cpu_setBlock_80(int thr_id, uint32_t *pdata)
 {
 	uint32_t h[8];
 	uint32_t data[20];
@@ -231,13 +233,13 @@ void blake256_cpu_setBlock_80(uint32_t *pdata)
 	}
 	blake256_compress1st(h, pdata, 512);
 
-	cudaMemcpyToSymbol(cpu_h, h, sizeof(h), 0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(c_data, data, sizeof(data), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(cpu_h, h, sizeof(h), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(c_data, data, sizeof(data), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }
 
 __host__
 void blake256_cpu_init(int thr_id, uint32_t threads)
 {
-	cudaMemcpyToSymbol(u256, c_u256, sizeof(c_u256), 0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(sigma, c_sigma, sizeof(c_sigma), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(u256, c_u256, sizeof(c_u256), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(sigma, c_sigma, sizeof(c_sigma), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }

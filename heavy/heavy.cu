@@ -170,6 +170,7 @@ int scanhash_heavy(int thr_id, uint32_t *pdata,
         combine_cpu_init(thr_id, throughput);
 
         CUDA_SAFE_CALL(cudaMalloc(&heavy_nonceVector[thr_id], sizeof(uint32_t) * throughput));
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
         init[thr_id] = true;
     }
@@ -194,10 +195,10 @@ int scanhash_heavy(int thr_id, uint32_t *pdata,
 
     // Setze die Blockdaten
     hefty_cpu_setBlock(thr_id, throughput, pdata, blocklen);
-    sha256_cpu_setBlock(pdata, blocklen);
-    keccak512_cpu_setBlock(pdata, blocklen);
-    groestl512_cpu_setBlock(pdata, blocklen);
-    blake512_cpu_setBlock(pdata, blocklen);
+    sha256_cpu_setBlock(thr_id, pdata, blocklen);
+    keccak512_cpu_setBlock(thr_id, pdata, blocklen);
+    groestl512_cpu_setBlock(thr_id, pdata, blocklen);
+    blake512_cpu_setBlock(thr_id, pdata, blocklen);
 
     do {
 

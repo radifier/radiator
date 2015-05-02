@@ -3,6 +3,7 @@
 
 #include "cuda_helper.h"
 
+
 // globaler Speicher für alle HeftyHashes aller Threads
 extern uint32_t *heavy_heftyHashes[MAX_GPUS];
 extern uint32_t *heavy_nonceVector[MAX_GPUS];
@@ -218,7 +219,7 @@ void keccak512_cpu_init(int thr_id, uint32_t threads)
 static int BLOCKSIZE = 84;
 
 __host__
-void keccak512_cpu_setBlock(void *data, int len)
+void keccak512_cpu_setBlock(int thr_id, void *data, int len)
 	// data muss 80 oder 84-Byte haben!
 	// heftyHash hat 32-Byte
 {
@@ -231,7 +232,7 @@ void keccak512_cpu_setBlock(void *data, int len)
 	keccak_block((uint64_t*)&keccak_cpu_state, (const uint32_t*)data, host_keccak_round_constants);
 
 	// state kopieren
-	cudaMemcpyToSymbol( c_State, keccak_cpu_state, 25*sizeof(uint64_t), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(c_State, keccak_cpu_state, 25 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 
 	// keccak hat 72-Byte blöcke, d.h. in unserem Fall zwei Blöcke
 	// zu jeweils
@@ -253,7 +254,7 @@ void keccak512_cpu_setBlock(void *data, int len)
 
 	// Message 2 ins Constant Memory kopieren (die variable Nonce und
 	// der Hefty1 Anteil muss aber auf der GPU erst noch ersetzt werden)
-	cudaMemcpyToSymbol( c_PaddedMessage2, msgBlock, 18*sizeof(uint32_t), 0, cudaMemcpyHostToDevice );
+	cudaMemcpyToSymbolAsync( c_PaddedMessage2, msgBlock, 18*sizeof(uint32_t), 0, cudaMemcpyHostToDevice );
 
 	BLOCKSIZE = len;
 }
@@ -263,7 +264,7 @@ void keccak512_cpu_copyHeftyHash(int thr_id, uint32_t threads, void *heftyHashes
 {
 	// Hefty1 Hashes kopieren
 	if (copy)
-		CUDA_SAFE_CALL(cudaMemcpy(heavy_heftyHashes[thr_id], heftyHashes, 8 * sizeof(uint32_t) * threads, cudaMemcpyHostToDevice));
+		CUDA_SAFE_CALL(cudaMemcpyAsync(heavy_heftyHashes[thr_id], heftyHashes, 8 * sizeof(uint32_t) * threads, cudaMemcpyHostToDevice, gpustream[thr_id]));
 	//else cudaDeviceSynchronize();
 }
 
@@ -277,7 +278,7 @@ void keccak512_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce)
 	dim3 block(threadsperblock);
 
 	if (BLOCKSIZE==84)
-		keccak512_gpu_hash<84><<<grid, block>>>(threads, startNounce, d_hash3output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
+		keccak512_gpu_hash<84><<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash3output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
 	else if (BLOCKSIZE==80)
-		keccak512_gpu_hash<80><<<grid, block>>>(threads, startNounce, d_hash3output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
+		keccak512_gpu_hash<80><<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash3output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
 }

@@ -5,6 +5,7 @@
 
 #include "cuda_helper.h"
 
+
 #define USE_SHARED 1
 
 // globaler Speicher für alle HeftyHashes aller Threads
@@ -311,7 +312,7 @@ void hefty_cpu_init(int thr_id, uint32_t threads)
     CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 
     // Kopiere die Hash-Tabellen in den GPU-Speicher
-    cudaMemcpyToSymbol( hefty_gpu_constantTable,
+    cudaMemcpyToSymbolAsync( hefty_gpu_constantTable,
                         hefty_cpu_constantTable,
                         sizeof(uint32_t) * 64 );
 
@@ -382,11 +383,11 @@ void hefty_cpu_setBlock(int thr_id, uint32_t threads, void *data, int len)
         hash[k] += regs[k];
 
     // sponge speichern
-    cudaMemcpyToSymbol(hefty_gpu_sponge, sponge, 16);
+    cudaMemcpyToSymbolAsync(hefty_gpu_sponge, sponge, 16);
     // hash speichern
-    cudaMemcpyToSymbol(hefty_gpu_register, hash, 32);
+    cudaMemcpyToSymbolAsync(hefty_gpu_register, hash, 32);
     // Blockheader setzen (korrekte Nonce fehlt da drin noch)
-    CUDA_SAFE_CALL(cudaMemcpyToSymbol(hefty_gpu_blockHeader, &msgBlock[16], 64));
+    CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(hefty_gpu_blockHeader, &msgBlock[16], 64));
 }
 
 __host__
@@ -405,6 +406,6 @@ void hefty_cpu_hash(int thr_id, uint32_t threads, int startNounce)
     int shared_size = 0;
 #endif
 
-    hefty_gpu_hash <<< grid, block, shared_size >>> (threads, startNounce, heavy_heftyHashes[thr_id]);
+    hefty_gpu_hash <<< grid, block, shared_size , gpustream[thr_id]>>> (threads, startNounce, heavy_heftyHashes[thr_id]);
 
 }

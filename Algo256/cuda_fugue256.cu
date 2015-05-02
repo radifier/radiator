@@ -6,6 +6,7 @@
 #include "cuda_helper.h"
 #include <host_defines.h>
 
+
 #define USE_SHARED 1
 
 static uint32_t *d_fugue256_hashoutput[MAX_GPUS];
@@ -710,7 +711,7 @@ fugue256_gpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, void *outp
 #define texDef(texname, texmem, texsource, texsize) \
 	unsigned int *texmem; \
 	cudaMalloc(&texmem, texsize); \
-	cudaMemcpy(texmem, texsource, texsize, cudaMemcpyHostToDevice); \
+	cudaMemcpyAsync(texmem, texsource, texsize, cudaMemcpyHostToDevice, gpustream[thr_id]); \
 	texname.normalized = 0; \
 	texname.filterMode = cudaFilterModePoint; \
 	texname.addressMode[0] = cudaAddressModeClamp; \
@@ -740,15 +741,15 @@ __host__ void fugue256_cpu_setBlock(int thr_id, void *data, void *pTargetIn)
 	sph_fugue256_init(&ctx_fugue_const);
 	sph_fugue256 (&ctx_fugue_const, data, 80);	// State speichern
 
-	cudaMemcpyToSymbol(	GPUstate,
+	cudaMemcpyToSymbolAsync(	GPUstate,
 						ctx_fugue_const.S,
-						sizeof(uint32_t) * 30 );
+						sizeof(uint32_t) * 30 , 0,cudaMemcpyHostToDevice, gpustream[thr_id]);
 
-	cudaMemcpyToSymbol(	pTarget,
+	cudaMemcpyToSymbolAsync(	pTarget,
 						pTargetIn,
-						sizeof(uint32_t) * 8 );
+						sizeof(uint32_t) * 8, 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 
-	cudaMemset(d_resultNonce[thr_id], 0xFF, sizeof(uint32_t));
+	cudaMemsetAsync(d_resultNonce[thr_id], 0xFF, sizeof(uint32_t), gpustream[thr_id]);
 }
 
 __host__ void fugue256_cpu_hash(int thr_id, uint32_t threads, int startNounce, void *outputHashes, uint32_t *nounce)
@@ -762,7 +763,7 @@ __host__ void fugue256_cpu_hash(int thr_id, uint32_t threads, int startNounce, v
 	dim3 grid((threads + threadsperblock-1)/threadsperblock);
 	dim3 block(threadsperblock);
 
-	fugue256_gpu_hash<<<grid, block>>>(thr_id, threads, startNounce, d_fugue256_hashoutput[thr_id], d_resultNonce[thr_id]);
+	fugue256_gpu_hash<<<grid, block, 0, gpustream[thr_id]>>>(thr_id, threads, startNounce, d_fugue256_hashoutput[thr_id], d_resultNonce[thr_id]);
 
 	//cudaMemcpy(outputHashes, d_fugue256_hashoutput[thr_id], 8 * sizeof(uint32_t), cudaMemcpyDeviceToHost);
 	CUDA_SAFE_CALL(cudaMemcpy(nounce, d_resultNonce[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost));

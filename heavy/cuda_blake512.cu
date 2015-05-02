@@ -3,6 +3,7 @@
 
 #include "cuda_helper.h"
 
+
 // globaler Speicher für alle HeftyHashes aller Threads
 extern uint32_t *heavy_heftyHashes[MAX_GPUS];
 extern uint32_t *heavy_nonceVector[MAX_GPUS];
@@ -195,20 +196,20 @@ template <int BLOCKSIZE> __global__ void blake512_gpu_hash(uint32_t threads, uin
 __host__ void blake512_cpu_init(int thr_id, uint32_t threads)
 {
 	// Kopiere die Hash-Tabellen in den GPU-Speicher
-	cudaMemcpyToSymbol( c_sigma,
+	cudaMemcpyToSymbolAsync( c_sigma,
 						host_sigma,
 						sizeof(host_sigma),
-						0, cudaMemcpyHostToDevice);
+						0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 
-	cudaMemcpyToSymbol( c_u512,
+	cudaMemcpyToSymbolAsync( c_u512,
 						host_u512,
 						sizeof(host_u512),
-						0, cudaMemcpyHostToDevice);
+						0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 
-	cudaMemcpyToSymbol( c_SecondRound,
+	cudaMemcpyToSymbolAsync( c_SecondRound,
 						host_SecondRound,
 						sizeof(host_SecondRound),
-						0, cudaMemcpyHostToDevice);
+						0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 
 	// Speicher für alle Ergebnisse belegen
 	CUDA_SAFE_CALL(cudaMalloc(&d_hash5output[thr_id], 16 * sizeof(uint32_t) * threads));
@@ -216,7 +217,7 @@ __host__ void blake512_cpu_init(int thr_id, uint32_t threads)
 
 static int BLOCKSIZE = 84;
 
-__host__ void blake512_cpu_setBlock(void *pdata, int len)
+__host__ void blake512_cpu_setBlock(int thr_id, void *pdata, int len)
 	// data muss 84-Byte haben!
 	// heftyHash hat 32-Byte
 {
@@ -234,7 +235,7 @@ __host__ void blake512_cpu_setBlock(void *pdata, int len)
 		PaddedMessage[112] = 0x80;
 	}
 	// die Message (116 Bytes) ohne Padding zur Berechnung auf der GPU
-	cudaMemcpyToSymbol( c_PaddedMessage, PaddedMessage, 16*sizeof(uint64_t), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(c_PaddedMessage, PaddedMessage, 16 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 	BLOCKSIZE = len;
 }
 
@@ -247,7 +248,7 @@ __host__ void blake512_cpu_hash(int thr_id, uint32_t threads, uint32_t startNoun
 	dim3 block(threadsperblock);
 
 	if (BLOCKSIZE == 80)
-		blake512_gpu_hash<80><<<grid, block>>>(threads, startNounce, d_hash5output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
+		blake512_gpu_hash<80><<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash5output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
 	else if (BLOCKSIZE == 84)
-		blake512_gpu_hash<84><<<grid, block>>>(threads, startNounce, d_hash5output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
+		blake512_gpu_hash<84><<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash5output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
 }

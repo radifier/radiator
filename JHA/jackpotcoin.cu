@@ -13,7 +13,7 @@ extern "C"
 static uint32_t *d_hash[MAX_GPUS];
 
 extern void jackpot_keccak512_cpu_init(int thr_id, uint32_t threads);
-extern void jackpot_keccak512_cpu_setBlock(void *pdata, size_t inlen);
+extern void jackpot_keccak512_cpu_setBlock(int thr_id, void *pdata, size_t inlen);
 extern void jackpot_keccak512_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 
 extern void quark_blake512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash);
@@ -112,6 +112,7 @@ extern int scanhash_jackpot(int thr_id, uint32_t *pdata,
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		get_cuda_arch(&cuda_arch[thr_id]);
 
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
@@ -135,8 +136,8 @@ extern int scanhash_jackpot(int thr_id, uint32_t *pdata,
 	for (int k=0; k < 22; k++)
 		be32enc(&endiandata[k], pdata[k]);
 
-	jackpot_keccak512_cpu_setBlock((void*)endiandata, 80);
-	cuda_check_cpu_setTarget(ptarget);
+	jackpot_keccak512_cpu_setBlock(thr_id, (void*)endiandata, 80);
+	cuda_check_cpu_setTarget(ptarget, thr_id);
 
 	do {
 		// erstes Keccak512 Hash mit CUDA

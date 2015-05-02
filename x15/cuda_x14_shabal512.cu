@@ -4,6 +4,7 @@
 #include "cuda_helper.h"
 
 
+
 /* $Id: shabal.c 175 2010-05-07 16:03:20Z tp $ */
 /*
  * Shabal implementation.
@@ -463,5 +464,5 @@ __host__ void x14_shabal512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t s
 	dim3 grid((threads + threadsperblock-1)/threadsperblock);
 	dim3 block(threadsperblock);
 
-	x14_shabal512_gpu_hash_64<<<grid, block>>>(threads, startNounce, d_hash);
+	x14_shabal512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash);
 }

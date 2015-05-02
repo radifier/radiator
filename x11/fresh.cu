@@ -15,7 +15,7 @@ extern "C" {
 static uint32_t *d_hash[MAX_GPUS];
 static uint32_t *h_found[MAX_GPUS];
 
-extern void x11_shavite512_setBlock_80(void *pdata);
+extern void x11_shavite512_setBlock_80(int thr_id, void *pdata);
 extern void x11_shavite512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 extern void x11_shavite512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 
@@ -99,6 +99,7 @@ extern int scanhash_fresh(int thr_id, uint32_t *pdata,
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
 		x11_simd512_cpu_init(thr_id, throughput);
 		x11_echo512_cpu_init(thr_id, throughput);
@@ -114,7 +115,7 @@ extern int scanhash_fresh(int thr_id, uint32_t *pdata,
 	for (int k=0; k < 20; k++)
 		be32enc(&endiandata[k], pdata[k]);
 	
-	x11_shavite512_setBlock_80((void*)endiandata);
+	x11_shavite512_setBlock_80(thr_id, (void*)endiandata);
 
 	do {
 
@@ -125,6 +126,7 @@ extern int scanhash_fresh(int thr_id, uint32_t *pdata,
 		x11_shavite512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		x11_echo512_cpu_hash_64_final(thr_id, throughput, pdata[19], d_hash[thr_id], ptarget[7], h_found[thr_id]);
+		cudaStreamSynchronize(gpustream[thr_id]);
 
 		if (h_found[thr_id][0] != 0xffffffff)
 		{

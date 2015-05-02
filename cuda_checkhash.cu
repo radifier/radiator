@@ -21,10 +21,11 @@ void cuda_check_cpu_init(int thr_id, uint32_t threads)
 }
 
 // Target Difficulty
+
 __host__
-void cuda_check_cpu_setTarget(const void *ptarget)
+void cuda_check_cpu_setTarget(const void *ptarget, int thr_id)
 {
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(pTarget, ptarget, 8*sizeof(uint32_t), 0, cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(pTarget, ptarget, 8*sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -89,14 +90,14 @@ void cuda_checkhash_64(uint32_t threads, uint32_t startNounce, uint32_t *hash, u
 __host__
 uint32_t cuda_check_hash(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_inputHash)
 {
-	CUDA_SAFE_CALL(cudaMemset(d_resNonces[thr_id], 0xff, sizeof(uint32_t)));
+	CUDA_SAFE_CALL(cudaMemsetAsync(d_resNonces[thr_id], 0xff, sizeof(uint32_t), gpustream[thr_id]));
 
 	const uint32_t threadsperblock = 512;
 
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
 
-	cuda_checkhash_64 <<<grid, block>>> (threads, startNounce, d_inputHash, d_resNonces[thr_id]);
+	cuda_checkhash_64 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_inputHash, d_resNonces[thr_id]);
 
 	cudaMemcpy(h_resNonces[thr_id], d_resNonces[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost);
 
@@ -129,9 +130,9 @@ uint32_t cuda_check_hash_suppl(int thr_id, uint32_t threads, uint32_t startNounc
 	dim3 block(threadsperblock);
 
 	// first element stores the count of found nonces
-	cudaMemset(d_resNonces[thr_id], 0, sizeof(uint32_t));
+	cudaMemsetAsync(d_resNonces[thr_id], 0, sizeof(uint32_t), gpustream[thr_id]);
 
-	cuda_checkhash_64_suppl <<<grid, block>>> (startNounce, d_inputHash, d_resNonces[thr_id]);
+	cuda_checkhash_64_suppl <<<grid, block, 0, gpustream[thr_id]>>> (startNounce, d_inputHash, d_resNonces[thr_id]);
 	cudaMemcpy(h_resNonces[thr_id], d_resNonces[thr_id], 8*sizeof(uint32_t), cudaMemcpyDeviceToHost);
 
 	rescnt = h_resNonces[thr_id][0];
@@ -193,14 +194,14 @@ __host__
 uint32_t cuda_check_hash_branch(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_inputHash)
 {
 	uint32_t result = 0xffffffff;
-	cudaMemset(d_resNonces[thr_id], 0xff, sizeof(uint32_t));
+	cudaMemsetAsync(d_resNonces[thr_id], 0xff, sizeof(uint32_t), gpustream[thr_id]);
 
 	const uint32_t threadsperblock = 256;
 
 	dim3 grid((threads + threadsperblock-1)/threadsperblock);
 	dim3 block(threadsperblock);
 
-	cuda_check_hash_branch_64 <<<grid, block>>> (threads, startNounce, d_nonceVector, d_inputHash, d_resNonces[thr_id]);
+	cuda_check_hash_branch_64 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_nonceVector, d_inputHash, d_resNonces[thr_id]);
 
 	cudaMemcpy(h_resNonces[thr_id], d_resNonces[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost);
 
@@ -211,14 +212,14 @@ uint32_t cuda_check_hash_branch(int thr_id, uint32_t threads, uint32_t startNoun
 __host__
 void cuda_check_quarkcoin(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_inputHash, uint32_t *resNonces)
 {
-	CUDA_SAFE_CALL(cudaMemset(d_resNonces[thr_id], 0xff, 2*sizeof(uint32_t)));
+	CUDA_SAFE_CALL(cudaMemsetAsync(d_resNonces[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]));
 
 	const uint32_t threadsperblock = 256;
 
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
 
-	cuda_check_quarkcoin_64 << <grid, block >> > (threads, startNounce, d_nonceVector, d_inputHash, d_resNonces[thr_id]);
+	cuda_check_quarkcoin_64 << <grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_nonceVector, d_inputHash, d_resNonces[thr_id]);
 
 	cudaMemcpy(resNonces, d_resNonces[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost);
 }

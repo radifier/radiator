@@ -2,12 +2,12 @@
 #define _CUDA_HEAVY_H
 
 void blake512_cpu_init(int thr_id, uint32_t threads);
-void blake512_cpu_setBlock(void *pdata, int len);
+void blake512_cpu_setBlock(int thr_id, void *pdata, int len);
 void blake512_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce);
 
 void groestl512_cpu_init(int thr_id, uint32_t threads);
 void groestl512_cpu_copyHeftyHash(int thr_id, uint32_t threads, void *heftyHashes, int copy);
-void groestl512_cpu_setBlock(void *data, int len);
+void groestl512_cpu_setBlock(int thr_id, void *data, int len);
 void groestl512_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce);
 
 void hefty_cpu_hash(int thr_id, uint32_t threads, int startNounce);
@@ -15,12 +15,12 @@ void hefty_cpu_setBlock(int thr_id, uint32_t threads, void *data, int len);
 void hefty_cpu_init(int thr_id, uint32_t threads);
 
 void keccak512_cpu_init(int thr_id, uint32_t threads);
-void keccak512_cpu_setBlock(void *data, int len);
+void keccak512_cpu_setBlock(int thr_id, void *data, int len);
 void keccak512_cpu_copyHeftyHash(int thr_id, uint32_t threads, void *heftyHashes, int copy);
 void keccak512_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce);
 
 void sha256_cpu_init(int thr_id, uint32_t threads);
-void sha256_cpu_setBlock(void *data, int len);
+void sha256_cpu_setBlock(int thr_id, void *data, int len);
 void sha256_cpu_hash(int thr_id, uint32_t threads, int startNounce);
 void sha256_cpu_copyHeftyHash(int thr_id, uint32_t threads, void *heftyHashes, int copy);
 

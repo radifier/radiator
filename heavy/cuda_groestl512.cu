@@ -6,6 +6,7 @@
 
 #include "cuda_helper.h"
 
+
 // globaler Speicher für alle HeftyHashes aller Threads
 extern uint32_t *heavy_heftyHashes[MAX_GPUS];
 extern uint32_t *heavy_nonceVector[MAX_GPUS];
@@ -733,7 +734,7 @@ template <int BLOCKSIZE> __global__ void groestl512_gpu_hash(uint32_t threads, u
 #define texDef(texname, texmem, texsource, texsize) \
 	unsigned int *texmem; \
 	cudaMalloc(&texmem, texsize); \
-	cudaMemcpy(texmem, texsource, texsize, cudaMemcpyHostToDevice); \
+	cudaMemcpyAsync(texmem, texsource, texsize, cudaMemcpyHostToDevice, gpustream[thr_id]); \
 	texname.normalized = 0; \
 	texname.filterMode = cudaFilterModePoint; \
 	texname.addressMode[0] = cudaAddressModeClamp; \
@@ -759,7 +760,7 @@ __host__ void groestl512_cpu_init(int thr_id, uint32_t threads)
 
 static int BLOCKSIZE = 84;
 
-__host__ void groestl512_cpu_setBlock(void *data, int len)
+__host__ void groestl512_cpu_setBlock(int thr_id, void *data, int len)
 	// data muss 80/84-Byte haben!
 	// heftyHash hat 32-Byte
 {
@@ -787,10 +788,10 @@ __host__ void groestl512_cpu_setBlock(void *data, int len)
 	groestl_state_init[31] = 0x20000;
 
 	// state speichern
-	cudaMemcpyToSymbol(groestl_gpu_state, groestl_state_init, 128);
+	cudaMemcpyToSymbolAsync(groestl_gpu_state, groestl_state_init, 128);
 
 	// Blockheader setzen (korrekte Nonce und Hefty Hash fehlen da drin noch)
-	cudaMemcpyToSymbol(groestl_gpu_msg, msgBlock, 128);
+	cudaMemcpyToSymbolAsync(groestl_gpu_msg, msgBlock, 128);
 	BLOCKSIZE = len;
 }
 
@@ -798,7 +799,7 @@ __host__ void groestl512_cpu_copyHeftyHash(int thr_id, uint32_t threads, void *h
 {
 	// Hefty1 Hashes kopieren (eigentlich nur zum debuggen)
 	if (copy)
-		CUDA_SAFE_CALL(cudaMemcpy(heavy_heftyHashes[thr_id], heftyHashes, 8 * sizeof(uint32_t) * threads, cudaMemcpyHostToDevice));
+		CUDA_SAFE_CALL(cudaMemcpyAsync(heavy_heftyHashes[thr_id], heftyHashes, 8 * sizeof(uint32_t) * threads, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }
 
 __host__ void groestl512_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce)
@@ -810,7 +811,7 @@ __host__ void groestl512_cpu_hash(int thr_id, uint32_t threads, uint32_t startNo
 	dim3 block(threadsperblock);
 
 	if (BLOCKSIZE == 84)
-		groestl512_gpu_hash<84><<<grid, block>>>(threads, startNounce, d_hash4output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
+		groestl512_gpu_hash<84><<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash4output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
 	else if (BLOCKSIZE == 80)
-		groestl512_gpu_hash<80><<<grid, block>>>(threads, startNounce, d_hash4output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
+		groestl512_gpu_hash<80><<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash4output[thr_id], heavy_heftyHashes[thr_id], heavy_nonceVector[thr_id]);
 }

@@ -15,6 +15,7 @@
 #include <stdio.h>
 
 
+
 static uint32_t *d_state[MAX_GPUS];
 static uint4 *d_temp4[MAX_GPUS];
 
@@ -654,23 +655,23 @@ void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce,
 	dim3 block(tpb);
 	dim3 grid8(((threads + tpb-1)/tpb)*8);
 
-	x11_simd512_gpu_expand_64 <<<grid8, block>>> (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id]);
+	x11_simd512_gpu_expand_64 <<<grid8, block, 0, gpustream[thr_id]>>> (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id]);
 	//MyStreamSynchronize(NULL, order, thr_id);
 
 	dim3 grid((threads + tpb-1)/tpb);
 
 	if (device_sm[device_map[thr_id]] >= 500) 
 	{
-		x11_simd512_gpu_compress_64_maxwell << < grid, block >> > (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id], d_state[thr_id]);
+		x11_simd512_gpu_compress_64_maxwell << < grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id], d_state[thr_id]);
 		//MyStreamSynchronize(NULL, order, thr_id);
 	}
 	else 
 	{
-		x11_simd512_gpu_compress1_64 << < grid, block >> > (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id], d_state[thr_id]);
-		x11_simd512_gpu_compress2_64 << < grid, block >> > (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id], d_state[thr_id]);
+		x11_simd512_gpu_compress1_64 << < grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id], d_state[thr_id]);
+		x11_simd512_gpu_compress2_64 << < grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id], d_state[thr_id]);
 		//	MyStreamSynchronize(NULL, order, thr_id);
 	}
 
-	x11_simd512_gpu_final_64 << <grid, block >> > (threads, startNounce, (uint64_t*)d_hash,d_temp4[thr_id], d_state[thr_id]);
+	x11_simd512_gpu_final_64 << <grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, (uint64_t*)d_hash,d_temp4[thr_id], d_state[thr_id]);
 //	MyStreamSynchronize(NULL, order, thr_id);
 }

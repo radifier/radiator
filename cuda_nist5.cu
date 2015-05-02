@@ -14,8 +14,8 @@ extern "C"
 static uint32_t *d_hash[MAX_GPUS];
 
 extern void quark_blake512_cpu_init(int thr_id);
-extern void quark_blake512_cpu_setBlock_80(uint64_t *pdata);
-extern void quark_blake512_cpu_setBlock_80_multi(uint32_t thr_id, uint64_t *pdata);
+extern void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata);
+extern void quark_blake512_cpu_setBlock_80_multi(int thr_id, uint64_t *pdata);
 extern void quark_blake512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 extern void quark_blake512_cpu_hash_80_multi(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 
@@ -97,6 +97,7 @@ extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		get_cuda_arch(&cuda_arch[thr_id]);
 
 		// Konstanten kopieren, Speicher belegen
@@ -122,9 +123,9 @@ extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 	}
 	else
 	{
-		quark_blake512_cpu_setBlock_80((uint64_t *)endiandata);
+		quark_blake512_cpu_setBlock_80(thr_id, (uint64_t *)endiandata);
 	}
-	cuda_check_cpu_setTarget(ptarget);
+	cuda_check_cpu_setTarget(ptarget, thr_id);
 
 	do {
 

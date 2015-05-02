@@ -20,6 +20,8 @@
 
 #include "cuda_helper.h"
 
+
+
 typedef unsigned char BitSequence;
 
 typedef struct {
@@ -821,6 +823,6 @@ __host__ void x11_luffaCubehash512_cpu_hash_64(int thr_id, uint32_t threads, uin
     dim3 grid((threads + threadsperblock-1)/threadsperblock);
     dim3 block(threadsperblock);
 
-	x11_luffaCubehash512_gpu_hash_64 << <grid, block>> >(threads, startNounce, (uint64_t*)d_hash);
+	x11_luffaCubehash512_gpu_hash_64 << <grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash);
 }
 

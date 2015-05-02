@@ -17,6 +17,7 @@ extern "C" {
 #include <memory.h>
 
 
+
 /* threads per block */
 #define TPB 192
 
@@ -316,7 +317,7 @@ void pentablake_cpu_hash_80(int thr_id, uint32_t threads, const uint32_t startNo
 	dim3 grid((threads + TPB-1)/TPB);
 	dim3 block(TPB);
 
-	pentablake_gpu_hash_80 <<<grid, block>>> (threads, startNounce, d_outputHash);
+	pentablake_gpu_hash_80 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_outputHash);
 }
 
 
@@ -369,7 +370,7 @@ void pentablake_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, 
 	dim3 grid((threads + TPB - 1) / TPB);
 	dim3 block(TPB);
 
-	pentablake_gpu_hash_64 <<<grid, block>>> (threads, startNounce, (uint64_t*)d_outputHash);
+	pentablake_gpu_hash_64 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, (uint64_t*)d_outputHash);
 }
 
 #if 0
@@ -386,7 +387,7 @@ uint32_t pentablake_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNoun
 	if (cudaMemset(d_resNounce[thr_id], 0xff, 2*sizeof(uint32_t)) != cudaSuccess)
 		return result;
 
-	pentablake_gpu_hash_80<<<grid, block>>>(threads, startNounce, d_resNounce[thr_id]);
+	pentablake_gpu_hash_80<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_resNounce[thr_id]);
 	cudaDeviceSynchronize();
 	if (cudaSuccess == cudaMemcpy(h_resNounce[thr_id], d_resNounce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost)) {
 		result = h_resNounce[thr_id][0];
@@ -423,10 +424,10 @@ uint32_t pentablake_check_hash(int thr_id, uint32_t threads, uint32_t startNounc
 	dim3 block(TPB);
 
 	/* Check error on Ctrl+C or kill to prevent segfaults on exit */
-	if (cudaMemset(d_resNounce[thr_id], 0xff, 2*sizeof(uint32_t)) != cudaSuccess)
+	if (cudaMemsetAsync(d_resNounce[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]) != cudaSuccess)
 		return result;
 
-	pentablake_gpu_check_hash <<<grid, block>>> (threads, startNounce, d_inputHash, d_resNounce[thr_id]);
+	pentablake_gpu_check_hash <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_inputHash, d_resNounce[thr_id]);
 
 	if (cudaSuccess == cudaMemcpy(h_resNounce[thr_id], d_resNounce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost)) {
 		result = h_resNounce[thr_id][0];
@@ -437,7 +438,7 @@ uint32_t pentablake_check_hash(int thr_id, uint32_t threads, uint32_t startNounc
 
 
 __host__
-void pentablake_cpu_setBlock_80(uint32_t *pdata, const uint32_t *ptarget)
+void pentablake_cpu_setBlock_80(int thr_id, uint32_t *pdata, const uint32_t *ptarget)
 {
 	uint8_t data[128];
 	memcpy((void*) data, (void*) pdata, 80);
@@ -449,9 +450,9 @@ void pentablake_cpu_setBlock_80(uint32_t *pdata, const uint32_t *ptarget)
 	data[126] = 0x02;
 	data[127] = 0x80;
 
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(c_data, data, sizeof(data), 0, cudaMemcpyHostToDevice));
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(c_sigma, host_sigma, sizeof(host_sigma), 0, cudaMemcpyHostToDevice));
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(c_Target, ptarget, 32, 0, cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_data, data, sizeof(data), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_sigma, host_sigma, sizeof(host_sigma), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_Target, ptarget, 32, 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }
 
 static bool init[MAX_GPUS] = { false };
@@ -484,6 +485,7 @@ extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 64 * throughput));
 		CUDA_SAFE_CALL(cudaMallocHost(&h_resNounce[thr_id], 2*sizeof(uint32_t)));
 		CUDA_SAFE_CALL(cudaMalloc(&d_resNounce[thr_id], 2*sizeof(uint32_t)));
@@ -494,7 +496,7 @@ extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	for (int k=0; k < 20; k++)
 		be32enc(&endiandata[k], pdata[k]);
 
-	pentablake_cpu_setBlock_80(endiandata, ptarget);
+	pentablake_cpu_setBlock_80(thr_id, endiandata, ptarget);
 
 	do {
 

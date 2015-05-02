@@ -5,6 +5,7 @@
 #include "miner.h"
 #include "cuda_helper.h"
 
+
 // globaler Speicher für alle HeftyHashes aller Threads
 __constant__ uint32_t pTarget[8]; // Single GPU
 static uint32_t *d_outputHashes[MAX_GPUS];
@@ -297,14 +298,10 @@ __host__ void myriadgroestl_cpu_setBlock(int thr_id, void *data, void *pTargetIn
     // auf der GPU ausgeführt)
 
     // Blockheader setzen (korrekte Nonce und Hefty Hash fehlen da drin noch)
-    cudaMemcpyToSymbol( myriadgroestl_gpu_msg,
-                        msgBlock,
-                        128);
+	cudaMemcpyToSymbolAsync(myriadgroestl_gpu_msg, msgBlock, 128, 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 
-    cudaMemset(d_resultNonce[thr_id], 0xFF, 4*sizeof(uint32_t));
-    cudaMemcpyToSymbol( pTarget,
-                        pTargetIn,
-                        sizeof(uint32_t) * 8 );
+	cudaMemsetAsync(d_resultNonce[thr_id], 0xFF, 4 * sizeof(uint32_t), gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(pTarget, pTargetIn, sizeof(uint32_t) * 8, 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }
 
 __host__ void myriadgroestl_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *nounce)
@@ -315,14 +312,14 @@ __host__ void myriadgroestl_cpu_hash(int thr_id, uint32_t threads, uint32_t star
     // mit den Quad Funktionen brauchen wir jetzt 4 threads pro Hash, daher Faktor 4 bei der Blockzahl
     const int factor=4;
 
-    cudaMemset(d_resultNonce[thr_id], 0xFF, 4*sizeof(uint32_t));
+	cudaMemsetAsync(d_resultNonce[thr_id], 0xFF, 4 * sizeof(uint32_t), gpustream[thr_id]);
     // berechne wie viele Thread Blocks wir brauchen
     dim3 grid(factor*((threads + threadsperblock-1)/threadsperblock));
     dim3 block(threadsperblock);
 
-    myriadgroestl_gpu_hash_quad<<<grid, block>>>(threads, startNounce, d_outputHashes[thr_id]);
+    myriadgroestl_gpu_hash_quad<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_outputHashes[thr_id]);
     dim3 grid2((threads + threadsperblock-1)/threadsperblock);
-    myriadgroestl_gpu_hash_quad2<<<grid2, block>>>(threads, startNounce, d_resultNonce[thr_id], d_outputHashes[thr_id]);
+    myriadgroestl_gpu_hash_quad2<<<grid2, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_resultNonce[thr_id], d_outputHashes[thr_id]);
 
 
     CUDA_SAFE_CALL(cudaMemcpy(nounce, d_resultNonce[thr_id], 4*sizeof(uint32_t), cudaMemcpyDeviceToHost));

@@ -31,8 +31,8 @@ static uint32_t *d_hash[MAX_GPUS];
 static uint32_t *h_found[MAX_GPUS];
 
 extern void quark_blake512_cpu_init(int thr_id);
-extern void quark_blake512_cpu_setBlock_80(uint64_t *pdata);
-extern void quark_blake512_cpu_setBlock_80_multi(uint32_t thr_id, uint64_t *pdata);
+extern void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata);
+extern void quark_blake512_cpu_setBlock_80_multi(int thr_id, uint64_t *pdata);
 extern void quark_blake512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 extern void quark_blake512_cpu_hash_80_multi(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 
@@ -166,6 +166,7 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		get_cuda_arch(&cuda_arch[thr_id]);
 		if (opt_n_gputhreads > 1)
 			quark_blake512_cpu_init(thr_id);
@@ -190,7 +191,7 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 	}
 	else
 	{
-		quark_blake512_cpu_setBlock_80((uint64_t *)endiandata);
+		quark_blake512_cpu_setBlock_80(thr_id, (uint64_t *)endiandata);
 	}
 	do {
 
@@ -210,6 +211,7 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 		x11_shavite512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		x11_echo512_cpu_hash_64_final(thr_id, throughput, pdata[19], d_hash[thr_id], ptarget[7], h_found[thr_id]);
+		cudaStreamSynchronize(gpustream[thr_id]);
 		if (h_found[thr_id][0] != 0xffffffff)
 		{
 			const uint32_t Htarg = ptarget[7];

@@ -7,6 +7,7 @@
 #include <memory.h>
 #include "cuda_helper.h"
 
+
 #define UINT2(x,y) make_uint2(x,y)
 
 static uint32_t *d_KNonce[MAX_GPUS];
@@ -429,12 +430,12 @@ void keccak256_gpu_hash_80(uint32_t threads, uint32_t startNounce,  uint32_t *co
 __host__
 void keccak256_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *h_nounce)
 {
-	cudaMemset(d_KNonce[thr_id], 0xffffffff, 2*sizeof(uint32_t));
+	cudaMemsetAsync(d_KNonce[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
 	const uint32_t threadsperblock = 512;
 
 	dim3 grid((threads + threadsperblock-1)/threadsperblock);
 	dim3 block(threadsperblock);
-	keccak256_gpu_hash_80<<<grid, block>>>(threads, startNounce, d_KNonce[thr_id]);
+	keccak256_gpu_hash_80<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_KNonce[thr_id]);
 	//MyStreamSynchronize(NULL, order, thr_id);
 	CUDA_SAFE_CALL(cudaMemcpy(h_nounce, d_KNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 }
@@ -487,16 +488,16 @@ void keccak256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, u
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
 
-	keccak256_gpu_hash_32 <<<grid, block>>> (threads, startNounce, d_outputHash);
+	keccak256_gpu_hash_32 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_outputHash);
 }
 
 __host__
-void keccak256_setBlock_80(void *pdata,const void *pTargetIn)
+void keccak256_setBlock_80(int thr_id, void *pdata,const void *pTargetIn)
 {
 	unsigned char PaddedMessage[80];
 	memcpy(PaddedMessage, pdata, 80);
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(pTarget, pTargetIn, 8*sizeof(uint32_t), 0, cudaMemcpyHostToDevice));
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(c_PaddedMessage80, PaddedMessage, 10*sizeof(uint64_t), 0, cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(pTarget, pTargetIn, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedMessage80, PaddedMessage, 10 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }
 
 __host__

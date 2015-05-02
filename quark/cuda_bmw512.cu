@@ -471,7 +471,7 @@ __host__ void quark_bmw512_cpu_init(int thr_id, uint32_t threads)
 }
 
 // Bmw512 für 80 Byte grosse Eingangsdaten
-__host__ void quark_bmw512_cpu_setBlock_80(void *pdata)
+__host__ void quark_bmw512_cpu_setBlock_80(int thr_id, void *pdata)
 {
 	// Message mit Padding bereitstellen
 	// lediglich die korrekte Nonce ist noch ab Byte 76 einzusetzen.
@@ -485,7 +485,7 @@ __host__ void quark_bmw512_cpu_setBlock_80(void *pdata)
 	message[15] = SPH_C64(640);
 
 	// die Message zur Berechnung auf der GPU
-	cudaMemcpyToSymbol( c_PaddedMessage80, PaddedMessage, 16*sizeof(uint64_t), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(c_PaddedMessage80, PaddedMessage, 16 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }
 
 __host__ void quark_bmw512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash)
@@ -496,7 +496,7 @@ __host__ void quark_bmw512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t st
     dim3 grid((threads + threadsperblock-1)/threadsperblock);
     dim3 block(threadsperblock);
 
-    quark_bmw512_gpu_hash_64<<<grid, block>>>(threads, startNounce, (uint64_t*)d_hash, d_nonceVector);
+    quark_bmw512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash, d_nonceVector);
 //	MyStreamSynchronize(NULL, order, thr_id);
 }
 
@@ -508,6 +508,6 @@ __host__ void quark_bmw512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t st
     dim3 grid((threads + threadsperblock-1)/threadsperblock);
     dim3 block(threadsperblock);
 
-    quark_bmw512_gpu_hash_80<<<grid, block>>>(threads, startNounce, (uint64_t*)d_hash);
+    quark_bmw512_gpu_hash_80<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash);
 }
 

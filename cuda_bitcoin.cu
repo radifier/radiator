@@ -13,6 +13,7 @@ void bitcoin_cpu_init(int thr_id);
 void bitcoin_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, const uint32_t *const ms, uint32_t merkle, uint32_t time, uint32_t compacttarget, uint32_t *const h_nounce);
 void bitcoin_midstate(const uint32_t *data, uint32_t *midstate);
 
+
 __constant__ uint32_t pTarget[8];
 static uint32_t *d_result[MAX_GPUS];
 
@@ -641,7 +642,7 @@ void bitcoin_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, const 
 {
 	uint32_t b2, c2, d2, f2, g2, h2, t1, w16, w17, t1c, t2c, w16rot, w17rot;
 
-	cudaMemset(d_result[thr_id], 0xff, 2 * sizeof(uint32_t));
+	cudaMemsetAsync(d_result[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
 
 	t1 = ms[7] + (rrot(ms[4], 6) ^ rrot(ms[4], 11) ^ rrot(ms[4], 25)) + (ms[6] ^ (ms[4] & (ms[5] ^ ms[6]))) + 0x428a2f98U + merkle;
 	d2 = ms[3] + t1;
@@ -664,7 +665,7 @@ void bitcoin_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, const 
 
 	dim3 grid((threads + TPB*NONCES_PER_THREAD - 1) / TPB / NONCES_PER_THREAD);
 	dim3 block(TPB);
-	bitcoin_gpu_hash << <grid, block >> > (threads, startNounce, d_result[thr_id], t1c, t2c, w16, w16rot, w17, w17rot, b2, c2, d2, f2, g2, h2, ms[0], ms[1], ms[2], ms[3], ms[4], ms[5], ms[6], ms[7], compacttarget);
+	bitcoin_gpu_hash << <grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_result[thr_id], t1c, t2c, w16, w16rot, w17, w17rot, b2, c2, d2, f2, g2, h2, ms[0], ms[1], ms[2], ms[3], ms[4], ms[5], ms[6], ms[7], compacttarget);
 	CUDA_SAFE_CALL(cudaMemcpy(h_nounce, d_result[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 }
 

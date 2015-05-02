@@ -6,6 +6,7 @@
 #include "cuda_helper.h"
 #include <host_defines.h>
 
+
 // globaler Speicher für alle HeftyHashes aller Threads
 __constant__ uint32_t pTarget[8]; // Single GPU
 static uint32_t *d_resultNonce[MAX_GPUS];
@@ -96,14 +97,10 @@ __host__ void groestlcoin_cpu_setBlock(int thr_id, void *data, void *pTargetIn)
     // auf der GPU ausgeführt)
 
     // Blockheader setzen (korrekte Nonce und Hefty Hash fehlen da drin noch)
-    cudaMemcpyToSymbol( groestlcoin_gpu_msg,
-                        msgBlock,
-                        128);
+	cudaMemcpyToSymbolAsync(groestlcoin_gpu_msg, msgBlock, 128, 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 
-    cudaMemset(d_resultNonce[thr_id], 0xFF, sizeof(uint32_t));
-    cudaMemcpyToSymbol( pTarget,
-                        pTargetIn,
-                        sizeof(uint32_t) * 8 );
+	cudaMemsetAsync(d_resultNonce[thr_id], 0xFF, sizeof(uint32_t), gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(pTarget, pTargetIn, sizeof(uint32_t) * 8, 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }
 
 __host__ void groestlcoin_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, void *outputHashes, uint32_t *nounce)
@@ -118,8 +115,8 @@ __host__ void groestlcoin_cpu_hash(int thr_id, uint32_t threads, uint32_t startN
     dim3 grid(factor*((threads + threadsperblock-1)/threadsperblock));
     dim3 block(threadsperblock);
 
-    cudaMemset(d_resultNonce[thr_id], 0xFF, 2 * sizeof(uint32_t));
-    groestlcoin_gpu_hash_quad<<<grid, block>>>(threads, startNounce, d_resultNonce[thr_id]);
+	cudaMemsetAsync(d_resultNonce[thr_id], 0xFF, 2 * sizeof(uint32_t), gpustream[thr_id]);
+    groestlcoin_gpu_hash_quad<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_resultNonce[thr_id]);
 
     CUDA_SAFE_CALL(cudaMemcpy(nounce, d_resultNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 }

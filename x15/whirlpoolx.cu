@@ -11,7 +11,7 @@ extern "C"
 #include "cuda_helper.h"
 
 extern void whirlpoolx_cpu_init(int thr_id, uint32_t threads);
-extern void whirlpoolx_setBlock_80(void *pdata, const void *ptarget);
+extern void whirlpoolx_setBlock_80(int thr_id, void *pdata, const void *ptarget);
 extern void cpu_whirlpoolx(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *foundNonce);
 extern void whirlpoolx_precompute(int thr_id);
 
@@ -65,6 +65,7 @@ int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		whirlpoolx_cpu_init(thr_id, throughput);
 		init[thr_id] = true;
 	}
@@ -74,7 +75,7 @@ int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t
 		be32enc(&endiandata[k], pdata[k]);
 	}
 
-	whirlpoolx_setBlock_80((void*)endiandata, &ptarget[6]);
+	whirlpoolx_setBlock_80(thr_id, (void*)endiandata, &ptarget[6]);
 	whirlpoolx_precompute(thr_id);
 	do {
 		uint32_t foundNonce[2];

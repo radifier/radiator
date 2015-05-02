@@ -2,6 +2,8 @@
 
 #include "cuda_helper.h"
 
+
+
 #if 0
 static __constant__ uint64_t SKEIN_IV512_256[8] = {
 	0xCCD044A12FDB3E13, 0xE83590301A79A9EB,
@@ -189,7 +191,7 @@ void skein256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, ui
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
 
-	skein256_gpu_hash_32<<<grid, block>>>(threads, startNounce, d_outputHash);
+	skein256_gpu_hash_32<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_outputHash);
 
 }
 

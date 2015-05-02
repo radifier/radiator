@@ -11,6 +11,7 @@
 #include "cuda_helper.h"
 
 
+
 __constant__ uint32_t pTarget[8];
 static uint32_t *d_nonce[MAX_GPUS];
 
@@ -1117,9 +1118,9 @@ __host__ void x13_fugue512_cpu_init(int thr_id, uint32_t threads)
 {
 	cudaMalloc(&d_nonce[thr_id], 2*sizeof(uint32_t));
 }
-__host__ void x13_fugue512_cpu_setTarget(const void *ptarget)
+__host__ void x13_fugue512_cpu_setTarget(int thr_id, const void *ptarget)
 {
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(pTarget, ptarget, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(pTarget, ptarget, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 
 }
 
@@ -1139,7 +1140,7 @@ __host__ void x13_fugue512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t st
 
 	// fprintf(stderr, "threads=%d, %d blocks, %d threads per block, %d bytes shared\n", threads, grid.x, block.x, shared_size);
 
-	x13_fugue512_gpu_hash_64<<<grid, block>>>(threads, startNounce, d_hash);
+	x13_fugue512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash);
 //	MyStreamSynchronize(NULL, order, thr_id);
 }
 __host__ void x13_fugue512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash, uint32_t *res)
@@ -1150,8 +1151,8 @@ __host__ void x13_fugue512_cpu_hash_64_final(int thr_id, uint32_t threads, uint3
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
 
-	cudaMemset(d_nonce[thr_id], 0xff, 2*sizeof(uint32_t));
+	cudaMemsetAsync(d_nonce[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
 
-	x13_fugue512_gpu_hash_64_final << <grid, block>> >(threads, startNounce, d_hash, d_nonce[thr_id]);
+	x13_fugue512_gpu_hash_64_final << <grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash, d_nonce[thr_id]);
 	cudaMemcpy(res, d_nonce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost);
 }

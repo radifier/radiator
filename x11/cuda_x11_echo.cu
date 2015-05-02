@@ -3,6 +3,8 @@
 
 #include "cuda_helper.h"
 
+
+
 #include "cuda_x11_aes.cu"
 
 static uint32_t *d_found[MAX_GPUS];
@@ -369,7 +371,7 @@ __host__ void x11_echo512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t sta
     dim3 grid((threads + threadsperblock-1)/threadsperblock);
     dim3 block(threadsperblock);
 
-    x11_echo512_gpu_hash_64<<<grid, block>>>(threads, startNounce, d_hash);
+    x11_echo512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash);
 	//MyStreamSynchronize(NULL, order, thr_id);
 }
 
@@ -692,9 +694,9 @@ __host__ void x11_echo512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32
 	// berechne wie viele Thread Blocks wir brauchen
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
-	cudaMemset(d_found[thr_id], 0xff, 2*sizeof(uint32_t));
+	cudaMemsetAsync(d_found[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
 
-	x11_echo512_gpu_hash_64_final << <grid, block>> >(threads, startNounce, (uint64_t*)d_hash, d_found[thr_id], target);
+	x11_echo512_gpu_hash_64_final << <grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash, d_found[thr_id], target);
 	//MyStreamSynchronize(NULL, order, thr_id);
-	CUDA_SAFE_CALL(cudaMemcpy(h_found, d_found[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost));
+	CUDA_SAFE_CALL(cudaMemcpyAsync(h_found, d_found[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]));
 }

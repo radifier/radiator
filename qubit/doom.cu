@@ -13,9 +13,9 @@ extern "C" {
 static uint32_t *d_hash[MAX_GPUS];
 
 extern void qubit_luffa512_cpu_init(int thr_id, uint32_t threads);
-extern void qubit_luffa512_cpu_setBlock_80(void *pdata);
+extern void qubit_luffa512_cpu_setBlock_80(int thr_id, void *pdata);
 extern void qubit_luffa512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
-extern void qubit_luffa512_cpufinal_setBlock_80(void *pdata, const void *ptarget);
+extern void qubit_luffa512_cpufinal_setBlock_80(int thr_id, void *pdata, const void *ptarget);
 extern uint32_t qubit_luffa512_cpu_finalhash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 
 extern void doomhash(void *state, const void *input)
@@ -62,6 +62,7 @@ extern int scanhash_doom(int thr_id, uint32_t *pdata,
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
 
@@ -73,7 +74,7 @@ extern int scanhash_doom(int thr_id, uint32_t *pdata,
 	for (int k=0; k < 20; k++)
 		be32enc(&endiandata[k], pdata[k]);
 
-	qubit_luffa512_cpufinal_setBlock_80((void*)endiandata,ptarget);
+	qubit_luffa512_cpufinal_setBlock_80(thr_id, (void*)endiandata,ptarget);
 
 	do {
 

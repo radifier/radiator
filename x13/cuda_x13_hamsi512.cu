@@ -7,12 +7,9 @@ using namespace std;
 #include <stdio.h>
 #endif
 #include <memory.h>
-
-
-//typedef unsigned char BitSequence;
-
-
 #include "cuda_helper.h"
+
+
 
 static __constant__ uint32_t d_T512[4096/4] = {
 	0xef0b0270, 0x3afd0000, 0x5dae0000,
@@ -871,5 +868,5 @@ __host__ void x13_hamsi512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t st
     dim3 grid((threads + threadsperblock-1)/threadsperblock);
     dim3 block(threadsperblock);
 
-    x13_hamsi512_gpu_hash_64<<<grid, block>>>(threads, startNounce, d_hash);
+    x13_hamsi512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash);
 }

@@ -4,6 +4,7 @@
 #include "cuda_helper.h"
 #include <sm_30_intrinsics.h>
 
+
 static uint32_t *d_tempBranch1Nonces[MAX_GPUS];
 static uint32_t *d_numValid[MAX_GPUS];
 static uint32_t *h_numValid[MAX_GPUS];
@@ -32,8 +33,8 @@ cuda_compactTestFunction_t h_JackpotTrueFunction[MAX_GPUS], h_JackpotFalseFuncti
 // Setup-Funktionen
 __host__ void jackpot_compactTest_cpu_init(int thr_id, uint32_t threads)
 {
-	cudaMemcpyFromSymbol(&h_JackpotTrueFunction[thr_id], d_JackpotTrueFunction, sizeof(cuda_compactTestFunction_t));
-	cudaMemcpyFromSymbol(&h_JackpotFalseFunction[thr_id], d_JackpotFalseFunction, sizeof(cuda_compactTestFunction_t));
+	cudaMemcpyFromSymbolAsync(&h_JackpotTrueFunction[thr_id], d_JackpotTrueFunction, sizeof(cuda_compactTestFunction_t), 0, cudaMemcpyDeviceToHost, gpustream[thr_id]);
+	cudaMemcpyFromSymbolAsync(&h_JackpotFalseFunction[thr_id], d_JackpotFalseFunction, sizeof(cuda_compactTestFunction_t), 0, cudaMemcpyDeviceToHost, gpustream[thr_id]);
 
 	// wir brauchen auch Speicherplatz auf dem Device
 	cudaMalloc(&d_tempBranch1Nonces[thr_id], sizeof(uint32_t) * threads * 2);	
@@ -58,7 +59,7 @@ __host__ void jackpot_compactTest_cpu_init(int thr_id, uint32_t threads)
 // Die Summenfunktion (vom NVIDIA SDK)
 __global__ void jackpot_compactTest_gpu_SCAN(uint32_t *data, int width, uint32_t *partial_sums=NULL, cuda_compactTestFunction_t testFunc=NULL, uint32_t threads=0, uint32_t startNounce=0, uint32_t *inpHashes=NULL, uint32_t *d_validNonceTable=NULL)
 {
-	extern __shared__ uint32_t sums[];
+	__shared__ uint32_t sums[32];
 	int id = ((blockIdx.x * blockDim.x) + threadIdx.x);
 	//int lane_id = id % warpSize;
 	int lane_id = id % width;
@@ -252,38 +253,38 @@ __host__ void jackpot_compactTest_cpu_singleCompaction(int thr_id, uint32_t thre
 	bool callThrid = (thr2 > 0) ? true : false;
 
 	// Erster Initialscan
-	jackpot_compactTest_gpu_SCAN<<<thr1,blockSize, 32*sizeof(uint32_t)>>>(
+	jackpot_compactTest_gpu_SCAN<<<thr1,blockSize, 0, gpustream[thr_id]>>>(
 		d_tempBranch1Nonces[thr_id], 32, d_partSum[0][thr_id], function, orgThreads, startNounce, inpHashes, d_validNonceTable);	
 
 	// weitere Scans
 	if(callThrid)
 	{		
-		jackpot_compactTest_gpu_SCAN<<<thr2,blockSize, 32*sizeof(uint32_t)>>>(d_partSum[0][thr_id], 32, d_partSum[1][thr_id]);
-		jackpot_compactTest_gpu_SCAN<<<1, thr2, 32*sizeof(uint32_t)>>>(d_partSum[1][thr_id], (thr2>32) ? 32 : thr2);
+		jackpot_compactTest_gpu_SCAN<<<thr2,blockSize, 0, gpustream[thr_id]>>>(d_partSum[0][thr_id], 32, d_partSum[1][thr_id]);
+		jackpot_compactTest_gpu_SCAN<<<1, thr2, 0, gpustream[thr_id]>>>(d_partSum[1][thr_id], (thr2>32) ? 32 : thr2);
 	}else
 	{
-		jackpot_compactTest_gpu_SCAN<<<thr3,blockSize2, 32*sizeof(uint32_t)>>>(d_partSum[0][thr_id], (blockSize2>32) ? 32 : blockSize2);
+		jackpot_compactTest_gpu_SCAN<<<thr3,blockSize2, 0, gpustream[thr_id]>>>(d_partSum[0][thr_id], (blockSize2>32) ? 32 : blockSize2);
 	}
 
 	if(callThrid)
-		cudaMemcpy(nrm, &(d_partSum[1][thr_id])[thr2-1], sizeof(uint32_t), cudaMemcpyDeviceToHost);
+		cudaMemcpyAsync(nrm, &(d_partSum[1][thr_id])[thr2-1], sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
 	else
-		cudaMemcpy(nrm, &(d_partSum[0][thr_id])[nSummen-1], sizeof(uint32_t), cudaMemcpyDeviceToHost);
+		cudaMemcpyAsync(nrm, &(d_partSum[0][thr_id])[nSummen - 1], sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
 
 	
 	// Addieren
 	if(callThrid)
 	{
-		jackpot_compactTest_gpu_ADD<<<thr2-1, blockSize>>>(d_partSum[0][thr_id]+blockSize, d_partSum[1][thr_id], blockSize*thr2);
+		jackpot_compactTest_gpu_ADD<<<thr2-1, blockSize, 0, gpustream[thr_id]>>>(d_partSum[0][thr_id]+blockSize, d_partSum[1][thr_id], blockSize*thr2);
 	}
-	jackpot_compactTest_gpu_ADD<<<thr1-1, blockSize>>>(d_tempBranch1Nonces[thr_id]+blockSize, d_partSum[0][thr_id], threads);
+	jackpot_compactTest_gpu_ADD<<<thr1-1, blockSize, 0, gpustream[thr_id]>>>(d_tempBranch1Nonces[thr_id]+blockSize, d_partSum[0][thr_id], threads);
 	
 	// Scatter
-	jackpot_compactTest_gpu_SCATTER<<<thr1,blockSize,0>>>(d_tempBranch1Nonces[thr_id], d_nonces1, 
+	jackpot_compactTest_gpu_SCATTER<<<thr1,blockSize,0, gpustream[thr_id]>>>(d_tempBranch1Nonces[thr_id], d_nonces1, 
 		function, orgThreads, startNounce, inpHashes, d_validNonceTable);
 
 	// Sync
-	cudaDeviceSynchronize();
+	cudaStreamSynchronize(gpustream[thr_id]);
 }
 
 ////// ACHTUNG: Diese funktion geht aktuell nur mit threads > 65536 (Am besten 256 * 1024 oder 256*2048)
@@ -301,25 +302,25 @@ __host__ void jackpot_compactTest_cpu_dualCompaction(int thr_id, uint32_t thread
 	int thr2 = threads / (blockSize*blockSize);
 
 	// 1
-	jackpot_compactTest_gpu_SCAN<<<thr1,blockSize, 32*sizeof(uint32_t)>>>(d_tempBranch1Nonces[thr_id], 32, d_partSum1[thr_id], h_JackpotTrueFunction[thr_id], threads, startNounce, inpHashes);
-	jackpot_compactTest_gpu_SCAN<<<thr2,blockSize, 32*sizeof(uint32_t)>>>(d_partSum1[thr_id], 32, d_partSum2[thr_id]);
-	jackpot_compactTest_gpu_SCAN<<<1, thr2, 32*sizeof(uint32_t)>>>(d_partSum2[thr_id], (thr2>32) ? 32 : thr2);
+	jackpot_compactTest_gpu_SCAN<<<thr1,blockSize, 32*sizeof(uint32_t), 0, gpustream[thr_id]>>>(d_tempBranch1Nonces[thr_id], 32, d_partSum1[thr_id], h_JackpotTrueFunction[thr_id], threads, startNounce, inpHashes);
+	jackpot_compactTest_gpu_SCAN<<<thr2,blockSize, 32*sizeof(uint32_t), 0, gpustream[thr_id]>>>(d_partSum1[thr_id], 32, d_partSum2[thr_id]);
+	jackpot_compactTest_gpu_SCAN<<<1, thr2, 32*sizeof(uint32_t), 0, gpustream[thr_id]>>>(d_partSum2[thr_id], (thr2>32) ? 32 : thr2);
 	cudaMemcpy(&nrm[0], &(d_partSum2[thr_id])[thr2-1], sizeof(uint32_t), cudaMemcpyDeviceToHost);
-	jackpot_compactTest_gpu_ADD<<<thr2-1, blockSize>>>(d_partSum1[thr_id]+blockSize, d_partSum2[thr_id], blockSize*thr2);
-	jackpot_compactTest_gpu_ADD<<<thr1-1, blockSize>>>(d_tempBranch1Nonces[thr_id]+blockSize, d_partSum1[thr_id], threads);
+	jackpot_compactTest_gpu_ADD<<<thr2-1, blockSize, 0, gpustream[thr_id]>>>(d_partSum1[thr_id]+blockSize, d_partSum2[thr_id], blockSize*thr2);
+	jackpot_compactTest_gpu_ADD<<<thr1-1, blockSize, 0, gpustream[thr_id]>>>(d_tempBranch1Nonces[thr_id]+blockSize, d_partSum1[thr_id], threads);
 
 	// 2
-	jackpot_compactTest_gpu_SCAN<<<thr1,blockSize, 32*sizeof(uint32_t)>>>(d_tempBranch2Nonces[thr_id], 32, d_partSum1[thr_id], h_JackpotFalseFunction[thr_id], threads, startNounce, inpHashes);
-	jackpot_compactTest_gpu_SCAN<<<thr2,blockSize, 32*sizeof(uint32_t)>>>(d_partSum1[thr_id], 32, d_partSum2[thr_id]);
-	jackpot_compactTest_gpu_SCAN<<<1, thr2, 32*sizeof(uint32_t)>>>(d_partSum2[thr_id], (thr2>32) ? 32 : thr2);
+	jackpot_compactTest_gpu_SCAN<<<thr1,blockSize, 32*sizeof(uint32_t), 0, gpustream[thr_id]>>>(d_tempBranch2Nonces[thr_id], 32, d_partSum1[thr_id], h_JackpotFalseFunction[thr_id], threads, startNounce, inpHashes);
+	jackpot_compactTest_gpu_SCAN<<<thr2,blockSize, 32*sizeof(uint32_t), 0, gpustream[thr_id]>>>(d_partSum1[thr_id], 32, d_partSum2[thr_id]);
+	jackpot_compactTest_gpu_SCAN<<<1, thr2, 32*sizeof(uint32_t), 0, gpustream[thr_id]>>>(d_partSum2[thr_id], (thr2>32) ? 32 : thr2);
 	cudaMemcpy(&nrm[1], &(d_partSum2[thr_id])[thr2-1], sizeof(uint32_t), cudaMemcpyDeviceToHost);	
-	jackpot_compactTest_gpu_ADD<<<thr2-1, blockSize>>>(d_partSum1[thr_id]+blockSize, d_partSum2[thr_id], blockSize*thr2);
-	jackpot_compactTest_gpu_ADD<<<thr1-1, blockSize>>>(d_tempBranch2Nonces[thr_id]+blockSize, d_partSum1[thr_id], threads);
+	jackpot_compactTest_gpu_ADD<<<thr2-1, blockSize, 0, gpustream[thr_id]>>>(d_partSum1[thr_id]+blockSize, d_partSum2[thr_id], blockSize*thr2);
+	jackpot_compactTest_gpu_ADD<<<thr1-1, blockSize, 0, gpustream[thr_id]>>>(d_tempBranch2Nonces[thr_id]+blockSize, d_partSum1[thr_id], threads);
 	
 	// Hier ist noch eine Besonderheit: in d_tempBranch1Nonces sind die element von 1...nrm1 die Interessanten
 	// Schritt 3: Scatter
-	jackpot_compactTest_gpu_SCATTER<<<thr1,blockSize,0>>>(d_tempBranch1Nonces[thr_id], d_nonces1, h_JackpotTrueFunction[thr_id], threads, startNounce, inpHashes);
-	jackpot_compactTest_gpu_SCATTER<<<thr1,blockSize,0>>>(d_tempBranch2Nonces[thr_id], d_nonces2, h_JackpotFalseFunction[thr_id], threads, startNounce, inpHashes);
+	jackpot_compactTest_gpu_SCATTER<<<thr1,blockSize,0, 0, gpustream[thr_id]>>>(d_tempBranch1Nonces[thr_id], d_nonces1, h_JackpotTrueFunction[thr_id], threads, startNounce, inpHashes);
+	jackpot_compactTest_gpu_SCATTER<<<thr1,blockSize,0, 0, gpustream[thr_id]>>>(d_tempBranch2Nonces[thr_id], d_nonces2, h_JackpotFalseFunction[thr_id], threads, startNounce, inpHashes);
 	cudaDeviceSynchronize();
 	*/
 }
