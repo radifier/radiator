@@ -53,12 +53,24 @@ void quark_blake512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t
 		const int hashPosition = nounce - startNounce;
 
 		uint64_t *inpHash = &g_hash[hashPosition*8];
-		uint2 block[16] =
-		{
-			vectorizeswap(inpHash[0]), vectorizeswap(inpHash[1]), vectorizeswap(inpHash[2]), vectorizeswap(inpHash[3]),
-			vectorizeswap(inpHash[4]), vectorizeswap(inpHash[5]), vectorizeswap(inpHash[6]), vectorizeswap(inpHash[7]),
-			{ 0, 0x80000000UL }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 1, 0 }, { 0, 0 }, { 0x200, 0 }
-		};
+		uint2 block[16];
+		block[0] = vectorizeswap(inpHash[0]);
+		block[1] = vectorizeswap(inpHash[1]);
+		block[2] = vectorizeswap(inpHash[2]);
+		block[3] = vectorizeswap(inpHash[3]);
+		block[4] = vectorizeswap(inpHash[4]);
+		block[5] = vectorizeswap(inpHash[5]);
+		block[6] = vectorizeswap(inpHash[6]);
+		block[7] = vectorizeswap(inpHash[7]);
+		block[8] = vectorizehigh(0x80000000);
+		block[9] = vectorizelow(0x0);
+		block[10] = vectorizelow(0x0);
+		block[11] = vectorizelow(0x0);
+		block[12] = vectorizelow(0x0);
+		block[13] = vectorizelow(0x1);
+		block[14] = vectorizelow(0x0);
+		block[15] = vectorizelow(0x200);
+
 		const uint2 h[8] =
 		{
 				{ 0xf3bcc908UL, 0x6a09e667UL },
@@ -269,7 +281,7 @@ void quark_blake512_gpu_hash_80(uint32_t threads, uint32_t startNounce, uint32_t
 		block[7] = c_PaddedM[7];
 		block[8] = c_PaddedM[8];
 		block[9] = c_PaddedM[9];
-		block[10] = vectorize(0x8000000000000000);
+		block[10] = vectorizehigh(0x80000000);
 		block[11] = vectorize(0);
 		block[12] = vectorize(0);
 		block[13] = vectorize(0x0000000000000001);
@@ -487,7 +499,7 @@ void quark_blake512_gpu_hash_80_multi(uint32_t threads, uint32_t startNounce, ui
 		block[7] = c_PaddedMessage[7];
 		block[8] = c_PaddedMessage[8];
 		block[9] = c_PaddedMessage[9];
-		block[10] = vectorize(0x8000000000000000);
+		block[10] = vectorizehigh(0x80000000);
 		block[11] = vectorize(0);
 		block[12] = vectorize(0);
 		block[13] = vectorize(0x0000000000000001);
