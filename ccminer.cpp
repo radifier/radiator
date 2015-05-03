@@ -588,6 +588,7 @@ static int share_result(int result, const char *reason)
 			check_dups = true;
 		}
 		return 0;
+
 	}
 	return 1;
 }
