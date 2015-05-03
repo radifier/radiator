@@ -12,8 +12,7 @@
 #include <stdio.h>
 #include <memory.h>
 #include "cuda_vector.h" 
-
-extern cudaError_t MyStreamSynchronize(cudaStream_t stream, int situation, int thr_id);
+#include "cuda_helper.h"
 
 // __device__  uint4 *  S;
  __constant__  uint32 *prevstate;
@@ -847,10 +846,10 @@ __global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k5(int threads, uint3
 void yescrypt_cpu_init(int thr_id, int threads, uint32_t *hash, uint32_t *hash2, uint32_t *hash3, uint32_t *hash4)
 {
     
-	cudaMemcpyToSymbol(state2, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(sha256test, &hash2, sizeof(hash2), 0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(prevstate, &hash3, sizeof(hash3), 0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(B, &hash4, sizeof(hash4), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(state2, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(sha256test, &hash2, sizeof(hash2), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(prevstate, &hash3, sizeof(hash3), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(B, &hash4, sizeof(hash4), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 	cudaMalloc(&d_YNonce[thr_id], sizeof(uint32_t)); 
 	
 } 
@@ -872,19 +871,18 @@ __host__ uint32_t yescrypt_cpu_hash_k4(int thr_id, int threads, uint32_t startNo
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
 	
-	yescrypt_gpu_hash_k0 << <grid, block >> >(threads, startNounce);
-	yescrypt_gpu_hash_k1 << <grid, block >> >(threads, startNounce);
-	yescrypt_gpu_hash_k2c << <grid2, block2 >> >(threads, startNounce);
-	yescrypt_gpu_hash_k2c1 << <grid2, block2 >> >(threads, startNounce);
-	yescrypt_gpu_hash_k5 << <grid, block >> >(threads, startNounce, d_YNonce[thr_id]);
+	yescrypt_gpu_hash_k0 << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce);
+	yescrypt_gpu_hash_k1 << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce);
+	yescrypt_gpu_hash_k2c << <grid2, block2, 0, gpustream[thr_id] >> >(threads, startNounce);
+	yescrypt_gpu_hash_k2c1 << <grid2, block2, 0, gpustream[thr_id] >> >(threads, startNounce);
+	yescrypt_gpu_hash_k5 << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce, d_YNonce[thr_id]);
 
-	MyStreamSynchronize(NULL, order, thr_id);
-	cudaMemcpy(&result[thr_id], d_YNonce[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost);
+	CUDA_SAFE_CALL(cudaMemcpy(&result[thr_id], d_YNonce[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost));
 	
 return result[thr_id];
 }
 
-__host__ void yescrypt_setBlockTarget(uint32_t* pdata, const void *target)
+__host__ void yescrypt_setBlockTarget(int thr_id, uint32_t* pdata, const void *target)
 {
 
 		unsigned char PaddedMessage[128]; //bring balance to the force
@@ -903,8 +901,8 @@ __host__ void yescrypt_setBlockTarget(uint32_t* pdata, const void *target)
 //		for (int i = 0; i<10; i++) { printf(" pdata/input %d %08x %08x \n",i,pdata[2*i],pdata[2*i+1]); }
 		
 		 
-		cudaMemcpyToSymbol(shapad, pad3, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
-		CUDA_SAFE_CALL(cudaMemcpyToSymbol(pTarget, target, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice));
-		CUDA_SAFE_CALL(cudaMemcpyToSymbol(c_data, PaddedMessage, 32 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice));
+		CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(shapad, pad3, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+		CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(pTarget, target, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+		CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_data, PaddedMessage, 32 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }
 

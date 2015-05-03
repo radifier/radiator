@@ -14,7 +14,7 @@ static uint32_t *d_hash3[MAX_GPUS];
 static uint32_t *d_hash4[MAX_GPUS];
 
 
-extern void yescrypt_setBlockTarget(uint32_t * data, const void *ptarget);
+extern void yescrypt_setBlockTarget(int thr_id, uint32_t * data, const void *ptarget);
 extern void yescrypt_cpu_init(int thr_id, int threads, uint32_t* hash, uint32_t* hash2, uint32_t* hash3, uint32_t* hash4);
 extern uint32_t yescrypt_cpu_hash_k4(int thr_id, int threads, uint32_t startNounce, int order);
   
@@ -27,31 +27,40 @@ int scanhash_yescrypt(int thr_id, uint32_t *pdata,
 //	if (pdata[0] == 0) {return 0;} // don't start unless it is really up
 
 	if (opt_benchmark)
-		((uint32_t*)ptarget)[7] = 0x0000ff;
+		((uint32_t*)ptarget)[7] = 0x0000ffff;
 
 	const uint32_t Htarg = ptarget[7];
 
-//	const int throughput = gpus_intensity[thr_id] ? 256 * 64 * gpus_intensity[thr_id] : 256 * 64 * 3.5;
 	int coef = 2;
 	if (device_sm[device_map[thr_id]] == 500) coef = 1;
 	if (device_sm[device_map[thr_id]] == 350) coef = 2;
 
-	const int throughput = 256*coef;
+	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 256*coef); 
+	throughput = min(throughput, max_nonce - first_nonce);
 
-	static bool init[MAX_GPUS] = { 0 };
+	static bool init[MAX_GPUS] = { false };
 	if (!init[thr_id])
 	{
-		cudaSetDevice(device_map[thr_id]); 
-		cudaDeviceReset();
-		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
-		 
+		if(thr_id%opt_n_gputhreads == 0)
+		{
+			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+			cudaDeviceReset();
+			cudaSetDeviceFlags(cudaDeviceBlockingSync);
+			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		}
+		else
+		{
+			while(!init[thr_id - thr_id%opt_n_gputhreads])
+			{
+			}
+			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+		}
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
+
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id],  2048 * 128 * sizeof(uint64_t) * throughput));
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash2[thr_id], 8 * sizeof(uint32_t) * throughput));
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash3[thr_id], 32*64 * sizeof(uint32_t) * throughput));
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash4[thr_id], 32*8 * sizeof(uint32_t) * throughput));
-
-
  
 		yescrypt_cpu_init(thr_id, throughput, d_hash[thr_id], d_hash2[thr_id], d_hash3[thr_id], d_hash4[thr_id]);
 		init[thr_id] = true;
@@ -61,7 +70,7 @@ int scanhash_yescrypt(int thr_id, uint32_t *pdata,
 		for (int k = 0; k < 20; k++)
 			be32enc(&endiandata[k], ((uint32_t*)pdata)[k]);
 
-	yescrypt_setBlockTarget(pdata,ptarget);
+	yescrypt_setBlockTarget(thr_id, pdata,ptarget);
 
 	do {
 		int order = 0;
@@ -80,6 +89,8 @@ int scanhash_yescrypt(int thr_id, uint32_t *pdata,
 //			if ( vhash64[7] <= ptarget[7]) { // && fulltest(vhash64, ptarget)) {
 				pdata[19] = foundNonce;
 				*hashes_done = foundNonce - first_nonce + 1;
+				if(opt_benchmark)
+					applog(LOG_INFO, "GPU #%d: Found nounce %08x", device_map[thr_id], foundNonce);
 				return 1;
 /*
 			} else {

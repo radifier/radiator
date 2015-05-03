@@ -1,19 +1,7 @@
-
-/*
-#include <cuda.h>
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-
-
-
-#include <stdint.h>
-#include <memory.h>
-*/
 #include <stdio.h>
 #include <memory.h>
 #include "cuda_vector.h" 
- 
-extern cudaError_t MyStreamSynchronize(cudaStream_t stream, int situation, int thr_id);
+#include "cuda_helper.h"
 
  __device__  uint4 *  W;
 uint32_t *d_NNonce[MAX_GPUS];
@@ -750,7 +738,7 @@ void neoscrypt_cpu_init(int thr_id, int threads,uint32_t *hash)
 {
     
 //	cudaMemcpyToSymbol(BLAKE2S_SIGMA, BLAKE2S_SIGMA_host, sizeof(BLAKE2S_SIGMA_host), 0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(W, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(W, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 	cudaMalloc(&d_NNonce[thr_id], sizeof(uint32_t)); 
 	
 } 
@@ -759,33 +747,27 @@ void neoscrypt_cpu_init(int thr_id, int threads,uint32_t *hash)
 __host__ uint32_t neoscrypt_cpu_hash_k4(int stratum,int thr_id, int threads, uint32_t startNounce,  int order)
 {
 	uint32_t result[MAX_GPUS] = {0xffffffff};
-	cudaMemset(d_NNonce[thr_id], 0xffffffff, sizeof(uint32_t));
-
+	cudaMemsetAsync(d_NNonce[thr_id], 0xff, sizeof(uint32_t), gpustream[thr_id]);
  
 	const int threadsperblock = 128;
-	
  
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
-	
- 
 
 //	neoscrypt_gpu_hash_orig << <grid, block >> >(threads, startNounce, d_NNonce[thr_id]);
 	
-	neoscrypt_gpu_hash_k0  << <grid, block >> >(stratum,threads, startNounce);
-	neoscrypt_gpu_hash_k01 << <grid, block >> >(threads, startNounce);
-	neoscrypt_gpu_hash_k2  << <grid, block >> >(threads, startNounce);
-	neoscrypt_gpu_hash_k3  << <grid, block >> >(threads, startNounce);
-	neoscrypt_gpu_hash_k4  << <grid, block >> >(stratum,threads, startNounce, d_NNonce[thr_id]);
+	neoscrypt_gpu_hash_k0 << <grid, block, 0, gpustream[thr_id] >> >(stratum, threads, startNounce);
+	neoscrypt_gpu_hash_k01 << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce);
+	neoscrypt_gpu_hash_k2 << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce);
+	neoscrypt_gpu_hash_k3 << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce);
+	neoscrypt_gpu_hash_k4 << <grid, block, 0, gpustream[thr_id] >> >(stratum, threads, startNounce, d_NNonce[thr_id]);
 	
-
-	MyStreamSynchronize(NULL, order, thr_id);
-	cudaMemcpy(&result[thr_id], d_NNonce[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost);
+	CUDA_SAFE_CALL(cudaMemcpy(&result[thr_id], d_NNonce[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost));
 	
 return result[thr_id];
 }
 
-__host__ void neoscrypt_setBlockTarget(uint32_t* pdata, const void *target)
+__host__ void neoscrypt_setBlockTarget(int thr_id, uint32_t* pdata, const void *target)
 {
 
 		unsigned char PaddedMessage[80*4]; //bring balance to the force
@@ -799,14 +781,12 @@ __host__ void neoscrypt_setBlockTarget(uint32_t* pdata, const void *target)
 		((uint8*)key)[0] = ((uint8*)pdata)[0];
 //		for (int i = 0; i<10; i++) { printf(" pdata/input %d %08x %08x \n",i,pdata[2*i],pdata[2*i+1]); }
 		
-
 		Blake2Shost(input,key);
-		
 
-		cudaMemcpyToSymbol(pTarget, target, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
-		cudaMemcpyToSymbol(input_init, input, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
-		cudaMemcpyToSymbol(key_init, key, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
+		CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(pTarget, target, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+		CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(input_init, input, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+		CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(key_init, key, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 
-		cudaMemcpyToSymbol(c_data, PaddedMessage, 40 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice);
+		CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_data, PaddedMessage, 40 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }
 
