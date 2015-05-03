@@ -12,14 +12,14 @@ static uint32_t *d_partSum[2][MAX_GPUS]; // fuer bis zu vier partielle Summen
 
 
 // True/False tester
-typedef uint32_t(*cuda_compactTestFunction_t)(uint32_t *inpHash);
+typedef uint32_t(*cuda_compactTestFunction_t)(const uint32_t *inpHash);
 
-__device__ uint32_t QuarkTrueTest(uint32_t *inpHash)
+__device__ uint32_t QuarkTrueTest(const uint32_t *inpHash)
 {
 	return ((inpHash[0] & 0x08) == 0x08);
 }
 
-__device__ uint32_t QuarkFalseTest(uint32_t *inpHash)
+__device__ uint32_t QuarkFalseTest(const uint32_t *inpHash)
 {
 	return ((inpHash[0] & 0x08) == 0);
 }
@@ -55,7 +55,7 @@ __host__ void quark_compactTest_cpu_init(int thr_id, uint32_t threads)
 #endif
 
 // Die Summenfunktion (vom NVIDIA SDK)
-__global__ void quark_compactTest_gpu_SCAN(uint32_t *data, int width, uint32_t *partial_sums=NULL, cuda_compactTestFunction_t testFunc=NULL, uint32_t threads=0, uint32_t startNounce=0, uint32_t *inpHashes=NULL, uint32_t *d_validNonceTable=NULL)
+__global__ void quark_compactTest_gpu_SCAN(uint32_t *data, int width, uint32_t *partial_sums=NULL, cuda_compactTestFunction_t testFunc=NULL, uint32_t threads=0, uint32_t startNounce=0, const uint32_t *inpHashes=NULL, const uint32_t *d_validNonceTable=NULL)
 {
 	__shared__ uint32_t sums[32];
 	int id = ((blockIdx.x * blockDim.x) + threadIdx.x);
@@ -75,18 +75,16 @@ __global__ void quark_compactTest_gpu_SCAN(uint32_t *data, int width, uint32_t *
 	{
 		if (id < threads)
 		{
-			uint32_t *inpHash;
 			if(d_validNonceTable == NULL)
 			{
 				// keine Nonce-Liste
-				inpHash = &inpHashes[id<<4];
+				value = (*testFunc)(&inpHashes[id << 4]);
 			}else
 			{
 				// Nonce-Liste verfügbar
 				int nonce = d_validNonceTable[id] - startNounce;
-				inpHash = &inpHashes[nonce<<4];
+				value = (*testFunc)(&inpHashes[nonce << 4]);
 			}			
-			value = (*testFunc)(inpHash);
 		}else
 		{
 			value = 0;
@@ -167,7 +165,7 @@ __global__ void quark_compactTest_gpu_SCAN(uint32_t *data, int width, uint32_t *
 }
 
 // Uniform add: add partial sums array
-__global__ void quark_compactTest_gpu_ADD(uint32_t *data, uint32_t *partial_sums, int len)
+__global__ void quark_compactTest_gpu_ADD(uint32_t *data, const uint32_t *partial_sums, int len)
 {
 	__shared__ uint32_t buf;
 	int id = ((blockIdx.x * blockDim.x) + threadIdx.x);
@@ -184,7 +182,7 @@ __global__ void quark_compactTest_gpu_ADD(uint32_t *data, uint32_t *partial_sums
 }
 
 // Der Scatter
-__global__ void quark_compactTest_gpu_SCATTER(uint32_t *sum, uint32_t *outp, cuda_compactTestFunction_t testFunc, uint32_t threads=0, uint32_t startNounce=0, uint32_t *inpHashes=NULL, uint32_t *d_validNonceTable=NULL)
+__global__ void quark_compactTest_gpu_SCATTER(const uint32_t *sum, uint32_t *outp, cuda_compactTestFunction_t testFunc, uint32_t threads=0, uint32_t startNounce=0, const uint32_t *inpHashes=NULL, const uint32_t *d_validNonceTable=NULL)
 {
 	int id = ((blockIdx.x * blockDim.x) + threadIdx.x);
 	uint32_t actNounce = id;
@@ -192,20 +190,18 @@ __global__ void quark_compactTest_gpu_SCATTER(uint32_t *sum, uint32_t *outp, cud
 	if (id < threads)
 	{
 //		const uint32_t nounce = startNounce + id;
-		uint32_t *inpHash;
 		if(d_validNonceTable == NULL)
 		{
 			// keine Nonce-Liste
-			inpHash = &inpHashes[id<<4];
+			value = (*testFunc)(&inpHashes[id << 4]);
 		}else
 		{
 			// Nonce-Liste verfügbar
 			int nonce = d_validNonceTable[id] - startNounce;
 			actNounce = nonce;
-			inpHash = &inpHashes[nonce<<4];
+			value = (*testFunc)(&inpHashes[nonce << 4]);
 		}
 
-		value = (*testFunc)(inpHash);
 	}else
 	{
 		value = 0;
@@ -235,7 +231,7 @@ __host__ static uint32_t quark_compactTest_roundUpExp(uint32_t val)
 
 __host__ void quark_compactTest_cpu_singleCompaction(int thr_id, uint32_t threads, uint32_t *nrm,
 														uint32_t *d_nonces1, cuda_compactTestFunction_t function,
-														uint32_t startNounce, uint32_t *inpHashes, uint32_t *d_validNonceTable)
+														uint32_t startNounce, const uint32_t *inpHashes, const uint32_t *d_validNonceTable)
 {
 	int orgThreads = threads;
 	threads = (int)quark_compactTest_roundUpExp((uint32_t)threads);
