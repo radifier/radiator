@@ -113,9 +113,9 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 		lyra2_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		skein256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		groestl256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id], foundNonce);
+		CUDA_SAFE_CALL(cudaGetLastError());
 		if (foundNonce[0] != 0)
 		{
-			CUDA_SAFE_CALL(cudaGetLastError());
 			const uint32_t Htarg = ptarget[7];
 			uint32_t vhash64[8];
 			be32enc(&endiandata[19], foundNonce[0]);
