@@ -169,8 +169,8 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
 
 		quark_blake512_cpu_init(thr_id);
+//		quark_skein512_cpu_init(thr_id);
 		quark_groestl512_cpu_init(thr_id, throughput);
-		quark_skein512_cpu_init(thr_id);
 		quark_bmw512_cpu_init(thr_id, throughput);
 		cuda_check_cpu_init(thr_id, throughput);
 		quark_compactTest_cpu_init(thr_id, throughput);

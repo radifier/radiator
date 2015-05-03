@@ -259,6 +259,10 @@
     <CudaCompile Include="cuda_bitcoin.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
+    <ClCompile Include="sph\neoscrypt.c" />
+    <ClCompile Include="sph\sha256_Y.c" />
+    <ClCompile Include="sph\yescrypt-opt.c" />
+    <ClCompile Include="sph\yescryptcommon.c" />
     <ClCompile Include="util.cpp" />
     <ClCompile Include="fuguecoin.cpp" />
     <ClCompile Include="groestlcoin.cpp" />
@@ -325,6 +329,8 @@
     <ClInclude Include="hefty1.h" />
     <ClInclude Include="miner.h" />
     <ClInclude Include="nvml.h" />
+	<ClInclude Include="sph\neoscrypt.h" />
+    <ClInclude Include="sph\sha256_Y.h" />
     <ClInclude Include="sph\sph_blake.h" />
     <ClInclude Include="sph\sph_bmw.h" />
     <ClInclude Include="sph\sph_cubehash.h" />
@@ -343,6 +349,8 @@
     <ClInclude Include="sph\sph_hamsi.h" />
     <ClInclude Include="sph\sph_types.h" />
     <ClInclude Include="sph\sph_whirlpool.h" />
+	<ClInclude Include="sph\sysendian.h" />
+    <ClInclude Include="sph\yescrypt.h" />
     <ClInclude Include="uint256.h" />
   </ItemGroup>
   <ItemGroup>
@@ -399,6 +407,8 @@
       <MaxRegCount>92</MaxRegCount>
     </CudaCompile>
     <CudaCompile Include="Algo256\cuda_skein256.cu" />
+	<CudaCompile Include="neoscrypt\cuda_neoscrypt.cu" />
+    <CudaCompile Include="neoscrypt\neoscrypt.cu" />
     <CudaCompile Include="pentablake.cu">
       <MaxRegCount>80</MaxRegCount>
       <AdditionalOptions Condition="'$(Configuration)'=='Release'">--ptxas-options="-dlcm=cg" %(AdditionalOptions)</AdditionalOptions>
@@ -495,6 +505,8 @@
     </CudaCompile>
     <CudaCompile Include="x17\x17.cu">
     </CudaCompile>
+	<CudaCompile Include="yescrypt\cuda_yescrypt.cu" />
+    <CudaCompile Include="yescrypt\yescrypt.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
