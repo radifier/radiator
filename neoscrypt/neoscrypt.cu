@@ -16,9 +16,9 @@ extern void neoscrypt_cpu_init(int thr_id, int threads,uint32_t* hash);
 extern uint32_t neoscrypt_cpu_hash_k4(int stratum,int thr_id, int threads, uint32_t startNounce, int order);
   
 
-extern "C" int scanhash_neoscrypt(int stratum, int thr_id, uint32_t *pdata,
+int scanhash_neoscrypt(int stratum, int thr_id, uint32_t *pdata,
     const uint32_t *ptarget, uint32_t max_nonce,
-    unsigned long *hashes_done)
+    uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
 

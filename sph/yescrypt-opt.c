@@ -34,6 +34,7 @@
 #warning "This implementation does not use SIMD, and thus it runs a lot slower than the SIMD-enabled implementation. Use yescrypt-best.c instead unless you're building this SIMD-less implementation on purpose (for testing only)."
 #endif
 
+#include <stdio.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>

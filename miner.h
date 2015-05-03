@@ -375,11 +375,11 @@ extern int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 
 extern int scanhash_neoscrypt(int stratum, int thr_id, uint32_t *pdata,
 	const uint32_t *ptarget, uint32_t max_nonce,
-	unsigned long *hashes_done);
+	uint32_t *hashes_done);
 
 extern int scanhash_yescrypt(int thr_id, uint32_t *pdata,
 	const uint32_t *ptarget, uint32_t max_nonce,
-	unsigned long *hashes_done);
+	uint32_t *hashes_done);
 
 /* api related */
 void *api_thread(void *userdata);

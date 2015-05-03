@@ -5,17 +5,17 @@
 #include <cuda_runtime.h>
 #ifdef __cplusplus
 #include <cstdint>
-namespace std;
+using namespace std;
 #else
 #include <stdint.h>
 #endif
 
 #ifdef __INTELLISENSE__
+#define NOASM
 /* reduce vstudio warnings (__byteperm, blockIdx...) */
 #include <device_functions.h>
 #include <device_launch_parameters.h>
 #define __launch_bounds__(max_tpb, min_blocks)
-#define asm("a" : "=l"(result) : "l"(a))
 
 uint32_t __byte_perm(uint32_t x, uint32_t y, uint32_t z);
 uint32_t __shfl(uint32_t x, uint32_t y, uint32_t z);
