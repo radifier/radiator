@@ -6,24 +6,24 @@ extern "C"
 
 #include "cuda_helper.h"
 #include "miner.h"
-
+#include <string.h>
 
 static uint32_t *d_hash[MAX_GPUS] ;
  
 
 extern void neoscrypt_setBlockTarget(int thr_id, uint32_t * data, const void *ptarget);
 extern void neoscrypt_cpu_init(int thr_id, int threads,uint32_t* hash);
-extern uint32_t neoscrypt_cpu_hash_k4(int stratum,int thr_id, int threads, uint32_t startNounce, int order);
+extern void neoscrypt_cpu_hash_k4(int stratum,int thr_id, int threads, uint32_t startNounce, int order, uint32_t* foundnonce);
   
 
-int scanhash_neoscrypt(int stratum, int thr_id, uint32_t *pdata,
-    const uint32_t *ptarget, uint32_t max_nonce,
+int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
+    uint32_t *ptarget, uint32_t max_nonce,
     uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
 
 	if (opt_benchmark)
-		((uint32_t*)ptarget)[7] = 0x01ff;
+		ptarget[7] = 0x01ff;
 
 //	const int throughput = gpus_intensity[thr_id] ? 256 * 64 * gpus_intensity[thr_id] : 256 * 64 * 3.5;
 	int intensity = (256 * 64 * 3.5);
@@ -83,7 +83,7 @@ int scanhash_neoscrypt(int stratum, int thr_id, uint32_t *pdata,
 	uint32_t endiandata[20];
 	if (stratum) {
 		for (int k = 0; k < 20; k++)
-			be32enc(&endiandata[k], ((uint32_t*)pdata)[k]);
+			be32enc(&endiandata[k], pdata[k]);
 	}
 	else {
 		for (int k = 0; k < 20; k++)
@@ -93,38 +93,66 @@ int scanhash_neoscrypt(int stratum, int thr_id, uint32_t *pdata,
 
 
 	neoscrypt_setBlockTarget(thr_id, endiandata, ptarget);
+	uint32_t foundNonce[2];
 
 	do {
 		int order = 0;
-		uint32_t foundNonce = neoscrypt_cpu_hash_k4(stratum, thr_id, throughput, pdata[19], order++);
-//		foundNonce = 10 + pdata[19];
-		if(foundNonce != 0xffffffff)
+		neoscrypt_cpu_hash_k4(stratum, thr_id, throughput, pdata[19], order++, foundNonce);
+		if(foundNonce[0] != 0xffffffff)
 		{
-			if(opt_benchmark)
-				applog(LOG_INFO, "GPU #%d Found nounce %08x", thr_id, foundNonce);
-
 			uint32_t vhash64[8];
 
 			if(stratum)
 			{
-				be32enc(&endiandata[19], foundNonce);
+				be32enc(&endiandata[19], foundNonce[0]);
 			}
 			else
 			{
-				endiandata[19] = foundNonce;
+				endiandata[19] = foundNonce[0];
 			}
 			neoscrypt((unsigned char*)endiandata, (unsigned char*)vhash64, 0x80000620);
 
-			if(vhash64[7] <= ptarget[7])
-			{ // && fulltest(vhash64, ptarget)) {
-				pdata[19] = foundNonce;
-				*hashes_done = foundNonce - first_nonce + 1;
-				return 1;
+			if(vhash64[7] <= ptarget[7] && fulltest(vhash64, ptarget))
+			{
+				int res = 1;
+				*hashes_done = pdata[19] - first_nonce + throughput;
+				if(foundNonce[1] != 0xffffffff)
+				{
+					if(stratum)
+					{
+						be32enc(&endiandata[19], foundNonce[1]);
+					}
+					else
+					{
+						endiandata[19] = foundNonce[1];
+					}
+					neoscrypt((unsigned char*)endiandata, (unsigned char*)vhash64, 0x80000620);
+					if(vhash64[7] <= ptarget[7] && fulltest(vhash64, ptarget))
+					{
+
+						pdata[21] = foundNonce[1];
+						res++;
+						if(opt_benchmark)
+							applog(LOG_INFO, "GPU #%d: Found second nounce %08x", device_map[thr_id], foundNonce[1]);
+					}
+					else
+					{
+						if(vhash64[7] != ptarget[7])
+						{
+							applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], foundNonce[1]);
+						}
+					}
+
+				}
+				pdata[19] = foundNonce[0];
+				if(opt_benchmark)
+					applog(LOG_INFO, "GPU #%d: Found nounce %08x", device_map[thr_id], foundNonce[0]);
+				return res;
 			}
 			else
 			{
-				*hashes_done = foundNonce - first_nonce + 1; // keeps hashrate calculation happy
-				applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU!", thr_id, foundNonce);
+				if(vhash64[7] != ptarget[7])
+				   applog(LOG_WARNING, "GPU #%d: result for nonce $%08X does not validate on CPU!", device_map[thr_id], foundNonce);
 			}
 
 		}

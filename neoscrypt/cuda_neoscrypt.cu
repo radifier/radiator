@@ -531,7 +531,7 @@ static __forceinline__ __device__ void fastkdf32(const uint32_t * password, cons
 
 	uchar4 unfucked[1];
 	unfucked[0] = make_uchar4(B[28 + bufidx], B[29 + bufidx], B[30 + bufidx], B[31 + bufidx]);
-	((uint32_t*)output)[7] = ((uint32_t*)unfucked)[0] ^ ((uint32_t*)A)[7];
+	output[7] = ((uint32_t*)unfucked)[0] ^ ((uint32_t*)A)[7];
 }
 
 
@@ -776,6 +776,8 @@ __global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k4(int stratum, int
 		if(outbuf[7] <= pTarget[7])
 		{
 			uint32_t tmp = atomicExch(&nonceVector[0], nonce);
+			if(tmp != 0xffffffff)
+				nonceVector[1] = tmp;
 		}
 	}
 }
@@ -785,15 +787,14 @@ void neoscrypt_cpu_init(int thr_id, int threads, uint32_t *hash)
 
 	//	cudaMemcpyToSymbol(BLAKE2S_SIGMA, BLAKE2S_SIGMA_host, sizeof(BLAKE2S_SIGMA_host), 0, cudaMemcpyHostToDevice);
 	cudaMemcpyToSymbolAsync(W, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
-	cudaMalloc(&d_NNonce[thr_id], sizeof(uint32_t));
+	cudaMalloc(&d_NNonce[thr_id], 2*sizeof(uint32_t));
 
 }
 
 
-__host__ uint32_t neoscrypt_cpu_hash_k4(int stratum, int thr_id, int threads, uint32_t startNounce, int order)
+__host__ void neoscrypt_cpu_hash_k4(int stratum, int thr_id, int threads, uint32_t startNounce, int order, uint32_t* result)
 {
-	uint32_t result[MAX_GPUS] = { 0xffffffff };
-	cudaMemsetAsync(d_NNonce[thr_id], 0xff, sizeof(uint32_t), gpustream[thr_id]);
+	cudaMemsetAsync(d_NNonce[thr_id], 0xff, 2*sizeof(uint32_t), gpustream[thr_id]);
 
 	const int threadsperblock = 128;
 
@@ -808,9 +809,9 @@ __host__ uint32_t neoscrypt_cpu_hash_k4(int stratum, int thr_id, int threads, ui
 	neoscrypt_gpu_hash_k3 << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce);
 	neoscrypt_gpu_hash_k4 << <grid, block, 0, gpustream[thr_id] >> >(stratum, threads, startNounce, d_NNonce[thr_id]);
 
-	CUDA_SAFE_CALL(cudaMemcpy(&result[thr_id], d_NNonce[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost));
+	CUDA_SAFE_CALL(cudaMemcpy(result, d_NNonce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost));
 
-	return result[thr_id];
+	return;
 }
 
 __host__ void neoscrypt_setBlockTarget(int thr_id, uint32_t* pdata, const void *target)
