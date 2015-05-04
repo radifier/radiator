@@ -35,9 +35,9 @@ int cuda_num_devices()
 	}
 
 	int maj = version / 1000, min = version % 100; // same as in deviceQuery sample
-	if (maj < 5 || (maj == 6 && min < 5))
+	if (maj < 6 || (maj == 6 && min < 5))
 	{
-		applog(LOG_ERR, "Driver does not support CUDA %d.%d API! Update your nVidia driver!", 5, 5);
+		applog(LOG_ERR, "Driver does not support CUDA 6.5 API! Update your nVidia driver!");
 		exit(1);
 	}
 
@@ -45,7 +45,10 @@ int cuda_num_devices()
 	err = cudaGetDeviceCount(&GPU_N);
 	if (err != cudaSuccess)
 	{
-		applog(LOG_ERR, "Unable to query number of CUDA devices! Is an nVidia driver installed?");
+		if(err!=cudaErrorNoDevice)
+			applog(LOG_ERR, "No CUDA device found!");
+		else
+			applog(LOG_ERR, "Unable to query number of CUDA devices!");
 		exit(1);
 	}
 	return GPU_N;
