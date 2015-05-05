@@ -1104,7 +1104,11 @@ static void stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 	}
 	
 	/* Increment extranonce2 */
+
 	for (i = 0; i < (int)sctx->xnonce2_size && !++sctx->job.xnonce2[i]; i++);
+	{
+		sctx->job.xnonce2[i]++;		
+	}
 
 	/* Assemble block header */
 	memset(work->data, 0, sizeof(work->data));
@@ -1349,12 +1353,12 @@ static void *miner_thread(void *userdata)
 		 *    before hashrate is computed */
 		if (max64 < minmax) {
 			switch (opt_algo) {
+			case ALGO_KECCAK:
 			case ALGO_BLAKECOIN:
 			case ALGO_BLAKE:
-			case ALGO_SKEIN:
-			case ALGO_KECCAK:
-				minmax = 0x80000000U;
+				minmax = 0x70000000U;
 				break;
+			case ALGO_SKEIN:
 			case ALGO_BITCOIN:
 			case ALGO_NEO:
 				minmax = 0x40000000U;
