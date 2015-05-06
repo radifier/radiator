@@ -559,7 +559,7 @@ static __device__ __forceinline__ uint2 operator* (uint2 a, uint2 b)
 }
 
 // uint2 method
-#if  __CUDA_ARCH__ >= 350 && !defined NOASM
+#if  __CUDA_ARCH__ >= 320 && !defined NOASM
 __device__ __inline__ uint2 ROR2(const uint2 a, const int offset) 
 {
 	uint2 result;
@@ -751,7 +751,7 @@ static __forceinline__ __device__ uint2 SHL2(const uint2 a, int offset)
 static __forceinline__ __device__ uint2 SHR2(const uint2 a, int offset)
 {
 	uint2 result;
-#if __CUDA_ARCH__ > 300 && !defined NOASM
+#if __CUDA_ARCH__ > 320 && !defined NOASM
 	if (offset<32) {
 		asm("{\n\t"
 			"shf.r.clamp.b32 %0,%2,%3,%4; \n\t"

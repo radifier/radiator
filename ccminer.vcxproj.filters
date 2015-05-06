@@ -219,6 +219,10 @@
     <ClCompile Include="api.cpp">
       <Filter>Source Files\CUDA</Filter>
     </ClCompile>
+    <ClCompile Include="sph\neoscrypt.c" />
+    <ClCompile Include="sph\sha256_Y.c" />
+    <ClCompile Include="sph\yescrypt-opt.c" />
+    <ClCompile Include="sph\yescryptcommon.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="compat.h">
@@ -359,6 +363,10 @@
     <ClInclude Include="lyra2\Sponge.h">
       <Filter>Header Files\lyra2</Filter>
     </ClInclude>
+    <ClInclude Include="sph\neoscrypt.h" />
+    <ClInclude Include="sph\sha256_Y.h" />
+    <ClInclude Include="sph\sysendian.h" />
+    <ClInclude Include="sph\yescrypt.h" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="cuda.cpp">
@@ -558,5 +566,9 @@
     <CudaCompile Include="skein.cu">
       <Filter>Source Files\CUDA</Filter>
     </CudaCompile>
+    <CudaCompile Include="neoscrypt\cuda_neoscrypt.cu" />
+    <CudaCompile Include="neoscrypt\neoscrypt.cu" />
+    <CudaCompile Include="yescrypt\cuda_yescrypt.cu" />
+    <CudaCompile Include="yescrypt\yescrypt.cu" />
   </ItemGroup>
 </Project>

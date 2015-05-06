@@ -1,5 +1,5 @@
 
-ccMiner release 3.0-git(KlausT-MOD) (Feb 1st, 2015)
+ccMiner release 4.00-git(KlausT-MOD) (May 6th, 2015)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -49,6 +49,7 @@ Pentablake (Blake 512 x5)
 S3 (OneCoin)
 Skein (Skein + SHA)
 Lyra2RE (new VertCoin algo)
+Neoscrypt
 
 where some of these coins have a VERY NOTABLE nVidia advantage
 over competing AMD (OpenCL Only) implementations.
@@ -82,7 +83,8 @@ its command line interface and options.
                           luffa       use to mine Doomcoin
                           lyra2       use to mine Vertcoin
                           mjollnir    use to mine Mjollnircoin
-                          myr-gr      use to mine Myriad-Groest
+                          myr-gr      use to mine Myriad-Groestl
+						  neoscrypt   use to mine Feathercoin, etc
                           nist5       use to mine TalkCoin
                           penta       use to mine Joincoin / Pentablake
                           quark       use to mine Quarkcoin
@@ -192,6 +194,7 @@ features.
 2015-02-09 v1.02: various bug fixes and optimizations
 2015-03-08 v2.00: added whirlpoolx algo (Vanillacoin), also various optimizations and bug fixes
 2015-03-30 v3.00: added skein (for Myriadcoin for example)
+2015-05-06 v4.00: added Neoscrypt
 
 >>> AUTHORS <<<
 
