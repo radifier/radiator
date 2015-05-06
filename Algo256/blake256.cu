@@ -513,7 +513,7 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 #else
 	uint32_t crcsum;
 #endif
-	unsigned int intensity = (device_sm[device_map[thr_id]] > 500) ? 29 : 29;
+	unsigned int intensity = (device_sm[device_map[thr_id]] > 500) ? 28 : 28;
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1U << intensity);
 	throughput = min(throughput, max_nonce - first_nonce);
 
