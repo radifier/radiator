@@ -1,11 +1,6 @@
-#ifdef __cplusplus
 #include <cstdint>
 #include <cstdio>
 using namespace std;
-#else
-#include <stdint.h>
-#include <stdio.h>
-#endif
 #include <memory.h>
 
 #include "cuda_helper.h" 
@@ -13,8 +8,8 @@ using namespace std;
 
 #define TPBf 128
 
-static __constant__ uint64_t c_PaddedMessage80[2]; // padded message (80 bytes + padding)
-__constant__ uint2 precalcvalues[9];
+static __constant__ uint64_t c_PaddedMessage80[MAX_GPUS][2]; // padded message (80 bytes + padding)
+__constant__ uint2 precalcvalues[MAX_GPUS][9];
 static uint32_t *d_found[MAX_GPUS];
 
 // Take a look at: https://www.schneier.com/skein1.3.pdf
@@ -2070,7 +2065,7 @@ __constant__ uint32_t sha256_constantTable[64] = {
 
 __global__
 __launch_bounds__(1024)
-void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ d_found, uint64_t target)
+void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ d_found, uint64_t target, int thr_id)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
@@ -2079,20 +2074,20 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 		uint2 t0, t1, t2;
 		uint2 p[8];
 
-		h0 = precalcvalues[0];
-		h1 = precalcvalues[1];
-		h2 = precalcvalues[2];
-		h3 = precalcvalues[3];
-		h4 = precalcvalues[4];
-		h5 = precalcvalues[5];
-		h6 = precalcvalues[6];
-		h7 = precalcvalues[7];
-		t2 = precalcvalues[8];
+		h0 = precalcvalues[thr_id][0];
+		h1 = precalcvalues[thr_id][1];
+		h2 = precalcvalues[thr_id][2];
+		h3 = precalcvalues[thr_id][3];
+		h4 = precalcvalues[thr_id][4];
+		h5 = precalcvalues[thr_id][5];
+		h6 = precalcvalues[thr_id][6];
+		h7 = precalcvalues[thr_id][7];
+		t2 = precalcvalues[thr_id][8];
 
-		const uint2 nounce2 = make_uint2(_LOWORD(c_PaddedMessage80[1]), cuda_swab32(startNounce + thread));
+		const uint2 nounce2 = make_uint2(_LOWORD(c_PaddedMessage80[thr_id][1]), cuda_swab32(startNounce + thread));
 
 		// skein_big_close -> etype = 0x160, ptr = 16, bcount = 1, extra = 16
-		p[0] = vectorize(c_PaddedMessage80[0]);
+		p[0] = vectorize(c_PaddedMessage80[thr_id][0]);
 		p[1] = nounce2;
 
 		#pragma unroll
@@ -2126,7 +2121,7 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 		t0 = vectorizelow(8); // extra
 		t1 = vectorizehigh(0xFF000000ul); // etype
 
-		h0 = vectorize(c_PaddedMessage80[0]) ^ p[0];
+		h0 = vectorize(c_PaddedMessage80[thr_id][0]) ^ p[0];
 		h1 = nounce2 ^ p[1];
 		h2 = p[2];
 		h3 = p[3];
@@ -2336,7 +2331,7 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 	}
 }
 __global__
-void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ d_found, uint64_t target)
+void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ d_found, uint64_t target, int thr_id)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
@@ -2345,20 +2340,20 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 		uint2 t0, t1, t2;
 		uint2 p[8];
 
-		h0 = precalcvalues[0];
-		h1 = precalcvalues[1];
-		h2 = precalcvalues[2];
-		h3 = precalcvalues[3];
-		h4 = precalcvalues[4];
-		h5 = precalcvalues[5];
-		h6 = precalcvalues[6];
-		h7 = precalcvalues[7];
-		t2 = precalcvalues[8];
+		h0 = precalcvalues[thr_id][0];
+		h1 = precalcvalues[thr_id][1];
+		h2 = precalcvalues[thr_id][2];
+		h3 = precalcvalues[thr_id][3];
+		h4 = precalcvalues[thr_id][4];
+		h5 = precalcvalues[thr_id][5];
+		h6 = precalcvalues[thr_id][6];
+		h7 = precalcvalues[thr_id][7];
+		t2 = precalcvalues[thr_id][8];
 
-		const uint2 nounce2 = make_uint2(_LOWORD(c_PaddedMessage80[1]), cuda_swab32(startNounce + thread));
+		const uint2 nounce2 = make_uint2(_LOWORD(c_PaddedMessage80[thr_id][1]), cuda_swab32(startNounce + thread));
 
 		// skein_big_close -> etype = 0x160, ptr = 16, bcount = 1, extra = 16
-		p[0] = vectorize(c_PaddedMessage80[0]);
+		p[0] = vectorize(c_PaddedMessage80[thr_id][0]);
 		p[1] = nounce2;
 
 #pragma unroll
@@ -2392,7 +2387,7 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 		t0 = vectorizelow(8); // extra
 		t1 = vectorizehigh(0xFF000000ul); // etype
 
-		h0 = vectorize(c_PaddedMessage80[0]) ^ p[0];
+		h0 = vectorize(c_PaddedMessage80[thr_id][0]) ^ p[0];
 		h1 = nounce2 ^ p[1];
 		h2 = p[2];
 		h3 = p[3];
@@ -2632,7 +2627,7 @@ void quark_skein512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t sta
 }
 
 
-static uint64_t PaddedMessage[16];
+static uint64_t PaddedMessage[MAX_GPUS][16];
 
 static void precalc(int thr_id)
 {
@@ -2655,7 +2650,7 @@ static void precalc(int thr_id)
 
 	uint64_t p[8];
 	for (int i = 0; i<8; i++)
-		p[i] = PaddedMessage[i];
+		p[i] = PaddedMessage[thr_id][i];
 
 	TFBIG_4e_PRE(0);
 	TFBIG_4o_PRE(1);
@@ -2679,27 +2674,24 @@ static void precalc(int thr_id)
 
 	uint64_t buffer[9];
 
-	buffer[0] = PaddedMessage[0] ^ p[0];
-	buffer[1] = PaddedMessage[1] ^ p[1];
-	buffer[2] = PaddedMessage[2] ^ p[2];
-	buffer[3] = PaddedMessage[3] ^ p[3];
-	buffer[4] = PaddedMessage[4] ^ p[4];
-	buffer[5] = PaddedMessage[5] ^ p[5];
-	buffer[6] = PaddedMessage[6] ^ p[6];
-	buffer[7] = PaddedMessage[7] ^ p[7];
+	buffer[0] = PaddedMessage[thr_id][0] ^ p[0];
+	buffer[1] = PaddedMessage[thr_id][1] ^ p[1];
+	buffer[2] = PaddedMessage[thr_id][2] ^ p[2];
+	buffer[3] = PaddedMessage[thr_id][3] ^ p[3];
+	buffer[4] = PaddedMessage[thr_id][4] ^ p[4];
+	buffer[5] = PaddedMessage[thr_id][5] ^ p[5];
+	buffer[6] = PaddedMessage[thr_id][6] ^ p[6];
+	buffer[7] = PaddedMessage[thr_id][7] ^ p[7];
 	buffer[8] = t2;
-	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(precalcvalues, buffer, sizeof(buffer), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(precalcvalues[thr_id], buffer, sizeof(buffer), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }
 
 __host__
 void skein512_cpu_setBlock_80(int thr_id, void *pdata)
 {
-	memcpy(&PaddedMessage[0], pdata, 80);
-
-	CUDA_SAFE_CALL(
-		cudaMemcpyToSymbolAsync(c_PaddedMessage80, &PaddedMessage[8], 8 * 2, 0, cudaMemcpyHostToDevice, gpustream[thr_id])
-	);
-	CUDA_SAFE_CALL(cudaMalloc(&(d_found[thr_id]), 3 * sizeof(uint32_t)));
+	memcpy(&PaddedMessage[thr_id][0], pdata, 80);
+	CUDA_SAFE_CALL(cudaMalloc(&(d_found[thr_id]), 2 * sizeof(uint32_t)));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedMessage80[thr_id], &PaddedMessage[thr_id][8], 8 * 2, 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 
 	precalc(thr_id);
 }
@@ -2709,16 +2701,16 @@ void skein512_cpu_hash_80_52(int thr_id, uint32_t threads, uint32_t startNounce,
 {
 	dim3 grid((threads + 1024 - 1) / 1024);
 	dim3 block(1024);
-	cudaMemsetAsync(d_found[thr_id], 0xffffffff, 2 * sizeof(uint32_t), gpustream[thr_id]);
-	skein512_gpu_hash_80_52 << < grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_found[thr_id], target);
-	cudaMemcpy(h_found, d_found[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost);
+	cudaMemsetAsync(d_found[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
+	skein512_gpu_hash_80_52 << < grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_found[thr_id], target, thr_id);
+	cudaMemcpyAsync(h_found, d_found[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
 }
 __host__
 void skein512_cpu_hash_80_50(int thr_id, uint32_t threads, uint32_t startNounce, int swapu, uint64_t target, uint32_t *h_found)
 {
 	dim3 grid((threads + 256 - 1) / 256);
 	dim3 block(256);
-	cudaMemsetAsync(d_found[thr_id], 0xffffffff, 2 * sizeof(uint32_t), gpustream[thr_id]);
-	skein512_gpu_hash_80_50 << < grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_found[thr_id], target);
-	cudaMemcpy(h_found, d_found[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost);
+	cudaMemsetAsync(d_found[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
+	skein512_gpu_hash_80_50 << < grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_found[thr_id], target, thr_id);
+	cudaMemcpyAsync(h_found, d_found[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
 }

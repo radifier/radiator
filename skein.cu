@@ -76,7 +76,6 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
-		cuda_check_cpu_init(thr_id, throughput);
 		init[thr_id] = true;
 	}
 
@@ -93,6 +92,7 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 			skein512_cpu_hash_80_52(thr_id, throughput, pdata[19], swap, target, foundnonces[thr_id]);
 		else
 			skein512_cpu_hash_80_50(thr_id, throughput, pdata[19], swap, target, foundnonces[thr_id]);
+		cudaStreamSynchronize(gpustream[thr_id]);
 
 		if (foundnonces[thr_id][0] != 0xffffffff)
 		{
