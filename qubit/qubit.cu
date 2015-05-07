@@ -136,8 +136,6 @@ extern int scanhash_qubit(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
 		CUDA_SAFE_CALL(cudaMallocHost(&(h_found[thr_id]), 4 * sizeof(uint32_t)));
 
-		cuda_check_cpu_init(thr_id, throughput);
-
 		init[thr_id] = true;
 	}
 
@@ -145,7 +143,6 @@ extern int scanhash_qubit(int thr_id, uint32_t *pdata,
 		be32enc(&endiandata[k], pdata[k]);
 
 	qubit_luffa512_cpu_setBlock_80(thr_id, (void*)endiandata);
-	cuda_check_cpu_setTarget(ptarget, thr_id);
 
 	do {
 
