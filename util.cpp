@@ -1157,7 +1157,6 @@ bool stratum_authorize(struct stratum_ctx *sctx, const char *user, const char *p
 			applog(LOG_DEBUG, "stratum extranonce subscribe timed out");
 		goto out;
 		}
-	}
 
 	sret = stratum_recv_line(sctx);
 	if (sret) {
@@ -1178,6 +1177,8 @@ bool stratum_authorize(struct stratum_ctx *sctx, const char *user, const char *p
 		}
 		free(sret);
 	}
+	}
+
 out:
 	free(s);
 	if (val)
