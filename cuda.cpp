@@ -19,6 +19,7 @@ using namespace std;
 #include "miner.h"
 
 #include "cuda_runtime.h"
+cudaStream_t gpustream[MAX_GPUS] = { 0 };
 
 cudaDeviceProp device_props[MAX_GPUS];
 cudaStream_t gpustream[MAX_GPUS] = { 0 };
