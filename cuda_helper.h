@@ -37,8 +37,8 @@ void __threadfence(void);
 #define MAX_GPUS 32
 #endif
 
-extern "C" int device_map[MAX_GPUS];
-extern "C"  long device_sm[MAX_GPUS];
+extern int device_map[MAX_GPUS];
+extern long device_sm[MAX_GPUS];
 extern cudaStream_t gpustream[MAX_GPUS];
 
 // common functions
@@ -85,7 +85,11 @@ extern cudaError_t MyStreamSynchronize(cudaStream_t stream, int situation, int t
 #define ROTL32(x, n) __funnelshift_l( (x), (x), (n) )
 #endif
 
-// #define NOASM
+// #define NOASM here if you don't want asm
+#ifndef __CUDA_ARCH__
+#define NOASM
+#endif
+
 __device__ __forceinline__ uint64_t MAKE_ULONGLONG(uint32_t LO, uint32_t HI)
 {
 #ifndef NOASM
@@ -131,7 +135,7 @@ __device__ __forceinline__ uint64_t REPLACE_LOWORD(const uint64_t x, const uint3
 #endif
 }
 
-// Endian Drehung für 32 Bit Typen
+// endian change for 32bit
 #ifdef __CUDA_ARCH__
 __device__ __forceinline__ uint32_t cuda_swab32(const uint32_t x)
 {
@@ -141,8 +145,8 @@ __device__ __forceinline__ uint32_t cuda_swab32(const uint32_t x)
 #else
 	/* host */
 	#define cuda_swab32(x) \
-	((((x) << 24) & 0xff000000u) | (((x) << 8) & 0x00ff0000u) | \
-		(((x) >> 8) & 0x0000ff00u) | (((x) >> 24) & 0x000000ffu))
+	( ((x) << 24) | (((x) << 8) & 0x00ff0000u) | \
+		(((x) >> 8) & 0x0000ff00u) | ((x) >> 24))
 #endif
 
 
@@ -178,8 +182,7 @@ static __device__ uint32_t _LOWORD(const uint64_t x)
 #endif
 }
 
-// Input:       77665544 33221100
-// Output:      00112233 44556677
+// endian change for 64bit
 #if (defined __CUDA_ARCH__ && !defined NOASM)
 __device__ __forceinline__ uint64_t cuda_swab64(uint64_t x)
 {
@@ -196,14 +199,14 @@ __device__ __forceinline__ uint64_t cuda_swab64(uint64_t x)
 #else
 	/* host */
 	#define cuda_swab64(x) \
-		((uint64_t)((((uint64_t)(x) & 0xff00000000000000ULL) >> 56) | \
+		((uint64_t)((((uint64_t)(x)) >> 56) | \
 			(((uint64_t)(x) & 0x00ff000000000000ULL) >> 40) | \
 			(((uint64_t)(x) & 0x0000ff0000000000ULL) >> 24) | \
 			(((uint64_t)(x) & 0x000000ff00000000ULL) >>  8) | \
 			(((uint64_t)(x) & 0x00000000ff000000ULL) <<  8) | \
 			(((uint64_t)(x) & 0x0000000000ff0000ULL) << 24) | \
 			(((uint64_t)(x) & 0x000000000000ff00ULL) << 40) | \
-			(((uint64_t)(x) & 0x00000000000000ffULL) << 56)))
+			(((uint64_t)(x)) << 56)))
 #endif
 
 /*********************************************************************/
@@ -252,7 +255,7 @@ uint64_t xor1(const uint64_t a, const uint64_t b)
 	return result;
 }
 #else
-#define xor1(a,b) (a ^ b)
+#define xor1(a,b) ((a) ^ (b))
 #endif
 
 #if USE_XOR_ASM_OPTS
@@ -268,7 +271,7 @@ uint64_t xor3(const uint64_t a, const uint64_t b, const uint64_t c)
 	return result;
 }
 #else
-#define xor3(a,b,c) (a ^ b ^ c)
+#define xor3(a,b,c) ((a) ^ (b) ^ (c))
 #endif
 
 #if USE_XOR_ASM_OPTS
@@ -287,7 +290,7 @@ uint64_t xor8(const uint64_t a, const uint64_t b, const uint64_t c, const uint64
 	return result;
 }
 #else
-#define xor8(a,b,c,d,e,f,g,h) ((a^b)^(c^d)^(e^f)^(g^h))
+#define xor8(a,b,c,d,e,f,g,h) ((a)^(b)^(c)^(d)^(e)^(f)^(g)^(h))
 #endif
 
 // device asm for x17
@@ -295,6 +298,7 @@ __device__ __forceinline__
 uint64_t xandx(const uint64_t a, const uint64_t b, const uint64_t c)
 {
 	uint64_t result;
+#ifndef NOASM
 	asm("{\n\t"
 		".reg .u64 n;\n\t"
 		"xor.b64 %0, %2, %3;\n\t"
@@ -302,6 +306,9 @@ uint64_t xandx(const uint64_t a, const uint64_t b, const uint64_t c)
 		"xor.b64 %0, n, %3;"
 	"}\n"
 	: "=l"(result) : "l"(a), "l"(b), "l"(c));
+#else
+	result = ((((b) ^ (c)) & (a)) ^ (c));
+#endif
 	return result;
 }
 
@@ -310,6 +317,7 @@ __device__ __forceinline__
 uint64_t andor(uint64_t a, uint64_t b, uint64_t c)
 {
 	uint64_t result;
+#ifndef NOASM
 	asm("{\n\t"
 		".reg .u64 m,n;\n\t"
 		"and.b64 m,  %1, %2;\n\t"
@@ -318,6 +326,9 @@ uint64_t andor(uint64_t a, uint64_t b, uint64_t c)
 		" or.b64 %0, %0, m ;\n\t"
 	"}\n"
 	: "=l"(result) : "l"(a), "l"(b), "l"(c));
+#else
+	result = (((a) & (b)) | (((a) | (b)) & (c)));
+#endif
 	return result;
 }
 
@@ -326,8 +337,12 @@ __device__ __forceinline__
 uint64_t shr_t64(uint64_t x, uint32_t n)
 {
 	uint64_t result;
+#ifndef NOASM
 	asm("shr.b64 %0,%1,%2;\n\t"
 	: "=l"(result) : "l"(x), "r"(n));
+#else
+	result = x >> n;
+#endif
 	return result;
 }
 
@@ -336,8 +351,12 @@ __device__ __forceinline__
 uint64_t shl_t64(uint64_t x, uint32_t n)
 {
 	uint64_t result;
+#ifndef NOASM
 	asm("shl.b64 %0,%1,%2;\n\t"
 	: "=l"(result) : "l"(x), "r"(n));
+#else
+	result = x << n;
+#endif
 	return result;
 }
 
@@ -457,8 +476,13 @@ uint64_t SWAPDWORDS(uint64_t value)
 __device__ __forceinline__
 void LOHI(uint32_t &lo, uint32_t &hi, uint64_t x)
 {
+#ifndef NOASM
 	asm("mov.b64 {%0,%1},%2; \n\t"
 		: "=r"(lo), "=r"(hi) : "l"(x));
+#else
+	lo = x & 0xffffffff;
+	hi = x >> 32;
+#endif
 }
 
 __device__ __forceinline__ uint64_t devectorize(uint2 x)
@@ -504,6 +528,7 @@ static __device__ __forceinline__ uint2 operator& (uint2 a, uint2 b) { return ma
 static __device__ __forceinline__ uint2 operator| (uint2 a, uint2 b) { return make_uint2(a.x | b.x, a.y | b.y); }
 static __device__ __forceinline__ uint2 operator~ (uint2 a) { return make_uint2(~a.x, ~a.y); }
 static __device__ __forceinline__ void operator^= (uint2 &a, uint2 b) { a = a ^ b; }
+
 static __device__ __forceinline__ uint2 operator+ (uint2 a, uint2 b)
 {
 #ifndef NOASM
@@ -518,7 +543,6 @@ static __device__ __forceinline__ uint2 operator+ (uint2 a, uint2 b)
 	return make_uint2(a.x + b.x, a.y + b.y);
 #endif
 }
-
 
 static __device__ __forceinline__ uint2 operator- (uint2 a, uint2 b)
 {
@@ -590,8 +614,6 @@ __device__ __inline__ uint2 ROR2(const uint2 v, const int n)
 	return result;
 }
 #endif
-
-
 
 __device__ __inline__ uint2 ROR8(const uint2 a)
 {
@@ -786,6 +808,7 @@ static __forceinline__ __device__ uint2 SHL2(const uint2 a, int offset)
 #endif
 	return result;
 }
+
 static __forceinline__ __device__ uint2 SHR2(const uint2 a, int offset)
 {
 	uint2 result;
@@ -833,8 +856,12 @@ static __device__ __forceinline__ uint2 vectorizeswap(uint64_t v)
 __device__ __forceinline__ uint32_t devectorize16(ushort2 x)
 {
 	uint32_t result;
+#ifndef NOASM
 	asm("mov.b32 %0,{%1,%2}; \n\t"
 		: "=r"(result) : "h"(x.x) , "h"(x.y));
+#else
+	result = x.x + (x.y << 16);
+#endif
 	return result;
 }
 
@@ -842,8 +869,13 @@ __device__ __forceinline__ uint32_t devectorize16(ushort2 x)
 __device__ __forceinline__ ushort2 vectorize16(uint32_t x)
 {
 	ushort2 result;
+#ifndef NOASM
 	asm("mov.b32 {%0,%1},%2; \n\t"
 		: "=h"(result.x), "=h"(result.y) : "r"(x));
+#else
+	result.x = x & 0xffff;
+	result.y = x >> 16;
+#endif
 	return result;
 }
 
@@ -851,7 +883,7 @@ extern int cuda_arch[MAX_GPUS];
 extern void get_cuda_arch(int *);
 #define ROTR32(x, n) (((x) >> (n)) | ((x) << (32 - (n))))
 
-
+/*
 static __device__ __forceinline__ uint4 mul4(uint4 a)
 {
 	uint4 result;
@@ -909,9 +941,10 @@ static __device__ __forceinline__ ulonglong2 madd4long(ulonglong2 a, ulonglong2 
 		 : "=l"(result.x), "=l"(result.y) : "l"(a.x), "l"(a.y), "l"(b.x), "l"(b.y));
 	return result;
 	}
+*/
 static __device__ __forceinline__ void madd4long2(ulonglong2 &a, ulonglong2 b)
  {
-	
+#ifndef NOASM	
 		asm("{\n\t"
 		 ".reg .u32 a0,a1,a2,a3,b0,b1,b2,b3;\n\t"
 		 "mov.b64 {a0,a1}, %0;\n\t"
@@ -926,31 +959,49 @@ static __device__ __forceinline__ void madd4long2(ulonglong2 &a, ulonglong2 b)
 		 "mov.b64 %1, {b2,b3};\n\t"
 		 "}\n\t"
 		 : "+l"(a.x), "+l"(a.y) : "l"(b.x), "l"(b.y));
-	
+#else // ?? no idea what madd4long is supposed to do
+	 a.x = a.x + b.x;
+	 if(a.x < b.x)
+		 a.y = a.y + b.y + 1;
+	 else
+		 a.y = a.y + b.y;
+#endif	
 }
 
 __device__ __forceinline__
 uint32_t xor3b(uint32_t a, uint32_t b, uint32_t c) {
 	uint32_t result;
+#ifndef NOASM
 	asm("{ .reg .u32 t1;\n\t"
 		"xor.b32 t1, %2, %3;\n\t"
 		"xor.b32 %0, %1, t1;\n\t"
 		"}"
 		: "=r"(result) : "r"(a), "r"(b), "r"(c));
+#else
+	result = a ^ b ^ c;
+#endif
 	return result;
 }
 
 __device__ __forceinline__
 uint32_t shr_t32(uint32_t x, uint32_t n) {
 	uint32_t result;
+#ifndef NOASM
 	asm("shr.b32 %0,%1,%2;"	: "=r"(result) : "r"(x), "r"(n));
+#else
+	result = x >> n;
+#endif
 	return result;
 }
 
 __device__ __forceinline__
 uint32_t shl_t32(uint32_t x, uint32_t n) {
 	uint32_t result;
+#ifndef NOASM
 	asm("shl.b32 %0,%1,%2;" : "=r"(result) : "r"(x), "r"(n));
+#else
+	result = x << n;
+#endif
 	return result;
 }
 
@@ -958,6 +1009,7 @@ uint32_t shl_t32(uint32_t x, uint32_t n) {
 __device__ __forceinline__
 uint32_t andor32(uint32_t a, uint32_t b, uint32_t c) {
 	uint32_t result;
+#ifndef NOASM
 	asm("{ .reg .u32 m,n,o;\n\t"
 		"and.b32 m,  %1, %2;\n\t"
 		" or.b32 n,  %1, %2;\n\t"
@@ -965,6 +1017,9 @@ uint32_t andor32(uint32_t a, uint32_t b, uint32_t c) {
 		" or.b32 %0,  m, o ;\n\t"
 		"}\n\t"
 		: "=r"(result) : "r"(a), "r"(b), "r"(c));
+#else
+	result = ((a | b) & c) | (a & b);
+#endif
 	return result;
 }
 

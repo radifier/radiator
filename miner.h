@@ -101,10 +101,6 @@ typedef unsigned char uchar;
 #define UINT32_MAX UINT_MAX
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 static inline bool is_windows(void) {
 #ifdef WIN32
         return true;
@@ -245,26 +241,43 @@ void aligned_free(void *ptr);
 
 #define USER_AGENT PACKAGE_NAME "/" PACKAGE_VERSION
 
-void sha256_init(uint32_t *state);
-void sha256_transform(uint32_t *state, const uint32_t *block, int swap);
-void sha256d(unsigned char *hash, const unsigned char *data, int len);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+	void sha256_init(uint32_t *state);
+	void sha256_transform(uint32_t *state, const uint32_t *block, int swap);
+	void sha256d(unsigned char *hash, const unsigned char *data, int len);
 
 #if defined(__ARM_NEON__) || defined(__i386__) || defined(__x86_64__)
 #define HAVE_SHA256_4WAY 0
-int sha256_use_4way();
-void sha256_init_4way(uint32_t *state);
-void sha256_transform_4way(uint32_t *state, const uint32_t *block, int swap);
+	int sha256_use_4way();
+	void sha256_init_4way(uint32_t *state);
+	void sha256_transform_4way(uint32_t *state, const uint32_t *block, int swap);
 #endif
 
 #if defined(__x86_64__) && defined(USE_AVX2)
 #define HAVE_SHA256_8WAY 0
-int sha256_use_8way();
-void sha256_init_8way(uint32_t *state);
-void sha256_transform_8way(uint32_t *state, const uint32_t *block, int swap);
+	int sha256_use_8way();
+	void sha256_init_8way(uint32_t *state);
+	void sha256_transform_8way(uint32_t *state, const uint32_t *block, int swap);
 #endif
 
-extern int scanhash_sha256d(int thr_id, uint32_t *pdata,
-	uint32_t *ptarget, uint32_t max_nonce, uint32_t *hashes_done);
+	extern int scanhash_sha256d(int thr_id, uint32_t *pdata,
+								uint32_t *ptarget, uint32_t max_nonce, uint32_t *hashes_done);
+
+	struct work_restart
+	{
+		volatile unsigned long	restart;
+		char			padding[128 - sizeof(unsigned long)];
+	};
+	extern struct work_restart *work_restart;
+
+	extern bool fulltest(const uint32_t *hash, const uint32_t *target);
+
+#ifdef __cplusplus
+}
+#endif
 
 extern unsigned char *scrypt_buffer_alloc();
 
@@ -457,11 +470,6 @@ struct thr_info {
 	struct cgpu_info gpu;
 };
 
-struct work_restart {
-	volatile unsigned long	restart;
-	char			padding[128 - sizeof(unsigned long)];
-};
-
 extern bool opt_benchmark;
 extern bool opt_debug;
 extern bool opt_quiet;
@@ -486,7 +494,6 @@ extern struct thr_info *thr_info;
 extern int longpoll_thr_id;
 extern int stratum_thr_id;
 extern int api_thr_id;
-extern struct work_restart *work_restart;
 extern bool opt_trust_pool;
 extern uint16_t opt_vote;
 
@@ -539,7 +546,6 @@ extern char *bin2hex(const unsigned char *in, size_t len);
 extern bool hex2bin(unsigned char *p, const char *hexstr, size_t len);
 extern int timeval_subtract(struct timeval *result, struct timeval *x,
 	struct timeval *y);
-extern bool fulltest(const uint32_t *hash, const uint32_t *target);
 extern void diff_to_target(uint32_t *target, double diff);
 extern void get_currentalgo(char* buf, int sz);
 extern uint32_t device_intensity(int thr_id, const char *func, uint32_t defcount);
@@ -657,6 +663,10 @@ void applog_hash(unsigned char *hash);
 void applog_compare_hash(unsigned char *hash, unsigned char *hash2);
 
 void print_hash_tests(void);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void animehash(void *state, const void *input);
 void blake256hash(void *output, const void *input, int8_t rounds);
 void deephash(void *state, const void *input);

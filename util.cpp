@@ -648,7 +648,7 @@ int timeval_subtract(struct timeval *result, struct timeval *x,
 	return (start > end);
 }
 
-bool fulltest(const uint32_t *hash, const uint32_t *target)
+extern "C" bool fulltest(const uint32_t *hash, const uint32_t *target)
 {
 	int i;
 	bool rc = true;
