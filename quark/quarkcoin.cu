@@ -252,7 +252,7 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 		
 		cuda_check_quarkcoin(thr_id, nrm3, pdata[19], d_branch3Nonces[thr_id], d_hash[thr_id], foundnonces[thr_id]);
 
-		if (foundnonces[0] != 0xffffffff)
+		if (foundnonces[thr_id][0] != 0xffffffff)
 		{
 			const uint32_t Htarg = ptarget[7];
 			uint32_t vhash64[8];
