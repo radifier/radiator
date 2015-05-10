@@ -1,3 +1,4 @@
+
 #include <string.h>
 #ifdef __cplusplus
 #include <cstdint>
@@ -11,6 +12,7 @@
 #include "cuda_groestlcoin.h"
 
 #include "miner.h"
+#include <cuda.h>
 #include <cuda_runtime.h>
 
 #define SWAP32(x) \
@@ -42,8 +44,9 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
     uint32_t max_nonce, uint32_t *hashes_done)
 {
     uint32_t start_nonce = pdata[19]++;
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1 << 19); // 256*256*8
-    throughput = min(throughput, max_nonce - start_nonce);
+	unsigned int intensity = (device_sm[device_map[thr_id]] > 500) ? 24 : 23;
+	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1U << intensity);
+	throughput = min(throughput, max_nonce - start_nonce);
 
     uint32_t *outputHash = (uint32_t*)malloc(throughput * 16 * sizeof(uint32_t));
 
@@ -53,7 +56,14 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
     // init
     if(!init[thr_id])
     {
-        groestlcoin_cpu_init(thr_id, throughput);
+		cudaSetDevice(device_map[thr_id]);
+		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+		if (opt_n_gputhreads == 1)
+		{
+			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		}
+
+		groestlcoin_cpu_init(thr_id, throughput);
         init[thr_id] = true;
     }
 
