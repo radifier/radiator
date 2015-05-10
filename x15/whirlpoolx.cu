@@ -56,7 +56,7 @@ int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t
 		{
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 			cudaDeviceReset();
-			cudaSetDeviceFlags(cudaDeviceBlockingSync);
+			cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		}
 		else

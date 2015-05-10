@@ -65,7 +65,7 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 		{
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 			cudaDeviceReset();
-			cudaSetDeviceFlags(cudaDeviceBlockingSync);
+			cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		}
 		else
