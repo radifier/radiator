@@ -87,6 +87,7 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 				{
 					endiandata[19] = SWAP32(foundNounce[1]);
 					groestlhash(tmpHash, endiandata);
+				if (tmpHash[7] != Htarg) applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU!", thr_id, foundNounce);
 
 					if (tmpHash[7] <= Htarg && fulltest(tmpHash, ptarget))
 					{
