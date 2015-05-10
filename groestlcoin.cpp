@@ -15,6 +15,16 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#define CUDA_SAFE_CALL(call)                                          \
+do {                                                                  \
+	cudaError_t err = call;                                           \
+	if (cudaSuccess != err) {                                         \
+		fprintf(stderr, "Cuda error in func '%s' at line %i : %s.\n", \
+		         __FUNCTION__, __LINE__, cudaGetErrorString(err) );   \
+		exit(EXIT_FAILURE);                                           \
+		}                                                                 \
+} while (0)
+
 #define SWAP32(x) \
     ((((x) << 24) & 0xff000000u) | (((x) << 8) & 0x00ff0000u)   | \
       (((x) >> 8) & 0x0000ff00u) | (((x) >> 24) & 0x000000ffu))
@@ -39,6 +49,7 @@ extern "C" void groestlhash(void *state, const void *input)
 }
 
 static bool init[MAX_GPUS] = { false };
+static THREAD uint32_t *foundNounce;
 
 extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
     uint32_t max_nonce, uint32_t *hashes_done)
@@ -51,7 +62,7 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
     uint32_t *outputHash = (uint32_t*)malloc(throughput * 16 * sizeof(uint32_t));
 
     if (opt_benchmark)
-        ptarget[7] = 0x000000ff;
+        ptarget[7] = 0x0000000f;
 
     // init
     if(!init[thr_id])
@@ -66,6 +77,7 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		groestlcoin_cpu_init(thr_id, throughput);
         init[thr_id] = true;
     }
+	CUDA_SAFE_CALL(cudaMallocHost(&foundNounce, 2 * 4));
 
     // Endian Drehung ist notwendig
     uint32_t endiandata[32];
@@ -75,68 +87,64 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
     // Context mit dem Endian gedrehten Blockheader vorbereiten (Nonce wird später ersetzt)
     groestlcoin_cpu_setBlock(thr_id, endiandata, (void*)ptarget);
 
-    do {
-        // GPU
-        uint32_t foundNounce[2];
-        const uint32_t Htarg = ptarget[7];
+	do
+	{
+		// GPU
+		const uint32_t Htarg = ptarget[7];
 
-        groestlcoin_cpu_hash(thr_id, throughput, pdata[19], outputHash, foundNounce);
+		groestlcoin_cpu_hash(thr_id, throughput, pdata[19], outputHash, foundNounce);
 
-        if(foundNounce[0] < 0xffffffff)
-        {
-            uint32_t tmpHash[8];
-            endiandata[19] = SWAP32(foundNounce[0]);
-            groestlhash(tmpHash, endiandata);
+		if(foundNounce[0] < 0xffffffff)
+		{
+			uint32_t tmpHash[8];
+			endiandata[19] = SWAP32(foundNounce[0]);
+			groestlhash(tmpHash, endiandata);
 
-            if (tmpHash[7] <= Htarg && fulltest(tmpHash, ptarget))
+			if(tmpHash[7] <= Htarg && fulltest(tmpHash, ptarget))
 			{
 				int res = 1;
-				// check if there was some other ones...
+				if(opt_benchmark)
+					applog(LOG_INFO, "GPU #%d Found nounce %08x", device_map[thr_id], foundNounce[0]);
 				*hashes_done = pdata[19] - start_nonce + throughput;
-				if (foundNounce[1] != 0xffffffff)
+				if(foundNounce[1] != 0xffffffff)
 				{
 					endiandata[19] = SWAP32(foundNounce[1]);
 					groestlhash(tmpHash, endiandata);
-				if (tmpHash[7] != Htarg) applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU!", thr_id, foundNounce);
-
-					if (tmpHash[7] <= Htarg && fulltest(tmpHash, ptarget))
+					if(tmpHash[7] <= Htarg && fulltest(tmpHash, ptarget))
 					{
-
 						pdata[21] = foundNounce[1];
 						res++;
-						if (opt_benchmark)
+						if(opt_benchmark)
 							applog(LOG_INFO, "GPU #%d Found second nounce %08x", device_map[thr_id], foundNounce[1]);
 					}
 					else
 					{
-						if (tmpHash[7] != Htarg)
+						if(tmpHash[7] != Htarg)
 						{
 							applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], foundNounce[1]);
 						}
 					}
 				}
 				pdata[19] = foundNounce[0];
-				if (opt_benchmark)
-					applog(LOG_INFO, "GPU #%d Found nounce %08x", device_map[thr_id], foundNounce[0]);
 				return res;
 			}
 			else
 			{
-				if (tmpHash[7] != Htarg)
-					{
-						applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], foundNounce[0]);
-					}
+				if(tmpHash[7] != Htarg)
+				{
+					applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], foundNounce[0]);
+				}
 			}
-        }
+		}
 
 		pdata[19] += throughput;
 		cudaError_t err = cudaGetLastError();
-		if (err != cudaSuccess)
+		if(err != cudaSuccess)
 		{
 			applog(LOG_ERR, "GPU #%d: %s", device_map[thr_id], cudaGetErrorString(err));
 			exit(EXIT_FAILURE);
 		}
-	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
+	} while(!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 
     *hashes_done = pdata[19] - start_nonce + 1;
     free(outputHash);
