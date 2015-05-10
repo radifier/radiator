@@ -147,6 +147,8 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 	if (opt_benchmark)
 		ptarget[7] = 0xf;
 
+	static uint32_t *foundnonces[MAX_GPUS];
+
 	if (!init[thr_id])
 	{
 		if (thr_id%opt_n_gputhreads == 0)
@@ -167,18 +169,16 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 
 		// Konstanten kopieren, Speicher belegen
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
-
+		CUDA_SAFE_CALL(cudaMallocHost(&foundnonces[thr_id], 2 * 4));
+		CUDA_SAFE_CALL(cudaMalloc(&d_branch1Nonces[thr_id], sizeof(uint32_t)*throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_branch2Nonces[thr_id], sizeof(uint32_t)*throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_branch3Nonces[thr_id], sizeof(uint32_t)*throughput));
 		quark_blake512_cpu_init(thr_id);
 //		quark_skein512_cpu_init(thr_id);
 		quark_groestl512_cpu_init(thr_id, throughput);
 		quark_bmw512_cpu_init(thr_id, throughput);
 		cuda_check_cpu_init(thr_id, throughput);
 		quark_compactTest_cpu_init(thr_id, throughput);
-
-		CUDA_SAFE_CALL(cudaMalloc(&d_branch1Nonces[thr_id], sizeof(uint32_t)*throughput));
-		CUDA_SAFE_CALL(cudaMalloc(&d_branch2Nonces[thr_id], sizeof(uint32_t)*throughput));
-		CUDA_SAFE_CALL(cudaMalloc(&d_branch3Nonces[thr_id], sizeof(uint32_t)*throughput));
-
 		quark_jh512_cpu_init(thr_id, throughput);
 
 		init[thr_id] = true;
@@ -250,14 +250,13 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 		quark_jh512_cpu_hash_64_final(thr_id, nrm2, pdata[19], d_branch2Nonces[thr_id], d_hash[thr_id]);
 		quark_keccak512_cpu_hash_64_final(thr_id, nrm1, pdata[19], d_branch1Nonces[thr_id], d_hash[thr_id]);
 		
-		uint32_t foundnonces[2];
-		cuda_check_quarkcoin(thr_id, nrm3, pdata[19], d_branch3Nonces[thr_id], d_hash[thr_id], foundnonces);
+		cuda_check_quarkcoin(thr_id, nrm3, pdata[19], d_branch3Nonces[thr_id], d_hash[thr_id], foundnonces[thr_id]);
 
 		if (foundnonces[0] != 0xffffffff)
 		{
 			const uint32_t Htarg = ptarget[7];
 			uint32_t vhash64[8];
-			be32enc(&endiandata[19], foundnonces[0]);
+			be32enc(&endiandata[19], foundnonces[thr_id][0]);
 			quarkhash(vhash64, endiandata);
 
 			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
@@ -265,24 +264,24 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 				int res = 1;
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				// check if there was some other ones...
-				if (foundnonces[1] != 0xffffffff)
+				if (foundnonces[thr_id][1] != 0xffffffff)
 				{
-					be32enc(&endiandata[19], foundnonces[1]);
+					be32enc(&endiandata[19], foundnonces[thr_id][1]);
 					quarkhash(vhash64, endiandata);
 
 					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 					{
-						pdata[21] = foundnonces[1];
+						pdata[21] = foundnonces[thr_id][1];
 						res++;
-						if (opt_benchmark)  applog(LOG_INFO, "GPU #%d: Found second nonce $%08X", device_map[thr_id], foundnonces[1]);
+						if(opt_benchmark)  applog(LOG_INFO, "GPU #%d: Found second nonce $%08X", device_map[thr_id], foundnonces[thr_id][1]);
 					}
 					else
 					{
 						if (vhash64[7] != Htarg) // don't show message if it is equal but fails fulltest
-							applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU!", device_map[thr_id], foundnonces[1]);
+							applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU!", device_map[thr_id], foundnonces[thr_id][1]);
 					}
 				}
-				pdata[19] = foundnonces[0];
+				pdata[19] = foundnonces[thr_id][0];
 				return res;
 			}
 			else
