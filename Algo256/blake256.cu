@@ -55,7 +55,7 @@ extern "C" uint32_t crc32_u32t(const uint32_t *buf, size_t size);
 
 /* 8 adapters max */
 static uint32_t *d_resNonce[MAX_GPUS];
-static uint32_t *h_resNonce[MAX_GPUS];
+static __declspec(thread) uint32_t *h_resNonce;
 
 /* max count of found nonces in one call */
 #define NBN 2
@@ -467,10 +467,10 @@ static uint32_t blake256_cpu_hash_16(const int thr_id, const uint32_t threads, c
 		return result;
 
 	blake256_gpu_hash_16 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNonce, d_resNonce[thr_id], highTarget, (int) rounds, opt_tracegpu);
-	CUDA_SAFE_CALL(cudaMemcpyAsync(h_resNonce[thr_id], d_resNonce[thr_id], NBN*sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
-	result = h_resNonce[thr_id][0];
+	CUDA_SAFE_CALL(cudaMemcpyAsync(h_resNonce, d_resNonce[thr_id], NBN*sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
+	result = h_resNonce[0];
 	for (int n=0; n < (NBN-1); n++)
-		extra_results[thr_id][n] = h_resNonce[thr_id][n + 1];
+		extra_results[thr_id][n] = h_resNonce[n + 1];
 	return result;
 }
 
@@ -548,7 +548,7 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
-		CUDA_SAFE_CALL(cudaMallocHost(&h_resNonce[thr_id], NBN * sizeof(uint32_t)));
+		CUDA_SAFE_CALL(cudaMallocHost(&h_resNonce, NBN * sizeof(uint32_t)));
 		CUDA_SAFE_CALL(cudaMalloc(&d_resNonce[thr_id], NBN * sizeof(uint32_t)));
 		init[thr_id] = true;
 	}

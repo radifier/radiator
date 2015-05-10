@@ -14,7 +14,7 @@ extern "C"
 
 #include "cuda_helper.h"
 
-static uint32_t h_nounce[MAX_GPUS][2];
+static __declspec(thread) uint32_t *h_nounce;
 
 extern void keccak256_cpu_init(int thr_id, uint32_t threads);
 extern void keccak256_setBlock_80(int thr_id, void *pdata,const void *ptarget);
@@ -65,8 +65,9 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
+		CUDA_SAFE_CALL(cudaMallocHost(&h_nounce, 2 * sizeof(uint32_t)));
 		keccak256_cpu_init(thr_id, (int)throughput);
-//		CUDA_SAFE_CALL(cudaMallocHost(&h_nounce[thr_id], 2 * sizeof(uint32_t)));
+//		CUDA_SAFE_CALL(cudaMallocHost(&h_nounce, 2 * sizeof(uint32_t)));
 		init[thr_id] = true;
 	}
 
@@ -79,12 +80,12 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 
 	do {
 
-		keccak256_cpu_hash_80(thr_id, (int) throughput, pdata[19], h_nounce[thr_id]);
-		if (h_nounce[thr_id][0] != UINT32_MAX)
+		keccak256_cpu_hash_80(thr_id, (int) throughput, pdata[19], h_nounce);
+		if (h_nounce[0] != UINT32_MAX)
 		{
 			uint32_t Htarg = ptarget[7];
 			uint32_t vhash64[8];
-			be32enc(&endiandata[19], h_nounce[thr_id][0]);
+			be32enc(&endiandata[19], h_nounce[0]);
 			keccak256_hash(vhash64, endiandata);
 
 			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
@@ -92,36 +93,36 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 				int res = 1;
 				// check if there was some other ones...
 				*hashes_done = pdata[19] - first_nonce + throughput;
-				if (h_nounce[thr_id][1] != 0xffffffff)
+				if (h_nounce[1] != 0xffffffff)
 				{
-					be32enc(&endiandata[19], h_nounce[thr_id][1]);
+					be32enc(&endiandata[19], h_nounce[1]);
 					keccak256_hash(vhash64, endiandata);
 
 					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 					{
-						pdata[21] = h_nounce[thr_id][1];
+						pdata[21] = h_nounce[1];
 						res++;
 						if (opt_benchmark)
-							applog(LOG_INFO, "GPU #%d Found second nounce %08x", device_map[thr_id], h_nounce[thr_id][1]);
+							applog(LOG_INFO, "GPU #%d Found second nounce %08x", device_map[thr_id], h_nounce[1]);
 					}
 					else
 					{
 						if (vhash64[7] != Htarg)
 						{
-							applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], h_nounce[thr_id][1]);
+							applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], h_nounce[1]);
 						}
 					}
 				}
-				pdata[19] = h_nounce[thr_id][0];
+				pdata[19] = h_nounce[0];
 				if (opt_benchmark)
-					applog(LOG_INFO, "GPU #%d Found nounce %08x", device_map[thr_id], h_nounce[thr_id][0]);
+					applog(LOG_INFO, "GPU #%d Found nounce %08x", device_map[thr_id], h_nounce[0]);
 				return res;
 			}
 			else
 			{
 				if (vhash64[7] != Htarg)
 				{
-					applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], h_nounce[thr_id][0]);
+					applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], h_nounce[0]);
 				}
 			}
 		}

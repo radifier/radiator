@@ -10,6 +10,7 @@ extern "C" {
 #include "cuda_helper.h"
 
 static _ALIGN(64) uint64_t *d_hash[MAX_GPUS];
+static __declspec(thread) uint32_t *foundNonce;
 
 extern void blake256_cpu_init(int thr_id, uint32_t threads);
 extern void blake256_cpu_hash_80(const int thr_id, const uint32_t threads, const uint32_t startNonce, uint64_t *Hash);
@@ -87,6 +88,7 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
+		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * 4));
 		blake256_cpu_init(thr_id, throughput);
 		keccak256_cpu_init(thr_id,throughput);
 		skein256_cpu_init(thr_id, throughput);
@@ -106,8 +108,6 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 	groestl256_setTarget(thr_id, ptarget);
 
 	do {
-		uint32_t foundNonce[2] = { 0, 0 };
-
 		blake256_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		keccak256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		lyra2_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
