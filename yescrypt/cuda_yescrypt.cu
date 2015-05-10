@@ -857,7 +857,7 @@ void yescrypt_cpu_init(int thr_id, int threads, uint32_t *hash, uint32_t *hash2,
 
 __host__ uint32_t yescrypt_cpu_hash_k4(int thr_id, int threads, uint32_t startNounce,  int order)
 {
-	uint32_t result[MAX_GPUS] = {0xffffffff};
+	uint32_t result;
 	cudaMemsetAsync(d_YNonce[thr_id], 0xffffffff, sizeof(uint32_t), gpustream[thr_id]);
 
  
@@ -877,9 +877,9 @@ __host__ uint32_t yescrypt_cpu_hash_k4(int thr_id, int threads, uint32_t startNo
 	yescrypt_gpu_hash_k2c1 << <grid2, block2, 0, gpustream[thr_id] >> >(threads, startNounce);
 	yescrypt_gpu_hash_k5 << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce, d_YNonce[thr_id]);
 
-	CUDA_SAFE_CALL(cudaMemcpyAsync(&result[thr_id], d_YNonce[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
+	CUDA_SAFE_CALL(cudaMemcpyAsync(&result, d_YNonce[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
 	
-return result[thr_id];
+return result;
 }
 
 __host__ void yescrypt_setBlockTarget(int thr_id, uint32_t* pdata, const void *target)
@@ -901,7 +901,7 @@ __host__ void yescrypt_setBlockTarget(int thr_id, uint32_t* pdata, const void *t
 //		for (int i = 0; i<10; i++) { printf(" pdata/input %d %08x %08x \n",i,pdata[2*i],pdata[2*i+1]); }
 		
 		 
-		CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(shapad, pad3, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+		CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(&shapad, pad3, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(pTarget, target, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_data, PaddedMessage, 32 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }
