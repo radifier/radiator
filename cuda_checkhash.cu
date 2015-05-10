@@ -99,7 +99,8 @@ uint32_t cuda_check_hash(int thr_id, uint32_t threads, uint32_t startNounce, uin
 
 	cuda_checkhash_64 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_inputHash, d_resNonces[thr_id]);
 
-	cudaMemcpy(h_resNonces[thr_id], d_resNonces[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost);
+	cudaMemcpyAsync(h_resNonces[thr_id], d_resNonces[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
+	cudaStreamSynchronize(gpustream[thr_id]);
 
 	return h_resNonces[thr_id][0];
 }
@@ -133,7 +134,8 @@ uint32_t cuda_check_hash_suppl(int thr_id, uint32_t threads, uint32_t startNounc
 	cudaMemsetAsync(d_resNonces[thr_id], 0, sizeof(uint32_t), gpustream[thr_id]);
 
 	cuda_checkhash_64_suppl <<<grid, block, 0, gpustream[thr_id]>>> (startNounce, d_inputHash, d_resNonces[thr_id]);
-	cudaMemcpy(h_resNonces[thr_id], d_resNonces[thr_id], 8*sizeof(uint32_t), cudaMemcpyDeviceToHost);
+	cudaMemcpyAsync(h_resNonces[thr_id], d_resNonces[thr_id], 8*sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
+	cudaStreamSynchronize(gpustream[thr_id]);
 
 	rescnt = h_resNonces[thr_id][0];
 	if (rescnt > 1)
@@ -203,7 +205,8 @@ uint32_t cuda_check_hash_branch(int thr_id, uint32_t threads, uint32_t startNoun
 
 	cuda_check_hash_branch_64 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_nonceVector, d_inputHash, d_resNonces[thr_id]);
 
-	cudaMemcpy(h_resNonces[thr_id], d_resNonces[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost);
+	cudaMemcpyAsync(h_resNonces[thr_id], d_resNonces[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
+	cudaStreamSynchronize(gpustream[thr_id]);
 
 	result = *h_resNonces[thr_id];
 
@@ -221,7 +224,8 @@ void cuda_check_quarkcoin(int thr_id, uint32_t threads, uint32_t startNounce, ui
 
 	cuda_check_quarkcoin_64 << <grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_nonceVector, d_inputHash, d_resNonces[thr_id]);
 
-	cudaMemcpy(resNonces, d_resNonces[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost);
+	cudaMemcpyAsync(resNonces, d_resNonces[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
+	cudaStreamSynchronize(gpustream[thr_id]);
 }
 
 int cuda_arch[MAX_GPUS];

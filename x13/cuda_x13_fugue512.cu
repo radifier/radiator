@@ -1154,5 +1154,6 @@ __host__ void x13_fugue512_cpu_hash_64_final(int thr_id, uint32_t threads, uint3
 	cudaMemsetAsync(d_nonce[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
 
 	x13_fugue512_gpu_hash_64_final << <grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash, d_nonce[thr_id]);
-	cudaMemcpy(res, d_nonce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost);
+	cudaMemcpyAsync(res, d_nonce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
+	cudaStreamSynchronize(gpustream[thr_id]);
 }

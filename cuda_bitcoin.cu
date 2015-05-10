@@ -666,7 +666,7 @@ void bitcoin_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, const 
 	dim3 grid((threads + TPB*NONCES_PER_THREAD - 1) / TPB / NONCES_PER_THREAD);
 	dim3 block(TPB);
 	bitcoin_gpu_hash << <grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_result[thr_id], t1c, t2c, w16, w16rot, w17, w17rot, b2, c2, d2, f2, g2, h2, ms[0], ms[1], ms[2], ms[3], ms[4], ms[5], ms[6], ms[7], compacttarget);
-	CUDA_SAFE_CALL(cudaMemcpy(h_nounce, d_result[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
+	CUDA_SAFE_CALL(cudaMemcpyAsync(h_nounce, d_result[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
 }
 
 __host__

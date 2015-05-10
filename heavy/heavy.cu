@@ -263,7 +263,7 @@ int scanhash_heavy(int thr_id, uint32_t *pdata,
         if(actualNumberOfValuesInNonceVectorGPU > 0)
         {
             size_t size = sizeof(uint32_t) * actualNumberOfValuesInNonceVectorGPU;
-            CUDA_SAFE_CALL(cudaMemcpy(cpu_nonceVector, heavy_nonceVector[thr_id], size, cudaMemcpyDeviceToHost));
+            CUDA_SAFE_CALL(cudaMemcpyAsync(cpu_nonceVector, heavy_nonceVector[thr_id], size, cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
 
             for (uint32_t i=0; i < actualNumberOfValuesInNonceVectorGPU; i++)
             {

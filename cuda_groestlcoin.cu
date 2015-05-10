@@ -118,5 +118,5 @@ __host__ void groestlcoin_cpu_hash(int thr_id, uint32_t threads, uint32_t startN
 	cudaMemsetAsync(d_resultNonce[thr_id], 0xFF, 2 * sizeof(uint32_t), gpustream[thr_id]);
     groestlcoin_gpu_hash_quad<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_resultNonce[thr_id]);
 
-    CUDA_SAFE_CALL(cudaMemcpy(nounce, d_resultNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
+    CUDA_SAFE_CALL(cudaMemcpyAsync(nounce, d_resultNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
 }

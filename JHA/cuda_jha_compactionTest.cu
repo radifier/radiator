@@ -305,7 +305,7 @@ __host__ void jackpot_compactTest_cpu_dualCompaction(int thr_id, uint32_t thread
 	jackpot_compactTest_gpu_SCAN<<<thr1,blockSize, 32*sizeof(uint32_t), 0, gpustream[thr_id]>>>(d_tempBranch1Nonces[thr_id], 32, d_partSum1[thr_id], h_JackpotTrueFunction[thr_id], threads, startNounce, inpHashes);
 	jackpot_compactTest_gpu_SCAN<<<thr2,blockSize, 32*sizeof(uint32_t), 0, gpustream[thr_id]>>>(d_partSum1[thr_id], 32, d_partSum2[thr_id]);
 	jackpot_compactTest_gpu_SCAN<<<1, thr2, 32*sizeof(uint32_t), 0, gpustream[thr_id]>>>(d_partSum2[thr_id], (thr2>32) ? 32 : thr2);
-	cudaMemcpy(&nrm[0], &(d_partSum2[thr_id])[thr2-1], sizeof(uint32_t), cudaMemcpyDeviceToHost);
+	cudaMemcpyAsync(&nrm[0], &(d_partSum2[thr_id])[thr2-1], sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
 	jackpot_compactTest_gpu_ADD<<<thr2-1, blockSize, 0, gpustream[thr_id]>>>(d_partSum1[thr_id]+blockSize, d_partSum2[thr_id], blockSize*thr2);
 	jackpot_compactTest_gpu_ADD<<<thr1-1, blockSize, 0, gpustream[thr_id]>>>(d_tempBranch1Nonces[thr_id]+blockSize, d_partSum1[thr_id], threads);
 
@@ -313,7 +313,7 @@ __host__ void jackpot_compactTest_cpu_dualCompaction(int thr_id, uint32_t thread
 	jackpot_compactTest_gpu_SCAN<<<thr1,blockSize, 32*sizeof(uint32_t), 0, gpustream[thr_id]>>>(d_tempBranch2Nonces[thr_id], 32, d_partSum1[thr_id], h_JackpotFalseFunction[thr_id], threads, startNounce, inpHashes);
 	jackpot_compactTest_gpu_SCAN<<<thr2,blockSize, 32*sizeof(uint32_t), 0, gpustream[thr_id]>>>(d_partSum1[thr_id], 32, d_partSum2[thr_id]);
 	jackpot_compactTest_gpu_SCAN<<<1, thr2, 32*sizeof(uint32_t), 0, gpustream[thr_id]>>>(d_partSum2[thr_id], (thr2>32) ? 32 : thr2);
-	cudaMemcpy(&nrm[1], &(d_partSum2[thr_id])[thr2-1], sizeof(uint32_t), cudaMemcpyDeviceToHost);	
+	cudaMemcpyAsync(&nrm[1], &(d_partSum2[thr_id])[thr2-1], sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);	
 	jackpot_compactTest_gpu_ADD<<<thr2-1, blockSize, 0, gpustream[thr_id]>>>(d_partSum1[thr_id]+blockSize, d_partSum2[thr_id], blockSize*thr2);
 	jackpot_compactTest_gpu_ADD<<<thr1-1, blockSize, 0, gpustream[thr_id]>>>(d_tempBranch2Nonces[thr_id]+blockSize, d_partSum1[thr_id], threads);
 	

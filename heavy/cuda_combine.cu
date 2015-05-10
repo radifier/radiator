@@ -142,5 +142,5 @@ void combine_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, uint32
 	combine_gpu_hash <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_hashoutput[thr_id], d_hash2output[thr_id], d_hash3output[thr_id], d_hash4output[thr_id], d_hash5output[thr_id], heavy_nonceVector[thr_id]);
 
 	// da die Hash Auswertung noch auf der CPU erfolgt, müssen die Ergebnisse auf jeden Fall zum Host kopiert werden
-	CUDA_SAFE_CALL(cudaMemcpy(hash, d_hashoutput[thr_id], 8 * sizeof(uint32_t) * threads, cudaMemcpyDeviceToHost));
+	CUDA_SAFE_CALL(cudaMemcpyAsync(hash, d_hashoutput[thr_id], 8 * sizeof(uint32_t) * threads, cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
 }

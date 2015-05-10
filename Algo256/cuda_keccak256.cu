@@ -246,7 +246,7 @@ void keccak256_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, u
 	dim3 block(threadsperblock);
 	keccak256_gpu_hash_80<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_KNonce[thr_id]);
 	//MyStreamSynchronize(NULL, order, thr_id);
-	CUDA_SAFE_CALL(cudaMemcpy(h_nounce, d_KNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
+	CUDA_SAFE_CALL(cudaMemcpyAsync(h_nounce, d_KNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
 }
 
 __global__ __launch_bounds__(256,3)

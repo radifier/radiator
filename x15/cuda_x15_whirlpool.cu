@@ -1782,7 +1782,7 @@ extern uint32_t* whirlpool512_cpu_finalhash_64(int thr_id, uint32_t threads, uin
 	//oldwhirlpool_gpu_finalhash_64 << <grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash, d_WNonce[thr_id]);
 	//MyStreamSynchronize(NULL, order, thr_id);
 
-	CUDA_SAFE_CALL(cudaMemcpy(h_wnounce[thr_id], d_WNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
+	CUDA_SAFE_CALL(cudaMemcpyAsync(h_wnounce[thr_id], d_WNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
 	return h_wnounce[thr_id];
 }
 

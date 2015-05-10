@@ -607,7 +607,8 @@ __host__ void cpu_whirlpoolx(int thr_id, uint32_t threads, uint32_t startNounce,
 	cudaMemsetAsync(d_WXNonce[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
 	whirlpoolx <<<grid, block , 0, gpustream[thr_id]>>>(threads, startNounce, d_WXNonce[thr_id]);
 
-	cudaMemcpy(h_wxnounce[thr_id], d_WXNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost);
+	cudaMemcpyAsync(h_wxnounce[thr_id], d_WXNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
+	cudaStreamSynchronize(gpustream[thr_id]);
 	foundnonce[0] = h_wxnounce[thr_id][0];
 	foundnonce[1] = h_wxnounce[thr_id][1];
 }
