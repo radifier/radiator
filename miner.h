@@ -50,6 +50,12 @@ void *alloca (size_t);
 
 #include "compat.h"
 
+#ifdef _MSC_VER
+#define THREAD __declspec(thread)
+#else
+#define THREAD __thread
+#endif
+
 #if defined(__CUDA_ARCH__) && __CUDA_ARCH__ > 0
 # define _ALIGN(x) __align__(x)
 #elif _MSC_VER

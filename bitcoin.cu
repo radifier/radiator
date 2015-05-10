@@ -1,7 +1,7 @@
 #include "miner.h"
 #include "cuda_helper.h"
 
-static __declspec(thread) uint32_t *h_nounce;
+static THREAD uint32_t *h_nounce;
 
 extern void bitcoin_cpu_init(int thr_id);
 extern void bitcoin_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, const uint32_t *const ms, uint32_t merkle, uint32_t time, uint32_t compacttarget, uint32_t *const h_nounce);

@@ -147,7 +147,7 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 	if (opt_benchmark)
 		ptarget[7] = 0x0ff;
 
-	static __declspec(thread) uint32_t *foundnonces;
+	static THREAD uint32_t *foundnonces;
 
 	if (!init[thr_id])
 	{

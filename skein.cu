@@ -12,7 +12,7 @@ extern "C" {
 #include "cuda_helper.h"
 #include <openssl/sha.h>
 
-static __declspec(thread) uint32_t *foundnonces;
+static THREAD uint32_t *foundnonces;
 
 extern void skein512_cpu_setBlock_80(int thr_id,void *pdata);
 extern void skein512_cpu_hash_80_50(int thr_id, uint32_t threads, uint32_t startNounce, int swapu, uint64_t target, uint32_t *h_found);

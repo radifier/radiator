@@ -55,7 +55,7 @@ extern "C" uint32_t crc32_u32t(const uint32_t *buf, size_t size);
 
 /* 8 adapters max */
 static uint32_t *d_resNonce[MAX_GPUS];
-static __declspec(thread) uint32_t *h_resNonce;
+static THREAD uint32_t *h_resNonce;
 
 /* max count of found nonces in one call */
 #define NBN 2

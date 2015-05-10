@@ -28,7 +28,7 @@ extern "C"
 
 
 static uint32_t *d_hash[MAX_GPUS];
-static __declspec(thread) uint32_t *h_found;
+static THREAD uint32_t *h_found;
 
 extern void quark_blake512_cpu_init(int thr_id);
 extern void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata);

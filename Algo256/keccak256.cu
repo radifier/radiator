@@ -14,7 +14,7 @@ extern "C"
 
 #include "cuda_helper.h"
 
-static __declspec(thread) uint32_t *h_nounce;
+static THREAD uint32_t *h_nounce;
 
 extern void keccak256_cpu_init(int thr_id, uint32_t threads);
 extern void keccak256_setBlock_80(int thr_id, void *pdata,const void *ptarget);

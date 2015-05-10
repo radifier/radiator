@@ -15,7 +15,7 @@ extern "C" {
 #include "cuda_helper.h"
 
 static uint32_t *d_hash[MAX_GPUS];
-static __declspec(thread) uint32_t *h_found;
+static THREAD uint32_t *h_found;
 
 extern void qubit_luffa512_cpu_init(int thr_id, uint32_t threads);
 extern void qubit_luffa512_cpu_setBlock_80(int thr_id, void *pdata);
