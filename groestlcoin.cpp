@@ -50,6 +50,7 @@ extern "C" void groestlhash(void *state, const void *input)
 
 static bool init[MAX_GPUS] = { false };
 static THREAD uint32_t *foundNounce;
+extern cudaStream_t gpustream[MAX_GPUS];
 
 extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
     uint32_t max_nonce, uint32_t *hashes_done)
@@ -67,17 +68,26 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
     // init
     if(!init[thr_id])
     {
-		cudaSetDevice(device_map[thr_id]);
-		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-		if (opt_n_gputhreads == 1)
+		if(thr_id%opt_n_gputhreads == 0)
 		{
+			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+			cudaDeviceReset();
+			cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		}
+		else
+		{
+			while(!init[thr_id - thr_id%opt_n_gputhreads])
+			{
+			}
+			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+		}
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
 		groestlcoin_cpu_init(thr_id, throughput);
-        init[thr_id] = true;
+		CUDA_SAFE_CALL(cudaMallocHost(&foundNounce, 2 * 4));
+		init[thr_id] = true;
     }
-	CUDA_SAFE_CALL(cudaMallocHost(&foundNounce, 2 * 4));
 
     // Endian Drehung ist notwendig
     uint32_t endiandata[32];

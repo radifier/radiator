@@ -11,7 +11,7 @@
 __constant__ uint32_t pTarget[8]; // Single GPU
 static uint32_t *d_resultNonce[MAX_GPUS];
 
-__constant__ uint32_t groestlcoin_gpu_msg[32];
+__constant__ uint32_t groestlcoin_gpu_msg[MAX_GPUS][32];
 
 // 64 Register Variante für Compute 3.0
 #include "groestl_functions_quad.cu"
@@ -20,7 +20,7 @@ __constant__ uint32_t groestlcoin_gpu_msg[32];
 #define SWAB32(x) cuda_swab32(x)
 
 __global__ __launch_bounds__(512, 2)
-void groestlcoin_gpu_hash_quad(uint32_t threads, uint32_t startNounce, uint32_t *resNounce)
+void groestlcoin_gpu_hash_quad(uint32_t threads, uint32_t startNounce, uint32_t *resNounce, int thr_id)
 {
     // durch 4 dividieren, weil jeweils 4 Threads zusammen ein Hash berechnen
     uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x) >> 2;
@@ -29,7 +29,7 @@ void groestlcoin_gpu_hash_quad(uint32_t threads, uint32_t startNounce, uint32_t 
         // GROESTL
         uint32_t paddedInput[8];
 #pragma unroll 8
-        for(int k=0;k<8;k++) paddedInput[k] = groestlcoin_gpu_msg[4*k+(threadIdx.x & 3)];
+        for(int k=0;k<8;k++) paddedInput[k] = groestlcoin_gpu_msg[thr_id][4*k+(threadIdx.x & 3)];
 
         const uint32_t nounce = startNounce + thread;
         if ((threadIdx.x & 3) == 3)
@@ -70,10 +70,6 @@ void groestlcoin_gpu_hash_quad(uint32_t threads, uint32_t startNounce, uint32_t 
 // Setup-Funktionen
 __host__ void groestlcoin_cpu_init(int thr_id, uint32_t threads)
 {
-	cudaDeviceReset();
-	cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-	cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
-    // Speicher für Gewinner-Nonce belegen
     cudaMalloc(&d_resultNonce[thr_id], 2 * sizeof(uint32_t)); 
 }
 
@@ -94,7 +90,7 @@ __host__ void groestlcoin_cpu_setBlock(int thr_id, void *data, void *pTargetIn)
     // auf der GPU ausgeführt)
 
     // Blockheader setzen (korrekte Nonce und Hefty Hash fehlen da drin noch)
-	cudaMemcpyToSymbolAsync(groestlcoin_gpu_msg, msgBlock, 128, 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(groestlcoin_gpu_msg[thr_id], msgBlock, 128, 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 
 	cudaMemsetAsync(d_resultNonce[thr_id], 0xFF, sizeof(uint32_t), gpustream[thr_id]);
 	cudaMemcpyToSymbolAsync(pTarget, pTargetIn, sizeof(uint32_t) * 8, 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
@@ -113,7 +109,7 @@ __host__ void groestlcoin_cpu_hash(int thr_id, uint32_t threads, uint32_t startN
     dim3 block(threadsperblock);
 
 	cudaMemsetAsync(d_resultNonce[thr_id], 0xFF, 2 * sizeof(uint32_t), gpustream[thr_id]);
-    groestlcoin_gpu_hash_quad<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_resultNonce[thr_id]);
+    groestlcoin_gpu_hash_quad<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_resultNonce[thr_id], thr_id);
 
     CUDA_SAFE_CALL(cudaMemcpyAsync(nounce, d_resultNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
 }
