@@ -2,7 +2,7 @@
 #include <cstdio>
 using namespace std;
 #include <memory.h>
-
+#include "miner.h"
 #include "cuda_helper.h" 
 
 
@@ -2627,7 +2627,7 @@ void quark_skein512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t sta
 }
 
 
-static uint64_t PaddedMessage[MAX_GPUS][16];
+static THREAD uint64_t PaddedMessage[16];
 
 static void precalc(int thr_id)
 {
@@ -2650,7 +2650,7 @@ static void precalc(int thr_id)
 
 	uint64_t p[8];
 	for (int i = 0; i<8; i++)
-		p[i] = PaddedMessage[thr_id][i];
+		p[i] = PaddedMessage[i];
 
 	TFBIG_4e_PRE(0);
 	TFBIG_4o_PRE(1);
@@ -2674,14 +2674,14 @@ static void precalc(int thr_id)
 
 	uint64_t buffer[9];
 
-	buffer[0] = PaddedMessage[thr_id][0] ^ p[0];
-	buffer[1] = PaddedMessage[thr_id][1] ^ p[1];
-	buffer[2] = PaddedMessage[thr_id][2] ^ p[2];
-	buffer[3] = PaddedMessage[thr_id][3] ^ p[3];
-	buffer[4] = PaddedMessage[thr_id][4] ^ p[4];
-	buffer[5] = PaddedMessage[thr_id][5] ^ p[5];
-	buffer[6] = PaddedMessage[thr_id][6] ^ p[6];
-	buffer[7] = PaddedMessage[thr_id][7] ^ p[7];
+	buffer[0] = PaddedMessage[0] ^ p[0];
+	buffer[1] = PaddedMessage[1] ^ p[1];
+	buffer[2] = PaddedMessage[2] ^ p[2];
+	buffer[3] = PaddedMessage[3] ^ p[3];
+	buffer[4] = PaddedMessage[4] ^ p[4];
+	buffer[5] = PaddedMessage[5] ^ p[5];
+	buffer[6] = PaddedMessage[6] ^ p[6];
+	buffer[7] = PaddedMessage[7] ^ p[7];
 	buffer[8] = t2;
 	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(precalcvalues[thr_id], buffer, sizeof(buffer), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }
@@ -2689,9 +2689,9 @@ static void precalc(int thr_id)
 __host__
 void skein512_cpu_setBlock_80(int thr_id, void *pdata)
 {
-	memcpy(&PaddedMessage[thr_id][0], pdata, 80);
+	memcpy(&PaddedMessage[0], pdata, 80);
 	CUDA_SAFE_CALL(cudaMalloc(&(d_found[thr_id]), 2 * sizeof(uint32_t)));
-	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedMessage80[thr_id], &PaddedMessage[thr_id][8], 8 * 2, 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedMessage80[thr_id], &PaddedMessage[8], 8 * 2, 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 
 	precalc(thr_id);
 }

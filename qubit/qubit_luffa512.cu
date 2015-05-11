@@ -26,7 +26,7 @@ using namespace std;
 #include <stdio.h>
 #endif
 #include <memory.h>
-
+#include "miner.h"
 #include "cuda_helper.h"
 
 
@@ -35,7 +35,7 @@ using namespace std;
 #define UINT32_MAX UINT_MAX
 #endif
 
-static unsigned char PaddedMessage[MAX_GPUS][128];
+static THREAD unsigned char PaddedMessage[128];
 __constant__ uint64_t c_PaddedMessage80[MAX_GPUS][16]; // padded message (80 bytes + padding)
 __constant__ uint32_t c_Target[8];
 __constant__ uint32_t statebufferpre[MAX_GPUS][8];
@@ -677,11 +677,11 @@ __host__ void qubit_cpu_precalc(int thr_id)
 	};
 
 	for (int i = 0; i<8; i++)
-		statebuffer[i] = BYTES_SWAP32(*(((uint32_t*)PaddedMessage[thr_id]) + i));
+		statebuffer[i] = BYTES_SWAP32(*(((uint32_t*)PaddedMessage) + i));
 	rnd512cpu(statebuffer, statechainv);
 
 	for (int i = 0; i<8; i++)
-		statebuffer[i] = BYTES_SWAP32(*(((uint32_t*)PaddedMessage[thr_id]) + i + 8));
+		statebuffer[i] = BYTES_SWAP32(*(((uint32_t*)PaddedMessage) + i + 8));
 
 	rnd512cpu(statebuffer, statechainv);
 
@@ -703,14 +703,14 @@ void qubit_luffa512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNoun
 __host__
 void qubit_luffa512_cpu_setBlock_80(int thr_id, void *pdata)
 {
-	memcpy(PaddedMessage[thr_id], pdata, 80);
-	memset(PaddedMessage[thr_id] + 80, 0, 48);
-	PaddedMessage[thr_id][80] = 0x80;
-	PaddedMessage[thr_id][111] = 1;
-	PaddedMessage[thr_id][126] = 0x02;
-	PaddedMessage[thr_id][127] = 0x80;
+	memcpy(PaddedMessage, pdata, 80);
+	memset(PaddedMessage + 80, 0, 48);
+	PaddedMessage[80] = 0x80;
+	PaddedMessage[111] = 1;
+	PaddedMessage[126] = 0x02;
+	PaddedMessage[127] = 0x80;
 
-	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedMessage80[thr_id], PaddedMessage[thr_id], 16 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedMessage80[thr_id], PaddedMessage, 16 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 	qubit_cpu_precalc(thr_id);
 }
 
