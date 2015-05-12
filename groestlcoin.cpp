@@ -95,14 +95,14 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
         be32enc(&endiandata[kk], pdata[kk]);
 
     // Context mit dem Endian gedrehten Blockheader vorbereiten (Nonce wird später ersetzt)
-    groestlcoin_cpu_setBlock(thr_id, endiandata, (void*)ptarget);
+    groestlcoin_cpu_setBlock(thr_id, endiandata);
 
 	do
 	{
 		// GPU
 		const uint32_t Htarg = ptarget[7];
 
-		groestlcoin_cpu_hash(thr_id, throughput, pdata[19], outputHash, foundNounce);
+		groestlcoin_cpu_hash(thr_id, throughput, pdata[19], outputHash, foundNounce, ptarget[7]);
 
 		if(foundNounce[0] < 0xffffffff)
 		{
