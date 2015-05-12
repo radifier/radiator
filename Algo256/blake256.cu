@@ -536,7 +536,7 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		if (thr_id%opt_n_gputhreads == 0)
 		{
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-			cudaDeviceReset();
+			
 			cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		}

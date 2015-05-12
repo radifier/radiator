@@ -266,7 +266,7 @@ __host__ void myriadgroestl_cpu_init(int thr_id, uint32_t threads)
 	if (thr_id%opt_n_gputhreads == 0)
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-		cudaDeviceReset();
+		
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 	}
