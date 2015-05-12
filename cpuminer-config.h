@@ -14,7 +14,7 @@
 
 /* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
    */
-#define HAVE_ALLOCA_H 1
+//#define HAVE_ALLOCA_H 1
 
 /* Define to 1 if you have the declaration of `be32dec', and to 0 if you
    don't. */
@@ -39,7 +39,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
-#define HAVE_LIBCRYPTO 1
+//#define HAVE_LIBCRYPTO 1
 
 /* Define to 1 if you have a functional curl library. */
 #define HAVE_LIBCURL 1
@@ -57,31 +57,31 @@
 #define HAVE_STDLIB_H 1
 
 /* Define to 1 if you have the <strings.h> header file. */
-#define HAVE_STRINGS_H 1
+//#define HAVE_STRINGS_H 1
 
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
 
 /* Define to 1 if you have the <syslog.h> header file. */
-#define HAVE_SYSLOG_H 1
+//#define HAVE_SYSLOG_H 1
 
 /* Define to 1 if you have the <sys/endian.h> header file. */
 /* #undef HAVE_SYS_ENDIAN_H */
 
 /* Define to 1 if you have the <sys/param.h> header file. */
-#define HAVE_SYS_PARAM_H 1
+//#define HAVE_SYS_PARAM_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
 
 /* Define to 1 if you have the <sys/sysctl.h> header file. */
-#define HAVE_SYS_SYSCTL_H 1
+//#define HAVE_SYS_SYSCTL_H 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#define HAVE_UNISTD_H 1
+//#define HAVE_UNISTD_H 1
 
 /* Defined if libcurl supports AsynchDNS */
 #define LIBCURL_FEATURE_ASYNCHDNS 1
@@ -185,7 +185,7 @@
 #define USE_AVX2 0
 
 /* Define to 1 if XOP assembly is available. */
-#define USE_XOP 1
+//#define USE_XOP 1
 
 /* Version number of package */
 #define VERSION "4.00-git(KlausT-MOD)"
