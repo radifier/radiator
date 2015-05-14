@@ -57,7 +57,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 
 
 
-	static bool init[MAX_GPUS] = { false };
+	static volatile bool init[MAX_GPUS] = { false };
 	if (!init[thr_id])
 	{
 		if(thr_id%opt_n_gputhreads == 0)
@@ -98,6 +98,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 	do {
 		int order = 0;
 		neoscrypt_cpu_hash_k4(stratum, thr_id, throughput, pdata[19], order++, foundNonce);
+		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		if(foundNonce[0] != 0xffffffff)
 		{
 			uint32_t vhash64[8];

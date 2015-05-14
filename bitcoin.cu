@@ -122,7 +122,7 @@ void bitcoin_hash(uint32_t *output, const uint32_t *data, uint32_t nonce, const 
 	be32enc(&output[7], h + hc[7]);
 }
 
-static bool init[MAX_GPUS] = { false };
+static volatile bool init[MAX_GPUS] = { false };
 
 int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
@@ -153,7 +153,8 @@ int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 	do
 	{
 		bitcoin_cpu_hash(thr_id, (int)throughput, pdata[19], ms, pdata[16], pdata[17], pdata[18], h_nounce);
-		if (h_nounce[0] != UINT32_MAX)
+		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
+		if(h_nounce[0] != UINT32_MAX)
 		{
 			uint32_t vhash64[8];
 			bitcoin_hash(vhash64, pdata, h_nounce[0], ms);

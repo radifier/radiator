@@ -207,6 +207,8 @@ int api_thr_id = -1;
 bool stratum_need_reset = false;
 struct work_restart *work_restart = NULL;
 struct stratum_ctx stratum = { 0 };
+bool stop_mining = false;
+bool mining_has_stopped[MAX_GPUS] = { false };
 
 pthread_mutex_t applog_lock;
 static pthread_mutex_t stats_lock;
@@ -442,13 +444,24 @@ void proper_exit(int reason)
 	if (hnvml)
 		nvml_destroy(hnvml);
 #endif
-
-
-	pthread_mutex_lock(&g_work_lock);	//freeze stratum
-	pthread_mutex_lock(&stats_lock);	//hack. Freeze all the gputhreads when they finnish
-
-	cuda_devicereset();
-
+	if(reason == 2)
+	{
+		pthread_mutex_lock(&g_work_lock);	//freeze stratum
+		stop_mining = true;
+		applog(LOG_INFO, "stopping %d threads", opt_n_threads);
+		bool everything_stopped;
+		do
+		{
+			everything_stopped = true;
+			for(int i = 0; i < opt_n_threads; i++)
+			{
+				if(!mining_has_stopped[i])
+					everything_stopped = false;
+			}
+		} while(!everything_stopped);
+		applog(LOG_INFO, "resetting GPUs");
+		cuda_devicereset();
+	}
 	free(opt_syslog_pfx);
 	free(opt_api_allow);
 	hashlog_purge_all();
@@ -458,8 +471,7 @@ void proper_exit(int reason)
 	timeEndPeriod(1); // else never executed
 #endif
 
-//	sleep(4);
-	exit(0);
+	exit(reason & 1);
 }
 
 static bool jobj_binary(const json_t *obj, const char *key,
@@ -2367,11 +2379,11 @@ static void signal_handler(int sig)
 	case SIGINT:
 		signal(sig, SIG_IGN);
 		applog(LOG_INFO, "SIGINT received, exiting");
-		proper_exit(0);
+		proper_exit(2);
 		break;
 	case SIGTERM:
 		applog(LOG_INFO, "SIGTERM received, exiting");
-		proper_exit(0);
+		proper_exit(2);
 		break;
 	}
 }
@@ -2381,11 +2393,11 @@ BOOL WINAPI ConsoleHandler(DWORD dwType)
 	switch (dwType) {
 	case CTRL_C_EVENT:
 		applog(LOG_INFO, "CTRL_C_EVENT received, exiting");
-		proper_exit(0);
+		proper_exit(2);
 		break;
 	case CTRL_BREAK_EVENT:
 		applog(LOG_INFO, "CTRL_BREAK_EVENT received, exiting");
-		proper_exit(0);
+		proper_exit(2);
 		break;
 	default:
 		return false;

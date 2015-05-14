@@ -500,7 +500,7 @@ void blake256_cpu_setBlock_16(int thr_id, uint32_t *penddata, const uint32_t *mi
 }
 #endif
 
-static bool init[MAX_GPUS] = { false };
+static volatile bool init[MAX_GPUS] = { false };
 
 extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t max_nonce, uint32_t *hashes_done, int8_t blakerounds=14)
@@ -544,6 +544,7 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		{
 			while (!init[thr_id - thr_id%opt_n_gputhreads])
 			{
+				
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
@@ -572,7 +573,8 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		// GPU FULL HASH
 		blake256_cpu_hash_80(thr_id, throughput, pdata[19], targetHigh, crcsum, blakerounds);
 #endif
-		if (foundNonce != UINT32_MAX)
+		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
+		if(foundNonce != UINT32_MAX)
 		{
 			uint32_t vhashcpu[8];
 			uint32_t Htarg = (uint32_t)targetHigh;

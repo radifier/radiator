@@ -53,7 +53,7 @@ extern "C" void s3hash(void *output, const void *input)
 	memcpy(output, hash, 32);
 }
 
-static bool init[MAX_GPUS] = { false };
+static volatile bool init[MAX_GPUS] = { false };
 static uint32_t *h_found[MAX_GPUS];
 
 /* Main S3 entry point */
@@ -86,6 +86,7 @@ extern int scanhash_s3(int thr_id, uint32_t *pdata,
 		{
 			while (!init[thr_id - thr_id%opt_n_gputhreads])
 			{
+				
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
@@ -116,7 +117,8 @@ extern int scanhash_s3(int thr_id, uint32_t *pdata,
 		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		quark_skein512_cpu_hash_64_final(thr_id, throughput, pdata[19], NULL, d_hash[thr_id], h_found[thr_id], ptarget[7]);
 
-		if (h_found[thr_id][0] != 0xffffffff)
+		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
+		if(h_found[thr_id][0] != 0xffffffff)
 		{
 			const uint32_t Htarg = ptarget[7];
 			uint32_t vhash64[8];

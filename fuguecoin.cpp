@@ -11,6 +11,8 @@
 #include "miner.h"
 #include "cuda_fugue256.h"
 #include <cuda_runtime.h>
+extern bool stop_mining;
+extern bool mining_has_stopped[MAX_GPUS];
 
 extern "C" void my_fugue256_init(void *cc);
 extern "C" void my_fugue256(void *cc, const void *data, size_t len);
@@ -24,7 +26,7 @@ extern "C" void my_fugue256_addbits_and_close(void *cc, unsigned ub, unsigned n,
     ((((x) << 24) & 0xff000000u) | (((x) << 8) & 0x00ff0000u)   | \
       (((x) >> 8) & 0x0000ff00u) | (((x) >> 24) & 0x000000ffu))
 
-static bool init[MAX_GPUS] = { false };
+static volatile bool init[MAX_GPUS] = { false };
 
 extern int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t max_nonce, uint32_t *hashes_done)
@@ -57,6 +59,7 @@ extern int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		uint32_t foundNounce = 0xFFFFFFFF;
 		fugue256_cpu_hash(thr_id, throughput, pdata[19], NULL, &foundNounce);
 
+		if(stop_mining) {mining_has_stopped[thr_id] = true; pthread_exit(nullptr);}
 		if(foundNounce < 0xffffffff)
 		{
 			uint32_t hash[8];

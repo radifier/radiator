@@ -41,7 +41,7 @@ static __inline uint32_t swab32_if(uint32_t val, bool iftrue)
 	return iftrue ? swab32(val) : val;
 }
 
-static bool init[MAX_GPUS] = { false };
+static volatile bool init[MAX_GPUS] = { false };
 
 int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 								  uint32_t *ptarget, uint32_t max_nonce,
@@ -72,6 +72,7 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 		{
 			while (!init[thr_id - thr_id%opt_n_gputhreads])
 			{
+				
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
@@ -95,7 +96,8 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 			skein512_cpu_hash_80_50(thr_id, throughput, pdata[19], swap, target, foundnonces);
 		cudaStreamSynchronize(gpustream[thr_id]);
 
-		if (foundnonces[0] != 0xffffffff)
+		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
+		if(foundnonces[0] != 0xffffffff)
 		{
 			uint32_t vhash64[8];
 

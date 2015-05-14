@@ -455,7 +455,7 @@ void pentablake_cpu_setBlock_80(int thr_id, uint32_t *pdata, const uint32_t *pta
 	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_Target, ptarget, 32, 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }
 
-static bool init[MAX_GPUS] = { false };
+static volatile bool init[MAX_GPUS] = { false };
 
 extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t max_nonce, uint32_t *hashes_done)
@@ -482,6 +482,7 @@ extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		{
 			while (!init[thr_id - thr_id%opt_n_gputhreads])
 			{
+				
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
@@ -509,7 +510,8 @@ extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		pentablake_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		CUDA_SAFE_CALL(cudaGetLastError());
 		uint32_t foundNonce = pentablake_check_hash(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		if (foundNonce != UINT32_MAX)
+		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
+		if(foundNonce != UINT32_MAX)
 		{
 			const uint32_t Htarg = ptarget[7];
 			uint32_t vhashcpu[8];

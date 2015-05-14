@@ -157,7 +157,7 @@ extern int scanhash_x13(int thr_id, uint32_t *pdata,
 	uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
-	static bool init[MAX_GPUS] = { false };
+	static volatile bool init[MAX_GPUS] = { false };
 	uint32_t endiandata[20];
 	int intensity = (device_sm[device_map[thr_id]] > 500) ? 256 * 256 * 20 : 256 * 256 * 10;
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity);
@@ -180,6 +180,7 @@ extern int scanhash_x13(int thr_id, uint32_t *pdata,
 		{
 			while (!init[thr_id - thr_id%opt_n_gputhreads])
 			{
+				
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
@@ -236,7 +237,8 @@ extern int scanhash_x13(int thr_id, uint32_t *pdata,
 		x13_hamsi512_cpu_hash_64(thr_id, throughput, pdata[19],  d_hash[thr_id]);
 		x13_fugue512_cpu_hash_64_final(thr_id, throughput, pdata[19], d_hash[thr_id], h_found);
 
-	//	h_found[0] = 0xffffffff;
+		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
+		//	h_found[0] = 0xffffffff;
 		if (h_found[0] != 0xffffffff)
 		{
 			const uint32_t Htarg = ptarget[7];

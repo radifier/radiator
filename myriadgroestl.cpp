@@ -11,8 +11,10 @@
 
 #include "miner.h"
 #include <cuda_runtime.h>
+extern bool stop_mining;
+extern bool mining_has_stopped[MAX_GPUS];
 
-static bool init[MAX_GPUS] = { false };
+static volatile bool init[MAX_GPUS] = { false };
 static uint32_t *h_found[MAX_GPUS];
 
 void myriadgroestl_cpu_init(int thr_id, uint32_t threads);
@@ -76,7 +78,8 @@ extern int scanhash_myriad(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 
 		myriadgroestl_cpu_hash(thr_id, throughput, pdata[19], h_found[thr_id]);
 
-		if (h_found[thr_id][0] != 0xffffffff)
+		if(stop_mining) {mining_has_stopped[thr_id] = true; pthread_exit(nullptr);}
+		if(h_found[thr_id][0] != 0xffffffff)
 		{
 			const uint32_t Htarg = ptarget[7];
 			uint32_t vhash64[8];

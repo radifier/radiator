@@ -40,6 +40,8 @@ void __threadfence(void);
 extern int device_map[MAX_GPUS];
 extern long device_sm[MAX_GPUS];
 extern cudaStream_t gpustream[MAX_GPUS];
+extern bool stop_mining;
+extern bool mining_has_stopped[MAX_GPUS];
 
 // common functions
 extern void cuda_check_cpu_init(int thr_id, uint32_t threads);

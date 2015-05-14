@@ -132,7 +132,7 @@ extern "C" void quarkhash(void *state, const void *input)
     memcpy(state, hash, 32);
 }
 
-static bool init[MAX_GPUS] = { false };
+static volatile bool init[MAX_GPUS] = { false };
 
 extern int scanhash_quark(int thr_id, uint32_t *pdata,
     uint32_t *ptarget, uint32_t max_nonce,
@@ -251,6 +251,7 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 		quark_keccak512_cpu_hash_64_final(thr_id, nrm1, pdata[19], d_branch1Nonces[thr_id], d_hash[thr_id]);
 		
 		cuda_check_quarkcoin(thr_id, nrm3, pdata[19], d_branch3Nonces[thr_id], d_hash[thr_id], foundnonces);
+		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 
 		if (foundnonces[0] != 0xffffffff)
 		{

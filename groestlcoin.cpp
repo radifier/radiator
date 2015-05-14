@@ -14,6 +14,8 @@
 #include "miner.h"
 #include <cuda.h>
 #include <cuda_runtime.h>
+extern bool stop_mining;
+extern bool mining_has_stopped[MAX_GPUS];
 
 #define CUDA_SAFE_CALL(call)                                          \
 do {                                                                  \
@@ -48,7 +50,7 @@ extern "C" void groestlhash(void *state, const void *input)
     memcpy(state, hashB, 32);
 }
 
-static bool init[MAX_GPUS] = { false };
+static volatile bool init[MAX_GPUS] = { false };
 static THREAD uint32_t *foundNounce;
 extern cudaStream_t gpustream[MAX_GPUS];
 
@@ -104,6 +106,7 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 
 		groestlcoin_cpu_hash(thr_id, throughput, pdata[19], outputHash, foundNounce, ptarget[7]);
 
+		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		if(foundNounce[0] < 0xffffffff)
 		{
 			uint32_t tmpHash[8];

@@ -127,7 +127,7 @@ struct check_nonce_for_remove
     }
 };
 
-static bool init[MAX_GPUS] = { false };
+static volatile bool init[MAX_GPUS] = { false };
 
 __host__
 int scanhash_heavy(int thr_id, uint32_t *pdata,

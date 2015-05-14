@@ -38,7 +38,7 @@ int scanhash_yescrypt(int thr_id, uint32_t *pdata,
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 256*coef); 
 	throughput = min(throughput, max_nonce - first_nonce);
 
-	static bool init[MAX_GPUS] = { false };
+	static volatile bool init[MAX_GPUS] = { false };
 	if (!init[thr_id])
 	{
 		if(thr_id%opt_n_gputhreads == 0)
@@ -77,7 +77,8 @@ int scanhash_yescrypt(int thr_id, uint32_t *pdata,
 		uint32_t foundNonce = yescrypt_cpu_hash_k4(thr_id, throughput, pdata[19], order++);
  //       uint32_t foundNonce = 0;
 //		foundNonce = 10 + pdata[19];
-		if  (foundNonce != 0xffffffff)
+		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
+		if(foundNonce != 0xffffffff)
 		{
 			uint32_t vhash64[8];
 			 

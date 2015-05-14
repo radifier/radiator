@@ -82,7 +82,7 @@ extern "C" unsigned int jackpothash(void *state, const void *input)
     return round;
 }
 
-static bool init[MAX_GPUS] = { false };
+static volatile bool init[MAX_GPUS] = { false };
 
 extern int scanhash_jackpot(int thr_id, uint32_t *pdata,
     uint32_t *ptarget, uint32_t max_nonce,
@@ -109,6 +109,7 @@ extern int scanhash_jackpot(int thr_id, uint32_t *pdata,
 		{
 			while (!init[thr_id - thr_id%opt_n_gputhreads])
 			{
+				
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
@@ -209,7 +210,8 @@ extern int scanhash_jackpot(int thr_id, uint32_t *pdata,
 		}
 
 		uint32_t foundNonce = cuda_check_hash_branch(thr_id, nrm3, pdata[19], d_branch3Nonces[thr_id], d_hash[thr_id]);
-		if  (foundNonce != 0xffffffff)
+		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
+		if(foundNonce != 0xffffffff)
 		{
 			unsigned int rounds;
 			uint32_t vhash64[8];

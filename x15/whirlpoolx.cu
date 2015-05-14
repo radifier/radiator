@@ -38,7 +38,7 @@ extern "C" void whirlxHash(void *state, const void *input)
 	memcpy(state, hash_xored, 32);
 }
 
-static bool init[MAX_GPUS] = { false };
+static volatile bool init[MAX_GPUS] = { false };
 
 int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_nonce, uint32_t *hashes_done)
 {
@@ -63,6 +63,7 @@ int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t
 		{
 			while (!init[thr_id - thr_id%opt_n_gputhreads])
 			{
+				
 			}
 			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		}
@@ -82,7 +83,8 @@ int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t
 		uint32_t foundNonce[2];
 		cpu_whirlpoolx(thr_id, throughput, pdata[19], foundNonce);
 		CUDA_SAFE_CALL(cudaGetLastError());
-		if (foundNonce[0] != UINT32_MAX)
+		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
+		if(foundNonce[0] != UINT32_MAX)
 		{
 			const uint32_t Htarg = ptarget[7];
 			uint32_t vhash64[8];
