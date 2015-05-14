@@ -12,7 +12,7 @@
 #include "cuda_fugue256.h"
 #include <cuda_runtime.h>
 extern bool stop_mining;
-extern bool mining_has_stopped[MAX_GPUS];
+extern volatile bool mining_has_stopped[MAX_GPUS];
 
 extern "C" void my_fugue256_init(void *cc);
 extern "C" void my_fugue256(void *cc, const void *data, size_t len);

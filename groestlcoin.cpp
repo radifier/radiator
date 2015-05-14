@@ -15,7 +15,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 extern bool stop_mining;
-extern bool mining_has_stopped[MAX_GPUS];
+extern volatile bool mining_has_stopped[MAX_GPUS];
 
 #define CUDA_SAFE_CALL(call)                                          \
 do {                                                                  \

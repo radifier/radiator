@@ -208,7 +208,7 @@ bool stratum_need_reset = false;
 struct work_restart *work_restart = NULL;
 struct stratum_ctx stratum = { 0 };
 bool stop_mining = false;
-bool mining_has_stopped[MAX_GPUS] = { false };
+volatile bool mining_has_stopped[MAX_GPUS] = { false };
 
 pthread_mutex_t applog_lock;
 static pthread_mutex_t stats_lock;

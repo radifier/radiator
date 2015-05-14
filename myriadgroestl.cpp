@@ -12,7 +12,7 @@
 #include "miner.h"
 #include <cuda_runtime.h>
 extern bool stop_mining;
-extern bool mining_has_stopped[MAX_GPUS];
+extern volatile bool mining_has_stopped[MAX_GPUS];
 
 static volatile bool init[MAX_GPUS] = { false };
 static uint32_t *h_found[MAX_GPUS];
