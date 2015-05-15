@@ -1,5 +1,5 @@
 
-ccMiner release 4.00-git(KlausT-MOD) (May 6th, 2015)
+ccMiner release 4.01-git(KlausT-MOD) (May 15th, 2015)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -113,6 +113,7 @@ its command line interface and options.
       --cert=FILE       certificate for mining server using SSL
   -x, --proxy=[PROTOCOL://]HOST[:PORT]  connect through a proxy
   -t, --threads=N       number of miner threads (default: number of nVidia GPUs in your system)
+  -g                    number of mining threads per GPU (default: 1)
   -r, --retries=N       number of times to retry if a network call fails
                           (default: retry indefinitely)
   -R, --retry-pause=N   time to pause between retries, in seconds (default: 15)
@@ -195,7 +196,7 @@ features.
 2015-03-08 v2.00: added whirlpoolx algo (Vanillacoin), also various optimizations and bug fixes
 2015-03-30 v3.00: added skein (for Myriadcoin for example)
 2015-05-06 v4.00: added Neoscrypt
-
+2015-05-15 v4.01: fixed crash after ctrl-c (Windows), fixed -g option
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
