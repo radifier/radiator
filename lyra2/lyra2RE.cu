@@ -69,7 +69,7 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 	throughput = min(throughput, (max_nonce - first_nonce));
 
 	if (opt_benchmark)
-		ptarget[7] = 0x000f;
+		ptarget[7] = 0x00ff;
 
 	if (!init[thr_id])
 	{
@@ -90,13 +90,12 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 		}
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * 4));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
 		blake256_cpu_init(thr_id, throughput);
 		keccak256_cpu_init(thr_id,throughput);
 		skein256_cpu_init(thr_id, throughput);
 		groestl256_cpu_init(thr_id, throughput);
 		lyra2_cpu_init(thr_id, throughput);
-
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
 
 		init[thr_id] = true;
 	}
@@ -151,7 +150,7 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 			}
 			else
 			{
-				if (vhash64[7] > Htarg) // don't show message if it is equal but fails fulltest
+				if (vhash64[7] != Htarg) // don't show message if it is equal but fails fulltest
 					applog(LOG_WARNING, "GPU #%d: result %08x does not validate on CPU!", device_map[thr_id], foundNonce[0]);
 			}
 		}

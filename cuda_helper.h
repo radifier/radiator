@@ -5,6 +5,7 @@
 #include <cuda_runtime.h>
 #ifdef __cplusplus
 #include <cstdint>
+#include <cstdio>
 using namespace std;
 #else
 #include <stdint.h>
@@ -16,14 +17,6 @@ using namespace std;
 #include <device_functions.h>
 #include <device_launch_parameters.h>
 #define __launch_bounds__(max_tpb, min_blocks)
-
-uint32_t __byte_perm(uint32_t x, uint32_t y, uint32_t z);
-uint32_t __shfl(uint32_t x, uint32_t y, uint32_t z);
-uint32_t atomicExch(uint32_t *x, uint32_t y);
-uint32_t atomicAdd(uint32_t *x, uint32_t y);
-void __syncthreads(void);
-void __threadfence(void);
-
 
 uint32_t __byte_perm(uint32_t x, uint32_t y, uint32_t z);
 uint32_t __shfl(uint32_t x, uint32_t y, uint32_t z);
@@ -81,10 +74,12 @@ extern cudaError_t MyStreamSynchronize(cudaStream_t stream, int situation, int t
 #endif
 #if __CUDA_ARCH__ < 320
 // Kepler (Compute 3.0)
-#define ROTL32(x, n) ((x) << (n)) | ((x) >> (32 - (n)))
+#define ROTL32(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
+#define ROTR32(x, n) (((x) >> (n)) | ((x) << (32 - (n))))
 #else
 // Kepler (Compute 3.5, 5.0)
 #define ROTL32(x, n) __funnelshift_l( (x), (x), (n) )
+#define ROTR32(x, n) __funnelshift_r( (x), (x), (n) )
 #endif
 
 // #define NOASM here if you don't want asm
@@ -883,7 +878,6 @@ __device__ __forceinline__ ushort2 vectorize16(uint32_t x)
 
 extern int cuda_arch[MAX_GPUS];
 extern void get_cuda_arch(int *);
-#define ROTR32(x, n) (((x) >> (n)) | ((x) << (32 - (n))))
 
 /*
 static __device__ __forceinline__ uint4 mul4(uint4 a)

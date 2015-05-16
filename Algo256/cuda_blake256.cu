@@ -39,13 +39,6 @@ static uint8_t  c_sigma[16][16] = {
 	{ 2, 12, 6, 10, 0, 11, 8, 3, 4, 13, 7, 5, 15, 14, 1, 9 }
 };
 
-static const uint32_t  c_IV256[8] = {
-	0x6A09E667, 0xBB67AE85,
-	0x3C6EF372, 0xA54FF53A,
-	0x510E527F, 0x9B05688C,
-	0x1F83D9AB, 0x5BE0CD19
-};
-
 __device__ __constant__ static uint32_t cpu_h[8];
 
 __device__ __constant__ static  uint32_t  u256[16];
@@ -75,7 +68,6 @@ static const uint32_t  c_u256[16] = {
 }
 
 //#define ROTL32(x, n) ((x) << (n)) | ((x) >> (32 - (n)))
-#define ROTR32(x, n) (((x) >> (n)) | ((x) << (32 - (n))))
 #define hostGS(a,b,c,d,x) { \
 	const uint8_t idx1 = c_sigma[r][x]; \
 	const uint8_t idx2 = c_sigma[r][x+1]; \
@@ -102,27 +94,24 @@ static const uint32_t  c_u256[16] = {
 		}
 
 __host__ __forceinline__
-static void blake256_compress1st(uint32_t *h, const uint32_t *block, const uint32_t T0)
+static void blake256_compress1st(uint32_t *h, const uint32_t *block)
 {
 	uint32_t m[16];
-	uint32_t v[16];
+	uint32_t v[16] =
+	{
+		0x6A09E667, 0xBB67AE85,
+		0x3C6EF372, 0xA54FF53A,
+		0x510E527F, 0x9B05688C,
+		0x1F83D9AB, 0x5BE0CD19,
+		0x243F6A88, 0x85A308D3,
+		0x13198A2E, 0x03707344,
+		0xA4093A22, 0x299F33D0,
+		0x082EFA98, 0xEC4E6C89
+	};
 	
 	for (int i = 0; i < 16; i++) {
 		m[i] = block[i];
 	}
-
-	for (int i = 0; i < 8; i++)
-		v[i] = h[i];
-
-	v[8] = c_u256[0];
-	v[9] = c_u256[1];
-	v[10] = c_u256[2];
-	v[11] = c_u256[3];
-
-	v[12] = c_u256[4] ^ T0;
-	v[13] = c_u256[5] ^ T0;
-	v[14] = c_u256[6];
-	v[15] = c_u256[7];
 
 	for (int r = 0; r < 14; r++) {
 		/* column step */
@@ -148,22 +137,16 @@ static void blake256_compress1st(uint32_t *h, const uint32_t *block, const uint3
 }
 
 __device__ __forceinline__
-static void blake256_compress2nd(uint32_t *h, const uint32_t *block, const uint32_t T0)
+static void blake256_compress2nd(uint32_t *const __restrict__ h, const uint32_t *const __restrict__ block)
 {
 	uint32_t v[16];
-
-	const uint32_t c_Padding[12] = {
-		0x80000000, 0, 0, 0,
-		0, 0, 0, 0,
-		0, 1, 0, 640
-	};
 
 	uint32_t m[16]=
 	{
 		block[0], block[1], block[2], block[3],
-		c_Padding[0], c_Padding[1], c_Padding[2], c_Padding[3],
-		c_Padding[4], c_Padding[5], c_Padding[6], c_Padding[7],
-		c_Padding[8], c_Padding[9], c_Padding[10], c_Padding[11]
+		0x80000000, 0, 0, 0,
+		0, 0, 0, 0,
+		0, 1, 0, 640
 	};
 
 	#pragma unroll 8
@@ -174,8 +157,8 @@ static void blake256_compress2nd(uint32_t *h, const uint32_t *block, const uint3
 	v[9] =  u256[1];
 	v[10] = u256[2];
 	v[11] = u256[3];
-	v[12] = u256[4] ^ T0;
-	v[13] = u256[5] ^ T0;
+	v[12] = u256[4] ^ 640;
+	v[13] = u256[5] ^ 640;
 	v[14] = u256[6];
 	v[15] = u256[7];
 
@@ -339,7 +322,7 @@ void blake256_gpu_hash_80(const uint32_t threads, const uint32_t startNonce, uin
 		for (int i = 0; i < 3; ++i) input[i] = c_data[16 + i];
 
 		input[3] = nonce;
-		blake256_compress2nd(h, input, 640);
+		blake256_compress2nd(h, input);
 
         #pragma unroll
 		for (int i = 0; i<4; i++) {
@@ -362,13 +345,15 @@ void blake256_cpu_hash_80(const int thr_id, const uint32_t threads, const uint32
 __host__
 void blake256_cpu_setBlock_80(int thr_id, uint32_t *pdata)
 {
-	uint32_t h[8];
+	uint32_t h[8] = {
+		0x6A09E667, 0xBB67AE85,
+		0x3C6EF372, 0xA54FF53A,
+		0x510E527F, 0x9B05688C,
+		0x1F83D9AB, 0x5BE0CD19
+	};
 	uint32_t data[20];
 	memcpy(data, pdata, 80);
-	for (int i = 0; i<8; i++) {
-		h[i] = c_IV256[i];
-	}
-	blake256_compress1st(h, pdata, 512);
+	blake256_compress1st(h, pdata);
 
 	cudaMemcpyToSymbolAsync(cpu_h, h, sizeof(h), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 	cudaMemcpyToSymbolAsync(c_data, data, sizeof(data), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);

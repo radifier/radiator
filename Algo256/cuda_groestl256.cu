@@ -103,21 +103,21 @@ extern uint32_t T3up_cpu[];
 extern uint32_t T3dn_cpu[];
 
 __device__ __forceinline__
-void groestl256_perm_P(uint32_t thread, uint32_t *a, uint32_t *mixtabs)
+void groestl256_perm_P(uint32_t *const __restrict__ a, const uint32_t *const __restrict__ mixtabs)
 {
 	#pragma unroll 10
 	for (int r = 0; r<10; r++)
 	{
 		uint32_t t[16];
 
-		a[0x0] ^= PC32up(0x00, r);
-		a[0x2] ^= PC32up(0x10, r);
-		a[0x4] ^= PC32up(0x20, r);
-		a[0x6] ^= PC32up(0x30, r);
-		a[0x8] ^= PC32up(0x40, r);
-		a[0xA] ^= PC32up(0x50, r);
-		a[0xC] ^= PC32up(0x60, r);
-		a[0xE] ^= PC32up(0x70, r);
+		a[0x0] ^= 0x00 + r;
+		a[0x2] ^= 0x10 + r;
+		a[0x4] ^= 0x20 + r;
+		a[0x6] ^= 0x30 + r;
+		a[0x8] ^= 0x40 + r;
+		a[0xA] ^= 0x50 + r;
+		a[0xC] ^= 0x60 + r;
+		a[0xE] ^= 0x70 + r;
 		RSTT(0x0, 0x1, a, 0x0, 0x2, 0x4, 0x6, 0x9, 0xB, 0xD, 0xF);
 		RSTT(0x2, 0x3, a, 0x2, 0x4, 0x6, 0x8, 0xB, 0xD, 0xF, 0x1);
 		RSTT(0x4, 0x5, a, 0x4, 0x6, 0x8, 0xA, 0xD, 0xF, 0x1, 0x3);
@@ -132,30 +132,68 @@ void groestl256_perm_P(uint32_t thread, uint32_t *a, uint32_t *mixtabs)
 			a[k] = t[k];
 	}
 }
+__device__ __forceinline__
+
+void groestl256_perm_P_final(uint32_t *const __restrict__ a, const uint32_t *const __restrict__ mixtabs)
+{
+	uint32_t t[16];
+#pragma unroll 10
+	for(int r = 0; r<9; r++)
+	{
+		a[0x0] ^= 0x00 + r;
+		a[0x2] ^= 0x10 + r;
+		a[0x4] ^= 0x20 + r;
+		a[0x6] ^= 0x30 + r;
+		a[0x8] ^= 0x40 + r;
+		a[0xA] ^= 0x50 + r;
+		a[0xC] ^= 0x60 + r;
+		a[0xE] ^= 0x70 + r;
+		RSTT(0x0, 0x1, a, 0x0, 0x2, 0x4, 0x6, 0x9, 0xB, 0xD, 0xF);
+		RSTT(0x2, 0x3, a, 0x2, 0x4, 0x6, 0x8, 0xB, 0xD, 0xF, 0x1);
+		RSTT(0x4, 0x5, a, 0x4, 0x6, 0x8, 0xA, 0xD, 0xF, 0x1, 0x3);
+		RSTT(0x6, 0x7, a, 0x6, 0x8, 0xA, 0xC, 0xF, 0x1, 0x3, 0x5);
+		RSTT(0x8, 0x9, a, 0x8, 0xA, 0xC, 0xE, 0x1, 0x3, 0x5, 0x7);
+		RSTT(0xA, 0xB, a, 0xA, 0xC, 0xE, 0x0, 0x3, 0x5, 0x7, 0x9);
+		RSTT(0xC, 0xD, a, 0xC, 0xE, 0x0, 0x2, 0x5, 0x7, 0x9, 0xB);
+		RSTT(0xE, 0xF, a, 0xE, 0x0, 0x2, 0x4, 0x7, 0x9, 0xB, 0xD);
+
+#pragma unroll 16
+		for(int k = 0; k<16; k++)
+			a[k] = t[k];
+	}
+	a[15] = T0dn(B32_0(a[14] ^ 0x79))
+		^   T1dn(B32_1(a[ 0] ^ 0x09))
+		^   T2dn(B32_2(a[ 2] ^ 0x19))
+		^   T3dn(B32_3(a[ 4] ^ 0x29))
+		^   T0up(B32_0(a[ 7]))
+		^   T1up(B32_1(a[ 9]))
+		^   T2up(B32_2(a[11]))
+		^   T3up(B32_3(a[13]));
+}
 
 __device__ __forceinline__
-void groestl256_perm_Q(uint32_t thread, uint32_t *a, uint32_t *mixtabs)
+void groestl256_perm_Q(uint32_t *const __restrict__ a, const uint32_t *const __restrict__ mixtabs)
 {
 	#pragma unroll
 	for (int r = 0; r<10; r++)
 	{
 		uint32_t t[16];
 
-		a[0x0] ^= QC32up(0x00, r);
+		a[0x0] ^= 0xFFFFFFFF;
 		a[0x1] ^= QC32dn(0x00, r);
-		a[0x2] ^= QC32up(0x10, r);
+		a[0x2] ^= 0xFFFFFFFF;
 		a[0x3] ^= QC32dn(0x10, r);
-		a[0x4] ^= QC32up(0x20, r);
+		a[0x4] ^= 0xFFFFFFFF;
 		a[0x5] ^= QC32dn(0x20, r);
-		a[0x6] ^= QC32up(0x30, r);
+		a[0x6] ^= 0xFFFFFFFF;
 		a[0x7] ^= QC32dn(0x30, r);
-		a[0x8] ^= QC32up(0x40, r);
+		a[0x8] ^= 0xFFFFFFFF;
 		a[0x9] ^= QC32dn(0x40, r);
-		a[0xA] ^= QC32up(0x50, r);
+		a[0xA] ^= 0xFFFFFFFF;
 		a[0xB] ^= QC32dn(0x50, r);
-		a[0xC] ^= QC32up(0x60, r);
+		a[0xC] ^= 0xFFFFFFFF;
 		a[0xD] ^= QC32dn(0x60, r);
-		a[0xE] ^= QC32up(0x70, r);
+		a[0xE] ^= 0xFFFFFFFF;
 		a[0xF] ^= QC32dn(0x70, r);
 		RSTT(0x0, 0x1, a, 0x2, 0x6, 0xA, 0xE, 0x1, 0x5, 0x9, 0xD);
 		RSTT(0x2, 0x3, a, 0x4, 0x8, 0xC, 0x0, 0x3, 0x7, 0xB, 0xF);
@@ -219,22 +257,22 @@ void groestl256_gpu_hash32(uint32_t threads, uint32_t startNounce, uint64_t *con
 		// Perm
 
 #if USE_SHARED
-		groestl256_perm_P(thread, state, mixtabs);
+		groestl256_perm_P(state, mixtabs);
 		state[15] ^= 0x10000;
-		groestl256_perm_Q(thread, message, mixtabs);
+		groestl256_perm_Q(message, mixtabs);
 #else
-		groestl256_perm_P(thread, state, NULL);
+		groestl256_perm_P(state, NULL);
 		state[15] ^= 0x10000;
-		groestl256_perm_P(thread, message, NULL);
+		groestl256_perm_P(message, NULL);
 #endif
 		#pragma unroll 16
 		for (int u = 0; u<16; u++) state[u] ^= message[u];
 		#pragma unroll 16
 		for (int u = 0; u<16; u++) message[u] = state[u];
 #if USE_SHARED
-		groestl256_perm_P(thread, message, mixtabs);
+		groestl256_perm_P_final(message, mixtabs);
 #else
-		groestl256_perm_P(thread, message, NULL);
+		groestl256_perm_P(message, NULL);
 #endif
 		state[15] ^= message[15];
 
@@ -249,13 +287,13 @@ void groestl256_gpu_hash32(uint32_t threads, uint32_t startNounce, uint64_t *con
 
 #define texDef(texname, texmem, texsource, texsize) \
 	unsigned int *texmem; \
-	cudaMalloc(&texmem, texsize); \
+	CUDA_SAFE_CALL(cudaMalloc(&texmem, texsize)); \
 	cudaMemcpyAsync(texmem, texsource, texsize, cudaMemcpyHostToDevice, gpustream[thr_id]); \
 	texname.normalized = 0; \
 	texname.filterMode = cudaFilterModePoint; \
 	texname.addressMode[0] = cudaAddressModeClamp; \
 	{ cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<unsigned int>(); \
-	  cudaBindTexture(NULL, &texname, texmem, &channelDesc, texsize ); } \
+	  CUDA_SAFE_CALL(cudaBindTexture(NULL, &texname, texmem, &channelDesc, texsize)); }
 
 __host__
 void groestl256_cpu_init(int thr_id, uint32_t threads)
@@ -271,8 +309,8 @@ void groestl256_cpu_init(int thr_id, uint32_t threads)
 	texDef(t3up2, d_T3up, T3up_cpu, sizeof(uint32_t) * 256);
 	texDef(t3dn2, d_T3dn, T3dn_cpu, sizeof(uint32_t) * 256);
 
-	cudaMalloc(&d_GNonce[thr_id], 2*sizeof(uint32_t));
-	cudaMallocHost(&d_gnounce[thr_id], 2*sizeof(uint32_t));
+	CUDA_SAFE_CALL(cudaMalloc(&d_GNonce[thr_id], 2 * sizeof(uint32_t)));
+	CUDA_SAFE_CALL(cudaMallocHost(&d_gnounce[thr_id], 2*sizeof(uint32_t)));
 }
 
 __host__
