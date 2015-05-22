@@ -390,6 +390,10 @@
     </CudaCompile>
     <CudaCompile Include="cuda_nist5.cu">
     </CudaCompile>
+    <CudaCompile Include="cuda_x11_aes_noasm.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
     <CudaCompile Include="groestl_functions_quad.cu">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </CudaCompile>

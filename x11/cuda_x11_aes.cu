@@ -82,26 +82,15 @@ __device__ __forceinline__
 uint32_t bfe(uint32_t x, uint8_t bit, uint8_t numBits)
 {
 	uint32_t ret;
-#ifndef NOASM
-	asm ("bfe.u32 %0, %1, %2, %3;" : "=r"(ret) : "r"(x), "r"((uint32_t)bit), "r"((uint32_t)numBits));
-#else
-	ret = 0;
-	uint32_t mask = 1;
-	for (int i=0; i<bit+numBits; i++)
-	{
-		if (i>=bit)
-			ret |= x & mask;
-		mask<<=1;
-	}
-	ret >>= bit;
-#endif
+	asm("bfe.u32 %0, %1, %2, %3;" : "=r"(ret) : "r"(x), "r"((uint32_t)bit), "r"((uint32_t)numBits));
 	return ret;
 }
 
 __device__ __forceinline__
-uint32_t bfi(uint32_t x, uint32_t a, uint32_t bit, uint32_t numBits) {
+uint32_t bfi(uint32_t x, uint32_t a, uint32_t bit, uint32_t numBits)
+{
 	uint32_t ret;
-	asm("bfi.b32 %0, %1, %2, %3,%4;" : "=r"(ret) : "r"(x), "r"(a), "r"(bit), "r"(numBits));
+	asm("bfi.b32 %0, %1, %2, %3, %4;" : "=r"(ret) : "r"(x), "r"(a), "r"(bit), "r"(numBits));
 	return ret;
 }
 

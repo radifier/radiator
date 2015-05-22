@@ -7,7 +7,11 @@
 
 __constant__ uint32_t c_PaddedMessage80[32]; // padded message (80 bytes + padding)
 
+#ifdef NOASM
+#include "cuda_x11_aes_noasm.cu"
+#else
 #include "cuda_x11_aes.cu"
+#endif
 
 __device__ __forceinline__
  void AES_ROUND_NOKEY(
