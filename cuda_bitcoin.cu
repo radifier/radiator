@@ -20,20 +20,18 @@ static uint32_t *d_result[MAX_GPUS];
 #define TPB 512
 #define NONCES_PER_THREAD 32
 
-#define rrot(x, n) ((x >> n) | (x << (32 - n)))
+#define rrot(x, n) ROTR32(x,n)
 
 __global__ __launch_bounds__(TPB, 2)
 void bitcoin_gpu_hash(const uint32_t threads, const uint32_t startNounce, uint32_t *const result, const uint32_t t1c, const uint32_t t2c, const uint32_t w16, const uint32_t w16rot, const uint32_t w17, const uint32_t w17rot, const uint32_t b2, const uint32_t c2, const uint32_t d2, const uint32_t f2, const uint32_t g2, const uint32_t h2, const uint32_t ms0, const uint32_t ms1, const uint32_t ms2, const uint32_t ms3, const uint32_t ms4, const uint32_t ms5, const uint32_t ms6, const uint32_t ms7, const uint32_t compacttarget)
 {
-	uint32_t threadindex = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t threadindex = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (threadindex < threads)
 	{
 		uint32_t t1, a, b, c, d, e, f, g, h;
 		uint32_t w[64];
 		const uint32_t numberofthreads = blockDim.x*gridDim.x;
 		const uint32_t maxnonce = startNounce + threadindex + numberofthreads*NONCES_PER_THREAD - 1;
-		const uint32_t threadindex = blockIdx.x*blockDim.x + threadIdx.x;
-		
 
 		#pragma unroll 
 		for (uint32_t nonce = startNounce + threadindex; nonce <= maxnonce; nonce += numberofthreads)

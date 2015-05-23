@@ -152,7 +152,7 @@ int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 
 	do
 	{
-		bitcoin_cpu_hash(thr_id, (int)throughput, pdata[19], ms, pdata[16], pdata[17], pdata[18], h_nounce);
+		bitcoin_cpu_hash(thr_id, throughput, pdata[19], ms, pdata[16], pdata[17], pdata[18], h_nounce);
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		if(h_nounce[0] != UINT32_MAX)
 		{
