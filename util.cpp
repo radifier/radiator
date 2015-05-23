@@ -1318,7 +1318,7 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 	bool clean, ret = false;
 	int merkle_count, i;
 	json_t *merkle_arr;
-	uchar **merkle;
+	uchar **merkle = NULL;
 	int ntime;
 
 	job_id = json_string_value(json_array_get(params, 0));
@@ -1353,7 +1353,8 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 			applog(LOG_DEBUG, "stratum time is at least %ds in the future", ntime);
 	}
 
-	merkle = (uchar**)malloc(merkle_count * sizeof(char *));
+	if (merkle_count)
+		merkle = (uchar**) malloc(merkle_count * sizeof(char *));
 	for(i = 0; i < merkle_count; i++)
 	{
 		const char *s = json_string_value(json_array_get(merkle_arr, i));
