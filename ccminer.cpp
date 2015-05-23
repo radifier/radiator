@@ -1071,14 +1071,14 @@ err_out:
 	return false;
 }
 
-static void stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
+static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 {
 	uchar merkle_root[64];
 	int i;
 
 	if (!sctx->job.job_id) {
 		// applog(LOG_WARNING, "stratum_gen_work: job not yet retrieved");
-		return;
+		return false;
 	}
 
 	pthread_mutex_lock(&sctx->work_lock);
@@ -1183,6 +1183,7 @@ static void stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 		default:
 			diff_to_target(work->target, sctx->job.diff / opt_difficulty);
 	}
+	return true;
 }
 
 void restart_threads(void)
@@ -1281,13 +1282,18 @@ static void *miner_thread(void *userdata)
 
 		if(have_stratum)
 		{
-			if(time(NULL) >= (g_work_time + opt_scantime))
+			if(loopcnt==0 || time(NULL) >= (g_work_time + opt_scantime))
 				extrajob = true;
 			pthread_mutex_lock(&g_work_lock);
 			if(nonceptr[0] >= end_nonce-0x10000 || extrajob)
 			{
 				extrajob = false;
-				stratum_gen_work(&stratum, &g_work);
+				while(!stratum_gen_work(&stratum, &g_work))
+				{
+					if(opt_debug)
+						applog(LOG_DEBUG, "thread %d: waiting for work", thr_id);
+					sleep(3);
+				}
 			}
 		}
 		else
@@ -1329,6 +1335,8 @@ static void *miner_thread(void *userdata)
 			}
 		}
 		if (memcmp(work.data, g_work.data, wcmplen)) {
+			if(opt_debug)
+				applog(LOG_DEBUG, "thread %d: new work", thr_id);
 #if 0
 			if (opt_debug) {
 				for (int n=0; n <= (wcmplen-8); n+=8) {
@@ -1345,6 +1353,8 @@ static void *miner_thread(void *userdata)
 		}
 		else
 		{
+			if(opt_debug)
+				applog(LOG_DEBUG, "thread %d: continue with old work");
 			nonceptr[0]++; //??
 		}
 		work_restart[thr_id].restart = 0;
