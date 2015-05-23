@@ -1202,7 +1202,6 @@ static void *miner_thread(void *userdata)
 	uint64_t loopcnt = 0;
 	uint32_t max_nonce;
 	uint32_t end_nonce = UINT32_MAX / opt_n_threads * (thr_id + 1) - (thr_id + 1);
-	bool work_done = false;
 	bool extrajob = false;
 	char s[16];
 	int rc = 0;
@@ -1280,34 +1279,28 @@ static void *miner_thread(void *userdata)
 		int wcmplen = 76;
 		uint32_t *nonceptr = (uint32_t*) (((char*)work.data) + wcmplen);
 
-		if (have_stratum) {
-			uint32_t sleeptime = 0;
-			while (!work_done && time(NULL) >= (g_work_time + opt_scantime)) {
-				usleep(100*1000);
-				if (sleeptime > 4) {
-					extrajob = true;
-					break;
-				}
-				sleeptime++;
-			}
-			if (sleeptime && opt_debug && !opt_quiet)
-				applog(LOG_DEBUG, "sleeptime: %u ms", sleeptime*100);
-			nonceptr = (uint32_t*) (((char*)work.data) + wcmplen);
+		if(have_stratum)
+		{
+			if(time(NULL) >= (g_work_time + opt_scantime))
+				extrajob = true;
 			pthread_mutex_lock(&g_work_lock);
-			extrajob |= work_done;
-			if (nonceptr[0] >= end_nonce || extrajob) {
-				work_done = false;
+			if(nonceptr[0] >= end_nonce-0x10000 || extrajob)
+			{
 				extrajob = false;
 				stratum_gen_work(&stratum, &g_work);
 			}
-		} else {
+		}
+		else
+		{
 			pthread_mutex_lock(&g_work_lock);
-			if ((time(NULL) - g_work_time) >= scan_time || nonceptr[0] >= (end_nonce - 0x100)) {
-				if (opt_debug && g_work_time && !opt_quiet)
+			if((time(NULL) - g_work_time) >= scan_time || nonceptr[0] >= (end_nonce - 0x10000))
+			{
+				if(opt_debug && g_work_time && !opt_quiet)
 					applog(LOG_DEBUG, "work time %u/%us nonce %x/%x", time(NULL) - g_work_time,
-						scan_time, nonceptr[0], end_nonce);
+					scan_time, nonceptr[0], end_nonce);
 				/* obtain new work from internal workio thread */
-				if (unlikely(!get_work(mythr, &g_work))) {
+				if(unlikely(!get_work(mythr, &g_work)))
+				{
 					pthread_mutex_unlock(&g_work_lock);
 					applog(LOG_ERR, "work retrieval failed, exiting mining thread %d", mythr->id);
 					goto out;
@@ -1336,7 +1329,7 @@ static void *miner_thread(void *userdata)
 			}
 		}
 		if (memcmp(work.data, g_work.data, wcmplen)) {
-			#if 0
+#if 0
 			if (opt_debug) {
 				for (int n=0; n <= (wcmplen-8); n+=8) {
 					if (memcmp(work.data + n, g_work.data + n, 8)) {
@@ -1346,12 +1339,14 @@ static void *miner_thread(void *userdata)
 					}
 				}
 			}
-			#endif
+#endif
 			memcpy(&work, &g_work, sizeof(struct work));
 			nonceptr[0] = (UINT32_MAX / opt_n_threads) * thr_id; // 0 if single thr
-		} else
+		}
+		else
+		{
 			nonceptr[0]++; //??
-
+		}
 		work_restart[thr_id].restart = 0;
 		pthread_mutex_unlock(&g_work_lock);
 
