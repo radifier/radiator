@@ -1055,7 +1055,7 @@ static bool stratum_parse_extranonce(struct stratum_ctx *sctx, json_t *params, i
 	}
 	if(xn2_size < 2 || xn2_size > 16)
 	{
-		applog(LOG_INFO, "Failed to get valid n2size in parse_extranonce");
+		applog(LOG_ERR, "invalid n2size in parse_extranonce: size=%d", xn2_size);
 		goto out;
 	}
 
