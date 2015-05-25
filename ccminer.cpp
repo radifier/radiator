@@ -1327,7 +1327,6 @@ static void *miner_thread(void *userdata)
 			memcpy(work.target, g_work.target, sizeof(work.target));
 			work.difficulty = g_work.difficulty;
 			work.height = g_work.height;
-			nonceptr[0] = (UINT32_MAX / opt_n_threads) * thr_id; // 0 if single thr
 		}
 		if (memcmp(work.data, g_work.data, wcmplen)) {
 			if(opt_debug)
