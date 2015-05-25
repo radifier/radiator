@@ -2,8 +2,9 @@
 #define __MINER_H__
 
 #include "cpuminer-config.h"
-
+#ifndef __cplusplus
 #include <stdbool.h>
+#endif
 #include <inttypes.h>
 #include <sys/time.h>
 #include <pthread.h>
@@ -11,6 +12,9 @@
 #include <curl/curl.h>
 
 #ifdef WIN32
+#ifndef __cplusplus
+#define inline __inline
+#endif
 #define snprintf(...) _snprintf(__VA_ARGS__)
 #define strdup(x) _strdup(x)
 #define strncasecmp(x,y,z) _strnicmp(x,y,z)
@@ -117,28 +121,31 @@ static inline bool is_windows(void) {
 
 #if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))
 #define WANT_BUILTIN_BSWAP
-#else
-#define bswap_32(x) ((((x) << 24) & 0xff000000u) | (((x) << 8) & 0x00ff0000u) \
-                   | (((x) >> 8) & 0x0000ff00u) | (((x) >> 24) & 0x000000ffu))
-#define bswap_64(x) (((uint64_t) bswap_32((uint32_t)((x) & 0xffffffffu)) << 32) \
-                   | (uint64_t) bswap_32((uint32_t)((x) >> 32)))
 #endif
 
-static inline uint32_t swab32(uint32_t v)
+static inline uint32_t swab32(uint32_t x)
 {
 #ifdef WANT_BUILTIN_BSWAP
-	return __builtin_bswap32(v);
+	return __builtin_bswap32(x);
 #else
-	return bswap_32(v);
+#ifdef _MSC_VER
+	return _byteswap_ulong(x);
+#else
+	return ((((x) << 24) & 0xff000000u) | (((x) << 8) & 0x00ff0000u) | (((x) >> 8) & 0x0000ff00u) | (((x) >> 24) & 0x000000ffu));
+#endif
 #endif
 }
 
-static inline uint64_t swab64(uint64_t v)
+static inline uint64_t swab64(uint64_t x)
 {
 #ifdef WANT_BUILTIN_BSWAP
-	return __builtin_bswap64(v);
+	return __builtin_bswap64(x);
 #else
-	return bswap_64(v);
+#ifdef _MSC_VER
+	return _byteswap_uint64(x);
+#else
+	return (((uint64_t)bswap_32((uint32_t)((x)& 0xffffffffu)) << 32) | (uint64_t)bswap_32((uint32_t)((x) >> 32)));
+#endif
 #endif
 }
 
@@ -164,9 +171,7 @@ static inline void swab256(void *dest_p, const void *src_p)
 #if !HAVE_DECL_BE32DEC
 static inline uint32_t be32dec(const void *pp)
 {
-	const uint8_t *p = (uint8_t const *)pp;
-	return ((uint32_t)(p[3]) + ((uint32_t)(p[2]) << 8) +
-	    ((uint32_t)(p[1]) << 16) + ((uint32_t)(p[0]) << 24));
+	return swab32(*((uint32_t*)pp));
 }
 #endif
 
@@ -182,11 +187,7 @@ static inline uint32_t le32dec(const void *pp)
 #if !HAVE_DECL_BE32ENC
 static inline void be32enc(void *pp, uint32_t x)
 {
-	uint8_t *p = (uint8_t *)pp;
-	p[3] = x & 0xff;
-	p[2] = (x >> 8) & 0xff;
-	p[1] = (x >> 16) & 0xff;
-	p[0] = (x >> 24) & 0xff;
+	*((uint32_t*)pp) = swab32(x);
 }
 #endif
 
