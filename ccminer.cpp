@@ -1328,11 +1328,6 @@ static void *miner_thread(void *userdata)
 			work.difficulty = g_work.difficulty;
 			work.height = g_work.height;
 			nonceptr[0] = (UINT32_MAX / opt_n_threads) * thr_id; // 0 if single thr
-			/* on new target, ignoring nonce, clear sent data (hashlog) */
-			if (memcmp(work.target, g_work.target, sizeof(work.target))) {
-				if (check_dups)
-					hashlog_purge_job(work.job_id);
-			}
 		}
 		if (memcmp(work.data, g_work.data, wcmplen)) {
 			if(opt_debug)
