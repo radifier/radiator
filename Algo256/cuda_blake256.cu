@@ -14,7 +14,7 @@ extern "C" {
 
 
 static __device__ uint64_t cuda_swab32ll(uint64_t x) {
-	return MAKE_ULONGLONG(cuda_swab32(_LOWORD(x)), cuda_swab32(_HIWORD(x)));
+	return MAKE_UINT64(cuda_swab32(_LOWORD(x)), cuda_swab32(_HIWORD(x)));
 }
 
 __constant__ static uint32_t  c_data[20];
@@ -326,7 +326,7 @@ void blake256_gpu_hash_80(const uint32_t threads, const uint32_t startNonce, uin
 
         #pragma unroll
 		for (int i = 0; i<4; i++) {
-			Hash[i*threads + thread] = cuda_swab32ll(MAKE_ULONGLONG(h[2 * i], h[2*i+1]));
+			Hash[i*threads + thread] = cuda_swab32ll(MAKE_UINT64(h[2 * i], h[2*i+1]));
 		}
 	}
 }

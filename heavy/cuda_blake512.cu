@@ -166,10 +166,10 @@ template <int BLOCKSIZE> __global__ void blake512_gpu_hash(uint32_t threads, uin
 			buf[14] = REPLACE_LOWORD(buf[14], hefty[7]);
 		}
 		else if (BLOCKSIZE == 80) {
-			buf[10] = MAKE_ULONGLONG(hefty[0], hefty[1]);
-			buf[11] = MAKE_ULONGLONG(hefty[2], hefty[3]);
-			buf[12] = MAKE_ULONGLONG(hefty[4], hefty[5]);
-			buf[13] = MAKE_ULONGLONG(hefty[6], hefty[7]);
+			buf[10] = MAKE_UINT64(hefty[0], hefty[1]);
+			buf[11] = MAKE_UINT64(hefty[2], hefty[3]);
+			buf[12] = MAKE_UINT64(hefty[4], hefty[5]);
+			buf[13] = MAKE_UINT64(hefty[6], hefty[7]);
 		}
 
 		// erste Runde

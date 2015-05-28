@@ -87,7 +87,7 @@ extern cudaError_t MyStreamSynchronize(cudaStream_t stream, int situation, int t
 #define NOASM
 #endif
 
-__device__ __forceinline__ uint64_t MAKE_ULONGLONG(uint32_t LO, uint32_t HI)
+__device__ __forceinline__ uint64_t MAKE_UINT64(uint32_t LO, uint32_t HI)
 {
 #ifndef NOASM
 	uint64_t result;
@@ -839,7 +839,7 @@ static __forceinline__ __device__ uint2 SHR2(const uint2 a, int offset)
 	return result;
 }
 
-static __device__ __forceinline__ uint64_t devectorizeswap(uint2 v) { return MAKE_ULONGLONG(cuda_swab32(v.y), cuda_swab32(v.x)); }
+static __device__ __forceinline__ uint64_t devectorizeswap(uint2 v) { return MAKE_UINT64(cuda_swab32(v.y), cuda_swab32(v.x)); }
 static __device__ __forceinline__ uint2 vectorizeswap(uint64_t v)
 {
 	uint2 result;
