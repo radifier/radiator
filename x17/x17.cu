@@ -202,8 +202,6 @@ extern int scanhash_x17(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		get_cuda_arch(&cuda_arch[thr_id]);
 
-		if (opt_n_gputhreads > 1)
-			quark_blake512_cpu_init(thr_id);
 		quark_groestl512_cpu_init(thr_id, throughput);
 		quark_skein512_cpu_init(thr_id);
 		quark_bmw512_cpu_init(thr_id, throughput);
@@ -226,26 +224,12 @@ extern int scanhash_x17(int thr_id, uint32_t *pdata,
 	for (int k=0; k < 20; k++)
 		be32enc(&endiandata[k], pdata[k]);
 
-	if (opt_n_gputhreads > 1)
-	{
-		quark_blake512_cpu_setBlock_80_multi(thr_id, (uint64_t *)endiandata);
-	}
-	else
-	{
-		quark_blake512_cpu_setBlock_80(thr_id, (uint64_t *)endiandata);
-	}
+	quark_blake512_cpu_setBlock_80(thr_id, (uint64_t *)endiandata);
 	cuda_check_cpu_setTarget(ptarget, thr_id);
 
 	do {
 		// Hash with CUDA
-		if (opt_n_gputhreads > 1)
-		{
-			quark_blake512_cpu_hash_80_multi(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		}
-		else
-		{
-			quark_blake512_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		}
+		quark_blake512_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		quark_bmw512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash[thr_id]);
 		quark_groestl512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash[thr_id]);
 		quark_skein512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash[thr_id]);

@@ -533,21 +533,9 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 
 	if (!init[thr_id]) 
 	{
-		if (thr_id%opt_n_gputhreads == 0)
-		{
-			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-			
-			cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
-		}
-		else
-		{
-			while (!init[thr_id - thr_id%opt_n_gputhreads])
-			{
-				
-			}
-			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-		}
+		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMallocHost(&h_resNonce, NBN * sizeof(uint32_t)));
 		CUDA_SAFE_CALL(cudaMalloc(&d_resNonce[thr_id], NBN * sizeof(uint32_t)));

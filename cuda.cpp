@@ -65,10 +65,10 @@ void cuda_devicenames()
 		exit(1);
 	}
 
-	for (int i = 0; i < GPU_N*opt_n_gputhreads; i++)
+	for (int i = 0; i < GPU_N; i++)
 	{
 		cudaDeviceProp props;
-		cudaGetDeviceProperties(&props, device_map[i / opt_n_gputhreads]);
+		cudaGetDeviceProperties(&props, device_map[i]);
 
 		device_props[i] = props;
 		device_name[i] = strdup(props.name);
@@ -93,12 +93,9 @@ void cuda_devicereset()
 {
 	for (int i = 0; i < active_gpus; i++)
 	{
-		if (i%opt_n_gputhreads == 0)
-		{
-			cudaSetDevice(device_map[i]);
-			cudaDeviceSynchronize();
-			cudaDeviceReset();
-		}
+		cudaSetDevice(device_map[i]);
+		cudaDeviceSynchronize();
+		cudaDeviceReset();
 	}
 }
 

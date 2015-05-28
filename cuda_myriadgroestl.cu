@@ -263,17 +263,9 @@ __global__ void __launch_bounds__(256, 3)
 // Setup-Funktionen
 __host__ void myriadgroestl_cpu_init(int thr_id, uint32_t threads)
 {
-	if (thr_id%opt_n_gputhreads == 0)
-	{
-		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-		
-		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
-	}
-	else
-	{
-		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-	}
+	CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+	cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+	cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 	// Speicher für Gewinner-Nonce belegen
     cudaMalloc(&d_resultNonce[thr_id], 4*sizeof(uint32_t)); 
 

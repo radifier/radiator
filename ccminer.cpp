@@ -177,7 +177,6 @@ static json_t *opt_config;
 static const bool opt_time = true;
 static enum sha_algos opt_algo = ALGO_X11;
 int opt_n_threads = 0;
-int opt_n_gputhreads = 1;
 int opt_affinity = -1;
 int opt_priority = 0;
 static double opt_difficulty = 1; // CH
@@ -289,7 +288,6 @@ Options:\n\
       --cert=FILE       certificate for mining server using SSL\n\
   -x, --proxy=[PROTOCOL://]HOST[:PORT]  connect through a proxy\n\
   -t, --threads=N       number of miner threads (default: number of nVidia GPUs)\n\
-  -g, --gputhreads=N    number of threads per gpu (default: 1)\n\
   -r, --retries=N       number of times to retry if a network call fails\n\
                           (default: retry indefinitely)\n\
   -R, --retry-pause=N   time to pause between retries, in seconds (default: 30)\n\
@@ -326,7 +324,7 @@ static char const short_options[] =
 #ifdef HAVE_SYSLOG_H
 	"S"
 #endif
-	"a:c:i:Dhp:Px:mnqr:R:s:t:T:o:u:O:Vd:f:mv:N:b:g:e";
+	"a:c:i:Dhp:Px:mnqr:R:s:t:T:o:u:O:Vd:f:mv:N:b:e";
 
 static struct option const options[] = {
 	{ "algo", 1, NULL, 'a' },
@@ -361,7 +359,6 @@ static struct option const options[] = {
 	{ "syslog-prefix", 1, NULL, 1008 },
 #endif
 	{ "threads", 1, NULL, 't' },
-	{ "gputhreads", 1, NULL, 'g' },
 	{ "Disable extranounce support", 1, NULL, 'e' },
 	{ "vote", 1, NULL, 'v' },
 	{ "trust-pool", 0, NULL, 'm' },
@@ -579,7 +576,6 @@ static int share_result(int result, const char *reason)
 	for (int i = 0; i < opt_n_threads; i++) {
 		hashrate += stats_get_speed(i, thr_hashrates[i]);
 	}
-//	hashrate /= opt_n_gputhreads;
 	result ? accepted_count++ : rejected_count++;
 	pthread_mutex_unlock(&stats_lock);
 
@@ -1631,23 +1627,9 @@ static void *miner_thread(void *userdata)
 
 		if (!opt_quiet && (loopcnt > 0))
 		{
-			double hashrate = 0.0;
+			double hashrate;
 
-			if (opt_n_gputhreads != 1)
-			{
-				int index = thr_id / opt_n_gputhreads;
-				if (thr_id < active_gpus)
-				{
-					for (int i = 0; i < opt_n_gputhreads; i++)
-					{
-						hashrate += thr_hashrates[(index*opt_n_gputhreads) + i];
-					}
-				}
-			}
-			else
-			{
-				hashrate = thr_hashrates[thr_id];
-			}
+			hashrate = thr_hashrates[thr_id];
 			format_hashrate(hashrate, s);
 			applog(LOG_INFO, "GPU #%d: %s, %s", device_map[thr_id], device_name[device_map[thr_id]], s);
 		}
@@ -2252,29 +2234,6 @@ static void parse_arg(int key, char *arg)
 		break;
 
 	case 'e':
-		opt_extranonce = false;
-		break;
-
-	case 'g':
-		v = atoi(arg);
-		if (v < 1 || v > 9999)	/* sanity check */
-			show_usage_and_exit(1);
-		opt_n_gputhreads = v;
-
-		int buf[MAX_GPUS];
-		for (int i = 0; i < active_gpus; i++)
-		{
-			buf[i] = device_map[i];
-		}
-		for (int i = 0; i < active_gpus; i++)
-		{
-			for (int j = 0; j<opt_n_gputhreads; j++)
-			{
-				device_map[(i * opt_n_gputhreads) + j] = buf[i];
-			}
-		}
-		opt_n_threads = active_gpus*opt_n_gputhreads;
-		active_gpus= opt_n_threads;
 		opt_extranonce = false;
 		break;
 	case 'V':

@@ -41,20 +41,9 @@ int scanhash_yescrypt(int thr_id, uint32_t *pdata,
 	static volatile bool init[MAX_GPUS] = { false };
 	if (!init[thr_id])
 	{
-		if(thr_id%opt_n_gputhreads == 0)
-		{
-			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-			
-			cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
-		}
-		else
-		{
-			while(!init[thr_id - thr_id%opt_n_gputhreads])
-			{
-			}
-			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-		}
+		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id],  2048 * 128 * sizeof(uint64_t) * throughput));

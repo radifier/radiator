@@ -50,21 +50,9 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 		ptarget[7] = 0x0002;
 
 	if (!init[thr_id]) {
-		if (thr_id%opt_n_gputhreads == 0)
-		{
-			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-			
-			cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
-		}
-		else
-		{
-			while (!init[thr_id - thr_id%opt_n_gputhreads])
-			{
-				
-			}
-			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-		}
+		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMallocHost(&h_nounce, 2 * sizeof(uint32_t)));
 		keccak256_cpu_init(thr_id, (int)throughput);

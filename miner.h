@@ -483,7 +483,6 @@ extern bool opt_quiet;
 extern bool opt_protocol;
 extern bool opt_tracegpu;
 extern int opt_n_threads;
-extern int opt_n_gputhreads;
 extern int num_cpus;
 extern int active_gpus;
 extern int opt_timeout;

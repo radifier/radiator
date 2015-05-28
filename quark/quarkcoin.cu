@@ -151,19 +151,9 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 
 	if (!init[thr_id])
 	{
-		if (thr_id%opt_n_gputhreads == 0)
-		{
-			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-			
-			cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
-		}
-		else
-		{
-			while (!init[thr_id-thr_id%opt_n_gputhreads])
-			{ }
-			CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-		}
+		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		get_cuda_arch(&cuda_arch[thr_id]);
 
@@ -188,27 +178,13 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 	for (int k=0; k < 20; k++)
 		be32enc(&endiandata[k], pdata[k]);
 	cuda_check_cpu_setTarget(ptarget, thr_id);
-	if (opt_n_gputhreads > 1)
-	{
-		quark_blake512_cpu_setBlock_80_multi(thr_id, (uint64_t *)endiandata);
-	}
-	else
-	{
-		quark_blake512_cpu_setBlock_80(thr_id, (uint64_t *)endiandata);
-	}
+	quark_blake512_cpu_setBlock_80(thr_id, (uint64_t *)endiandata);
 
 	do {
 
 		uint32_t nrm1 = 0, nrm2 = 0, nrm3 = 0;
 
-		if (opt_n_gputhreads > 1)
-		{
-			quark_blake512_cpu_hash_80_multi(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		}
-		else
-		{
-			quark_blake512_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		}
+		quark_blake512_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		quark_bmw512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash[thr_id]);
 
 		quark_compactTest_single_false_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id], NULL,
