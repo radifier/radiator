@@ -210,7 +210,7 @@ void x11_cubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_
 	{
 		const uint32_t nounce = startNounce + thread;
 
-		const int hashPosition = nounce - startNounce;
+		const uint32_t hashPosition = nounce - startNounce;
 		uint32_t *const Hash = &g_hash[16 * hashPosition];
 
 		uint32_t x[2][2][2][2][2] =

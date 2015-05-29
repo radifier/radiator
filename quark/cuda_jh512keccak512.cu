@@ -281,7 +281,7 @@ void quark_jh512Keccak512_gpu_hash_64(uint32_t threads, uint32_t startNounce, ui
 	{
 		const uint32_t nounce = (startNounce + thread);
 
-		const int hashPosition = nounce - startNounce;
+		const uint32_t hashPosition = nounce - startNounce;
 		uint32_t *Hash = &g_hash[16 * hashPosition];
 		uint32_t x[8][4] = {
 			{ 0x964bd16f, 0x17aa003e, 0x052e6a63, 0x43d5157a },

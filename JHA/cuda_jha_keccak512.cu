@@ -106,7 +106,7 @@ __global__ void jackpot_keccak512_gpu_hash(uint32_t threads, uint32_t startNounc
     {
         const uint32_t nounce = startNounce + thread;
 
-        const int hashPosition = nounce - startNounce;
+        const uint32_t hashPosition = nounce - startNounce;
 
         // Nachricht kopieren
         uint32_t message[18];

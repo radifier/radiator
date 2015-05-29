@@ -1280,7 +1280,7 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 	{
 		const uint32_t nounce = (startNounce + thread);
 
-		const int hashPosition = nounce - startNounce;
+		const uint32_t hashPosition = nounce - startNounce;
 		uint32_t *const Hash = (uint32_t*)&g_hash[hashPosition*8];
 
 		// kopiere init-state

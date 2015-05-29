@@ -388,7 +388,7 @@ void quark_skein512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 
 		const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-		const int hashPosition = nounce - startNounce;
+		const uint32_t hashPosition = nounce - startNounce;
 		uint64_t *Hash = &g_hash[8 * hashPosition];
 
 		h[0] = skein_p[0] = vectorize(Hash[0]);
@@ -1912,7 +1912,7 @@ void quark_skein512_gpu_hash_64_final(const uint32_t threads, const uint32_t sta
 
 		const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-		const int hashPosition = nounce - startNounce;
+		const uint32_t hashPosition = nounce - startNounce;
 		const uint64_t *const inpHash = &g_hash[8 * hashPosition];
 
 		h0 = make_uint2(0x749C51CEull, 0x4903ADFF);

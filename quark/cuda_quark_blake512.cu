@@ -35,7 +35,7 @@ void quark_blake512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t
 #if USE_SHUFFLE
 	const int warpID = threadIdx.x & 0x0F; // 16 warps
 	const int warpBlockID = (thread + 15)>>4; // aufrunden auf volle Warp-Blöcke
-	const int maxHashPosition = thread<<3;
+	const int maxhashPosition = thread<<3;
 #endif
 
 #if USE_SHUFFLE
@@ -46,7 +46,7 @@ void quark_blake512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t
 	{
 		const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-		const int hashPosition = nounce - startNounce;
+		const uint32_t hashPosition = nounce - startNounce;
 
 		uint64_t *inpHash = &g_hash[hashPosition*8];
 		uint2 block[16];

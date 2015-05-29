@@ -354,7 +354,7 @@ void x11_echo512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *c
     if (thread < threads)
     {
         const uint32_t nounce = (startNounce + thread);
-        const int hashPosition = nounce - startNounce;
+        const uint32_t hashPosition = nounce - startNounce;
         uint32_t *const Hash = &g_hash[hashPosition<<4];
 		cuda_echo_round(sharedMemory, Hash);
     }
@@ -462,7 +462,7 @@ void x11_echo512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, const
 
 		const uint32_t nounce = (startNounce + thread);
 
-		const int hashPosition = nounce - startNounce;
+		const uint32_t hashPosition = nounce - startNounce;
 		const uint32_t *const Hash = (uint32_t*)&g_hash[hashPosition *8];
 
 		uint32_t h[16];

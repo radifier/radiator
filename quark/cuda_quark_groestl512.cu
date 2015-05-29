@@ -68,7 +68,7 @@ quark_doublegroestl512_gpu_hash_64_quad(uint32_t threads, uint32_t startNounce, 
 
         const uint32_t nounce = g_nonceVector ? g_nonceVector[thread] : (startNounce + thread);
 
-        const int hashPosition = nounce - startNounce;
+        const uint32_t hashPosition = nounce - startNounce;
         uint32_t * inpHash = &g_hash[hashPosition<<4];
         const uint16_t thr = threadIdx.x & (THF-1);
 

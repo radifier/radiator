@@ -33,7 +33,7 @@ void quark_keccak512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint2 *
     {
         uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-        int hashPosition = nounce - startNounce;
+        uint32_t hashPosition = nounce - startNounce;
         uint2 *inpHash = &g_hash[8 * hashPosition];
 
         uint2 s[25];
@@ -148,7 +148,7 @@ void quark_keccak512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, u
 	{
         const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-        const int hashPosition = nounce - startNounce;
+        const uint32_t hashPosition = nounce - startNounce;
 		uint2 *inpHash = &g_hash[8 * hashPosition];
 
 		uint2 s[25] = 

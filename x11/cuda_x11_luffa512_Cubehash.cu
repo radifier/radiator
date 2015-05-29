@@ -763,7 +763,7 @@ void x11_luffaCubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, ui
 	{
 		const uint32_t nounce = (startNounce + thread);
 
-		const int hashPosition = nounce - startNounce;
+		const uint32_t hashPosition = nounce - startNounce;
 		uint32_t *const Hash = (uint32_t*)&g_hash[8 * hashPosition];
 
 		uint32_t statebuffer[8];
