@@ -36,10 +36,10 @@ using namespace std;
 #endif
 
 static THREAD unsigned char PaddedMessage[128];
-__constant__ uint64_t c_PaddedMessage80[MAX_GPUS][16]; // padded message (80 bytes + padding)
+__constant__ uint64_t c_PaddedMessage80[16]; // padded message (80 bytes + padding)
 __constant__ uint32_t c_Target[8];
-__constant__ uint32_t statebufferpre[MAX_GPUS][8];
-__constant__ uint32_t statechainvpre[MAX_GPUS][40];
+__constant__ uint32_t statebufferpre[8];
+__constant__ uint32_t statechainvpre[40];
 
 
 
@@ -536,7 +536,7 @@ void qubit_luffa512_gpu_hash_80(uint32_t threads, uint32_t startNounce, uint32_t
 
 #pragma unroll
 		for (int i=8; i < 16; ++i)
-			buff[i] = c_PaddedMessage80[thr_id][i];
+			buff[i] = c_PaddedMessage80[i];
 
 		// die Nounce durch die thread-spezifische ersetzen
 		buff[9] = REPLACE_HIWORD(buff[9], cuda_swab32(nounce));
@@ -549,10 +549,10 @@ void qubit_luffa512_gpu_hash_80(uint32_t threads, uint32_t startNounce, uint32_t
 			statebuffer[i] = BYTES_SWAP32(((uint32_t*)buff)[i + 16]);
 #pragma unroll 4
 		for (int i = 4; i<8; i++)
-			statebuffer[i] = statebufferpre[thr_id][i];
+			statebuffer[i] = statebufferpre[i];
 #pragma unroll 
 		for (int i = 0; i<40; i++)
-			statechainv[i] = statechainvpre[thr_id][i];
+			statechainv[i] = statechainvpre[i];
 
 		uint32_t *outHash = outputHash + 16 * thread;
 		finalization512(statebuffer, statechainv, outHash);
@@ -574,7 +574,7 @@ void qubit_luffa512_gpu_finalhash_80(uint32_t threads, uint32_t startNounce, voi
 
 		#pragma unroll 16
 		for (int i=0; i < 16; ++i)
-			buff.buf64[i] = c_PaddedMessage80[thr_id][i];
+			buff.buf64[i] = c_PaddedMessage80[i];
 
 		// Tested nonce
 		buff.buf64[9] = REPLACE_HIWORD(buff.buf64[9], cuda_swab32(nounce));
@@ -685,8 +685,8 @@ __host__ void qubit_cpu_precalc(int thr_id)
 
 	rnd512cpu(statebuffer, statechainv);
 
-	cudaMemcpyToSymbolAsync(statebufferpre[thr_id], statebuffer, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
-	cudaMemcpyToSymbolAsync(statechainvpre[thr_id], statechainv, 40 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(statebufferpre, statebuffer, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(statechainvpre, statechainv, 40 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }
 
 __host__
@@ -710,7 +710,7 @@ void qubit_luffa512_cpu_setBlock_80(int thr_id, void *pdata)
 	PaddedMessage[126] = 0x02;
 	PaddedMessage[127] = 0x80;
 
-	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedMessage80[thr_id], PaddedMessage, 16 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedMessage80, PaddedMessage, 16 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 	qubit_cpu_precalc(thr_id);
 }
 

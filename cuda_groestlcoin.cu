@@ -10,7 +10,7 @@
 // globaler Speicher für alle HeftyHashes aller Threads
 static uint32_t *d_resultNonce[MAX_GPUS];
 
-__constant__ uint32_t groestlcoin_gpu_msg[MAX_GPUS][20];
+__constant__ uint32_t groestlcoin_gpu_msg[20];
 
 // 64 Register Variante für Compute 3.0
 #include "groestl_functions_quad.cu"
@@ -28,11 +28,11 @@ void groestlcoin_gpu_hash_quad(uint32_t threads, uint32_t startNounce, uint32_t 
         // GROESTL
 		uint32_t paddedInput[8] = { 0 };
         const uint32_t nounce = startNounce + thread;
-		paddedInput[0] = groestlcoin_gpu_msg[thr_id][(threadIdx.x & 3)];
-		paddedInput[1] = groestlcoin_gpu_msg[thr_id][4 + (threadIdx.x & 3)];
-		paddedInput[2] = groestlcoin_gpu_msg[thr_id][8 + (threadIdx.x & 3)];
-		paddedInput[3] = groestlcoin_gpu_msg[thr_id][12 + (threadIdx.x & 3)];
-		paddedInput[4] = groestlcoin_gpu_msg[thr_id][16 + (threadIdx.x & 3)];
+		paddedInput[0] = groestlcoin_gpu_msg[(threadIdx.x & 3)];
+		paddedInput[1] = groestlcoin_gpu_msg[4 + (threadIdx.x & 3)];
+		paddedInput[2] = groestlcoin_gpu_msg[8 + (threadIdx.x & 3)];
+		paddedInput[3] = groestlcoin_gpu_msg[12 + (threadIdx.x & 3)];
+		paddedInput[4] = groestlcoin_gpu_msg[16 + (threadIdx.x & 3)];
 		if ((threadIdx.x & 3) == 3) paddedInput[4] = SWAB32(nounce);
 		if ((threadIdx.x & 3) == 0) paddedInput[5] = 0x80;
 		if ((threadIdx.x & 3)==3) paddedInput[7] = 0x01000000;
@@ -80,7 +80,7 @@ __host__ void groestlcoin_cpu_setBlock(int thr_id, void *data )
 {
     uint32_t msgBlock[20];
     memcpy(&msgBlock[0], data, 80);
-	cudaMemcpyToSymbolAsync(groestlcoin_gpu_msg[thr_id], msgBlock, 80, 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(groestlcoin_gpu_msg, msgBlock, 80, 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 
 	cudaMemsetAsync(d_resultNonce[thr_id], 0xFF, sizeof(uint32_t), gpustream[thr_id]);
 }
