@@ -27,7 +27,7 @@ void __threadfence(void);
 #endif
 
 #ifndef MAX_GPUS
-#define MAX_GPUS 32
+#define MAX_GPUS 8
 #endif
 
 extern int device_map[MAX_GPUS];

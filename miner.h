@@ -506,7 +506,7 @@ extern uint16_t opt_vote;
 extern uint64_t global_hashrate;
 extern double   global_diff;
 
-#define MAX_GPUS 32
+#define MAX_GPUS 8
 extern char* device_name[MAX_GPUS];
 extern int device_map[MAX_GPUS];
 extern long  device_sm[MAX_GPUS];
