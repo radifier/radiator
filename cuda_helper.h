@@ -82,6 +82,7 @@ extern cudaError_t MyStreamSynchronize(cudaStream_t stream, int situation, int t
 #define ROTR32(x, n) __funnelshift_r( (x), (x), (n) )
 #endif
 
+#define NOASM
 // #define NOASM here if you don't want asm
 #ifndef __CUDA_ARCH__
 #define NOASM
@@ -537,7 +538,7 @@ static __device__ __forceinline__ uint2 operator+ (uint2 a, uint2 b)
 		: "=r"(result.x), "=r"(result.y) : "r"(a.x), "r"(a.y), "r"(b.x), "r"(b.y));
 	return result;
 #else
-	return make_uint2(a.x + b.x, a.y + b.y);
+	return vectorize(devectorize(a)+devectorize(b));
 #endif
 }
 
@@ -552,7 +553,7 @@ static __device__ __forceinline__ uint2 operator- (uint2 a, uint2 b)
 		: "=r"(result.x), "=r"(result.y) : "r"(a.x), "r"(a.y), "r"(b.x), "r"(b.y));
 	return result;
 #else
-return make_uint2(a.x - b.x, a.y - b.y);
+	return vectorize(devectorize(a)-devectorize(b));
 #endif
 }
 
