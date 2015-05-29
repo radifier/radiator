@@ -48,14 +48,6 @@ __host__ void jackpot_compactTest_cpu_init(int thr_id, uint32_t threads)
 	cudaMalloc(&d_partSum[1][thr_id], sizeof(uint32_t) * s1); // BLOCKSIZE (Threads/Block)
 }
 
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 300
-/**
- * __shfl_up() calculates a source lane ID by subtracting delta from the caller's lane ID, and clamping to the range 0..width-1
- */
-#undef __shfl_up
-#define __shfl_up(var, delta, width) (0)
-#endif
-
 // Die Summenfunktion (vom NVIDIA SDK)
 __global__ void jackpot_compactTest_gpu_SCAN(uint32_t *data, int width, uint32_t *partial_sums=NULL, cuda_compactTestFunction_t testFunc=NULL, uint32_t threads=0, uint32_t startNounce=0, uint32_t *inpHashes=NULL, uint32_t *d_validNonceTable=NULL)
 {

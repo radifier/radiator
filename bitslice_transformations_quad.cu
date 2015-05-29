@@ -1,11 +1,3 @@
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 300
-/**
-* __shfl() returns the value of var held by the thread whose ID is given by srcLane.
-* If srcLane is outside the range 0..width-1, the thread's own value of var is returned.
-*/
-#undef __shfl
-#define __shfl(var, srcLane, width) (uint32_t)(var)
-#endif
 
 #define merge8(z, x, y, b)\
 		z=__byte_perm(x, y, b); \

@@ -294,20 +294,10 @@ void pentablake_gpu_hash_80(uint32_t threads, const uint32_t startNounce, void *
 
 		pentablake_compress(h, buf, 640ULL);
 
-#if __CUDA_ARCH__ < 300
-		uint32_t *outHash = (uint32_t *)outputHash + 16 * thread;
-		#pragma unroll 8
-		for (uint32_t i=0; i < 8; i++) {
-			outHash[2*i]   = cuda_swab32( _HIWORD(h[i]) );
-			outHash[2*i+1] = cuda_swab32( _LOWORD(h[i]) );
-		}
-#else
 		uint64_t *outHash = (uint64_t *)outputHash + 8 * thread;
 		for (uint32_t i=0; i < 8; i++) {
 			outHash[i] = cuda_swab64( h[i] );
 		}
-#endif
-
 	}
 }
 
@@ -348,19 +338,10 @@ void pentablake_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_
 		// Ending round
 		pentablake_compress(h, buf, 512);
 
-#if __CUDA_ARCH__ < 300
-		uint32_t *outHash = (uint32_t*)&g_hash[thread<<3];
-		#pragma unroll 8
-		for (int i=0; i < 8; i++) {
-			outHash[2*i+0] = cuda_swab32( _HIWORD(h[i]) );
-			outHash[2*i+1] = cuda_swab32( _LOWORD(h[i]) );
-		}
-#else
 		uint64_t *outHash = &g_hash[thread<<3];
 		for (int i=0; i < 8; i++) {
 			outHash[i] = cuda_swab64(h[i]);
 		}
-#endif
 	}
 }
 
