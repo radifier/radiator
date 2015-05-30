@@ -34,10 +34,9 @@ int cuda_num_devices()
 		exit(1);
 	}
 
-	int maj = version / 1000, min = version % 100; // same as in deviceQuery sample
-	if (maj < 6 || (maj == 6 && min < 5))
+	if (version < CUDART_VERSION)
 	{
-		applog(LOG_ERR, "Driver does not support CUDA 6.5 API! Update your nVidia driver!");
+		applog(LOG_ERR, "Driver does not support CUDA %d.%d API! Update your nVidia driver!", CUDART_VERSION / 1000, (CUDART_VERSION % 1000) / 10);
 		exit(1);
 	}
 

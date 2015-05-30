@@ -2527,15 +2527,15 @@ int main(int argc, char *argv[])
 	long flags;
 	int i;
 
-	printf("*** ccminer " PACKAGE_VERSION " for nVidia GPUs ***\n");
+	printf("ccminer " PACKAGE_VERSION " for nVidia GPUs\n");
 #ifdef WIN32
-	printf("\tBuilt with VC++ 2013 and nVidia CUDA SDK 6.5\n\n");
+	printf("Built with Visual C++ 2013 and the nVidia CUDA Toolkit %d.%d\n\n", CUDART_VERSION/1000, (CUDART_VERSION%1000)/10);
 #else
-	printf("\tBuilt with the nVidia CUDA SDK 6.5\n\n");
+	printf("Built with the nVidia CUDA Toolkit %d.%d\n\n", CUDART_VERSION/1000, (CUDART_VERSION%1000)/10);
 #endif
-	printf("  Based on pooler cpuminer 2.3.2 and the tpruvot@github fork\n ");
-	printf("  CUDA support by Christian Buchner, Christian H. and DJM34\n");
-	printf("  Includes optimizations implemented by sp-hash, klaust, tpruvot and tsiv. \n\n");
+	printf("Based on pooler cpuminer 2.3.2 and the tpruvot@github fork\n");
+	printf("CUDA support by Christian Buchner, Christian H. and DJM34\n");
+	printf("Includes optimizations implemented by sp-hash, klaust, tpruvot and tsiv.\n\n");
 
 	rpc_user = strdup("");
 	rpc_pass = strdup("");
@@ -2682,11 +2682,6 @@ int main(int argc, char *argv[])
 		if(!opt_quiet)
 			applog(LOG_DEBUG, "Binding process to cpu mask %x", opt_affinity);
 		affine_to_cpu_mask(-1, opt_affinity);
-	}
-	if(active_gpus == 0)
-	{
-		applog(LOG_ERR, "No CUDA devices found! terminating.");
-		exit(1);
 	}
 	if(!opt_n_threads)
 		opt_n_threads = active_gpus;
