@@ -13,13 +13,12 @@ extern "C" {
 
 
 
-static __device__ uint64_t cuda_swab32ll(uint64_t x) {
+static __device__ __forceinline__ uint64_t cuda_swab32ll(uint64_t x) {
 	return MAKE_UINT64(cuda_swab32(_LOWORD(x)), cuda_swab32(_HIWORD(x)));
 }
 
-__constant__ static uint32_t  c_data[20];
+__constant__ static uint32_t  c_data[3];
 
-__constant__ static uint8_t sigma[16][16];
 static uint8_t  c_sigma[16][16] = {
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
 	{ 14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3 },
@@ -41,8 +40,19 @@ static uint8_t  c_sigma[16][16] = {
 
 __device__ __constant__ static uint32_t cpu_h[8];
 
-__device__ __constant__ static  uint32_t  u256[16];
-static const uint32_t  c_u256[16] = {
+__device__ __constant__ static  uint32_t  u256[16] =
+{
+	0x243F6A88, 0x85A308D3,
+	0x13198A2E, 0x03707344,
+	0xA4093822, 0x299F31D0,
+	0x082EFA98, 0xEC4E6C89,
+	0x452821E6, 0x38D01377,
+	0xBE5466CF, 0x34E90C6C,
+	0xC0AC29B7, 0xC97C50DD,
+	0x3F84D5B5, 0xB5470917
+};
+static const uint32_t  c_u256[16] =
+{
 	0x243F6A88, 0x85A308D3,
 	0x13198A2E, 0x03707344,
 	0xA4093822, 0x299F31D0,
@@ -53,21 +63,6 @@ static const uint32_t  c_u256[16] = {
 	0x3F84D5B5, 0xB5470917
 };
 
-#define GS2(a,b,c,d,x) { \
-	const uint8_t idx1 = sigma[r][x]; \
-	const uint8_t idx2 = sigma[r][x+1]; \
-	v[a] += (m[idx1] ^ u256[idx2]) + v[b]; \
-	v[d] = __byte_perm(v[d] ^ v[a],0, 0x1032); \
-	v[c] += v[d]; \
-	v[b] = SPH_ROTR32(v[b] ^ v[c], 12); \
-\
-	v[a] += (m[idx2] ^ u256[idx1]) + v[b]; \
-	v[d] = __byte_perm(v[d] ^ v[a],0, 0x0321); \
-	v[c] += v[d]; \
-	v[b] = SPH_ROTR32(v[b] ^ v[c], 7); \
-}
-
-//#define ROTL32(x, n) ((x) << (n)) | ((x) >> (32 - (n)))
 #define hostGS(a,b,c,d,x) { \
 	const uint8_t idx1 = c_sigma[r][x]; \
 	const uint8_t idx2 = c_sigma[r][x+1]; \
@@ -319,7 +314,7 @@ void blake256_gpu_hash_80(const uint32_t threads, const uint32_t startNonce, uin
 		for (int i = 0; i<8; i++) { h[i] = cpu_h[i];}
 
 		#pragma unroll 3
-		for (int i = 0; i < 3; ++i) input[i] = c_data[16 + i];
+		for (int i = 0; i < 3; ++i) input[i] = c_data[i];
 
 		input[3] = nonce;
 		blake256_compress2nd(h, input);
@@ -351,17 +346,13 @@ void blake256_cpu_setBlock_80(int thr_id, uint32_t *pdata)
 		0x510E527F, 0x9B05688C,
 		0x1F83D9AB, 0x5BE0CD19
 	};
-	uint32_t data[20];
-	memcpy(data, pdata, 80);
 	blake256_compress1st(h, pdata);
 
 	cudaMemcpyToSymbolAsync(cpu_h, h, sizeof(h), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
-	cudaMemcpyToSymbolAsync(c_data, data, sizeof(data), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(c_data, pdata+16, 3*sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }
 
 __host__
 void blake256_cpu_init(int thr_id, uint32_t threads)
 {
-	cudaMemcpyToSymbolAsync(u256, c_u256, sizeof(c_u256), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
-	cudaMemcpyToSymbolAsync(sigma, c_sigma, sizeof(c_sigma), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }

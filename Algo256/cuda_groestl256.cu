@@ -211,7 +211,7 @@ void groestl256_perm_Q(uint32_t *const __restrict__ a, const uint32_t *const __r
 }
 
 __global__ __launch_bounds__(256,1)
-void groestl256_gpu_hash32(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ outputHash, uint32_t *const __restrict__ nonceVector)
+void groestl256_gpu_hash32(uint32_t threads, uint32_t startNounce, const uint64_t *const __restrict__ outputHash, uint32_t *const __restrict__ nonceVector)
 {
 #if USE_SHARED
 	__shared__ uint32_t mixtabs[2048];
