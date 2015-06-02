@@ -8,17 +8,6 @@ static uint32_t *d_GNonce[MAX_GPUS];
 
 __constant__ uint32_t pTarget[8];
 
-#define C32e(x) \
-	  ((SPH_C32(x) >> 24) \
-	| ((SPH_C32(x) >>  8) & SPH_C32(0x0000FF00)) \
-	| ((SPH_C32(x) <<  8) & SPH_C32(0x00FF0000)) \
-	| ((SPH_C32(x) << 24) & SPH_C32(0xFF000000)))
-
-#define PC32up(j, r)   ((uint32_t)((j) + (r)))
-#define PC32dn(j, r)   0
-#define QC32up(j, r)   0xFFFFFFFF
-#define QC32dn(j, r)   (((uint32_t)(r) << 24) ^ ~((uint32_t)(j) << 24))
-
 #define B32_0(x)    __byte_perm(x, 0, 0x4440)
 //((x) & 0xFF)
 #define B32_1(x)    __byte_perm(x, 0, 0x4441)
@@ -137,7 +126,7 @@ __device__ __forceinline__
 void groestl256_perm_P_final(uint32_t *const __restrict__ a, const uint32_t *const __restrict__ mixtabs)
 {
 	uint32_t t[16];
-#pragma unroll 10
+#pragma unroll
 	for(int r = 0; r<9; r++)
 	{
 		a[0x0] ^= 0x00 + r;
@@ -175,26 +164,26 @@ __device__ __forceinline__
 void groestl256_perm_Q(uint32_t *const __restrict__ a, const uint32_t *const __restrict__ mixtabs)
 {
 	#pragma unroll
-	for (int r = 0; r<10; r++)
+	for (uint32_t r = 0; r<0x0a000000; r+=0x01000000)
 	{
 		uint32_t t[16];
 
 		a[0x0] ^= 0xFFFFFFFF;
-		a[0x1] ^= QC32dn(0x00, r);
+		a[0x1] ^= ~r;
 		a[0x2] ^= 0xFFFFFFFF;
-		a[0x3] ^= QC32dn(0x10, r);
+		a[0x3] ^= r ^ 0xefffffff;
 		a[0x4] ^= 0xFFFFFFFF;
-		a[0x5] ^= QC32dn(0x20, r);
+		a[0x5] ^= r ^ 0xdfffffff;
 		a[0x6] ^= 0xFFFFFFFF;
-		a[0x7] ^= QC32dn(0x30, r);
+		a[0x7] ^= r ^ 0xcfffffff;
 		a[0x8] ^= 0xFFFFFFFF;
-		a[0x9] ^= QC32dn(0x40, r);
+		a[0x9] ^= r ^ 0xbfffffff;
 		a[0xA] ^= 0xFFFFFFFF;
-		a[0xB] ^= QC32dn(0x50, r);
+		a[0xB] ^= r ^ 0xafffffff;
 		a[0xC] ^= 0xFFFFFFFF;
-		a[0xD] ^= QC32dn(0x60, r);
+		a[0xD] ^= r ^ 0x9fffffff;
 		a[0xE] ^= 0xFFFFFFFF;
-		a[0xF] ^= QC32dn(0x70, r);
+		a[0xF] ^= r ^ 0x8fffffff;
 		RSTT(0x0, 0x1, a, 0x2, 0x6, 0xA, 0xE, 0x1, 0x5, 0x9, 0xD);
 		RSTT(0x2, 0x3, a, 0x4, 0x8, 0xC, 0x0, 0x3, 0x7, 0xB, 0xF);
 		RSTT(0x4, 0x5, a, 0x6, 0xA, 0xE, 0x2, 0x5, 0x9, 0xD, 0x1);
