@@ -185,21 +185,24 @@ __device__ void myriadgroestl_gpu_sha256(uint32_t *message)
 
 // Progress W1
 #pragma unroll 
-    for(int j=0;j<61;j++)
+    for(int j=0;j<57;j++)
     {
 		uint32_t T1, T2;
 		T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + myr_sha256_gpu_constantTable2[j];
 		T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-#pragma unroll 7
+#pragma unroll
 		for (int k = 6; k >= 0; k--) regs[k + 1] = regs[k];
 		regs[0] = T1 + T2;
 		regs[4] += T1;
 	}
 
-    //// FERTIG
+	regs[3] += regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + myr_sha256_gpu_constantTable2[57];
+	regs[2] += regs[6] + S1(regs[3]) + Ch(regs[3], regs[4], regs[5]) + myr_sha256_gpu_constantTable2[58];
+	regs[1] += regs[5] + S1(regs[2]) + Ch(regs[2], regs[3], regs[4]) + myr_sha256_gpu_constantTable2[59];
+	regs[0] += regs[4] + S1(regs[1]) + Ch(regs[1], regs[2], regs[3]) + myr_sha256_gpu_constantTable2[60];
 
-	message[7] = cuda_swab32(hash[7] + regs[4]);
+	message[7] = cuda_swab32(hash[7] + regs[0]);
 }
 
 __global__ void __launch_bounds__(256, 4)
