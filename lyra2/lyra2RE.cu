@@ -8,7 +8,7 @@ extern "C" {
 
 #include "miner.h"
 #include "cuda_helper.h"
-
+#include <cuda_profiler_api.h>
 static _ALIGN(64) uint64_t *d_hash[MAX_GPUS];
 static THREAD uint32_t *foundNonce;
 
@@ -71,22 +71,25 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 	if (opt_benchmark)
 		ptarget[7] = 0x00ff;
 
-	if (!init[thr_id])
+	if(!init[thr_id])
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
+		CUDA_SAFE_CALL(cudaProfilerStop());
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * 4));
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
 		blake256_cpu_init(thr_id, throughput);
-		keccak256_cpu_init(thr_id,throughput);
+		keccak256_cpu_init(thr_id, throughput);
 		skein256_cpu_init(thr_id, throughput);
 		groestl256_cpu_init(thr_id, throughput);
 		lyra2_cpu_init(thr_id, throughput);
 
 		init[thr_id] = true;
 	}
+	else
+		CUDA_SAFE_CALL(cudaProfilerStart());
 
 	uint32_t endiandata[20];
 	for (int k=0; k < 20; k++)
