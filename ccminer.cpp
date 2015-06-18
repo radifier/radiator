@@ -278,9 +278,9 @@ Options:\n\
                         (matching 2nd gt640 in the PC)\n\
   -i  --intensity=N     GPU intensity 8-31 (default: auto) \n\
                         Decimals are allowed for fine tuning \n\
-  -f, --diff            Divide difficulty by this factor (std is 1) \n\
+  -f, --diff-factor     Divide difficulty by this factor (default 1.0) \n\
+  -m, --diff-multiplier Multiply difficulty by this value (default 1.0) \n\
   -v, --vote=VOTE       block reward vote (for HeavyCoin)\n\
-  -m, --trust-pool      trust the max block reward vote (maxvote) sent by the pool\n\
   -o, --url=URL         URL of mining server\n\
   -O, --userpass=U:P    username:password pair for mining server\n\
   -u, --user=USERNAME   username for mining server\n\
@@ -362,14 +362,15 @@ static struct option const options[] =
 	{ "threads", 1, NULL, 't' },
 	{ "Disable extranounce support", 1, NULL, 'e' },
 	{ "vote", 1, NULL, 'v' },
-	{ "trust-pool", 0, NULL, 'm' },
 	{ "timeout", 1, NULL, 'T' },
 	{ "url", 1, NULL, 'o' },
 	{ "user", 1, NULL, 'u' },
 	{ "userpass", 1, NULL, 'O' },
 	{ "version", 0, NULL, 'V' },
 	{ "devices", 1, NULL, 'd' },
-	{ "diff", 1, NULL, 'f' },
+	{ "diff-multiplier", 1, NULL, 'm' },
+	{ "diff-factor", 1, NULL, 'f' },
+	{ "diff", 1, NULL, 'f' }, // compat
 	{ 0, 0, 0, 0 }
 };
 
@@ -2207,9 +2208,6 @@ static void parse_arg(int key, char *arg)
 			show_usage_and_exit(1);
 		opt_vote = (uint16_t)v;
 		break;
-	case 'm':
-		opt_trust_pool = true;
-		break;
 	case 'u':
 		free(rpc_user);
 		rpc_user = strdup(arg);
@@ -2379,7 +2377,12 @@ static void parse_arg(int key, char *arg)
 			show_usage_and_exit(1);
 		opt_difficulty = d;
 		break;
-
+	case 'm': // --diff-multiplier
+		d = atof(arg);
+		if(d <= 0.)
+			show_usage_and_exit(1);
+		opt_difficulty = 1.0/d;
+		break;
 	case 'e':
 		opt_extranonce = false;
 		break;
