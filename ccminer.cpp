@@ -2558,7 +2558,7 @@ int main(int argc, char *argv[])
 #endif
 	// number of gpus
 	active_gpus = cuda_num_devices();
-	cuda_devicereset();
+//	cuda_devicereset();
 
 	if(active_gpus > 1)
 	{
