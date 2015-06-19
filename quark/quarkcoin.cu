@@ -170,7 +170,7 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 		cuda_check_cpu_init(thr_id, throughput);
 		quark_compactTest_cpu_init(thr_id, throughput);
 		quark_jh512_cpu_init(thr_id, throughput);
-
+		CUDA_SAFE_CALL(cudaGetLastError());
 		init[thr_id] = true;
 	}
 
