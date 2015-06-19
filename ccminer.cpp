@@ -307,9 +307,8 @@ Options:\n\
       --cpu-priority    set process priority (default: 0 idle, 2 normal to 5 highest)\n\
   -b, --api-bind        IP/Port for the miner API (default: 127.0.0.1:4068)\n\
   -S, --syslog          use system log for output messages\n\
-  --syslog - prefix = ... allow to change syslog tool name\n\
-   -B, --background      run the miner in the background\n\
-		--benchmark       run in offline benchmark mode\n\
+      --syslog-prefix=... allow to change syslog tool name\n\
+  -B, --background      run the miner in the background\n\
       --benchmark       run in offline benchmark mode\n\
       --cputest         debug hashes from cpu algorithms\n\
   -c, --config=FILE     load a JSON-format configuration file\n\
@@ -324,7 +323,7 @@ static char const short_options[] =
 #ifdef HAVE_SYSLOG_H
 "S"
 #endif
-"a:c:i:Dhp:Px:mnqr:R:s:t:T:o:u:O:Vd:f:mv:N:b:e";
+"a:c:i:Dhp:Px:nqr:R:s:t:T:o:u:O:Vd:f:m:v:N:b:e";
 
 static struct option const options[] =
 {
