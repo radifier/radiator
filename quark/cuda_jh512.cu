@@ -53,7 +53,7 @@ __constant__ static __align__(16) uint32_t c_E8_bslice32[42][8] = {
 };
 
 
-
+#ifndef NOASM
 __device__ __forceinline__
 static void SWAP4(uint32_t *x) {
 #pragma nounroll
@@ -92,7 +92,32 @@ static void SWAP1(uint32_t *x) {
 			: "+r"(*x) : "r"(y));
 	}
 }
-
+#else
+__device__ __forceinline__
+static void SWAP4(uint32_t *x)
+{
+	x[0] = ((x[0] & 0x0f0f0f0fu) << 4) | (x[0] & 0xF0F0F0F0u) >> 4;
+	x[1] = ((x[1] & 0x0f0f0f0fu) << 4) | (x[1] & 0xF0F0F0F0u) >> 4;
+	x[2] = ((x[2] & 0x0f0f0f0fu) << 4) | (x[2] & 0xF0F0F0F0u) >> 4;
+	x[3] = ((x[3] & 0x0f0f0f0fu) << 4) | (x[3] & 0xF0F0F0F0u) >> 4;
+}
+__device__ __forceinline__
+static void SWAP2(uint32_t *x)
+{
+	x[0] = ((x[0] & 0x33333333u) << 2) | (x[0] & 0xCCCCCCCCu) >> 2;
+	x[1] = ((x[1] & 0x33333333u) << 2) | (x[1] & 0xCCCCCCCCu) >> 2;
+	x[2] = ((x[2] & 0x33333333u) << 2) | (x[2] & 0xCCCCCCCCu) >> 2;
+	x[3] = ((x[3] & 0x33333333u) << 2) | (x[3] & 0xCCCCCCCCu) >> 2;
+}
+__device__ __forceinline__
+static void SWAP1(uint32_t *x)
+{
+	x[0] = ((x[0] & 0x55555555u) << 1) | (x[0] & 0xAAAAAAAAu) >> 1;
+	x[1] = ((x[1] & 0x55555555u) << 1) | (x[1] & 0xAAAAAAAAu) >> 1;
+	x[2] = ((x[2] & 0x55555555u) << 1) | (x[2] & 0xAAAAAAAAu) >> 1;
+	x[3] = ((x[3] & 0x55555555u) << 1) | (x[3] & 0xAAAAAAAAu) >> 1;
+}
+#endif
 /*swapping bits 16i||16i+1||......||16i+7  with bits 16i+8||16i+9||......||16i+15 of 32-bit x*/
 //#define SWAP8(x)   (x) = ((((x) & 0x00ff00ffUL) << 8) | (((x) & 0xff00ff00UL) >> 8));
 #define SWAP8(x) (x) = __byte_perm(x, x, 0x2301);
