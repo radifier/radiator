@@ -86,7 +86,7 @@ extern int scanhash_qubit(int thr_id, uint32_t *pdata,
 	cudaGetDeviceProperties(&props, device_map[thr_id]);
 	if (strstr(props.name, "970"))
 	{
-		intensity = 256 * 256 * 24;
+		intensity = 256 * 256 * 16;
 	}
 	else if (strstr(props.name, "980"))
 	{
