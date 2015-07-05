@@ -417,12 +417,12 @@ void quark_bmw512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *
 
 __global__
 __launch_bounds__(64, 8)
-void quark_bmw512_gpu_hash_64_quark(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, uint32_t *g_nonceVector)
+void quark_bmw512_gpu_hash_64_quark(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, uint32_t *const __restrict__ g_nonceVector)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = (startNounce + thread);
+		const uint32_t nounce = (startNounce + thread);
 
 		const int hashPosition = nounce - startNounce;
 		uint64_t *const inpHash = &g_hash[8 * hashPosition];
