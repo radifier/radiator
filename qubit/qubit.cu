@@ -102,7 +102,7 @@ extern int scanhash_qubit(int thr_id, uint32_t *pdata,
 	}
 	else if (strstr(props.name, "960"))
 	{
-		intensity = 256 * 256 * 23;
+		intensity = 256 * 256 * 16;
 	}
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity);
 
