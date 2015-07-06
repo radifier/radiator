@@ -23,6 +23,16 @@ int scanhash_yescrypt(int thr_id, uint32_t *pdata,
 	const uint32_t *ptarget, uint32_t max_nonce,
 	uint32_t *hashes_done)
 {
+	cudaDeviceProp props;
+	cudaGetDeviceProperties(&props, device_map[thr_id]);
+	unsigned int cc = props.major * 10 + props.minor;
+	if(cc < 32)
+	{
+		applog(LOG_ERR, "GPU #%d: this gpu is not supported", device_map[thr_id]);
+		mining_has_stopped[thr_id] = true;
+		proper_exit(2);
+	}
+
 	const uint32_t first_nonce = pdata[19];
 //	if (pdata[0] == 0) {return 0;} // don't start unless it is really up
 
