@@ -1,5 +1,5 @@
 
-ccMiner release 4.01-git(KlausT-MOD) (May 15th, 2015)
+ccMiner release 5.00-git(KlausT-MOD) (July 6th, 2015)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -197,6 +197,7 @@ features.
 2015-03-30 v3.00: added skein (for Myriadcoin for example)
 2015-05-06 v4.00: added Neoscrypt
 2015-05-15 v4.01: fixed crash after ctrl-c (Windows), fixed -g option
+2015-07-06 v5.00: -g option removed, some bug fixes and optimizations
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
