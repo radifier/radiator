@@ -11,6 +11,8 @@ extern "C" {
 #include <cuda_profiler_api.h>
 static _ALIGN(64) uint64_t *d_hash[MAX_GPUS];
 static THREAD uint32_t *foundNonce;
+static  uint64_t *d_hash2[MAX_GPUS];
+
 
 extern void blake256_cpu_init(int thr_id, uint32_t threads);
 extern void blake256_cpu_hash_80(const int thr_id, const uint32_t threads, const uint32_t startNonce, uint64_t *Hash);
@@ -21,9 +23,11 @@ extern void skein256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNon
 extern void skein256_cpu_init(int thr_id, uint32_t threads);
 
 extern void lyra2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNonce, uint64_t *d_outputHash);
-extern void lyra2_cpu_init(int thr_id, uint32_t threads);
+extern void lyra2_cpu_hash_32_multi(int thr_id, uint32_t threads, uint32_t startNonce, uint64_t *d_outputHash);
 
 extern void groestl256_setTarget(int thr_id, const void *ptarget);
+extern void lyra2_cpu_init(int thr_id, uint32_t threads, uint64_t* matrix);
+extern void lyra2_cpu_init_multi(int thr_id, uint32_t threads, uint64_t *hash, uint64_t* hash2);
 extern void groestl256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint64_t *d_outputHash, uint32_t *resultnonces);
 extern void groestl256_cpu_init(int thr_id, uint32_t threads);
 
@@ -45,7 +49,6 @@ extern "C" void lyra2_hash(void *state, const void *input)
 	sph_keccak256_close(&ctx_keccak, hashB);
 
 	LYRA2(hashA, 32, hashB, 32, hashB, 32, 1, 8, 8);
-
 	sph_skein256_init(&ctx_skein);
 	sph_skein256(&ctx_skein, hashA, 32);
 	sph_skein256_close(&ctx_skein, hashB);
@@ -64,15 +67,16 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 	uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
-	unsigned int intensity = (device_sm[device_map[thr_id]] > 500) ? 256 * 256 * 25 : 256 * 256 * 19;
+	unsigned int intensity = (device_sm[device_map[thr_id]] > 500) ? 256 * 256 * 4 : 256 * 256 * 4 ;
+    intensity = (device_sm[device_map[thr_id]] == 500) ? 256 * 256 * 2 : intensity;
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity); // 18=256*256*4;
-	throughput = min(throughput, (max_nonce - first_nonce));
-
+	
 	if (opt_benchmark)
 		ptarget[7] = 0x00ff;
 
+	
 	if(!init[thr_id])
-	{
+	{ 
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
@@ -80,13 +84,17 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaProfilerStop());
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * 4));
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash2[thr_id], 16  * 8 * 8 * sizeof(uint64_t) * throughput));
 		blake256_cpu_init(thr_id, throughput);
 		keccak256_cpu_init(thr_id, throughput);
 		skein256_cpu_init(thr_id, throughput);
 		groestl256_cpu_init(thr_id, throughput);
-		lyra2_cpu_init(thr_id, throughput);
 
-		init[thr_id] = true;
+		lyra2_cpu_init(thr_id, throughput,d_hash2[thr_id]);
+
+
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 8 * sizeof(uint32_t) * throughput));
+		init[thr_id] = true; 
 	}
 	else
 		CUDA_SAFE_CALL(cudaProfilerStart());
@@ -97,7 +105,6 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 
 	blake256_cpu_setBlock_80(thr_id, pdata);
 	groestl256_setTarget(thr_id, ptarget);
-
 	do {
 		blake256_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		keccak256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
@@ -112,7 +119,6 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 			uint32_t vhash64[8];
 			be32enc(&endiandata[19], foundNonce[0]);
 			lyra2_hash(vhash64, endiandata);
-
 			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 			{
 				int res = 1;
@@ -137,6 +143,7 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 				}
 				pdata[19] = foundNonce[0];
 				if (opt_benchmark) applog(LOG_INFO, "GPU #%d: Found nounce %08x", device_map[thr_id], foundNonce[0]);
+				MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 				return res;
 			}
 			else
@@ -147,6 +154,7 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 		}
 
 		pdata[19] += throughput;
+
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 
 	*hashes_done = pdata[19] - first_nonce + 1;
