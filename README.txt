@@ -1,5 +1,5 @@
 
-ccMiner release 5.00-git(KlausT-MOD) (July 6th, 2015)
+ccMiner release 5.01-git(KlausT-MOD) (July 6th, 2015)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -198,6 +198,7 @@ features.
 2015-05-06 v4.00: added Neoscrypt
 2015-05-15 v4.01: fixed crash after ctrl-c (Windows), fixed -g option
 2015-07-06 v5.00: -g option removed, some bug fixes and optimizations
+2015-07-08 v5.01: lyra2 optimization
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
