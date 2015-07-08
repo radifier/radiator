@@ -11,7 +11,6 @@ extern "C" {
 #include <cuda_profiler_api.h>
 static _ALIGN(64) uint64_t *d_hash[MAX_GPUS];
 static THREAD uint32_t *foundNonce;
-static  uint64_t *d_hash2[MAX_GPUS];
 
 
 extern void blake256_cpu_init(int thr_id, uint32_t threads);
@@ -26,7 +25,7 @@ extern void lyra2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNonce,
 extern void lyra2_cpu_hash_32_multi(int thr_id, uint32_t threads, uint32_t startNonce, uint64_t *d_outputHash);
 
 extern void groestl256_setTarget(int thr_id, const void *ptarget);
-extern void lyra2_cpu_init(int thr_id, uint32_t threads, uint64_t* matrix);
+extern void lyra2_cpu_init(int thr_id, uint32_t threads);
 extern void lyra2_cpu_init_multi(int thr_id, uint32_t threads, uint64_t *hash, uint64_t* hash2);
 extern void groestl256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint64_t *d_outputHash, uint32_t *resultnonces);
 extern void groestl256_cpu_init(int thr_id, uint32_t threads);
@@ -83,14 +82,12 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaProfilerStop());
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * 4));
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash2[thr_id], 16  * 8 * 8 * sizeof(uint64_t) * throughput));
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 8 * sizeof(uint32_t) * throughput));
 		blake256_cpu_init(thr_id, throughput);
 		keccak256_cpu_init(thr_id, throughput);
 		skein256_cpu_init(thr_id, throughput);
 		groestl256_cpu_init(thr_id, throughput);
-		lyra2_cpu_init(thr_id, throughput,d_hash2[thr_id]);
-
+		lyra2_cpu_init(thr_id, throughput);
 
 		init[thr_id] = true; 
 	}

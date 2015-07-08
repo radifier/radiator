@@ -1,12 +1,7 @@
-
-
 #include <stdio.h>
 #include <memory.h>
 #include "cuda_vector.h"
 #define TPB 8
-//
-
-
 
 #if __CUDA_ARCH__ < 500 
 #define vectype ulonglong4
@@ -21,6 +16,8 @@
 #define vectype uint28
 #define memshift 4   
 #endif 
+
+static  uint64_t *d_hash2[MAX_GPUS];
 __device__ vectype  *DMatrix;
 
 #if __CUDA_ARCH__ >= 500
@@ -361,9 +358,10 @@ __global__	__launch_bounds__(16,1)
 #else
 __global__	__launch_bounds__(TPB, 1)
 #endif
-void lyra2_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint2 *outputHash)
+void lyra2_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint2 *outputHash, uint64_t *hash2)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	DMatrix = (vectype*)hash2;
 
 	   vectype state[4];
 #if __CUDA_ARCH__ > 350
@@ -468,9 +466,10 @@ __global__	__launch_bounds__(16, 1)
 #else
 __global__	__launch_bounds__(TPB, 1)
 #endif
-void lyra2_gpu_hash_32_v3(uint32_t threads, uint32_t startNounce, uint2 *outputHash)
+void lyra2_gpu_hash_32_v3(uint32_t threads, uint32_t startNounce, uint2 *outputHash, uint64_t *hash2)
 {
 	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	DMatrix = (vectype*)hash2;
 
 	vectype state[4];
 
@@ -575,9 +574,9 @@ void lyra2_gpu_hash_32_v3(uint32_t threads, uint32_t startNounce, uint2 *outputH
 
 
 __host__
-void lyra2_cpu_init(int thr_id, uint32_t threads,uint64_t *hash)
+void lyra2_cpu_init(int thr_id, uint32_t threads)
 {
-	cudaMemcpyToSymbolAsync(DMatrix, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	CUDA_SAFE_CALL(cudaMalloc(&d_hash2[thr_id], 16 * 8 * 8 * sizeof(uint64_t) * threads));
 }
 
 
@@ -596,13 +595,10 @@ uint32_t tpb;
 	dim3 block(tpb);
 
 	if (device_sm[device_map[thr_id]] == 500)
-		lyra2_gpu_hash_32 << <grid, block, 0, gpustream[thr_id] >> > (threads, startNounce, (uint2*)d_outputHash);
+		lyra2_gpu_hash_32 << <grid, block, 0, gpustream[thr_id] >> > (threads, startNounce, (uint2*)d_outputHash, d_hash2[thr_id]);
     else 
-		lyra2_gpu_hash_32_v3 << <grid, block, 0, gpustream[thr_id] >> > (threads, startNounce, (uint2*)d_outputHash);
-
-
-
-	//MyStreamSynchronize(NULL, order, thr_id);
+		lyra2_gpu_hash_32_v3 << <grid, block, 0, gpustream[thr_id] >> > (threads, startNounce, (uint2*)d_outputHash, d_hash2[thr_id]);
+	CUDA_SAFE_CALL(cudaGetLastError());
 }
 
   
