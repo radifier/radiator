@@ -1,9 +1,6 @@
 #include <memory.h>
-
 #include "cuda_helper.h"
 
-
-static uint32_t *d_gnounce[MAX_GPUS];
 static uint32_t *d_GNonce[MAX_GPUS];
 
 __constant__ uint32_t pTarget[8];
@@ -277,7 +274,7 @@ void groestl256_gpu_hash32(uint32_t threads, uint32_t startNounce, const uint64_
 #define texDef(texname, texmem, texsource, texsize) \
 	unsigned int *texmem; \
 	CUDA_SAFE_CALL(cudaMalloc(&texmem, texsize)); \
-	cudaMemcpyAsync(texmem, texsource, texsize, cudaMemcpyHostToDevice, gpustream[thr_id]); \
+	CUDA_SAFE_CALL(cudaMemcpyAsync(texmem, texsource, texsize, cudaMemcpyHostToDevice, gpustream[thr_id])); \
 	texname.normalized = 0; \
 	texname.filterMode = cudaFilterModePoint; \
 	texname.addressMode[0] = cudaAddressModeClamp; \
@@ -299,13 +296,12 @@ void groestl256_cpu_init(int thr_id, uint32_t threads)
 	texDef(t3dn2, d_T3dn, T3dn_cpu, sizeof(uint32_t) * 256);
 
 	CUDA_SAFE_CALL(cudaMalloc(&d_GNonce[thr_id], 2 * sizeof(uint32_t)));
-	CUDA_SAFE_CALL(cudaMallocHost(&d_gnounce[thr_id], 2*sizeof(uint32_t)));
 }
 
 __host__
 void groestl256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint64_t *d_outputHash, uint32_t *resultnonces)
 {
-	cudaMemsetAsync(d_GNonce[thr_id], 0, 2 * sizeof(uint32_t), gpustream[thr_id]);
+	CUDA_SAFE_CALL(cudaMemsetAsync(d_GNonce[thr_id], 0, 2 * sizeof(uint32_t), gpustream[thr_id]));
 	const uint32_t threadsperblock = 256;
 
 	// berechne wie viele Thread Blocks wir brauchen
@@ -313,14 +309,13 @@ void groestl256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, 
 	dim3 block(threadsperblock);
 
 	groestl256_gpu_hash32<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_outputHash, d_GNonce[thr_id]);
-	cudaMemcpyAsync(d_gnounce[thr_id], d_GNonce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
-	cudaStreamSynchronize(gpustream[thr_id]);
-	resultnonces[0] = *(d_gnounce[thr_id]);
-	resultnonces[1] = *(d_gnounce[thr_id] + 1);
+	CUDA_SAFE_CALL(cudaGetLastError());
+	CUDA_SAFE_CALL(cudaMemcpyAsync(resultnonces, d_GNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaStreamSynchronize(gpustream[thr_id]));
 }
 
 __host__
 void groestl256_setTarget(int thr_id, const void *pTargetIn)
 {
-	cudaMemcpyToSymbolAsync(pTarget, pTargetIn, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(pTarget, pTargetIn, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }

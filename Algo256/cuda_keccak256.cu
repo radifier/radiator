@@ -280,6 +280,7 @@ void keccak256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, u
 	dim3 block(threadsperblock);
 
 	keccak256_gpu_hash_32 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_outputHash);
+	CUDA_SAFE_CALL(cudaGetLastError());
 }
 
 __host__

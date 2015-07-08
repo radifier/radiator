@@ -335,6 +335,7 @@ void blake256_cpu_hash_80(const int thr_id, const uint32_t threads, const uint32
 	dim3 block(threadsperblock);
 
 	blake256_gpu_hash_80 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNonce, Hash);
+	CUDA_SAFE_CALL(cudaGetLastError());
 }
 
 __host__
@@ -350,6 +351,7 @@ void blake256_cpu_setBlock_80(int thr_id, uint32_t *pdata)
 
 	cudaMemcpyToSymbolAsync(cpu_h, h, sizeof(h), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 	cudaMemcpyToSymbolAsync(c_data, pdata+16, 3*sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	CUDA_SAFE_CALL(cudaGetLastError());
 }
 
 __host__
