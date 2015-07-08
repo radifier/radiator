@@ -23,8 +23,7 @@
 #endif 
 __device__ vectype  *DMatrix;
 
-#define TPB 160
- 
+#if __CUDA_ARCH__ >= 500
 static __device__ __forceinline__ void Gfunc_v35(uint2 & a, uint2 &b, uint2 &c, uint2 &d)
 {
 
@@ -34,7 +33,7 @@ static __device__ __forceinline__ void Gfunc_v35(uint2 & a, uint2 &b, uint2 &c, 
 	c += d; b ^= c; b = ROR2(b, 63);
 
 }
-
+#else
 static __device__ __forceinline__ void Gfunc_v35(unsigned long long & a, unsigned long long &b, unsigned long long &c, unsigned long long &d)
 {
 
@@ -44,7 +43,7 @@ static __device__ __forceinline__ void Gfunc_v35(unsigned long long & a, unsigne
 	c += d; b ^= c; b = ROTR64(b, 63);
 
 }
-
+#endif
 
 static __device__ __forceinline__ void round_lyra_v35(vectype* s)
 {
