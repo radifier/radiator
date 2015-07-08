@@ -577,7 +577,7 @@ void lyra2_gpu_hash_32_v3(uint32_t threads, uint32_t startNounce, uint2 *outputH
 __host__
 void lyra2_cpu_init(int thr_id, uint32_t threads,uint64_t *hash)
 {
-	cudaMemcpyToSymbol(DMatrix, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(DMatrix, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }
 
 
@@ -596,9 +596,9 @@ uint32_t tpb;
 	dim3 block(tpb);
 
 	if (device_sm[device_map[thr_id]] == 500)
-		lyra2_gpu_hash_32 << <grid, block >> > (threads, startNounce, (uint2*)d_outputHash);
+		lyra2_gpu_hash_32 << <grid, block, 0, gpustream[thr_id] >> > (threads, startNounce, (uint2*)d_outputHash);
     else 
-    	lyra2_gpu_hash_32_v3 <<<grid, block>>> (threads, startNounce,(uint2*) d_outputHash);
+		lyra2_gpu_hash_32_v3 << <grid, block, 0, gpustream[thr_id] >> > (threads, startNounce, (uint2*)d_outputHash);
 
 
 
