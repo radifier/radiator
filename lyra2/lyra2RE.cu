@@ -83,17 +83,15 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaProfilerStop());
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * 4));
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash2[thr_id], 16  * 8 * 8 * sizeof(uint64_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 8 * sizeof(uint32_t) * throughput));
 		blake256_cpu_init(thr_id, throughput);
 		keccak256_cpu_init(thr_id, throughput);
 		skein256_cpu_init(thr_id, throughput);
 		groestl256_cpu_init(thr_id, throughput);
-
 		lyra2_cpu_init(thr_id, throughput,d_hash2[thr_id]);
 
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 8 * sizeof(uint32_t) * throughput));
 		init[thr_id] = true; 
 	}
 	else
