@@ -43,7 +43,7 @@ void to_bitslice_quad(uint32_t *const __restrict__ input, uint32_t *const __rest
 	uint32_t other[8];
 	uint32_t t;
 
-	uint32_t perm = (threadIdx.x & 1) ? 0x7362 : 0x5140;
+	const uint32_t perm = (threadIdx.x & 1) ? 0x7362 : 0x5140;
 	const unsigned int n = threadIdx.x & 3;
 #pragma unroll
 	for(int i = 0; i < 8; i++)
@@ -153,35 +153,26 @@ void from_bitslice_quad_final(const uint32_t *const __restrict__ input, uint32_t
 	uint32_t t;
 	const uint32_t perm = 0x7531;//(threadIdx.x & 1) ? 0x3175 : 0x7531;
 
+	output[0] = __byte_perm(input[0], input[4], perm);
+	output[2] = __byte_perm(input[1], input[5], perm);
+	output[8] = __byte_perm(input[2], input[6], perm);
+	output[10] = __byte_perm(input[3], input[7], perm);
+
+	SWAP1(output[0], output[2]);
+	SWAP1(output[8], output[10]);
+
+	SWAP2(output[2], output[10]);
+
+	output[6] = __byte_perm(output[2], output[10], 0x5410);
+	output[10] = __byte_perm(output[2], output[10], 0x7632);
+
 	if(threadIdx.x & 3)
 	{
-
-		output[0] = __byte_perm(input[0], input[4], perm);
-		output[2] = __byte_perm(input[1], input[5], perm);
-		output[8] = __byte_perm(input[2], input[6], perm);
-		output[10] = __byte_perm(input[3], input[7], perm);
-		SWAP1(output[0], output[2]);
-		SWAP1(output[8], output[10]);
-		SWAP2(output[2], output[10]);
-		output[6] = __byte_perm(output[2], output[10], 0x5410);
-		output[10] = __byte_perm(output[2], output[10], 0x7632);
 		SWAP4_final(output[6], output[10]);
 		output[6] = __byte_perm(output[6], 0, 0x3232);
 	}
 	else
 	{
-		output[0] = __byte_perm(input[0], input[4], perm);
-		output[2] = __byte_perm(input[1], input[5], perm);
-		output[8] = __byte_perm(input[2], input[6], perm);
-		output[10] = __byte_perm(input[3], input[7], perm);
-
-		SWAP1(output[0], output[2]);
-		SWAP1(output[8], output[10]);
-
-		SWAP2(output[2], output[10]);
-
-		output[6] = __byte_perm(output[2], output[10], 0x5410);
-		output[10] = __byte_perm(output[2], output[10], 0x7632);
 		output[2] = output[6];
 
 		SWAP4(output[2], output[10]);
