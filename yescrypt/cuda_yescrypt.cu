@@ -463,7 +463,7 @@ static __forceinline__ __device__ uint16 salsa20_8(const uint16 &X)
 	return(X + state);
 }
 
-static __forceinline__ __device__ void block_pwxform_long(int thread, ulonglong2to8 &Bout)
+static __forceinline__ __device__ void block_pwxform_long(unsigned int thread, ulonglong2to8 &Bout)
 {
 
 		ulonglong2 vec = Bout.l0;
@@ -538,7 +538,7 @@ static __forceinline__ __device__ void blockmix_salsa8_small2(uint32 &Bin)
 
 
 
-static __forceinline__ __device__ void blockmix_pwxform3(int thread, ulonglong2to8 *Bin)
+static __forceinline__ __device__ void blockmix_pwxform3(unsigned int thread, ulonglong2to8 *Bin)
 {
 	Bin[0] ^= Bin[15];
 	block_pwxform_long(thread, Bin[0]);
@@ -553,10 +553,10 @@ static __forceinline__ __device__ void blockmix_pwxform3(int thread, ulonglong2t
 }
 
 
-__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k0(int threads, uint32_t startNonce)
+__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k0(unsigned int threads, uint32_t startNonce)
 {
 
-	int thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	
     
 //	if (thread < threads)
@@ -606,10 +606,10 @@ __global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k0(int threads, uint3
 	}
 }
 
-__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k1(int threads, uint32_t startNonce)
+__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k1(unsigned int threads, uint32_t startNonce)
 {
 
-	int thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 
 
 //	if (thread < threads)
@@ -653,10 +653,10 @@ __global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k1(int threads, uint3
 #define thelength  8
 #define vectype ulonglong8to16
 
-__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k2c(int threads, uint32_t startNonce)
+__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k2c(unsigned int threads, uint32_t startNonce)
 {
 
-	int thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 
 
 //	if (thread < threads)
@@ -717,10 +717,10 @@ __global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k2c(int threads, uint
 	}
 }
 
-__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k2c1(int threads, uint32_t startNonce)
+__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k2c1(unsigned int threads, uint32_t startNonce)
 {
 
-	int thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 
 
 	if (thread < threads)
@@ -767,10 +767,10 @@ __global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k2c1(int threads, uin
 	}
 }
 
-__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k5(int threads, uint32_t startNonce, uint32_t *nonceVector)
+__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k5(unsigned int threads, uint32_t startNonce, uint32_t *nonceVector)
 {
 
-	int thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 
 
 		const uint32_t nonce = startNonce + thread;
@@ -843,7 +843,7 @@ __global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k5(int threads, uint3
 }
 
 
-void yescrypt_cpu_init(int thr_id, int threads, uint32_t *hash, uint32_t *hash2, uint32_t *hash3, uint32_t *hash4)
+void yescrypt_cpu_init(int thr_id, unsigned int threads, uint32_t *hash, uint32_t *hash2, uint32_t *hash3, uint32_t *hash4)
 {
     
 	cudaMemcpyToSymbolAsync(state2, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
@@ -855,14 +855,14 @@ void yescrypt_cpu_init(int thr_id, int threads, uint32_t *hash, uint32_t *hash2,
 } 
 
 
-__host__ uint32_t yescrypt_cpu_hash_k4(int thr_id, int threads, uint32_t startNounce,  int order)
+__host__ uint32_t yescrypt_cpu_hash_k4(int thr_id, unsigned int threads, uint32_t startNounce,  int order)
 {
 	uint32_t result;
 	cudaMemsetAsync(d_YNonce[thr_id], 0xffffffff, sizeof(uint32_t), gpustream[thr_id]);
 
  
-	const int threadsperblock = 16;
-	const int threadsperblock2 = 16;
+	const unsigned int threadsperblock = 16;
+	const unsigned int threadsperblock2 = 16;
 	 
  
 	dim3 grid2((threads + threadsperblock2 - 1) / threadsperblock2);

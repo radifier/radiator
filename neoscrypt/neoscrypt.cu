@@ -9,11 +9,11 @@ extern "C"
 #include <string.h>
 
 static uint32_t *d_hash[MAX_GPUS] ;
- 
+static uint32_t *foundNonce;
 
 extern void neoscrypt_setBlockTarget(int thr_id, uint32_t * data, const void *ptarget);
-extern void neoscrypt_cpu_init(int thr_id, int threads,uint32_t* hash);
-extern void neoscrypt_cpu_hash_k4(int stratum,int thr_id, int threads, uint32_t startNounce, int order, uint32_t* foundnonce);
+extern void neoscrypt_cpu_init(int thr_id, unsigned int threads,uint32_t* hash);
+extern void neoscrypt_cpu_hash_k4(int stratum,int thr_id, unsigned int threads, uint32_t startNounce, int order, uint32_t* foundnonce);
   
 
 int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
@@ -26,7 +26,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		ptarget[7] = 0x01ff;
 
 //	const int throughput = gpus_intensity[thr_id] ? 256 * 64 * gpus_intensity[thr_id] : 256 * 64 * 3.5;
-	int intensity = (256 * 64 * 3.5);
+	int intensity = (256 * 16 * 14);
 
 	cudaDeviceProp props;
 	cudaGetDeviceProperties(&props, device_map[thr_id]);
@@ -40,23 +40,23 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 
 	if (strstr(props.name, "970"))
 	{
-		intensity = (256 * 64 * 4);
+		intensity = (256 * 16 * 20);
 	}
 	else if (strstr(props.name, "980"))
 	{
-		intensity = (256 * 64 * 4);
+		intensity = (256 * 16 * 20);
 	}
 	else if (strstr(props.name, "750 Ti"))
 	{
-		intensity = (256 * 64 * 3.5);
+		intensity = (256 * 16 * 14);
 	}
 	else if (strstr(props.name, "750"))
 	{
-		intensity = ((256 * 64 * 3.5) / 2);
+		intensity = (256 * 16 * 7);
 	}
 	else if (strstr(props.name, "960"))
 	{
-		intensity = (256 * 64 * 3.5);
+		intensity = (256 * 16 * 14);
 	}
 
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity);
@@ -72,6 +72,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
+		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * 4));
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 32 * 130 * sizeof(uint64_t) * throughput));
 		neoscrypt_cpu_init(thr_id, throughput,d_hash[thr_id]);
 		init[thr_id] = true;
@@ -90,7 +91,6 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 
 
 	neoscrypt_setBlockTarget(thr_id, endiandata, ptarget);
-	uint32_t foundNonce[2];
 
 	do {
 		int order = 0;

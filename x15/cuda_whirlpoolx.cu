@@ -204,7 +204,7 @@ void precomputeX(uint32_t threads, uint2*const __restrict__ d_xtra, uint64_t*con
 
 
 	getShared(sharedMemory);
-	const int thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 

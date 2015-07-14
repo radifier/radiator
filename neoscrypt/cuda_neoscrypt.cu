@@ -124,7 +124,7 @@ idx = BLAKE2S_SIGMA_host[idx0][idx1+1]; a += key[idx]; \
 			} 
 
 
-static __forceinline__ __device__ void Blake2S(uint32_t * inout, const uint32_t * TheKey)
+static __forceinline__ __device__ void Blake2S(uint32_t *const __restrict__ inout, const uint32_t *const __restrict__ TheKey)
 {
 	uint16 V;
 	uint32_t idx;
@@ -373,7 +373,7 @@ static __forceinline__ __host__ void Blake2Shost(uint32_t * inout, const uint32_
 	((uint8*)inout)[0] = V.lo;
 }
 
-static __forceinline__ __device__ void fastkdf256(int thread, const uint32_t * password, uint8_t * output)
+static __forceinline__ __device__ void fastkdf256(unsigned int thread, const uint32_t *const __restrict__ password, uint8_t *const __restrict__ output)
 {
 
 	uint8_t bufidx = 0;
@@ -463,11 +463,8 @@ static __forceinline__ __device__ void fastkdf256(int thread, const uint32_t * p
 
 }
 
-static __forceinline__ __device__ void fastkdf32(const uint32_t * password, const uint32_t * salt, uint32_t * output)
+static __forceinline__ __device__ void fastkdf32(const uint32_t *const __restrict__ password, const uint32_t *const __restrict__ salt, uint32_t *const __restrict__ output)
 {
-
-
-
 	uint8_t bufidx = 0;
 	uchar4 bufhelper;
 
@@ -648,11 +645,11 @@ static __device__ __forceinline__ void neoscrypt_salsa(uint16 *XV)
 #define SHIFT 130
 
 
-__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k0(int stratum, int threads, uint32_t startNonce)
+__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k0(int stratum, unsigned int threads, uint32_t startNonce)
 {
 
-	int thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	int shift = SHIFT * 16 * thread;
+	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const unsigned int shift = SHIFT * 16 * thread;
 	//	if (thread < threads)
 	{
 		const uint32_t nonce = startNonce + thread;
@@ -675,15 +672,13 @@ __global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k0(int stratum, int
 	}
 }
 
-__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k01(int threads, uint32_t startNonce)
+__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k01(unsigned int threads, uint32_t startNonce)
 {
 
-	int thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	int shift = SHIFT * 16 * thread;
+	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const unsigned int shift = SHIFT * 16 * thread;
 	//	if (thread < threads)
 	{
-
-
 		uint16 X[4];
 		((uintx64 *)X)[0] = __ldg32(&(W + shift)[0]);
 
@@ -695,16 +690,14 @@ __global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k01(int threads, ui
 
 			//			((uintx64 *)(W + shift))[i + 1] = ((uintx64 *)X)[0];
 		}
-
-
 	}
 }
 
-__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k2(int threads, uint32_t startNonce)
+__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k2(unsigned int threads, uint32_t startNonce)
 {
 
-	int thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	int shift = SHIFT * 16 * thread;
+	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const unsigned int shift = SHIFT * 16 * thread;
 	//	if (thread < threads)
 	{
 		uint16 X[4];
@@ -722,13 +715,13 @@ __global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k2(int threads, uin
 	}
 }
 
-__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k3(int threads, uint32_t startNonce)
+__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k3(unsigned int threads, uint32_t startNonce)
 {
-	int thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	//	if (thread < threads)
 	{
 
-		int shift = SHIFT * 16 * thread;
+		const unsigned int shift = SHIFT * 16 * thread;
 		uint16 Z[4];
 
 
@@ -746,15 +739,15 @@ __global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k3(int threads, uin
 	}
 }
 
-__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k4(int stratum, int threads, uint32_t startNonce, uint32_t *nonceVector)
+__global__ __launch_bounds__(128, 3) void neoscrypt_gpu_hash_k4(int stratum, unsigned int threads, uint32_t startNonce, uint32_t *nonceVector)
 {
 
-	int thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	//	if (thread < threads)
 	{
 		const uint32_t nonce = startNonce + thread;
 
-		int shift = SHIFT * 16 * thread;
+		const unsigned int shift = SHIFT * 16 * thread;
 		uint16 Z[4];
 		uint32_t outbuf[8];
 
@@ -785,7 +778,7 @@ __global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k4(int stratum, int
 	}
 }
 
-void neoscrypt_cpu_init(int thr_id, int threads, uint32_t *hash)
+void neoscrypt_cpu_init(int thr_id, unsigned int threads, uint32_t *hash)
 {
 
 	//	cudaMemcpyToSymbol(BLAKE2S_SIGMA, BLAKE2S_SIGMA_host, sizeof(BLAKE2S_SIGMA_host), 0, cudaMemcpyHostToDevice);
@@ -795,11 +788,11 @@ void neoscrypt_cpu_init(int thr_id, int threads, uint32_t *hash)
 }
 
 
-__host__ void neoscrypt_cpu_hash_k4(int stratum, int thr_id, int threads, uint32_t startNounce, int order, uint32_t* result)
+__host__ void neoscrypt_cpu_hash_k4(int stratum, int thr_id, unsigned int threads, uint32_t startNounce, int order, uint32_t* result)
 {
 	cudaMemsetAsync(d_NNonce[thr_id], 0xff, 2*sizeof(uint32_t), gpustream[thr_id]);
 
-	const int threadsperblock = 128;
+	const unsigned int threadsperblock = 128;
 
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
@@ -811,7 +804,7 @@ __host__ void neoscrypt_cpu_hash_k4(int stratum, int thr_id, int threads, uint32
 	neoscrypt_gpu_hash_k2 << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce);
 	neoscrypt_gpu_hash_k3 << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce);
 	neoscrypt_gpu_hash_k4 << <grid, block, 0, gpustream[thr_id] >> >(stratum, threads, startNounce, d_NNonce[thr_id]);
-
+	CUDA_SAFE_CALL(cudaGetLastError());
 	CUDA_SAFE_CALL(cudaMemcpyAsync(result, d_NNonce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
 
 	return;
