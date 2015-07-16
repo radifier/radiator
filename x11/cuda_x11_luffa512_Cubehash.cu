@@ -39,7 +39,7 @@ typedef struct
     a[1+(8*j)] = a[0+(8*j)] ^ tmp;\
     a[0+(8*j)] = tmp;
 
-#if __CUDA_ARCH__ < 350
+#if __CUDA_ARCH__ < 320
 #define LROT(x,bits) ((x << bits) | (x >> (32 - bits)))
 #else
 #define LROT(x, bits) __funnelshift_l(x, x, bits)
