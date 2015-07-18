@@ -14,12 +14,19 @@
 		t=  t>>4;\
 		y=  y ^ t;
 
+#ifndef NOASM
 #define SWAP4_final(x,y)\
-		t = (y<<4); \
-		t = (x ^ t); \
-		t = 0xf0f0f0f0UL & t; \
-		x = (x ^ t); \
-
+	asm("and.b32 %0, %0, 0x0f0f0f0f;"\
+	    "and.b32 %1, %1, 0x0f0f0f0f;"\
+	    "vshl.u32.u32.u32.clamp.add %0, %1, 4, %0;\n\t"\
+	    : "+r"(x) : "r"(y));
+#else
+#define SWAP4_final(x,y)\
+	t = (y << 4); \
+	t = (x ^ t); \
+	t = 0xf0f0f0f0UL & t; \
+	x = (x ^ t); 
+#endif
 
 #define SWAP2(x,y)\
 		t = (y<<2); \
