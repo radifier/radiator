@@ -73,21 +73,22 @@ extern cudaError_t MyStreamSynchronize(cudaStream_t stream, int situation, int t
 #define SPH_T64(x) (x)
 // #define SPH_T64(x) ((x) & SPH_C64(0xFFFFFFFFFFFFFFFF))
 #endif
+#define ROTL32c(x, n) ((x) << (n)) | ((x) >> (32 - (n)))
 #if __CUDA_ARCH__ < 320
 // Kepler (Compute 3.0)
 #define ROTL32(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 #define ROTR32(x, n) (((x) >> (n)) | ((x) << (32 - (n))))
 #else
-// Kepler (Compute 3.5, 5.0)
-#define ROTL32(x, n) __funnelshift_l( (x), (x), (n) )
-#define ROTR32(x, n) __funnelshift_r( (x), (x), (n) )
+__device__ __forceinline__ uint32_t ROTR32(const uint32_t x, const uint32_t n)
+{
+	return(__funnelshift_r((x), (x), (n)));
+}
 #endif
 
 // #define NOASM here if you don't want asm
 #ifndef __CUDA_ARCH__
 #define NOASM
 #endif
-
 __device__ __forceinline__ uint64_t MAKE_UINT64(uint32_t LO, uint32_t HI)
 {
 #ifndef NOASM
