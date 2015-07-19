@@ -201,6 +201,11 @@
 			ROUND_EVEN; \
 			ROUND_ODD;}
 __global__
+#if __CUDA_ARCH__ > 500
+__launch_bounds__(512, 2)
+#else
+__launch_bounds__(256, 5)
+#endif
 void x11_cubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *g_hash)
 {
 	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
@@ -228,7 +233,17 @@ void x11_cubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_
 		x6 ^= Hash[6];
 		x7 ^= Hash[7];
 
-		SIXTEEN_ROUNDS;
+#if __CUDA_ARCH__ > 500
+		#pragma unroll 
+		for (int j = 0; j < 8; j++)
+#else
+		#pragma unroll 1
+		for (int j = 0; j < 8; j++)
+#endif
+		{
+				ROUND_EVEN;
+				ROUND_ODD;
+		}
 
 		x0 ^= (Hash[8]);
 		x1 ^= (Hash[9]);
@@ -238,16 +253,32 @@ void x11_cubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_
 		x5 ^= (Hash[13]);
 		x6 ^= (Hash[14]);
 		x7 ^= (Hash[15]);
-
-		SIXTEEN_ROUNDS;
+#if __CUDA_ARCH__ > 500
+		#pragma unroll
+		for (int j = 0; j < 8; j++)
+#else
+		for (int j = 0; j < 8; j++)
+#endif
+		{
+			ROUND_EVEN;
+			ROUND_ODD;
+		}
 		x0 ^= 0x80;
 
-		SIXTEEN_ROUNDS;
+		for (int j = 0; j < 8; j++)
+		{
+			ROUND_EVEN;
+			ROUND_ODD;
+		}
 		xv ^= 1;
 
 		for(int i = 3; i < 13; i++)
 		{
-			SIXTEEN_ROUNDS;
+			for (int j = 0; j < 8; j++)
+			{
+				ROUND_EVEN;
+				ROUND_ODD;
+			}
 		}
 
 		Hash[0] = x0;
