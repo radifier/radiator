@@ -148,7 +148,7 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 	const uint32_t throughput = min(device_intensity(device_map[thr_id], __func__, intensity), (max_nonce - first_nonce)); // 19=256*256*8;
 
 	if (opt_benchmark)
-		ptarget)[7] = 0x4f;
+		ptarget[7] = 0x4f;
 
 	if (!init[thr_id])
 	{
