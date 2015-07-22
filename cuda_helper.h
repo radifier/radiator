@@ -73,16 +73,39 @@ extern cudaError_t MyStreamSynchronize(cudaStream_t stream, int situation, int t
 #define SPH_T64(x) (x)
 // #define SPH_T64(x) ((x) & SPH_C64(0xFFFFFFFFFFFFFFFF))
 #endif
+
+#if defined _MSC_VER && !defined __CUDA_ARCH__
+#define ROTL32c(x, n) _rotl(x, n)
+#define ROTR32c(x, n) _rotr(x, n)
+#else
 #define ROTL32c(x, n) ((x) << (n)) | ((x) >> (32 - (n)))
+#define ROTR32c(x, n) ((x) >> (n)) | ((x) << (32 - (n)))
+#endif
+
+#ifndef __CUDA_ARCH__
+#define ROTR32(x, n) ROTR32c(x, n)
+#define ROTL32(x, n) ROTL32c(x, n)
+#else
 #if __CUDA_ARCH__ < 320
 // Kepler (Compute 3.0)
-#define ROTL32(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
-#define ROTR32(x, n) (((x) >> (n)) | ((x) << (32 - (n))))
+__device__ __forceinline__ uint32_t ROTR32(const uint32_t x, const uint32_t n)
+{
+	return (x >> n) | (x << (32 - n));
+}
+__device__ __forceinline__ uint32_t ROTL32(const uint32_t x, const uint32_t n)
+{
+	return (x << n) | (x >> (32 - n));
+}
 #else
 __device__ __forceinline__ uint32_t ROTR32(const uint32_t x, const uint32_t n)
 {
-	return(__funnelshift_r((x), (x), (n)));
+	return __funnelshift_r(x, x, n);
 }
+__device__ __forceinline__ uint32_t ROTL32(const uint32_t x, const uint32_t n)
+{
+	return __funnelshift_l(x, x, n);
+}
+#endif
 #endif
 
 // #define NOASM here if you don't want asm
@@ -400,7 +423,11 @@ uint64_t ROTR64(const uint64_t x, const int offset)
 }
 #else
 /* host */
+#if defined _MSC_VER && !defined __CUDA_ARCH__
+#define ROTR64(x, n) _rotr64(x, n)
+#else
 #define ROTR64(x, n)  (((x) >> (n)) | ((x) << (64 - (n))))
+#endif
 #endif
 
 // 64-bit ROTATE LEFT
@@ -454,7 +481,11 @@ uint64_t ROTL64(const uint64_t x, const int offset)
 }
 #else
 /* host */
+#if defined _MSC_VER && !defined __CUDA_ARCH__
+#define ROTL64(x, n) _rotr64(x, n)
+#else
 #define ROTL64(x, n)  (((x) << (n)) | ((x) >> (64 - (n))))
+#endif
 #endif
 
 __device__ __forceinline__
