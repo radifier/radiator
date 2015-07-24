@@ -530,7 +530,7 @@ __device__ __forceinline__ uint64_t devectorize(uint2 x)
 #endif
 }
 
-__device__ __forceinline__ uint2 vectorize(uint64_t x)
+__device__ __forceinline__ uint2 vectorize(const uint64_t x)
 {
 #ifndef NOASM
 	uint2 result;
@@ -577,6 +577,16 @@ static __device__ __forceinline__ uint2 operator+ (uint2 a, uint2 b)
 #endif
 }
 
+static __device__ __forceinline__ uint2 operator+ (uint2 a, uint32_t b)
+{
+	uint2 result;
+	asm("{\n\t"
+		"add.cc.u32 %0,%2,%4; \n\t"
+		"addc.u32 %1,%3,%5;   \n\t"
+		"}\n\t"
+		: "=r"(result.x), "=r"(result.y) : "r"(a.x), "r"(a.y), "r"(b), "r"(0));
+	return result;
+}
 static __device__ __forceinline__ uint2 operator- (uint2 a, uint2 b)
 {
 #ifndef NOASM
@@ -591,6 +601,16 @@ static __device__ __forceinline__ uint2 operator- (uint2 a, uint2 b)
 return make_uint2(a.x - b.x, a.y - b.y);
 #endif
 }
+
+
+
+static __device__ __forceinline__ uint4 operator^ (uint4 a, uint4 b) { return make_uint4(a.x ^ b.x, a.y ^ b.y, a.z ^ b.z, a.w ^ b.w); }
+static __device__ __forceinline__ uint4 operator& (uint4 a, uint4 b) { return make_uint4(a.x & b.x, a.y & b.y, a.z & b.z, a.w & b.w); }
+static __device__ __forceinline__ uint4 operator| (uint4 a, uint4 b) { return make_uint4(a.x | b.x, a.y | b.y, a.z | b.z, a.w | b.w); }
+static __device__ __forceinline__ uint4 operator~ (uint4 a) { return make_uint4(~a.x, ~a.y, ~a.z, ~a.w); }
+static __device__ __forceinline__ void operator^= (uint4 &a, uint4 b) { a = a ^ b; }
+static __device__ __forceinline__ uint4 operator^ (uint4 a, uint2 b) { return make_uint4(a.x ^ b.x, a.y ^ b.y, a.z ^ b.x, a.w ^ b.y); }
+
 
 static __device__ __forceinline__ void operator+= (uint2 &a, uint2 b) { a = a + b; }
 
