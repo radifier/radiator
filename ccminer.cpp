@@ -1365,10 +1365,14 @@ static void *miner_thread(void *userdata)
 
 	while(1)
 	{
+		// &work.data[19]
+		int wcmplen = (opt_algo == ALGO_BITC) ? 140 : 76;
+		uint32_t *nonceptr = (uint32_t*)(((char*)work.data) + wcmplen);
+
 		if(opt_benchmark)
 		{
-			work.data[19] = work.data[19] & 0xfffffffU;	//reset Hashcounters
-			work.data[21] = work.data[21] & 0xfffffffU;
+			nonceptr[0] = nonceptr[0] & 0xfffffffU;	//reset Hashcounters
+			nonceptr[2] = nonceptr[2] & 0xfffffffU;
 		}
 
 		struct timeval tv_start, tv_end, diff;
@@ -1376,10 +1380,6 @@ static void *miner_thread(void *userdata)
 		uint32_t start_nonce;
 		uint32_t scan_time = have_longpoll ? LP_SCANTIME : opt_scantime;
 		uint64_t max64, minmax = 0x100000;
-
-		// &work.data[19]
-		int wcmplen = (opt_algo == ALGO_BITC) ? 140 : 76;
-		uint32_t *nonceptr = (uint32_t*)(((char*)work.data) + wcmplen);
 
 		if(have_stratum)
 		{
@@ -1537,6 +1537,7 @@ static void *miner_thread(void *userdata)
 		hashes_done = 0;
 		gettimeofday(&tv_start, NULL);
 
+		uint32_t databackup = nonceptr[2];
 		/* scan nonces for a proof-of-work hash */
 		switch(opt_algo)
 		{
@@ -1751,7 +1752,7 @@ static void *miner_thread(void *userdata)
 		if(check_dups)
 			hashlog_remember_scan_range(&work);
 
-		if(!opt_quiet && (opt_algo == ALGO_BITC) ? (loopcnt % 400 == 0) : (loopcnt>0))
+		if(!opt_quiet && (opt_algo == ALGO_BITC) ? (loopcnt % 10 == 1) : (loopcnt>0))
 		{
 			double hashrate;
 
@@ -1781,6 +1782,9 @@ static void *miner_thread(void *userdata)
 		/* if nonce found, submit work */
 		if(rc && !opt_benchmark)
 		{
+			uint32_t found2;
+			found2 = nonceptr[2];
+			nonceptr[2] = databackup;
 			if(!submit_work(mythr, &work))
 				break;
 
@@ -1796,15 +1800,14 @@ static void *miner_thread(void *userdata)
 			}
 
 			// second nonce found, submit too (on pool only!)
-			if(rc > 1 && work.data[21])
+			if(rc > 1 && nonceptr[2])
 			{
-				work.data[19] = work.data[21];
-				work.data[21] = 0;
+				nonceptr[0] = found2;
 				if(!submit_work(mythr, &work))
 					break;
 			}
 		}
-		work.data[19] = start_nonce + hashes_done;
+		nonceptr[0] = start_nonce + hashes_done;
 		loopcnt++;
 	}
 
