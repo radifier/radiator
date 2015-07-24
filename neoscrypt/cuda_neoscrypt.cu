@@ -645,7 +645,7 @@ static __device__ __forceinline__ void neoscrypt_salsa(uint16 *XV)
 #define SHIFT 130
 
 
-__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k0(int stratum, unsigned int threads, uint32_t startNonce)
+__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k0(int stratum, uint32_t threads, uint32_t startNonce)
 {
 
 	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
@@ -672,7 +672,7 @@ __global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k0(int stratum, uns
 	}
 }
 
-__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k01(unsigned int threads, uint32_t startNonce)
+__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k01(uint32_t threads, uint32_t startNonce)
 {
 
 	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
@@ -693,7 +693,7 @@ __global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k01(unsigned int th
 	}
 }
 
-__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k2(unsigned int threads, uint32_t startNonce)
+__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k2(uint32_t threads, uint32_t startNonce)
 {
 
 	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
@@ -715,7 +715,7 @@ __global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k2(unsigned int thr
 	}
 }
 
-__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k3(unsigned int threads, uint32_t startNonce)
+__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k3(uint32_t threads, uint32_t startNonce)
 {
 	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	//	if (thread < threads)
@@ -739,7 +739,7 @@ __global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k3(unsigned int thr
 	}
 }
 
-__global__ __launch_bounds__(128, 3) void neoscrypt_gpu_hash_k4(int stratum, unsigned int threads, uint32_t startNonce, uint32_t *nonceVector)
+__global__ __launch_bounds__(128, 3) void neoscrypt_gpu_hash_k4(int stratum, uint32_t threads, uint32_t startNonce, uint32_t *nonceVector)
 {
 
 	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
@@ -778,7 +778,7 @@ __global__ __launch_bounds__(128, 3) void neoscrypt_gpu_hash_k4(int stratum, uns
 	}
 }
 
-void neoscrypt_cpu_init(int thr_id, unsigned int threads, uint32_t *hash)
+void neoscrypt_cpu_init(int thr_id, uint32_t threads, uint32_t *hash)
 {
 
 	//	cudaMemcpyToSymbol(BLAKE2S_SIGMA, BLAKE2S_SIGMA_host, sizeof(BLAKE2S_SIGMA_host), 0, cudaMemcpyHostToDevice);
@@ -788,7 +788,7 @@ void neoscrypt_cpu_init(int thr_id, unsigned int threads, uint32_t *hash)
 }
 
 
-__host__ void neoscrypt_cpu_hash_k4(int stratum, int thr_id, unsigned int threads, uint32_t startNounce, int order, uint32_t* result)
+__host__ void neoscrypt_cpu_hash_k4(int stratum, int thr_id, uint32_t threads, uint32_t startNounce, int order, uint32_t* result)
 {
 	cudaMemsetAsync(d_NNonce[thr_id], 0xff, 2*sizeof(uint32_t), gpustream[thr_id]);
 

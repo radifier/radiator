@@ -15,8 +15,8 @@ static uint32_t *d_hash4[MAX_GPUS];
 
 
 extern void yescrypt_setBlockTarget(int thr_id, uint32_t * data, const void *ptarget);
-extern void yescrypt_cpu_init(int thr_id, unsigned int threads, uint32_t* hash, uint32_t* hash2, uint32_t* hash3, uint32_t* hash4);
-extern uint32_t yescrypt_cpu_hash_k4(int thr_id, unsigned int threads, uint32_t startNounce, int order);
+extern void yescrypt_cpu_init(int thr_id, uint32_t threads, uint32_t* hash, uint32_t* hash2, uint32_t* hash3, uint32_t* hash4);
+extern uint32_t yescrypt_cpu_hash_k4(int thr_id, uint32_t threads, uint32_t startNounce, int order);
   
 
 int scanhash_yescrypt(int thr_id, uint32_t *pdata,

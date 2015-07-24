@@ -12,8 +12,8 @@ static uint32_t *d_hash[MAX_GPUS] ;
 static uint32_t *foundNonce;
 
 extern void neoscrypt_setBlockTarget(int thr_id, uint32_t * data, const void *ptarget);
-extern void neoscrypt_cpu_init(int thr_id, unsigned int threads,uint32_t* hash);
-extern void neoscrypt_cpu_hash_k4(int stratum,int thr_id, unsigned int threads, uint32_t startNounce, int order, uint32_t* foundnonce);
+extern void neoscrypt_cpu_init(int thr_id, uint32_t threads,uint32_t* hash);
+extern void neoscrypt_cpu_hash_k4(int stratum,int thr_id, uint32_t threads, uint32_t startNounce, int order, uint32_t* foundnonce);
   
 
 int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,

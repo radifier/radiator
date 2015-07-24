@@ -553,7 +553,7 @@ static __forceinline__ __device__ void blockmix_pwxform3(unsigned int thread, ul
 }
 
 
-__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k0(unsigned int threads, uint32_t startNonce)
+__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k0(uint32_t threads, uint32_t startNonce)
 {
 
 	unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
@@ -606,7 +606,7 @@ __global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k0(unsigned int threa
 	}
 }
 
-__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k1(unsigned int threads, uint32_t startNonce)
+__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k1(uint32_t threads, uint32_t startNonce)
 {
 
 	unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
@@ -653,7 +653,7 @@ __global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k1(unsigned int threa
 #define thelength  8
 #define vectype ulonglong8to16
 
-__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k2c(unsigned int threads, uint32_t startNonce)
+__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k2c(uint32_t threads, uint32_t startNonce)
 {
 
 	unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
@@ -717,7 +717,7 @@ __global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k2c(unsigned int thre
 	}
 }
 
-__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k2c1(unsigned int threads, uint32_t startNonce)
+__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k2c1(uint32_t threads, uint32_t startNonce)
 {
 
 	unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
@@ -767,7 +767,7 @@ __global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k2c1(unsigned int thr
 	}
 }
 
-__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k5(unsigned int threads, uint32_t startNonce, uint32_t *nonceVector)
+__global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k5(uint32_t threads, uint32_t startNonce, uint32_t *nonceVector)
 {
 
 	unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
@@ -843,7 +843,7 @@ __global__ __launch_bounds__(16, 1) void yescrypt_gpu_hash_k5(unsigned int threa
 }
 
 
-void yescrypt_cpu_init(int thr_id, unsigned int threads, uint32_t *hash, uint32_t *hash2, uint32_t *hash3, uint32_t *hash4)
+void yescrypt_cpu_init(int thr_id, uint32_t threads, uint32_t *hash, uint32_t *hash2, uint32_t *hash3, uint32_t *hash4)
 {
     
 	cudaMemcpyToSymbolAsync(state2, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
@@ -855,7 +855,7 @@ void yescrypt_cpu_init(int thr_id, unsigned int threads, uint32_t *hash, uint32_
 } 
 
 
-__host__ uint32_t yescrypt_cpu_hash_k4(int thr_id, unsigned int threads, uint32_t startNounce,  int order)
+__host__ uint32_t yescrypt_cpu_hash_k4(int thr_id, uint32_t threads, uint32_t startNounce,  int order)
 {
 	uint32_t result;
 	cudaMemsetAsync(d_YNonce[thr_id], 0xffffffff, sizeof(uint32_t), gpustream[thr_id]);
