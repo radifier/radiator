@@ -7,10 +7,11 @@ extern "C"
 #include "cuda_helper.h"
 
 static uint32_t *d_hash[MAX_GPUS];
+static uint32_t *foundNonce;
 
 extern void bitcredit_setBlockTarget(int thr_id, uint32_t * data, const uint32_t * midstate, const void *ptarget);
 extern void bitcredit_cpu_init(int thr_id, uint32_t threads, uint32_t* hash);
-extern uint32_t bitcredit_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, int order);
+extern void bitcredit_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *result);
 
 void credithash(void *state, const void *input)
 {
@@ -53,6 +54,7 @@ int scanhash_bitcredit(int thr_id, uint32_t *pdata,
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 8 * sizeof(uint32_t) * throughput));
+		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * sizeof(uint32_t)));
 		bitcredit_cpu_init(thr_id, throughput, d_hash[thr_id]);
 		init[thr_id] = true;
 	}
@@ -62,19 +64,29 @@ int scanhash_bitcredit(int thr_id, uint32_t *pdata,
 		be32enc(&endiandata[k], ((uint32_t*)pdata)[k]);
 
 	bitcredit_setBlockTarget(thr_id, pdata, midstate, ptarget);
-	uint64_t nloop = max_nonce / throughput + 1;
 	do
 	{
-		int order = 0;
-		uint32_t foundNonce = bitcredit_cpu_hash(thr_id, throughput, pdata[35], order++);
-		if(stop_mining)	{ mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr); }
-		if(foundNonce != 0xffffffff)
+		bitcredit_cpu_hash(thr_id, throughput, pdata[35], foundNonce);
+		cudaStreamSynchronize(gpustream[thr_id]);
+		if(stop_mining)
 		{
-			applog(LOG_INFO, "GPU #%d: Found nonce %08x", thr_id, foundNonce);
+			mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);
+		}
+		if(foundNonce[0] != 0xffffffff)
+		{
+			int res = 1;
+			if(opt_benchmark)
+				applog(LOG_INFO, "GPU #%d: Found nonce %08x", thr_id, foundNonce[0]);
 			*hashes_done = pdata[35] - first_nonce + throughput;
-			pdata[35] = foundNonce;
-			return 1;
-
+			pdata[35] = foundNonce[0];
+			if(foundNonce[1] != 0xffffffff)
+			{
+				res = 2;
+				if(opt_benchmark)
+					applog(LOG_INFO, "GPU #%d: Found second nonce %08x", thr_id, foundNonce[1]);
+				pdata[37] = foundNonce[1];
+			}
+			return res;
 		}
 		pdata[35] += throughput;
 	} while(!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[35]) + (uint64_t)throughput)));
