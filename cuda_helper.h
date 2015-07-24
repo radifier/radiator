@@ -112,6 +112,9 @@ __device__ __forceinline__ uint32_t ROTL32(const uint32_t x, const uint32_t n)
 #ifndef __CUDA_ARCH__
 #define NOASM
 #endif
+
+#define MAKE_ULONGLONG(lo, hi) MAKE_UINT64(lo, hi)
+
 __device__ __forceinline__ uint64_t MAKE_UINT64(uint32_t LO, uint32_t HI)
 {
 #ifndef NOASM

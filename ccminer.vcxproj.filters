@@ -76,6 +76,9 @@
     <Filter Include="Source Files\CUDA\neoscrypt">
       <UniqueIdentifier>{0e14317b-d054-4f9e-8f6f-3bd91b3aa160}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\CUDA\bitcredit">
+      <UniqueIdentifier>{cfe20f7e-f3ee-4eea-8a07-1600a08dbe02}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="compat\jansson\dump.c">
@@ -237,6 +240,9 @@
     <ClCompile Include="api.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sph\sph_sha2.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="compat.h">
@@ -388,6 +394,9 @@
     </ClInclude>
     <ClInclude Include="sph\neoscrypt.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda_vector.h">
+      <Filter>Header Files\CUDA</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -606,6 +615,15 @@
     </CudaCompile>
     <CudaCompile Include="cuda_x11_aes_noasm.cu">
       <Filter>Source Files\CUDA\x11</Filter>
+    </CudaCompile>
+    <CudaCompile Include="x11\c11.cu">
+      <Filter>Source Files\CUDA\x11</Filter>
+    </CudaCompile>
+    <CudaCompile Include="bitcredit\bitcredit.cu">
+      <Filter>Source Files\CUDA\bitcredit</Filter>
+    </CudaCompile>
+    <CudaCompile Include="bitcredit\cuda_bitcredit.cu">
+      <Filter>Source Files\CUDA\bitcredit</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

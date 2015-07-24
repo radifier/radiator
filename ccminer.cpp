@@ -83,9 +83,11 @@ struct workio_cmd {
 
 enum sha_algos {
 	ALGO_ANIME,
+	ALGO_BITC,
 	ALGO_BITCOIN,
 	ALGO_BLAKE,
 	ALGO_BLAKECOIN,
+	ALGO_C11,
 	ALGO_DEEP,
 	ALGO_DMD_GR,
 	ALGO_DOOM,
@@ -115,14 +117,15 @@ enum sha_algos {
 	ALGO_X17,
 	ALGO_NEO,
 	ALGO_YES
-
 };
 
 static const char *algo_names[] = {
 	"anime",
+	"credit",
 	"bitcoin",
 	"blake",
 	"blakecoin",
+	"c11",
 	"deep",
 	"dmd-gr",
 	"doom", /* is luffa */
@@ -244,6 +247,8 @@ Options:\n\
 			bitcoin     Bitcoin\n\
 			blake       Blake 256 (SFR/NEOS)\n\
 			blakecoin   Fast Blake 256 (8 rounds)\n\
+			c11         X11 variant\n\
+			credit      Credit\n\
 			deep        Deepcoin\n\
 			dmd-gr      Diamond-Groestl\n\
 			fresh       Freshcoin (shavite 80)\n\
@@ -513,11 +518,17 @@ static bool jobj_binary(const json_t *obj, const char *key,
 static bool work_decode(const json_t *val, struct work *work)
 {
 	int data_size = sizeof(work->data), target_size = sizeof(work->target);
+	int midstate_size;
 	int adata_sz = ARRAY_SIZE(work->data), atarget_sz = ARRAY_SIZE(work->target);
 	int i;
 
 	data_size = (opt_algo == ALGO_NEO) ? 80 : data_size; //silly and lazy
 	adata_sz = (opt_algo == ALGO_NEO) ? 20 : adata_sz;
+	if(opt_algo == ALGO_BITC)
+	{
+		data_size = 168;
+		midstate_size = sizeof(work->midstate);
+	}
 
 	if(unlikely(!jobj_binary(val, "data", work->data, data_size)))
 	{
@@ -528,6 +539,18 @@ static bool work_decode(const json_t *val, struct work *work)
 	{
 		applog(LOG_ERR, "JSON inval target");
 		return false;
+	}
+
+	if(opt_algo == ALGO_BITC)
+	{
+		if(unlikely(!jobj_binary(val, "midstate", work->midstate, midstate_size)))
+		{
+			applog(LOG_ERR, "JSON inval midstate");
+			return false;
+		}
+
+		for(i = 0; i < midstate_size >> 2; i++)
+			work->midstate[i] = le32dec(work->midstate + i);
 	}
 
 	if(opt_algo == ALGO_HEAVY)
@@ -1355,7 +1378,7 @@ static void *miner_thread(void *userdata)
 		uint64_t max64, minmax = 0x100000;
 
 		// &work.data[19]
-		int wcmplen = 76;
+		int wcmplen = (opt_algo == ALGO_BITC) ? 140 : 76;
 		uint32_t *nonceptr = (uint32_t*)(((char*)work.data) + wcmplen);
 
 		if(have_stratum)
@@ -1454,10 +1477,12 @@ static void *miner_thread(void *userdata)
 			case ALGO_KECCAK:
 			case ALGO_BLAKECOIN:
 			case ALGO_BLAKE:
+			case ALGO_BITC:
 				minmax = 0x70000000U;
 				break;
 			case ALGO_SKEIN:
 			case ALGO_BITCOIN:
+			case ALGO_WHCX:
 			case ALGO_NEO:
 			case ALGO_QUBIT:
 			case ALGO_QUARK:
@@ -1468,10 +1493,11 @@ static void *miner_thread(void *userdata)
 			case ALGO_LUFFA_DOOM:
 				minmax = 0x2000000;
 				break;
-				minmax = 0x800000;
-				break;
 			case ALGO_S3:
 			case ALGO_X11:
+			case ALGO_C11:
+				minmax = 0x800000;
+				break;
 			case ALGO_X13:
 				minmax = 0x400000;
 				break;
@@ -1539,6 +1565,11 @@ static void *miner_thread(void *userdata)
 		case ALGO_LUFFA_DOOM:
 			rc = scanhash_doom(thr_id, work.data, work.target,
 							   max_nonce, &hashes_done);
+			break;
+
+		case ALGO_C11:
+			rc = scanhash_c11(thr_id, work.data, work.target,
+							  max_nonce, &hashes_done);
 			break;
 
 		case ALGO_FUGUE256:
@@ -1664,6 +1695,10 @@ static void *miner_thread(void *userdata)
 			rc = scanhash_yescrypt(thr_id, work.data, work.target, max_nonce, &hashes_done);
 			break;
 
+		case ALGO_BITC:
+			rc = scanhash_bitcredit(thr_id, work.data, work.target, work.midstate, max_nonce, &hashes_done);
+			break;
+
 		default:
 			/* should never happen */
 			goto out;
@@ -1716,7 +1751,7 @@ static void *miner_thread(void *userdata)
 		if(check_dups)
 			hashlog_remember_scan_range(&work);
 
-		if(!opt_quiet && (loopcnt > 0))
+		if(!opt_quiet && (opt_algo == ALGO_BITC) ? (loopcnt % 400 == 0) : (loopcnt>0))
 		{
 			double hashrate;
 
