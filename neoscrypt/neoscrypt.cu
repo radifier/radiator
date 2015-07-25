@@ -14,7 +14,8 @@ static uint32_t *foundNonce;
 extern void neoscrypt_setBlockTarget(int thr_id, uint32_t * data, const void *ptarget);
 extern void neoscrypt_cpu_init(int thr_id, uint32_t threads,uint32_t* hash);
 extern void neoscrypt_cpu_hash_k4(int stratum,int thr_id, uint32_t threads, uint32_t startNounce, int order, uint32_t* foundnonce);
-  
+extern uint32_t neoscrypt_cpu_hash_k4_52(int stratum, int thr_id, int threads, uint32_t startNounce, int order);
+
 
 int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
     uint32_t *ptarget, uint32_t max_nonce,
@@ -94,9 +95,18 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 
 	do {
 		int order = 0;
-		neoscrypt_cpu_hash_k4(stratum, thr_id, throughput, pdata[19], order++, foundNonce);
+		if (device_sm[device_map[thr_id]] > 500)
+			foundNonce = neoscrypt_cpu_hash_k4_52(stratum, thr_id, throughput, pdata[19], order++);
+		else
+			foundNonce = neoscrypt_cpu_hash_k4(stratum, thr_id, throughput, pdata[19], order++);
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		if(foundNonce[0] != 0xffffffff)
+		
+
+
+
+
+
 		{
 			uint32_t vhash64[8];
 
