@@ -334,6 +334,7 @@ static __forceinline__ __host__ void Blake2Shost(uint32_t * inout, const uint32_
 
 	V.hi.s4 ^= BLAKE2S_BLOCK_SIZE;
 
+
 	for(int x = 0; x < 10; ++x)
 	{
 		BLAKE_Ghost(x, 0x00, V.lo.s0, V.lo.s4, V.hi.s0, V.hi.s4, inkey);
@@ -392,27 +393,27 @@ static __forceinline__ __device__ void fastkdf256(unsigned int thread, const uin
 	((uint816*)input)[0] = ((uint816*)input_init)[0];
 	((uint48*)key)[0] = ((uint48*)key_init)[0];
 
-
-	for(int i = 0; i < 32; ++i)
+	#pragma unroll
+	for (int i = 0; i < 31; ++i)
 	{
 
-		//		Blake2Stest(thread,input, key);
-
 		bufhelper = ((uchar4*)input)[0];
+		#pragma unroll
 		for(int x = 1; x < BLAKE2S_OUT_SIZE / 4; ++x)
 		{
 			bufhelper += ((uchar4*)input)[x];
 		}
 		bufidx = bufhelper.x + bufhelper.y + bufhelper.z + bufhelper.w;
 
-		int qbuf = bufidx / 4;
+		int qbuf = bufidx >> 2;
 		int rbuf = bufidx & 3;
 		int bitbuf = rbuf << 3;
 		uint32_t shifted[9];
 
 		shift256R2(shifted, ((uint8*)input)[0], bitbuf);
 
-		for(int k = 0; k < 9; ++k)
+		#pragma unroll
+		for (int k = 0; k < 9; ++k) 
 		{
 			((uint32_t *)B)[k + qbuf] ^= ((uint32_t *)shifted)[k];
 		}
@@ -425,25 +426,45 @@ static __forceinline__ __device__ void fastkdf256(unsigned int thread, const uin
 		{
 			((uint8*)B)[0] = ((uint8*)B)[8];
 		}
-
-		if(i<31)
-		{
+	#pragma unroll
 			for(int k = 0; k <BLAKE2S_BLOCK_SIZE / 4; k++)
 			{
 				((uchar4*)(input))[k] = make_uchar4((A + bufidx)[4 * k], (A + bufidx)[4 * k + 1],
 													(A + bufidx)[4 * k + 2], (A + bufidx)[4 * k + 3]);
 			}
 
-			for(int k = 0; k <BLAKE2S_KEY_SIZE / 4; k++)
-			{
+		#pragma unroll
+		for (int k = 0; k <BLAKE2S_KEY_SIZE / 4; k++) 
+		{
 				((uchar4*)(key))[k] = make_uchar4((B + bufidx)[4 * k], (B + bufidx)[4 * k + 1],
 												  (B + bufidx)[4 * k + 2], (B + bufidx)[4 * k + 3]);
 			}
 			Blake2S((uint32_t*)input, key);
+        
 		}
+	bufhelper = ((uchar4*)input)[0];
+	#pragma unroll
+	for (int x = 1; x < BLAKE2S_OUT_SIZE / 4; ++x) { bufhelper += ((uchar4*)input)[x]; }
+	bufidx = bufhelper.x + bufhelper.y + bufhelper.z + bufhelper.w;
+
+	int qbuf = bufidx >> 2;
+	int rbuf = bufidx & 3;
+	int bitbuf = rbuf << 3;
+	uint32_t shifted[9];
+
+	shift256R2(shifted, ((uint8*)input)[0], bitbuf);
+
+#pragma unroll
+	for (int k = 0; k < 9; ++k) {
+		((uint32_t *)B)[k + qbuf] ^= ((uint32_t *)shifted)[k];
 	}
+
+	if (bufidx < BLAKE2S_KEY_SIZE)                          { ((uint8*)B)[8] = ((uint8*)B)[0]; }
+	else if (bufidx > FASTKDF_BUFFER_SIZE - BLAKE2S_OUT_SIZE) { ((uint8*)B)[0] = ((uint8*)B)[8]; }
+
+
 	int left = FASTKDF_BUFFER_SIZE - bufidx;
-	int qleft = left / 4;
+	int qleft = left >> 2;
 	int rleft = left & 3;
 	for(int k = 0; k < qleft; ++k)
 	{
@@ -479,13 +500,15 @@ static __forceinline__ __device__ void fastkdf32(const uint32_t *const __restric
 	((uint816*)input)[0] = ((uint816*)password)[0];
 	((uint48*)key)[0] = ((uint48*)salt)[0];
 
-	for(int i = 0; i < 32; ++i)
+	#pragma unroll
+	for (int i = 0; i < 31; ++i)
 	{
 
 		Blake2S((uint32_t*)input, key);
 
 		bufidx = 0;
 		bufhelper = ((uchar4*)input)[0];
+		#pragma unroll
 		for(int x = 1; x < BLAKE2S_OUT_SIZE / 4; ++x)
 		{
 			bufhelper += ((uchar4*)input)[x];
@@ -498,13 +521,13 @@ static __forceinline__ __device__ void fastkdf32(const uint32_t *const __restric
 
 		shift256R2(shifted, ((uint8*)input)[0], bitbuf);
 
-		for(int k = 0; k < 9; ++k)
+	#pragma unroll
+		for (int k = 0; k < 9; ++k)
 		{
 			((uint32_t *)B)[k + qbuf] ^= ((uint32_t *)shifted)[k];
 		}
 
-		if(i<31)
-		{
+		
 			if(bufidx < BLAKE2S_KEY_SIZE)
 			{
 				((uint8*)B)[8] = ((uint8*)B)[0];
@@ -513,19 +536,37 @@ static __forceinline__ __device__ void fastkdf32(const uint32_t *const __restric
 			{
 				((uint8*)B)[0] = ((uint8*)B)[8];
 			}
-			//		MyUnion Test;
-
+			#pragma unroll
 			for(uint8_t k = 0; k <BLAKE2S_BLOCK_SIZE / 4; k++)
 			{
 				((uchar4*)(input))[k] =
 					make_uchar4((A + bufidx)[4 * k], (A + bufidx)[4 * k + 1], (A + bufidx)[4 * k + 2], (A + bufidx)[4 * k + 3]);
 			}
-			for(uint8_t k = 0; k <BLAKE2S_KEY_SIZE / 4; k++)
-			{
+		#pragma unroll
+		for (uint8_t k = 0; k <BLAKE2S_KEY_SIZE / 4; k++)
+		{
 				((uchar4*)(key))[k] =
 					make_uchar4((B + bufidx)[4 * k], (B + bufidx)[4 * k + 1], (B + bufidx)[4 * k + 2], (B + bufidx)[4 * k + 3]);
 			}
-		}
+	}
+	Blake2S((uint32_t*)input, key);
+
+	bufidx = 0;
+	bufhelper = ((uchar4*)input)[0];
+	#pragma unroll
+	for (int x = 1; x < BLAKE2S_OUT_SIZE / 4; ++x) { bufhelper += ((uchar4*)input)[x]; }
+	bufidx = bufhelper.x + bufhelper.y + bufhelper.z + bufhelper.w;
+	int qbuf = bufidx / 4;
+	int rbuf = bufidx & 3;
+	int bitbuf = rbuf << 3;
+	uint32_t shifted[9];
+
+	shift256R2(shifted, ((uint8*)input)[0], bitbuf);
+
+	#pragma unroll
+	for (int k = 0; k < 9; ++k)
+	{
+		((uint32_t *)B)[k + qbuf] ^= ((uint32_t *)shifted)[k];
 	}
 
 
@@ -587,8 +628,7 @@ c += d; b = rotate(b^c, 7); \
 
 
 
-
-static __forceinline__ __device__ uint16 salsa_small_scalar_rnd(const uint16 &X)
+__forceinline__ __device__ uint16 salsa_small_scalar_rnd(const uint16 &X)
 {
 	uint16 state = X;
 	uint32_t t;
@@ -601,7 +641,7 @@ static __forceinline__ __device__ uint16 salsa_small_scalar_rnd(const uint16 &X)
 	return(X + state);
 }
 
-static __device__ __forceinline__ uint16 chacha_small_parallel_rnd(const uint16 &X)
+__device__ __forceinline__ uint16 chacha_small_parallel_rnd(const uint16 &X)
 {
 
 	uint16 st = X;
@@ -645,18 +685,25 @@ static __device__ __forceinline__ void neoscrypt_salsa(uint16 *XV)
 #define SHIFT 130
 
 
-__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k0(int stratum, uint32_t threads, uint32_t startNonce)
+__global__
+#if __CUDA_ARCH__ > 500
+__launch_bounds__(128, 2)
+#else
+__launch_bounds__(128, 3)
+#endif
+void neoscrypt_gpu_hash_k0(int stratum, int threads, uint32_t startNonce)
 {
 
 	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	const unsigned int shift = SHIFT * 16 * thread;
-	//	if (thread < threads)
+	if (thread < threads)
 	{
 		const uint32_t nonce = startNonce + thread;
 
 		uint16 X[4];
 		uint32_t data[80];
 
+		#pragma unroll
 		for(int i = 0; i<20; i++)
 		{
 			((uint4*)data)[i] = ((uint4 *)c_data)[i];
@@ -672,17 +719,17 @@ __global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k0(int stratum, uin
 	}
 }
 
-__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k01(uint32_t threads, uint32_t startNonce)
+__global__ __launch_bounds__(128, 2) void neoscrypt_gpu_hash_k01(int threads, uint32_t startNonce)
 {
 
 	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	const unsigned int shift = SHIFT * 16 * thread;
-	//	if (thread < threads)
+	if (thread < threads)
 	{
 		uint16 X[4];
 		((uintx64 *)X)[0] = __ldg32(&(W + shift)[0]);
 
-		//#pragma unroll
+		#pragma unroll
 		for(int i = 0; i < 128; ++i)
 		{
 			neoscrypt_chacha(X);
@@ -693,16 +740,17 @@ __global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k01(uint32_t thread
 	}
 }
 
-__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k2(uint32_t threads, uint32_t startNonce)
+__global__ __launch_bounds__(128, 2) void neoscrypt_gpu_hash_k2(int threads, uint32_t startNonce)
 {
 
 	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	const unsigned int shift = SHIFT * 16 * thread;
-	//	if (thread < threads)
+	if (thread < threads)
 	{
 		uint16 X[4];
 		((uintx64 *)X)[0] = __ldg32(&(W + shift)[2048]);
 
+		#pragma unroll 
 		for(int t = 0; t < 128; t++)
 		{
 			int idx = X[3].lo.s0 & 0x7F;
@@ -715,10 +763,10 @@ __global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k2(uint32_t threads
 	}
 }
 
-__global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k3(uint32_t threads, uint32_t startNonce)
+__global__ __launch_bounds__(128, 2) void neoscrypt_gpu_hash_k3(int threads, uint32_t startNonce)
 {
 	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	//	if (thread < threads)
+	if (thread < threads)
 	{
 
 		const unsigned int shift = SHIFT * 16 * thread;
@@ -727,7 +775,7 @@ __global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k3(uint32_t threads
 
 		((uintx64*)Z)[0] = __ldg32(&(W + shift)[0]);
 
-		//#pragma unroll 
+		#pragma unroll 
 		for(int i = 0; i < 128; ++i)
 		{
 			neoscrypt_salsa(Z);
@@ -739,11 +787,12 @@ __global__ __launch_bounds__(128, 1) void neoscrypt_gpu_hash_k3(uint32_t threads
 	}
 }
 
-__global__ __launch_bounds__(128, 3) void neoscrypt_gpu_hash_k4(int stratum, uint32_t threads, uint32_t startNonce, uint32_t *nonceVector)
+
+__global__ __launch_bounds__(32, 12) void neoscrypt_gpu_hash_k4(int stratum, int threads, uint32_t startNonce, uint32_t *nonceVector)
 {
 
 	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	//	if (thread < threads)
+	if (thread < threads)
 	{
 		const uint32_t nonce = startNonce + thread;
 
@@ -753,6 +802,7 @@ __global__ __launch_bounds__(128, 3) void neoscrypt_gpu_hash_k4(int stratum, uin
 
 		uint32_t data[80];
 
+		#pragma unroll
 		for(int i = 0; i<20; i++)
 		{
 			((uint4*)data)[i] = ((uint4 *)c_data)[i];
@@ -761,6 +811,7 @@ __global__ __launch_bounds__(128, 3) void neoscrypt_gpu_hash_k4(int stratum, uin
 		data[39] = data[19];
 		data[59] = data[19];
 		((uintx64 *)Z)[0] = __ldg32(&(W + shift)[2048]);
+		#pragma unroll
 		for(int t = 0; t < 128; t++)
 		{
 			int idx = Z[3].lo.s0 & 0x7F;
@@ -792,7 +843,7 @@ __host__ void neoscrypt_cpu_hash_k4(int stratum, int thr_id, uint32_t threads, u
 {
 	cudaMemsetAsync(d_NNonce[thr_id], 0xff, 2*sizeof(uint32_t), gpustream[thr_id]);
 
-	const unsigned int threadsperblock = 128;
+	const unsigned int threadsperblock = 32;
 
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
