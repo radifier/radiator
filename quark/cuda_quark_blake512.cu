@@ -8,6 +8,7 @@
 #define USE_SHUFFLE 0
 
 __constant__ uint2 c_PaddedM[16];
+__constant__ uint2 Hostprecalc[16];
 
 // ---------------------------- BEGIN CUDA quark_blake512 functions ------------------------------------
 
@@ -21,6 +22,19 @@ __constant__ uint2 c_PaddedM[16];
 	v[c] += v[d]; \
 	v[b] = ROR2(v[b] ^ v[c], 11); \
 	}
+
+
+#define GprecalcHost(a,b,c,d,idx1,idx2) { \
+	v[a] += (block[idx2] ^ u512[idx1]) + v[b]; \
+	v[d] = ROTR64( v[d] ^ v[a],32); \
+	v[c] += v[d]; \
+	v[b] = ROTR64(v[b] ^ v[c], 25); \
+	v[a] += (block[idx1] ^ u512[idx2]) + v[b]; \
+	v[d] = ROTR64(v[d] ^ v[a],16); \
+	v[c] += v[d]; \
+	v[b] = ROTR64(v[b] ^ v[c], 11); \
+		}
+
 
 __global__ 
 #if __CUDA_ARCH__ > 500
@@ -469,6 +483,7 @@ void quark_blake512_gpu_hash_80(uint32_t threads, uint32_t startNounce, uint32_t
 	}
 }
 
+
 // ---------------------------- END CUDA quark_blake512 functions ------------------------------------
 
 __host__ void quark_blake512_cpu_init(int thr_id)
@@ -481,6 +496,64 @@ __host__ void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata)
 	for (int i = 0; i < 10; i++)
 		PaddedMessage[i] = cuda_swab64(pdata[i]);
 	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedM, PaddedMessage, 10 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+
+	uint64_t block[16];
+
+	uint64_t *peker = (uint64_t *)&PaddedMessage[0];
+
+	block[0] = peker[0];
+	block[1] = peker[1];
+	block[2] = peker[2];
+	block[3] = peker[3];
+	block[4] = peker[4];
+	block[5] = peker[5];
+	block[6] = peker[6];
+	block[7] = peker[7];
+	block[8] = peker[8];
+	block[9] = peker[9];
+	block[10] = 0x8000000000000000;
+	block[11] = 0;
+	block[12] = 0;
+	block[13] = 1;
+	block[14] = 0;
+	block[15] = 280;
+
+	const uint64_t u512[16] =
+	{
+		0x243f6a8885a308d3ULL, 0x13198a2e03707344ULL,
+		0xa4093822299f31d0ULL, 0x082efa98ec4e6c89ULL,
+		0x452821e638d01377ULL, 0xbe5466cf34e90c6cULL,
+		0xc0ac29b7c97c50ddULL, 0x3f84d5b5b5470917ULL,
+		0x9216d5d98979fb1bULL, 0xd1310ba698dfb5acULL,
+		0x2ffd72dbd01adfb7ULL, 0xb8e1afed6a267e96ULL,
+		0xba7c9045f12c7f99ULL, 0x24a19947b3916cf7ULL,
+		0x0801f2e2858efc16ULL, 0x636920d871574e69ULL
+	};
+
+	uint64_t h[8] = {
+		0x6a09e667f3bcc908ULL,
+		0xbb67ae8584caa73bULL,
+		0x3c6ef372fe94f82bULL,
+		0xa54ff53a5f1d36f1ULL,
+		0x510e527fade682d1ULL,
+		0x9b05688c2b3e6c1fULL,
+		0x1f83d9abfb41bd6bULL,
+		0x5be0cd19137e2179ULL
+	};
+
+	uint64_t v[16] =
+	{
+		h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7],
+		u512[0], u512[1], u512[2], u512[3], u512[4] ^ 640, u512[5] ^ 640, u512[6], u512[7]
+	};
+	
+	GprecalcHost(0, 4, 8, 12, 0x1, 0x0)
+	GprecalcHost(1, 5, 9, 13, 0x3, 0x2)
+	GprecalcHost(2, 6, 10, 14, 0x5, 0x4)
+	GprecalcHost(3, 7, 11, 15, 0x7, 0x6)
+
+	CUDA_SAFE_CALL(cudaMemcpyToSymbol(Hostprecalc, &v[0], 10 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice));
+
 
 }
 
