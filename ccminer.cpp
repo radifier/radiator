@@ -115,8 +115,7 @@ enum sha_algos {
 	ALGO_X14,
 	ALGO_X15,
 	ALGO_X17,
-	ALGO_NEO,
-	ALGO_YES
+	ALGO_NEO
 };
 
 static const char *algo_names[] = {
@@ -153,8 +152,7 @@ static const char *algo_names[] = {
 	"x14",
 	"x15",
 	"x17",
-	"neoscrypt",
-	"yesscrypt"
+	"neoscrypt"
 };
 
 bool opt_debug = false;
@@ -1265,7 +1263,6 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 	{
 	case ALGO_JACKPOT:
 	case ALGO_NEO:
-	case ALGO_YES:
 		diff_to_target(work->target, sctx->job.diff / (65536.0 * opt_difficulty));
 		break;
 	case ALGO_DMD_GR:
@@ -1690,10 +1687,7 @@ static void *miner_thread(void *userdata)
 			break;
 
 		case ALGO_NEO:
-			rc = scanhash_neoscrypt(have_stratum, thr_id, work.data, work.target, max_nonce, &hashes_done);			break;
-
-		case ALGO_YES:
-			rc = scanhash_yescrypt(thr_id, work.data, work.target, max_nonce, &hashes_done);
+			rc = scanhash_neoscrypt(have_stratum, thr_id, work.data, work.target, max_nonce, &hashes_done);
 			break;
 
 		case ALGO_BITC:
