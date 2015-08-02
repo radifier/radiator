@@ -286,8 +286,6 @@
     <ClCompile Include="sph\neoscrypt.c" />
     <ClCompile Include="sph\sha256_Y.c" />
     <ClCompile Include="sph\sph_sha2.c" />
-    <ClCompile Include="sph\yescrypt-opt.c" />
-    <ClCompile Include="sph\yescryptcommon.c" />
     <ClCompile Include="util.cpp" />
     <ClCompile Include="fuguecoin.cpp" />
     <ClCompile Include="groestlcoin.cpp" />
@@ -376,7 +374,6 @@
     <ClInclude Include="sph\sph_types.h" />
     <ClInclude Include="sph\sph_whirlpool.h" />
     <ClInclude Include="sph\sysendian.h" />
-    <ClInclude Include="sph\yescrypt.h" />
     <ClInclude Include="uint256.h" />
   </ItemGroup>
   <ItemGroup>
@@ -545,12 +542,6 @@
     <CudaCompile Include="x15\x15.cu">
     </CudaCompile>
     <CudaCompile Include="x17\x17.cu">
-    </CudaCompile>
-    <CudaCompile Include="yescrypt\cuda_yescrypt.cu">
-      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_32,sm_32</CodeGeneration>
-    </CudaCompile>
-    <CudaCompile Include="yescrypt\yescrypt.cu">
-      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_32,sm_32</CodeGeneration>
     </CudaCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

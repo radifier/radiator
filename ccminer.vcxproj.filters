@@ -383,9 +383,6 @@
     <ClInclude Include="lyra2\Sponge.h">
       <Filter>Header Files\lyra2</Filter>
     </ClInclude>
-    <ClInclude Include="sph\yescrypt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="sph\sysendian.h">
       <Filter>Header Files</Filter>
     </ClInclude>
