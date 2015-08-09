@@ -5,13 +5,9 @@
 //
 // STEP8_IF and STEP8_MAJ beinhalten je 2x 8-fach parallel Operations
 
-#if __CUDA_ARCH__ <= 500
 #define TPB 256
-#else
-#define TPB 224
-#endif
-
 #include "cuda_helper.h"
+#include "cuda_vector.h"
 #include <stdio.h>
 
 
