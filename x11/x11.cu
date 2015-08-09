@@ -58,7 +58,8 @@ extern void x11_shavite512_cpu_init(int thr_id, uint32_t threads);
 extern void x11_shavite512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce,  uint32_t *d_hash);
 
 extern int  x11_simd512_cpu_init(int thr_id, uint32_t threads);
-extern void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
+extern void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash, const uint32_t simdthreads);
+
 
 extern void x11_echo512_cpu_init(int thr_id, uint32_t threads);
 extern void x11_echo512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
@@ -144,8 +145,9 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 {
 	const uint32_t first_nonce = pdata[19];
 
-	int intensity = (device_sm[device_map[thr_id]] > 500) ? 256 * 256 * 21 : 256 * 256 * 10;
+	uint32_t intensity = (device_sm[device_map[thr_id]] > 500) ? 256 * 256 * 22 : 256 * 256 * 5;
 	const uint32_t throughput = min(device_intensity(device_map[thr_id], __func__, intensity), (max_nonce - first_nonce)); // 19=256*256*8;
+	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
 
 	if (opt_benchmark)
 		ptarget[7] = 0x4f;
@@ -182,7 +184,7 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 		cuda_jh512Keccak512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		x11_luffaCubehash512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		x11_shavite512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
+		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id], simdthreads);
 		x11_echo512_cpu_hash_64_final(thr_id, throughput, pdata[19], d_hash[thr_id], ptarget[7], h_found);
 		cudaStreamSynchronize(gpustream[thr_id]);
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}

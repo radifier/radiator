@@ -15,7 +15,6 @@
 #include <stdio.h>
 
 
-
 static uint32_t *d_state[MAX_GPUS];
 static uint4 *d_temp4[MAX_GPUS];
 
@@ -739,13 +738,20 @@ x11_simd512_gpu_expand_64(uint32_t threads, uint32_t startNounce, const uint64_t
 	}
 }
 
-__global__ void __launch_bounds__(TPB, 1)
-x11_simd512_gpu_compress1_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash,  uint4 *g_fft4, uint32_t *g_state)
+__global__
+#if __CUDA_ARCH__ > 500
+__launch_bounds__(TPB, 2)
+#else
+__launch_bounds__(32, 32)
+#endif
+void x11_simd512_gpu_compress_64_maxwell(uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint4 *g_fft4)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
 		const uint32_t nounce = (startNounce + thread);
+		uint4 g_state[64];
+
 
 		const uint32_t hashPosition = nounce - startNounce;
 		uint32_t *const Hash = (uint32_t*)&g_hash[8 * hashPosition];
@@ -779,12 +785,13 @@ x11_simd512_gpu_compress_64_maxwell(uint32_t threads, uint32_t startNounce, uint
 		const uint32_t hashPosition = nounce - startNounce;
 		uint32_t *const Hash = (uint32_t*)&g_hash[8 * hashPosition];
 
-		Compression1(Hash, hashPosition, g_fft4, g_state);
-		Compression2(hashPosition, g_fft4, g_state);
+		Compression1(Hash, hashPosition, g_fft4, (uint32_t *)g_state);
+		Compression2(hashPosition, g_fft4, (uint32_t *)&g_state);
+		Final(Hash, hashPosition, g_fft4, (uint32_t *)&g_state);
 	}
 }
 
-
+/*
 __global__ void  __launch_bounds__(TPB, 4)
 x11_simd512_gpu_final_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint4 *g_fft4, uint32_t *g_state)
 {
@@ -799,11 +806,11 @@ x11_simd512_gpu_final_64(uint32_t threads, uint32_t startNounce, uint64_t *g_has
 		Final(Hash, hashPosition, g_fft4, g_state);
 	}
 }
+*/
 
 __host__ 
 int x11_simd512_cpu_init(int thr_id, uint32_t threads)
 {
-	CUDA_SAFE_CALL(cudaMalloc(&d_state[thr_id], 32*sizeof(int)*threads));
 	CUDA_SAFE_CALL(cudaMalloc(&d_temp4[thr_id], 64*sizeof(uint4)*threads));
 
 	// Texture for 128-Bit Zugriffe
@@ -816,22 +823,19 @@ int x11_simd512_cpu_init(int thr_id, uint32_t threads)
 }
 void x11_simd512_cpu_free(int thr_id)
 {
-	cudaFree(&d_state[thr_id]);
 	cudaFree(&d_temp4[thr_id]);
 }
+
 __host__
-void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash)
+void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash, uint32_t simdthreads)
 {
-	int tpb;
-	if (device_sm[device_map[thr_id]] == 520)
-		tpb = 224;
-	else
-		tpb = 256;
+	dim3 block(simdthreads);
+	dim3 grid8(((threads + simdthreads - 1) / simdthreads) * 8);
 
-	dim3 block(tpb);
-	dim3 grid8(((threads + tpb-1)/tpb)*8);
-
-	x11_simd512_gpu_expand_64 <<<grid8, block, 0, gpustream[thr_id]>>> (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id]);
+	x11_simd512_gpu_expand_64 <<<grid8, block>>> (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id]);
+	dim3 grid((threads + simdthreads - 1) / simdthreads);
+	x11_simd512_gpu_compress_64_maxwell << < grid, block >> > (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id]);
+//	x11_simd512_gpu_final_64 << <grid, block >> > (threads, startNounce, (uint64_t*)d_hash,d_temp4[thr_id], d_state[thr_id]);
 	//MyStreamSynchronize(NULL, order, thr_id);
 
 	dim3 grid((threads + tpb-1)/tpb);
