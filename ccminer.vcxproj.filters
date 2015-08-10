@@ -70,8 +70,8 @@
     <Filter Include="Header Files\lyra2">
       <UniqueIdentifier>{2ff6e4ce-7c92-4cb2-a3ad-c331e94fd81d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\CUDA\lyra2re">
-      <UniqueIdentifier>{468663d2-b5d9-4372-acfd-fc1c00c0d038}</UniqueIdentifier>
+    <Filter Include="Source Files\CUDA\Lyra2">
+      <UniqueIdentifier>{03b56ddb-6ebb-40b7-9a62-0a22c8c2865f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\CUDA\neoscrypt">
       <UniqueIdentifier>{0e14317b-d054-4f9e-8f6f-3bd91b3aa160}</UniqueIdentifier>
@@ -592,23 +592,23 @@
     <CudaCompile Include="lyra2\cuda_lyra2.cu">
       <Filter>Source Files\CUDA\lyra2re</Filter>
     </CudaCompile>
-    <CudaCompile Include="neoscrypt\neoscrypt.cu">
-      <Filter>Source Files\CUDA\neoscrypt</Filter>
+    <CudaCompile Include="Algo256\cuda_bmw256.cu">
+      <Filter>Source Files\CUDA\Algo256</Filter>
     </CudaCompile>
-    <CudaCompile Include="yescrypt\yescrypt.cu">
-      <Filter>Source Files\CUDA\neoscrypt</Filter>
+    <CudaCompile Include="Algo256\cuda_cubehash256.cu">
+      <Filter>Source Files\CUDA\Algo256</Filter>
     </CudaCompile>
-    <CudaCompile Include="yescrypt\cuda_yescrypt.cu">
-      <Filter>Source Files\CUDA\neoscrypt</Filter>
+    <CudaCompile Include="lyra2\cuda_lyra2.cu">
+      <Filter>Source Files\CUDA\Lyra2</Filter>
     </CudaCompile>
-    <CudaCompile Include="neoscrypt\cuda_neoscrypt.cu">
-      <Filter>Source Files\CUDA\neoscrypt</Filter>
+    <CudaCompile Include="lyra2\lyra2RE.cu">
+      <Filter>Source Files\CUDA\Lyra2</Filter>
     </CudaCompile>
-    <CudaCompile Include="x15\cuda_whirlpoolx.cu">
-      <Filter>Source Files\CUDA</Filter>
+    <CudaCompile Include="lyra2\cuda_lyra2v2.cu">
+      <Filter>Source Files\CUDA\Lyra2</Filter>
     </CudaCompile>
-    <CudaCompile Include="x15\whirlpoolx.cu">
-      <Filter>Source Files\CUDA</Filter>
+    <CudaCompile Include="lyra2\lyra2REv2.cu">
+      <Filter>Source Files\CUDA\Lyra2</Filter>
     </CudaCompile>
     <CudaCompile Include="cuda_x11_aes_noasm.cu">
       <Filter>Source Files\CUDA\x11</Filter>

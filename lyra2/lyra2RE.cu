@@ -47,7 +47,7 @@ extern "C" void lyra2_hash(void *state, const void *input)
 	sph_keccak256(&ctx_keccak, hashA, 32);
 	sph_keccak256_close(&ctx_keccak, hashB);
 
-	LYRA2(hashA, 32, hashB, 32, hashB, 32, 1, 8, 8);
+	LYRA2_old(hashA, 32, hashB, 32, hashB, 32, 1, 8, 8);
 	sph_skein256_init(&ctx_skein);
 	sph_skein256(&ctx_skein, hashA, 32);
 	sph_skein256_close(&ctx_skein, hashB);
@@ -66,31 +66,10 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 	uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
-	unsigned int intensity = 256 * 256 * 4;
-	cudaDeviceProp props;
-	cudaGetDeviceProperties(&props, device_map[thr_id]);
-	if (strstr(props.name, "970"))
-	{
-		intensity = 256 * 256 * 4;
-	}
-	else if (strstr(props.name, "980"))
-	{
-		intensity = 256 * 256 * 4;
-	}
-	else if (strstr(props.name, "750 Ti"))
-	{
-		intensity = 256 * 256 * 2;
-	}
-	else if (strstr(props.name, "750"))
-	{
-		intensity = 256 * 256 * 2;
-	}
-	else if (strstr(props.name, "960"))
-	{
-		intensity = 256 * 256 * 3;
-	}
+	unsigned int intensity = (device_sm[device_map[thr_id]] > 500) ? 256 * 256 * 4 : 256 * 256 * 4 ;
+    intensity = (device_sm[device_map[thr_id]] == 500) ? 256 * 256 * 2 : intensity;
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity); // 18=256*256*4;
-
+	
 
 	if (opt_benchmark)
 		ptarget[7] = 0x00ff;

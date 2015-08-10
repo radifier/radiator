@@ -344,6 +344,10 @@ extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
 	uint32_t *hashes_done);
 
+extern int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
+	const uint32_t *ptarget, uint32_t max_nonce,
+	unsigned long *hashes_done);
+
 extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
 	uint32_t *hashes_done);
