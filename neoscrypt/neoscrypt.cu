@@ -53,7 +53,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 	throughput = min(throughput, (max_nonce - first_nonce));
 
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-//		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 //		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);	
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * 4));
