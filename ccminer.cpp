@@ -522,7 +522,7 @@ static bool work_decode(const json_t *val, struct work *work)
 	int adata_sz = ARRAY_SIZE(work->data), atarget_sz = ARRAY_SIZE(work->target);
 	int i;
 
-	data_size = (opt_algo == ALGO_NEO) ? 80 : data_size; //silly and lazy
+	data_size = (opt_algo == ALGO_NEO) ? 84 : data_size; //silly and lazy
 	adata_sz = (opt_algo == ALGO_NEO) ? 20 : adata_sz;
 	if(opt_algo == ALGO_BITC)
 	{
