@@ -860,8 +860,6 @@ __host__ void neoscrypt_cpu_hash_k4(int stratum, int thr_id, uint32_t threads, u
 	neoscrypt_gpu_hash_k4  << <grid, block >> >(stratum,threads, startNounce, d_NNonce[thr_id]);
 	//	neoscrypt_gpu_hash_orig << <grid, block >> >(threads, startNounce, d_NNonce[thr_id]);
 	CUDA_SAFE_CALL(cudaMemcpyAsync(result, d_NNonce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
-	
-return result[thr_id];
 }
 
 __host__ uint32_t neoscrypt_cpu_hash_k4_52(int stratum, int thr_id, int threads, uint32_t startNounce, int order)

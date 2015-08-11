@@ -603,16 +603,21 @@ return make_uint2(a.x - b.x, a.y - b.y);
 }
 
 
-
+static __device__ __forceinline__ uint4 operator+ (uint4 a, uint4 b)
+{
+	return make_uint4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
+}
 static __device__ __forceinline__ uint4 operator^ (uint4 a, uint4 b) { return make_uint4(a.x ^ b.x, a.y ^ b.y, a.z ^ b.z, a.w ^ b.w); }
 static __device__ __forceinline__ uint4 operator& (uint4 a, uint4 b) { return make_uint4(a.x & b.x, a.y & b.y, a.z & b.z, a.w & b.w); }
 static __device__ __forceinline__ uint4 operator| (uint4 a, uint4 b) { return make_uint4(a.x | b.x, a.y | b.y, a.z | b.z, a.w | b.w); }
 static __device__ __forceinline__ uint4 operator~ (uint4 a) { return make_uint4(~a.x, ~a.y, ~a.z, ~a.w); }
 static __device__ __forceinline__ void operator^= (uint4 &a, uint4 b) { a = a ^ b; }
-static __device__ __forceinline__ uint4 operator^ (uint4 a, uint2 b) { return make_uint4(a.x ^ b.x, a.y ^ b.y, a.z ^ b.x, a.w ^ b.y); }
-
 
 static __device__ __forceinline__ void operator+= (uint2 &a, uint2 b) { a = a + b; }
+static __forceinline__ __device__ uchar4 operator^ (uchar4 a, uchar4 b){return make_uchar4(a.x ^ b.x, a.y ^ b.y, a.z ^ b.z, a.w ^ b.w);}
+static __forceinline__ __device__ uchar4 operator+ (uchar4 a, uchar4 b){return make_uchar4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);}
+
+static __forceinline__ __device__ void operator^= (uchar4 &a, uchar4 b) { a = a ^ b; }
 
 /**
  * basic multiplication between 64bit no carry outside that range (ie mul.lo.b64(a*b))
