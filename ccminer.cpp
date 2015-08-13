@@ -52,7 +52,7 @@ BOOL WINAPI ConsoleHandler(DWORD);
 #endif
 
 #define PROGRAM_NAME		"ccminer"
-#define LP_SCANTIME		60
+#define LP_SCANTIME		25
 #define HEAVYCOIN_BLKHDR_SZ		84
 #define MNR_BLKHDR_SZ 80
 
@@ -173,7 +173,7 @@ bool opt_quiet = false;
 static int opt_retries = -1;
 static int opt_fail_pause = 30;
 int opt_timeout = 270;
-static int opt_scantime = 60;
+static int opt_scantime = 25;
 static json_t *opt_config;
 static const bool opt_time = true;
 static enum sha_algos opt_algo = ALGO_X11;
@@ -1168,7 +1168,6 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 	uchar merkle_root[64];
 	int i;
 
-	 applog(LOG_WARNING, "stratum_gen_work: pool fuck");
 	if(!sctx->job.job_id)
 	{
 		// applog(LOG_WARNING, "stratum_gen_work: job not yet retrieved");
@@ -1276,8 +1275,9 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 		diff_to_target(work->target, sctx->job.diff / (256.0 * opt_difficulty));
 		break;
 		case ALGO_LYRA2v2:
-			diff_to_target(work->target, sctx->job.diff / (16.0 * opt_difficulty));
-		break;
+			diff_to_target(work->target, sctx->job.diff / (128.0 * opt_difficulty));
+			break;
+
 	default:
 		diff_to_target(work->target, sctx->job.diff / opt_difficulty);
 	}
