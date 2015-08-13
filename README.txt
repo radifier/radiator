@@ -81,10 +81,9 @@ its command line interface and options.
                           jackpot     use to mine Jackpotcoin
                           keccak      use to mine Maxcoin
                           luffa       use to mine Doomcoin
-                          lyra2       use to mine Vertcoin
                           mjollnir    use to mine Mjollnircoin
                           myr-gr      use to mine Myriad-Groestl
-						  neoscrypt   use to mine Feathercoin, etc
+                          neoscrypt   use to mine FeatherCoin
                           nist5       use to mine TalkCoin
                           penta       use to mine Joincoin / Pentablake
                           quark       use to mine Quarkcoin
@@ -96,6 +95,7 @@ its command line interface and options.
                           x14         use to mine X14Coin
                           x15         use to mine Halcyon
                           x17         use to mine X17
+                          lyra2v2     use to mine Vertcoin
 
   -d, --devices         gives a comma separated list of CUDA device IDs
                         to operate on. Device IDs start counting from 0!
