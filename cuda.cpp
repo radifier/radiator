@@ -22,7 +22,7 @@ using namespace std;
 
 cudaDeviceProp device_props[MAX_GPUS];
 cudaStream_t gpustream[MAX_GPUS] = { 0 };
-extern int opt_api_listen;
+extern uint16_t opt_api_listen;
 
 // CUDA Devices on the System
 int cuda_num_devices()

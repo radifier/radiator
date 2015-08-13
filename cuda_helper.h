@@ -1093,6 +1093,12 @@ uint32_t andor32(uint32_t a, uint32_t b, uint32_t c) {
 	return result;
 }
 
+#if __CUDA_ARCH__ < 350
+#ifndef __ldg
+#define __ldg(x) (*(x))
+#endif
+#endif
+
 #endif // #ifndef CUDA_HELPER_H
 
 

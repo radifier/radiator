@@ -231,9 +231,8 @@ void bitcredit_cpu_init(int thr_id, uint32_t threads, uint32_t *hash)
 }
 
 
-__host__ uint32_t bitcredit_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, int order)
+__host__ void bitcredit_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *result)
 {
-	uint32_t result;
 	cudaMemsetAsync(d_BitNonce[thr_id], 0xff, sizeof(uint32_t), gpustream[thr_id]);
 
 	const unsigned int threadsperblock = TPB;
@@ -244,8 +243,6 @@ __host__ uint32_t bitcredit_cpu_hash(int thr_id, uint32_t threads, uint32_t star
 	bitcredit_gpu_hash << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce, d_BitNonce[thr_id]);
 	CUDA_SAFE_CALL(cudaGetLastError());
 	cudaMemcpyAsync(&result, d_BitNonce[thr_id], sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
-
-	return result;
 }
 
 __host__ void bitcredit_setBlockTarget(int thr_id, uint32_t* pdata, const uint32_t* zmidstate, const void *target)
@@ -257,7 +254,7 @@ __host__ void bitcredit_setBlockTarget(int thr_id, uint32_t* pdata, const uint32
 	((uint32_t*)PaddedMessage)[42] = 0x80000000;
 	((uint32_t*)PaddedMessage)[47] = 0x0540;
 
-	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(midstate, zmidstate, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(&midstate, zmidstate, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(pTarget, target, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_data, PaddedMessage, 48 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }

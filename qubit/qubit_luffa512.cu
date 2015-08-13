@@ -1035,7 +1035,7 @@ void qubit_luffa512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNoun
 	dim3 grid((threads + threadsperblock-1)/threadsperblock);
 	dim3 block(threadsperblock);
 
-	qubit_luffa512_gpu_hash_80 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_outputHash, thr_id);
+	qubit_luffa512_gpu_hash_80 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_outputHash);
 }
 
 __host__

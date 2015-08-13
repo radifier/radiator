@@ -559,7 +559,6 @@ __launch_bounds__(128, 3)
 #endif
 void neoscrypt_gpu_hash_k0(int stratum, uint32_t startNonce)
 {
-	const int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	const unsigned int shift = SHIFT * 16 * thread;
 	const uint32_t nonce = startNonce + thread;
@@ -635,55 +634,51 @@ __global__
 #if __CUDA_ARCH__ > 500
 __launch_bounds__(128, 3)
 #else
-__launch_bounds__(32, 12)
+__launch_bounds__(32, 16)
 #endif
 void neoscrypt_gpu_hash_k4(int stratum, uint32_t startNonce, uint32_t *nonceVector)
 {
 	const int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	const uint32_t nonce = startNonce + thread;
 	const int shift = SHIFT * 16 * thread;
-		uint16 Z[4];
+	uint16 Z[4];
 	uint32_t data[80];
 
-	#pragma unroll
-	for (int i = 0; i <  5; i++) ((uint4*)data)[i] = ((uint4 *)c_data)[i];
-		data[19] = (stratum) ? cuda_swab32(nonce) : nonce;
-	#pragma unroll
-	for (int i = 5; i < 20; i++) ((uint4*)data)[i] = ((uint4 *)data)[i % 5];
+#pragma unroll
+	for(int i = 0; i < 5; i++)
+		((uint4*)data)[i] = ((uint4 *)c_data)[i];
+	data[19] = (stratum) ? cuda_swab32(nonce) : nonce;
+#pragma unroll
+	for(int i = 5; i < 20; i++)
+		((uint4*)data)[i] = ((uint4 *)data)[i % 5];
 
 	((uintx64 *)Z)[0] = __ldg32(&(W + shift)[2048]);
-	#pragma nounroll
-		for(int t = 0; t < 128; t++)
+#pragma nounroll
+	for(int t = 0; t < 128; t++)
 	{
 		((uintx64 *)Z)[0] ^= __ldg32(&(W + shift)[(Z[3].lo.s0 & 0x7F) << 4]);
 		neoscrypt_salsa(Z);
 	}
 	((uintx64 *)Z)[0] ^= __ldg32(&(W + shift)[2064]);
-	
-	if (fastkdf(data, NULL, (uint32_t*)Z) <= pTarget[0])
-		{
-			uint32_t tmp = atomicExch(&nonceVector[0], nonce);
-			if(tmp != 0xffffffff)
-				nonceVector[1] = tmp;
-		}
 
+	if(fastkdf(data, NULL, (uint32_t*)Z) <= pTarget[0])
+	{
+		uint32_t tmp = atomicExch(nonceVector, nonce);
+		if(tmp != 0xffffffff)
+			nonceVector[1] = tmp;
+	}
 }
-
 
 void neoscrypt_cpu_init(int thr_id, uint32_t *hash)
 {
+	cudaMalloc(&d_NNonce[thr_id], 2 * sizeof(uint32_t));
 	//	cudaMemcpyToSymbol(BLAKE2S_SIGMA, BLAKE2S_SIGMA_host, sizeof(BLAKE2S_SIGMA_host), 0, cudaMemcpyHostToDevice);
 	cudaMemcpyToSymbolAsync(W, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
-	cudaMalloc(&d_NNonce[thr_id], 2*sizeof(uint32_t));
-
 }
 
 
-__host__ uint32_t neoscrypt_cpu_hash_k4(int stratum, int thr_id, int threads, uint32_t startNounce, const int threadsperblock)
-
-
+__host__ void neoscrypt_cpu_hash_k4(int stratum, int thr_id, int threads, uint32_t startNounce, const int threadsperblock, uint32_t *result)
 {
-	uint32_t result;
 	cudaMemsetAsync(d_NNonce[thr_id], 0xff, 2*sizeof(uint32_t), gpustream[thr_id]);
 
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
@@ -695,9 +690,8 @@ __host__ uint32_t neoscrypt_cpu_hash_k4(int stratum, int thr_id, int threads, ui
 	neoscrypt_gpu_hash_k3  << <grid, block, 0, gpustream[thr_id] >> >();  //b
 	neoscrypt_gpu_hash_k4  << <grid, block, 0, gpustream[thr_id] >> >(stratum, startNounce, d_NNonce[thr_id]);  //a
 
-	CUDA_SAFE_CALL(cudaMemcpyAsync(result, d_NNonce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
-	
-	return result;
+	CUDA_SAFE_CALL(cudaMemcpyAsync(result, d_NNonce[thr_id], 2*sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]));
+	cudaStreamSynchronize(gpustream[thr_id]);
 }
 
 

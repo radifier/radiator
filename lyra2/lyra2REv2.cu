@@ -17,7 +17,7 @@ static  uint64_t *d_hash3[MAX_GPUS];
 
 extern void blake256_cpu_init(int thr_id, uint32_t threads);
 extern void blake256_cpu_hash_80(const int thr_id, const uint32_t threads, const uint32_t startNonce, uint64_t *Hash);
-extern void blake256_cpu_setBlock_80(uint32_t *pdata);
+extern void blake256_cpu_setBlock_80(int thr_id, uint32_t *pdata);
 
 extern void keccak256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNonce, uint64_t *d_outputHash);
 extern void keccak256_cpu_init(int thr_id, uint32_t threads);
@@ -28,7 +28,7 @@ extern void skein256_cpu_init(int thr_id, uint32_t threads);
 extern void lyra2v2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNonce, uint64_t *d_outputHash);
 extern void lyra2v2_cpu_init(int thr_id, uint32_t threads, uint64_t* matrix);
 
-extern void bmw256_setTarget(const void *ptarget);
+extern void bmw256_setTarget(int thr_id, const void *ptarget);
 extern void bmw256_cpu_init(int thr_id, uint32_t threads);
 extern void bmw256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint32_t *resultnonces);
 
@@ -75,11 +75,11 @@ extern "C" void lyra2v2_hash(void *state, const void *input)
 	memcpy(state, hashA, 32);
 }
 
-static bool init[MAX_GPUS] = { 0 };
+static bool init[MAX_GPUS] = { false };
 
-extern "C" int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
+int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 	const uint32_t *ptarget, uint32_t max_nonce,
-	unsigned long *hashes_done)
+	uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
     unsigned int intensity = 256*256*8;
@@ -91,23 +91,19 @@ extern "C" int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 
 	if (!init[thr_id])
 	{ 
-		cudaSetDevice(device_map[thr_id]);
+		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-		if (opt_n_gputhreads == 1)
-		{
-			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
-		}
+		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
+
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash2[thr_id], 16  * 4 * 4 * sizeof(uint64_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 8 * sizeof(uint32_t) * throughput));
+
 		blake256_cpu_init(thr_id, throughput);
-		keccak256_cpu_init(thr_id,throughput);
+		keccak256_cpu_init(thr_id, throughput);
 		skein256_cpu_init(thr_id, throughput);
 		bmw256_cpu_init(thr_id, throughput);
-		
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash2[thr_id], 16  * 4 * 4 * sizeof(uint64_t) * throughput));
-
-        lyra2v2_cpu_init(thr_id, throughput,d_hash2[thr_id]);
-
-
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 8 * sizeof(uint32_t) * throughput));
+        lyra2v2_cpu_init(thr_id, throughput, d_hash2[thr_id]);
 
 		init[thr_id] = true; 
 	}
@@ -116,8 +112,8 @@ extern "C" int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 	for (int k=0; k < 20; k++)
 		be32enc(&endiandata[k], ((uint32_t*)pdata)[k]);
 
-	blake256_cpu_setBlock_80(pdata);
-	bmw256_setTarget(ptarget);
+	blake256_cpu_setBlock_80(thr_id, pdata);
+	bmw256_setTarget(thr_id, ptarget);
 
 	do {
 		uint32_t foundNonce[2] = { 0, 0 };
@@ -129,7 +125,11 @@ extern "C" int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 		skein256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		cubehash256_cpu_hash_32(thr_id, throughput,pdata[19], d_hash[thr_id]);
 		bmw256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id], foundNonce);
-		if (foundNonce[0] != 0)
+		if(stop_mining)
+		{
+			mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);
+		}
+		if(foundNonce[0] != 0)
 		{
 //			CUDA_SAFE_CALL(cudaGetLastError());
 			const uint32_t Htarg = ptarget[7];
@@ -145,11 +145,10 @@ extern "C" int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 				{
 					pdata[21] = foundNonce[1];
 					res++;
-					if (opt_benchmark)  applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, foundNonce[1], vhash64[7], Htarg);
+					if (opt_benchmark)  applog(LOG_INFO, "GPU #%d Found second nonce %08x", thr_id, foundNonce[1]);
 				}
 				pdata[19] = foundNonce[0];
-				if (opt_benchmark) applog(LOG_INFO, "GPU #%d Found nounce % 08x", thr_id, foundNonce[0], vhash64[7], Htarg);
-				MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
+				if (opt_benchmark) applog(LOG_INFO, "GPU #%d Found nonce % 08x", thr_id, foundNonce[0]);
 				return res;
 			}
 			else

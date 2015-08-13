@@ -486,14 +486,6 @@
     </CudaCompile>
     <CudaCompile Include="qubit\qubit_luffa512.cu">
     </CudaCompile>
-    <CudaCompile Include="lyra2\lyra2RE.cu">
-      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_32,sm_32;</CodeGeneration>
-      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|x64'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_32,sm_32;</CodeGeneration>
-    </CudaCompile>
-    <CudaCompile Include="lyra2\cuda_lyra2.cu">
-      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_32,sm_32;</CodeGeneration>
-      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|x64'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_32,sm_32;</CodeGeneration>
-    </CudaCompile>
     <CudaCompile Include="skein.cu">
       <MaxRegCount>64</MaxRegCount>
     </CudaCompile>

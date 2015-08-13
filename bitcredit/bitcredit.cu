@@ -40,9 +40,6 @@ int scanhash_bitcredit(int thr_id, uint32_t *pdata,
 	if(opt_benchmark)
 		ptarget[7] = 0x00000001;
 
-	const uint32_t Htarg = ptarget[7];
-	int coef = 4;
-
 	int intensity = 256 * 256 * 64 * 8;
 	const uint32_t throughput = min(device_intensity(device_map[thr_id], __func__, intensity), (max_nonce - first_nonce)); // 19=256*256*8;
 
@@ -59,7 +56,7 @@ int scanhash_bitcredit(int thr_id, uint32_t *pdata,
 		init[thr_id] = true;
 	}
 
-	uint32_t endiandata[42], endianmid[8];
+	uint32_t endiandata[42];
 	for(int k = 0; k < 42; k++)
 		be32enc(&endiandata[k], ((uint32_t*)pdata)[k]);
 

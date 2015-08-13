@@ -248,7 +248,7 @@ void bmw256_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint64_t *g_hash
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		const uint32_t nounce = startNounce + thread;
+//		const uint32_t nounce = startNounce + thread;
 
 		uint32_t dh[16] = {
 			(0x40414243), (0x44454647),
@@ -293,7 +293,7 @@ void bmw256_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint64_t *g_hash
 
 
 __host__
-void bmw256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint64_t *g_hash,uint32_t *resultnonces)
+void bmw256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint32_t *resultnonces)
 {
 	cudaMemset(d_GNonce[thr_id], 0x0, 2 * sizeof(uint32_t));
 	const uint32_t threadsperblock = TPB;
@@ -302,8 +302,9 @@ void bmw256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
 
-	bmw256_gpu_hash_32 << <grid, block >> >(threads, startNounce, g_hash, d_GNonce[thr_id]);
-	cudaMemcpy(d_gnounce[thr_id], d_GNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost);
+	bmw256_gpu_hash_32 << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce, g_hash, d_GNonce[thr_id]);
+	CUDA_SAFE_CALL(cudaGetLastError());
+	CUDA_SAFE_CALL(cudaMemcpy(d_gnounce[thr_id], d_GNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 	resultnonces[0] = *(d_gnounce[thr_id]);
 	resultnonces[1] = *(d_gnounce[thr_id] + 1);
 }
@@ -317,7 +318,7 @@ void bmw256_cpu_init(int thr_id, uint32_t threads)
 }
 
 __host__
-void bmw256_setTarget(const void *pTargetIn)
+void bmw256_setTarget(int thr_id, const void *pTargetIn)
 {
-	cudaMemcpyToSymbol(pTarget, pTargetIn, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(pTarget, pTargetIn, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }

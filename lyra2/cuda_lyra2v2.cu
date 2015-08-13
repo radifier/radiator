@@ -3,9 +3,8 @@
 #include <stdio.h>
 #include <memory.h>
 #include "cuda_vector.h"
-#define TPB 16
-//
 
+#define TPB 16
  
 #define Nrow 4
 #define Ncol 4
@@ -24,7 +23,7 @@
 #endif 
 __device__ vectype  *DMatrix;
 
- 
+#if __CUDA_ARCH__ >= 500 
 static __device__ __forceinline__ void Gfunc_v35(uint2 & a, uint2 &b, uint2 &c, uint2 &d)
 {
 
@@ -34,7 +33,7 @@ static __device__ __forceinline__ void Gfunc_v35(uint2 & a, uint2 &b, uint2 &c, 
 	c += d; b ^= c; b = ROR2(b, 63);
 
 }
-
+#else
 static __device__ __forceinline__ void Gfunc_v35(unsigned long long & a, unsigned long long &b, unsigned long long &c, unsigned long long &d)
 {
 
@@ -44,7 +43,7 @@ static __device__ __forceinline__ void Gfunc_v35(unsigned long long & a, unsigne
 	c += d; b ^= c; b = ROTR64(b, 63);
 
 }
-
+#endif
 
 static __device__ __forceinline__ void round_lyra_v35(vectype* s)
 {
@@ -567,7 +566,7 @@ int prev=3;
 __host__
 void lyra2v2_cpu_init(int thr_id, uint32_t threads,uint64_t *hash)
 {
-	cudaMemcpyToSymbol(DMatrix, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(DMatrix, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }
 
 

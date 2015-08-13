@@ -340,13 +340,9 @@ extern int scanhash_fresh(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
 	uint32_t *hashes_done);
 
-extern int scanhash_lyra2(int thr_id, uint32_t *pdata,
-	uint32_t *ptarget, uint32_t max_nonce,
-	uint32_t *hashes_done);
-
 extern int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 	const uint32_t *ptarget, uint32_t max_nonce,
-	unsigned long *hashes_done);
+	uint32_t *hashes_done);
 
 extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
@@ -695,7 +691,6 @@ void heavycoin_hash(unsigned char* output, const unsigned char* input, int len);
 void keccak256_hash(void *state, const void *input);
 unsigned int jackpothash(void *state, const void *input);
 void groestlhash(void *state, const void *input);
-void lyra2_hash(void *state, const void *input);
 void myriadhash(void *state, const void *input);
 void nist5hash(void *state, const void *input);
 void pentablakehash(void *output, const void *input);
