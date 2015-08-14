@@ -5,7 +5,7 @@
 #include "cuda_helper.h"
 
 __device__  uint4 *  W;
-uint32_t *d_NNonce[MAX_GPUS];
+static uint32_t *d_NNonce[MAX_GPUS];
 __constant__ uint32_t pTarget[1];
 __constant__ uint32_t input_init[16];
 __constant__ uint32_t c_data[20];
