@@ -2075,7 +2075,7 @@ static void parse_arg(int key, char *arg)
 		for(i = 0; i < ARRAY_SIZE(algo_names); i++)
 		{
 			if(algo_names[i] &&
-			   !strcmp(arg, algo_names[i]))
+			   !stricmp(arg, algo_names[i]))
 			{
 				opt_algo = (enum sha_algos)i;
 				break;
