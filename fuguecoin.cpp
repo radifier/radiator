@@ -34,7 +34,7 @@ extern int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t start_nonce = pdata[19]++;
 	unsigned int intensity = (device_sm[device_map[thr_id]] > 500) ? 22 : 19;
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1 << intensity); // 256*256*8
-	throughput = min(throughput, max_nonce - start_nonce);
+	throughput = min(throughput, max_nonce - start_nonce) & 0xfffffc00;
 
 	if (opt_benchmark)
 		ptarget[7] = 0xf;

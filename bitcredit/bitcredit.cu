@@ -41,7 +41,7 @@ int scanhash_bitcredit(int thr_id, uint32_t *pdata,
 		ptarget[7] = 0x00000001;
 
 	int intensity = 256 * 256 * 64 * 8;
-	const uint32_t throughput = min(device_intensity(device_map[thr_id], __func__, intensity), (max_nonce - first_nonce)); // 19=256*256*8;
+	const uint32_t throughput = min(device_intensity(device_map[thr_id], __func__, intensity), (max_nonce - first_nonce)) & 0xfffffc00; // 19=256*256*8;
 
 	static bool init[MAX_GPUS] = { false };
 	if(!init[thr_id])

@@ -165,7 +165,7 @@ extern int scanhash_anime(int thr_id, uint32_t *pdata,
 {
 	const uint32_t first_nonce = pdata[19];
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1 << 20); // 256*256*8
-	throughput = min(throughput, (max_nonce - first_nonce));
+	throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
 
 	if (opt_benchmark)
 		ptarget[7] = 0x00ff;

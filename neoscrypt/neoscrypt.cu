@@ -52,7 +52,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 
 
 		uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity);
-		throughput = min(throughput, (max_nonce - first_nonce));
+		throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
 
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);

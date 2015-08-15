@@ -142,7 +142,7 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 	const uint32_t first_nonce = pdata[19];
 
 	uint32_t intensity = (device_sm[device_map[thr_id]] > 500) ? 256 * 256 * 22 : 256 * 128 * 39;
-	const uint32_t throughput = min(device_intensity(device_map[thr_id], __func__, intensity), (max_nonce - first_nonce)); // 19=256*256*8;
+	const uint32_t throughput = min(device_intensity(device_map[thr_id], __func__, intensity), (max_nonce - first_nonce)) & 0xfffffc00; // 19=256*256*8;
 	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
 
 	if (opt_benchmark)

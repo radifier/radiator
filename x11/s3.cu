@@ -68,7 +68,7 @@ extern int scanhash_s3(int thr_id, uint32_t *pdata,
 	intensity--;
 #endif
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1 << intensity);
-	throughput = min(throughput, (max_nonce - first_nonce));
+	throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
 	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
 	if (opt_benchmark)
 		ptarget[7] = 0x0000000fu;

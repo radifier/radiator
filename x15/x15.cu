@@ -173,7 +173,7 @@ extern int scanhash_x15(int thr_id, uint32_t *pdata,
 	int intensity = 256 * 256 * 13;
 	if (device_sm[device_map[thr_id]] == 520)  intensity = 256 * 256 * 22;
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity); // 19=256*256*8;
-	throughput = min(throughput, (max_nonce - first_nonce));
+	throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
 	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
 
 	if (opt_benchmark)

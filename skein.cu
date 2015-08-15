@@ -52,7 +52,7 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 
 	uint32_t intensity = (device_sm[device_map[thr_id]] > 500) ? 1 << 28 : 1 << 27;;
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity); // 256*4096
-	throughput = min(throughput, max_nonce - first_nonce);
+	throughput = min(throughput, max_nonce - first_nonce) & 0xfffffc00;
 
 	if (opt_benchmark)
 	{

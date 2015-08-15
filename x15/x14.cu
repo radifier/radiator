@@ -163,7 +163,7 @@ extern int scanhash_x14(int thr_id, uint32_t *pdata,
 	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
 
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity); // 19=256*256*8;
-	throughput = min(throughput, max_nonce - first_nonce);
+	throughput = min(throughput, max_nonce - first_nonce) & 0xfffffc00;
 
 	if (opt_benchmark)
 		ptarget[7] = 0x000f;
