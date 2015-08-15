@@ -2559,11 +2559,20 @@ int main(int argc, char *argv[])
 	int i;
 
 	printf("ccminer " PACKAGE_VERSION " for nVidia GPUs\n");
-#ifdef WIN32
-	printf("Built with Visual C++ 2013 and the nVidia CUDA Toolkit %d.%d\n\n", CUDART_VERSION/1000, (CUDART_VERSION%1000)/10);
+#ifdef _MSC_VER
+	printf("Compiled with Visual C++ %d ", _MSC_VER / 100);
 #else
-	printf("Built with the nVidia CUDA Toolkit %d.%d\n\n", CUDART_VERSION/1000, (CUDART_VERSION%1000)/10);
+#ifdef __clang__
+	printf("Compiled with Clang %s ", __clang_version__);
+#else
+#ifdef __GNUC__
+	printf("Compiled with GCC %d.&d ", __GNUC__, __GNUC_MINOR__);
+#else
+	printf("Compiled with an unusual compiler ");
 #endif
+#endif
+#endif
+	printf("using Nvidia CUDA Toolkit %d.%d\n\n", CUDART_VERSION / 1000, (CUDART_VERSION % 1000) / 10);
 	printf("Based on pooler cpuminer 2.3.2 and the tpruvot@github fork\n");
 	printf("CUDA support by Christian Buchner, Christian H. and DJM34\n");
 	printf("Includes optimizations implemented by sp-hash, klaust, tpruvot and tsiv.\n\n");
