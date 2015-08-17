@@ -741,11 +741,11 @@ void quark_bmw512_gpu_hash_64_quark(uint32_t threads, uint32_t startNounce, uint
 		outpt[1] = phash[1];
 
 #pragma unroll 8
-		for (int i = 0; i < 8; i++)
+		for(int i = 0; i < 8; i++)
 		{
 			msg[i] = devectorize(msg2[i]);
 		}
-		
+
 
 		mxh[0] = msg[0] ^ hash2[0];
 		mxh[1] = msg[1] ^ hash2[1];
@@ -860,8 +860,8 @@ void quark_bmw512_gpu_hash_64_quark(uint32_t threads, uint32_t startNounce, uint
 			((precalcf[4] + ROTL64(msg2[4], 4 + 1) +
 			ROL8(msg2[4 + 3])) ^ hash[4 + 7]);
 		q[5 + 16] = pre2 + CONST_EXP3(5) +
-			((precalcf[5] + ROTL64(msg2[5], 5 + 1)) 
-			 ^ hash[5 + 7]);
+			((precalcf[5] + ROTL64(msg2[5], 5 + 1))
+			^ hash[5 + 7]);
 
 		pre1 = pre1 - q[4 + 0] + q[4 + 14];
 		pre2 = pre2 - q[5 + 0] + q[5 + 14];
@@ -904,7 +904,7 @@ void quark_bmw512_gpu_hash_64_quark(uint32_t threads, uint32_t startNounce, uint
 		pre2 = pre2 - q[13 + 0] + q[13 + 14];
 
 		q[14 + 16] = pre1 + CONST_EXP3(14) +
-			((precalcf[7]  +
+			((precalcf[7] +
 			ROTL64(msg2[14 - 13], (14 - 13) + 1)) ^ hash[14 - 9]);
 		q[15 + 16] = pre2 + CONST_EXP3(15) +
 			((precalcf[8] +
@@ -953,7 +953,7 @@ void quark_bmw512_gpu_hash_64_quark(uint32_t threads, uint32_t startNounce, uint
 		};
 
 #pragma unroll 16
-		for (int i = 0; i < 16; i++)
+		for(int i = 0; i < 16; i++)
 		{
 			msg[i] = devectorize(cmsg[i] ^ h[i]);
 		}
@@ -1138,29 +1138,30 @@ void quark_bmw512_gpu_hash_64_quark(uint32_t threads, uint32_t startNounce, uint
 
 		inpHash[0] = devectorize(msg2[8]);
 
-		if (((msg2[8].x) & 0x8)) return;
+		if(((msg2[8].x) & 0x8)) return;
 		{
 
-		msg2[0] = (SHL(XH64, 5) ^ SHR(q[16], 5) ^ h[0]) + (XL64    ^ q[24] ^ q[0]);
-		msg2[1] = (SHR(XH64, 7) ^ SHL(q[17], 8) ^ h[1]) + (XL64    ^ q[25] ^ q[1]);
-		msg2[2] = (SHR(XH64, 5) ^ SHL(q[18], 5) ^ h[2]) + (XL64    ^ q[26] ^ q[2]);
-		msg2[3] = (SHR(XH64, 1) ^ SHL(q[19], 5) ^ h[3]) + (XL64    ^ q[27] ^ q[3]);
-		msg2[5] = (SHL(XH64, 6) ^ SHR(q[21], 6) ^ h[5]) + (XL64    ^ q[29] ^ q[5]);
-		msg2[6] = (SHR(XH64, 4) ^ SHL(q[22], 6) ^ h[6]) + (XL64    ^ q[30] ^ q[6]);
-		msg2[7] = (SHR(XH64, 11) ^ SHL(q[23], 2) ^ h[7]) + (XL64    ^ q[31] ^ q[7]);
+			msg2[0] = (SHL(XH64, 5) ^ SHR(q[16], 5) ^ h[0]) + (XL64    ^ q[24] ^ q[0]);
+			msg2[1] = (SHR(XH64, 7) ^ SHL(q[17], 8) ^ h[1]) + (XL64    ^ q[25] ^ q[1]);
+			msg2[2] = (SHR(XH64, 5) ^ SHL(q[18], 5) ^ h[2]) + (XL64    ^ q[26] ^ q[2]);
+			msg2[3] = (SHR(XH64, 1) ^ SHL(q[19], 5) ^ h[3]) + (XL64    ^ q[27] ^ q[3]);
+			msg2[5] = (SHL(XH64, 6) ^ SHR(q[21], 6) ^ h[5]) + (XL64    ^ q[29] ^ q[5]);
+			msg2[6] = (SHR(XH64, 4) ^ SHL(q[22], 6) ^ h[6]) + (XL64    ^ q[30] ^ q[6]);
+			msg2[7] = (SHR(XH64, 11) ^ SHL(q[23], 2) ^ h[7]) + (XL64    ^ q[31] ^ q[7]);
 
-		msg2[9] = ROTL64(msg2[5], 10) + (XH64     ^     q[25] ^ h[9]) + (SHR(XL64, 6) ^ q[16] ^ q[9]);
-		msg2[10] = ROTL64(msg2[6], 11) + (XH64     ^     q[26] ^ h[10]) + (SHL(XL64, 6) ^ q[17] ^ q[10]);
-		msg2[11] = ROTL64(msg2[7], 12) + (XH64     ^     q[27] ^ h[11]) + (SHL(XL64, 4) ^ q[18] ^ q[11]);
-		msg2[12] = ROTL64(msg2[0], 13) + (XH64     ^     q[28] ^ h[12]) + (SHR(XL64, 3) ^ q[19] ^ q[12]);
-		msg2[13] = ROTL64(msg2[1], 14) + (XH64     ^     q[29] ^ h[13]) + (SHR(XL64, 4) ^ q[20] ^ q[13]);
-		msg2[14] = ROTL64(msg2[2], 15) + (XH64     ^     q[30] ^ h[14]) + (SHR(XL64, 7) ^ q[21] ^ q[14]);
-		msg2[15] = ROL16(msg2[3]) + (XH64     ^     q[31] ^ h[15]) + (SHR(XL64, 2) ^ q[22] ^ q[15]);
+			msg2[9] = ROTL64(msg2[5], 10) + (XH64     ^     q[25] ^ h[9]) + (SHR(XL64, 6) ^ q[16] ^ q[9]);
+			msg2[10] = ROTL64(msg2[6], 11) + (XH64     ^     q[26] ^ h[10]) + (SHL(XL64, 6) ^ q[17] ^ q[10]);
+			msg2[11] = ROTL64(msg2[7], 12) + (XH64     ^     q[27] ^ h[11]) + (SHL(XL64, 4) ^ q[18] ^ q[11]);
+			msg2[12] = ROTL64(msg2[0], 13) + (XH64     ^     q[28] ^ h[12]) + (SHR(XL64, 3) ^ q[19] ^ q[12]);
+			msg2[13] = ROTL64(msg2[1], 14) + (XH64     ^     q[29] ^ h[13]) + (SHR(XL64, 4) ^ q[20] ^ q[13]);
+			msg2[14] = ROTL64(msg2[2], 15) + (XH64     ^     q[30] ^ h[14]) + (SHR(XL64, 7) ^ q[21] ^ q[14]);
+			msg2[15] = ROL16(msg2[3]) + (XH64     ^     q[31] ^ h[15]) + (SHR(XL64, 2) ^ q[22] ^ q[15]);
 
-		uint28 *phash2 = (uint28*)inpHash;
-		phash2[0] = make_uint28(msg2[8], msg2[9], msg2[10], msg2[11]);
-		phash2[1] = make_uint28(msg2[12], msg2[13], msg2[14], msg2[15]);
+			uint28 *phash2 = (uint28*)inpHash;
+			phash2[0] = make_uint28(msg2[8], msg2[9], msg2[10], msg2[11]);
+			phash2[1] = make_uint28(msg2[12], msg2[13], msg2[14], msg2[15]);
 
+		}
 	}
 }
 
