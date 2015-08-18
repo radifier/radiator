@@ -2560,7 +2560,7 @@ int main(int argc, char *argv[])
 	printf("Compiled with Clang %s ", __clang_version__);
 #else
 #ifdef __GNUC__
-	printf("Compiled with GCC %d.&d ", __GNUC__, __GNUC_MINOR__);
+	printf("Compiled with GCC %d.%d ", __GNUC__, __GNUC_MINOR__);
 #else
 	printf("Compiled with an unusual compiler ");
 #endif
