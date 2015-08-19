@@ -14,7 +14,6 @@ extern "C" {
 static _ALIGN(64) uint64_t *d_hash[MAX_GPUS];
 static  uint64_t *d_hash2[MAX_GPUS];
 
-extern void blake256_cpu_init(int thr_id, uint32_t threads);
 extern void blake256_cpu_hash_80(const int thr_id, const uint32_t threads, const uint32_t startNonce, uint64_t *Hash);
 extern void blake256_cpu_setBlock_80(int thr_id, uint32_t *pdata);
 
@@ -108,7 +107,7 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity);
 
 	if (opt_benchmark)
-		((uint32_t*)ptarget)[7] = 0x00ff;
+		((uint32_t*)ptarget)[7] = 0x004f;
 
 	if (!init[thr_id])
 	{ 
@@ -120,7 +119,6 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash2[thr_id], 16  * 4 * 4 * sizeof(uint64_t) * throughput));
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 8 * sizeof(uint32_t) * throughput));
 
-		blake256_cpu_init(thr_id, throughput);
 		keccak256_cpu_init(thr_id, throughput);
 		skein256_cpu_init(thr_id, throughput);
 		bmw256_cpu_init(thr_id, throughput);
@@ -184,6 +182,6 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 
 	*hashes_done = pdata[19] - first_nonce + 1;
-	MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
+//	MyStreamSynchronize(NULL, NULL, device_map[thr_id]);
 	return 0;
 }
