@@ -20,7 +20,6 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 					   uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
-	int intensity = (256 * 64 * 3);
 	static uint32_t throughput;
 	static volatile bool init[MAX_GPUS] = { false };
 
@@ -33,6 +32,8 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 
 	if(!init[thr_id])
 	{
+		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+
 		cudaDeviceProp props;
 		cudaGetDeviceProperties(&props, device_map[thr_id]);
 		unsigned int cc = props.major * 10 + props.minor;
@@ -42,19 +43,17 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			mining_has_stopped[thr_id] = true;
 			proper_exit(2);
 		}
-
+		unsigned int intensity;
 		if(strstr(props.name, "970"))    intensity = (256 * 64 * 4);
 		else if(strstr(props.name, "980"))    intensity = (256 * 64 * 4);
 		else if(strstr(props.name, "750 Ti")) intensity = (256 * 32 * 6);
 		else if(strstr(props.name, "750"))    intensity = (256 * 32 * 7 / 2);
 		else if(strstr(props.name, "960"))    intensity = (256 * 32 * 7);
-
-
-
-		uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity);
+		else intensity = (256 * 64 * 3);
+		
+		throughput = device_intensity(device_map[thr_id], __func__, intensity);
 		throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
 
-		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		//		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);	
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
