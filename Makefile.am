@@ -20,6 +20,7 @@ ccminer_SOURCES	= elist.h miner.h compat.h \
 			  crc32.c hefty1.c \
 			  ccminer.cpp util.cpp \
 			  api.cpp hashlog.cpp nvml.cpp stats.cpp sysinfos.cpp cuda.cpp \
+			  cuda_helper.h cuda_vector.h \
 			  heavy/heavy.cu \
 			  heavy/cuda_blake512.cu heavy/cuda_blake512.h \
 			  heavy/cuda_combine.cu heavy/cuda_combine.h \
@@ -28,12 +29,11 @@ ccminer_SOURCES	= elist.h miner.h compat.h \
 			  heavy/cuda_keccak512.cu heavy/cuda_keccak512.h \
 			  heavy/cuda_sha256.cu heavy/cuda_sha256.h \
 			  sph/neoscrypt.h sph/neoscrypt.c \
-			  sph/sha256_Y.h sph/sha256_Y.c \
+			  sph/sha256_Y.h sph/sha256_Y.c sph/sph_sha2.c \
 			  fuguecoin.cpp Algo256/cuda_fugue256.cu sph/fugue.c uint256.h \
 			  groestlcoin.cpp cuda_groestlcoin.cu cuda_groestlcoin.h \
 			  myriadgroestl.cpp cuda_myriadgroestl.cu \
 			  lyra2/Lyra2.c lyra2/Sponge.c \
-		          lyra2/lyra2RE.cu lyra2/cuda_lyra2.cu \
 			  lyra2/lyra2REv2.cu lyra2/cuda_lyra2v2.cu \
 			  Algo256/cuda_blake256.cu Algo256/cuda_groestl256.cu Algo256/cuda_keccak256.cu Algo256/cuda_skein256.cu \
 			  Algo256/cuda_bmw256.cu Algo256/cuda_cubehash256.cu \
