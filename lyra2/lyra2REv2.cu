@@ -14,7 +14,7 @@ extern "C" {
 static _ALIGN(64) uint64_t *d_hash[MAX_GPUS];
 static  uint64_t *d_hash2[MAX_GPUS];
 
-extern void blake256_cpu_hash_80(const int thr_id, const uint32_t threads, const uint32_t startNonce, uint64_t *Hash);
+extern void blakeKeccak256_cpu_hash_80(const int thr_id, const uint32_t threads, const uint32_t startNonce, uint64_t *Hash);
 extern void blake256_cpu_setBlock_80(int thr_id, uint32_t *pdata);
 
 extern void keccak256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNonce, uint64_t *d_outputHash);
@@ -22,6 +22,9 @@ extern void keccak256_cpu_init(int thr_id, uint32_t threads);
 
 extern void skein256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNonce, uint64_t *d_outputHash);
 extern void skein256_cpu_init(int thr_id, uint32_t threads);
+
+extern void skeinCube256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNonce, uint64_t *d_outputHash);
+
 
 extern void lyra2v2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNonce, uint64_t *d_outputHash);
 extern void lyra2v2_cpu_init(int thr_id, uint32_t threads, uint64_t* matrix);
@@ -119,7 +122,7 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash2[thr_id], 16  * 4 * 4 * sizeof(uint64_t) * throughput));
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 8 * sizeof(uint32_t) * throughput));
 
-		keccak256_cpu_init(thr_id, throughput);
+//		keccak256_cpu_init(thr_id, throughput);
 		skein256_cpu_init(thr_id, throughput);
 		bmw256_cpu_init(thr_id, throughput);
         lyra2v2_cpu_init(thr_id, throughput, d_hash2[thr_id]);
@@ -137,8 +140,8 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 	do {
 		uint32_t foundNonce[2] = { 0, 0 };
 
-		blake256_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		keccak256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
+		blakeKeccak256_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id]);
+//		keccak256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		cubehash256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		lyra2v2_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		skein256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
