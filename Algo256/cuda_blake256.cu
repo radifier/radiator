@@ -445,7 +445,7 @@ void blakeKeccak256_gpu_hash_80(const uint32_t threads, const uint32_t startNonc
 
 		uint32_t m[16] =
 		{
-			c_data[16 + 0], c_data[16 + 1], c_data[16 + 2], nonce,
+			c_data[0], c_data[1], c_data[2], nonce,
 			c_Padding[0], c_Padding[1], c_Padding[2], c_Padding[3],
 			c_Padding[4], c_Padding[5], c_Padding[6], c_Padding[7],
 			c_Padding[8], c_Padding[9], c_Padding[10], c_Padding[11]
@@ -641,7 +641,6 @@ void blake256_gpu_hash_80(const uint32_t threads, const uint32_t startNonce, uin
 		const uint32_t nonce = startNonce + thread;
 		uint32_t h[8];
 		//		uint32_t input[4];
-		const uint32_t T0 = 640;
 #pragma unroll 8
 		for (int i = 0; i<8; i++) { h[i] = cpu_h[i]; }
 
@@ -666,7 +665,7 @@ void blake256_gpu_hash_80(const uint32_t threads, const uint32_t startNonce, uin
 
 		uint32_t m[16] =
 		{
-			c_data[16 + 0], c_data[16 + 1], c_data[16 + 2], nonce,
+			c_data[0], c_data[1], c_data[2], nonce,
 			c_Padding[0], c_Padding[1], c_Padding[2], c_Padding[3],
 			c_Padding[4], c_Padding[5], c_Padding[6], c_Padding[7],
 			c_Padding[8], c_Padding[9], c_Padding[10], c_Padding[11]
@@ -845,7 +844,7 @@ void blake256_cpu_hash_80(const int thr_id, const uint32_t threads, const uint32
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
 
-	blake256_gpu_hash_80 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNonce, Hash);
+	blake256_gpu_hash_80 <<<grid, block, 0, gpustream[thr_id]>>> (threads, startNonce, (uint32_t*)Hash);
 	CUDA_SAFE_CALL(cudaGetLastError());
 }
 
