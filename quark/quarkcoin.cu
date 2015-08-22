@@ -168,9 +168,9 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 		uint32_t noncebuffersize = throughput * 7 / 10;
 		uint32_t noncebuffersize2 = (throughput * 7 / 10)*7/10;
 
-		cudaMalloc(&d_branch1Nonces[thr_id], sizeof(uint32_t)*noncebuffersize2);
-		cudaMalloc(&d_branch2Nonces[thr_id], sizeof(uint32_t)*noncebuffersize2);
-		cudaMalloc(&d_branch3Nonces[thr_id], sizeof(uint32_t)*noncebuffersize);
+		CUDA_SAFE_CALL(cudaMalloc(&d_branch1Nonces[thr_id], sizeof(uint32_t)*noncebuffersize2));
+		CUDA_SAFE_CALL(cudaMalloc(&d_branch2Nonces[thr_id], sizeof(uint32_t)*noncebuffersize2));
+		CUDA_SAFE_CALL(cudaMalloc(&d_branch3Nonces[thr_id], sizeof(uint32_t)*noncebuffersize));
 		quark_blake512_cpu_init(thr_id);
 		quark_groestl512_cpu_init(thr_id, throughput);
 		quark_bmw512_cpu_init(thr_id, throughput);
@@ -228,7 +228,8 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 
 		quark_keccak512_cpu_hash_64_final(thr_id, nrm1, pdata[19], d_branch1Nonces[thr_id], d_hash[thr_id]);
 		quark_jh512_cpu_hash_64_final(thr_id, nrm2, pdata[19], d_branch3Nonces[thr_id], d_hash[thr_id]);
-		
+		CUDA_SAFE_CALL(cudaGetLastError());
+
 		cuda_check_quarkcoin(thr_id, nrm3, pdata[19], d_branch3Nonces[thr_id], d_hash[thr_id], foundnonces);
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 
