@@ -27,23 +27,21 @@ __constant__ uint2 c_keccak_round_constants35[24] = {
 #define bitselect(a, b, c) ((a) ^ ((c) & ((b) ^ (a))))
 
 __global__  __launch_bounds__(128, 4)
-void quark_keccak512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint2 *g_hash, uint32_t *g_nonceVector)
+void quark_keccak512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint2 *const __restrict__ g_hash, uint32_t *const __restrict__ g_nonceVector)
 {
-    uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+    const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
     {
-        uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
+        const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-        uint32_t hashPosition = nounce - startNounce;
-        uint2 *inpHash = &g_hash[8 * hashPosition];
+        const uint32_t hashPosition = nounce - startNounce;
+        uint2 *const inpHash = &g_hash[8 * hashPosition];
 
 
 		uint2 msg[8];
 
-		uint28 *phash = (uint28*)inpHash;
-		uint28 *outpt = (uint28*)msg;
-		outpt[0] = phash[0];
-		outpt[1] = phash[1];
+		((uint28*)msg)[0] = ((uint28*)inpHash)[0];
+		((uint28*)msg)[1] = ((uint28*)inpHash)[1];
 
         uint2 s[25];
 		uint2 bc[5], tmpxor[5], tmp1, tmp2;
@@ -98,7 +96,7 @@ void quark_keccak512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint2 *
 		{
 
 #pragma unroll
-			for (uint32_t x = 0; x < 5; x++)
+			for (int x = 0; x < 5; x++)
 				tmpxor[x] = s[x] ^ s[x + 5] ^ s[x + 10] ^ s[x + 15] ^ s[x + 20];
 
 			bc[0] = tmpxor[0] ^ ROL2(tmpxor[2], 1);
@@ -151,25 +149,23 @@ void quark_keccak512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint2 *
 
 
 __global__  __launch_bounds__(128, 6)
-void quark_keccakskein512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint2 *g_hash, uint32_t *g_nonceVector)
+void quark_keccakskein512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint2 *const __restrict__ g_hash, uint32_t *const __restrict__ g_nonceVector)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
+		const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
-		int hashPosition = nounce - startNounce;
-		uint2 *inpHash = &g_hash[8 * hashPosition];
+		const uint32_t hashPosition = nounce - startNounce;
+		uint2 *const inpHash = &g_hash[8 * hashPosition];
 
 		uint2 s[25];
 		uint2 bc[5], tmpxor[5], tmp1, tmp2;
 
 		uint2 msg[8];
 
-		uint28 *phash = (uint28*)inpHash;
-		uint28 *outpt = (uint28*)msg;
-		outpt[0] = phash[0];
-		outpt[1] = phash[1];
+		((uint28*)msg)[0] = ((uint28*)inpHash)[0];
+		((uint28*)msg)[1] = ((uint28*)inpHash)[1];
 
 		tmpxor[0] = msg[0] ^ msg[5];
 		tmpxor[1] = msg[1] ^ msg[6];
@@ -221,7 +217,7 @@ void quark_keccakskein512_gpu_hash_64(uint32_t threads, uint32_t startNounce, ui
 		{
 
 #pragma unroll
-			for (uint32_t x = 0; x < 5; x++)
+			for (int x = 0; x < 5; x++)
 				tmpxor[x] = s[x] ^ s[x + 5] ^ s[x + 10] ^ s[x + 15] ^ s[x + 20];
 
 			bc[0] = tmpxor[0] ^ ROL2(tmpxor[2], 1);
@@ -1026,26 +1022,19 @@ void quark_keccakskein512_gpu_hash_64(uint32_t threads, uint32_t startNounce, ui
 	h6 ^= h[6];
 	h7 ^= h[7];
 
-	uint2 skein_h8 = h0 ^ h1 ^ h2 ^ h3 ^ h4 ^ h5 ^ h6 ^ h7 ^ vectorize(0x1BD11BDAA9FC1A22ULL);
+	const uint2 skein_h8 = h0 ^ h1 ^ h2 ^ h3 ^ h4 ^ h5 ^ h6 ^ h7 ^ vectorize(0x1BD11BDAA9FC1A22ULL);
 
 	uint2 hash64[8];
 
-	hash64[0] = (h0);
-	//		hash64[1] = (h1);
-	hash64[2] = (h2);
-	//		hash64[3] = (h3);
-	hash64[4] = (h4);
+	hash64[0] = h0 + h1;
+	hash64[2] = h2 + h3;
 	hash64[5] = (h5 + vectorizelow(8ULL));
-	hash64[6] = (h6 + vectorizehigh(0xff000000UL));
-	//		hash64[7] = (h7);
 
-	hash64[0] += h1;
 	hash64[1] = ROL2(h1, 46) ^ hash64[0];
-	hash64[2] += h3;
 	hash64[3] = ROL2(h3, 36) ^ hash64[2];
-	hash64[4] += hash64[5];
+	hash64[4] = h4 + hash64[5];
 	hash64[5] = ROL2(hash64[5], 19) ^ hash64[4];
-	hash64[6] += h7;
+	hash64[6] = (h6 + vectorizehigh(0xff000000UL)) + h7;
 	hash64[7] = ROL2(h7, 37) ^ hash64[6];
 	hash64[2] += hash64[1];
 	hash64[1] = ROL2(hash64[1], 33) ^ hash64[2];
@@ -1756,9 +1745,8 @@ void quark_keccakskein512_gpu_hash_64(uint32_t threads, uint32_t startNounce, ui
 	//#pragma unroll
 	//		for (int i = 0; i<8; i++)
 	//			inpHash[i] = s[i];
-	uint64_t *outHash = (uint64_t *)&g_hash[8 * hashPosition];
-
-
+	uint64_t *const outHash = (uint64_t *)&g_hash[8 * hashPosition];
+	
 	outHash[0] = devectorize(hash64[0] + h0);
 	outHash[1] = devectorize(hash64[1] + h1);
 	outHash[2] = devectorize(hash64[2] + h2);
@@ -1780,7 +1768,7 @@ void quark_keccakskein512_gpu_hash_64(uint32_t threads, uint32_t startNounce, ui
 }
 
 __global__  __launch_bounds__(192, 4)
-void quark_keccak512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint2 *g_hash, uint32_t *g_nonceVector)
+void quark_keccak512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint2 *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
 {
     const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
@@ -1788,14 +1776,12 @@ void quark_keccak512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, u
         const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
         const uint32_t hashPosition = nounce - startNounce;
-		uint2 *inpHash = &g_hash[8 * hashPosition];
+		uint2 *const inpHash = &g_hash[8 * hashPosition];
 
 		uint2 msg[8];
 
-		uint28 *phash = (uint28*)inpHash;
-		uint28 *outpt = (uint28*)msg;
-		outpt[0] = phash[0];
-		outpt[1] = phash[1];
+		((uint28*)msg)[0] = ((uint28*)inpHash)[0];
+		((uint28*)msg)[1] = ((uint28*)inpHash)[1];
 
 		uint2 s[25];
 		uint2 bc[5], tmpxor[5], tmp1, tmp2;
@@ -1852,7 +1838,7 @@ void quark_keccak512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, u
 		{
 
 #pragma unroll
-			for (uint32_t x = 0; x < 5; x++)
+			for (int x = 0; x < 5; x++)
 				tmpxor[x] = s[x] ^ s[x + 5] ^ s[x + 10] ^ s[x + 15] ^ s[x + 20];
 
 			bc[0] = tmpxor[0] ^ ROL2(tmpxor[2], 1);
@@ -1907,9 +1893,7 @@ void quark_keccak512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, u
 		s[18] ^= t[2] ^ ROL2(t[4], 1);
 		s[24] ^= t[3] ^ ROL2(t[0], 1);
 
-		s[3] = ROL2(s[18], 21) ^ ((~ROL2(s[24], 14)) & s[0]);
-
-		inpHash[3] = s[3];
+		inpHash[3] = ROL2(s[18], 21) ^ ((~ROL2(s[24], 14)) & s[0]);;
 	}
 }
 
