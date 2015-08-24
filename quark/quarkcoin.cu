@@ -46,7 +46,7 @@ extern void  quark_jh512_cpu_init(int thr_id, uint32_t threads);
 
 
 extern void quark_compactTest_cpu_init(int thr_id, uint32_t threads);
-extern void quark_compactTest_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *inpHashes, uint32_t *d_validNonceTable,
+extern void quark_compactTest_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, const uint32_t *inpHashes, const uint32_t *d_validNonceTable,
 											uint32_t *d_nonces1, uint32_t *nrm1,
 											uint32_t *d_nonces2, uint32_t *nrm2);
 extern void quark_compactTest_single_false_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *inpHashes, uint32_t *d_validNonceTable,

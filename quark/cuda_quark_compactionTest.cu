@@ -31,19 +31,19 @@ cuda_compactTestFunction_t h_QuarkTrueFunction[MAX_GPUS], h_QuarkFalseFunction[M
 // Setup-Funktionen
 __host__ void quark_compactTest_cpu_init(int thr_id, uint32_t threads)
 {
-	cudaMemcpyFromSymbolAsync(&h_QuarkTrueFunction[thr_id], d_QuarkTrueFunction, sizeof(cuda_compactTestFunction_t), 0, cudaMemcpyDeviceToHost, gpustream[thr_id]);
-	cudaMemcpyFromSymbolAsync(&h_QuarkFalseFunction[thr_id], d_QuarkFalseFunction, sizeof(cuda_compactTestFunction_t), 0, cudaMemcpyDeviceToHost, gpustream[thr_id]);
+	CUDA_SAFE_CALL(cudaMemcpyFromSymbolAsync(&h_QuarkTrueFunction[thr_id], d_QuarkTrueFunction, sizeof(cuda_compactTestFunction_t), 0, cudaMemcpyDeviceToHost, gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaMemcpyFromSymbolAsync(&h_QuarkFalseFunction[thr_id], d_QuarkFalseFunction, sizeof(cuda_compactTestFunction_t), 0, cudaMemcpyDeviceToHost, gpustream[thr_id]));
 
 	// wir brauchen auch Speicherplatz auf dem Device
-	cudaMalloc(&d_tempBranch1Nonces[thr_id], sizeof(uint32_t) * threads * 2);	
-	cudaMalloc(&d_numValid[thr_id], 2*sizeof(uint32_t));
-	cudaMallocHost(&h_numValid[thr_id], 2*sizeof(uint32_t));
+	CUDA_SAFE_CALL(cudaMalloc(&d_tempBranch1Nonces[thr_id], sizeof(uint32_t) * threads * 2));
+	CUDA_SAFE_CALL(cudaMalloc(&d_numValid[thr_id], 2 * sizeof(uint32_t)));
+	CUDA_SAFE_CALL(cudaMallocHost(&h_numValid[thr_id], 2 * sizeof(uint32_t)));
 
 	uint32_t s1;
 	s1 = (threads / 256) * 2;
 
-	cudaMalloc(&d_partSum[0][thr_id], sizeof(uint32_t) * s1); // BLOCKSIZE (Threads/Block)
-	cudaMalloc(&d_partSum[1][thr_id], sizeof(uint32_t) * s1); // BLOCKSIZE (Threads/Block)
+	CUDA_SAFE_CALL(cudaMalloc(&d_partSum[0][thr_id], sizeof(uint32_t) * s1)); // BLOCKSIZE (Threads/Block)
+	CUDA_SAFE_CALL(cudaMalloc(&d_partSum[1][thr_id], sizeof(uint32_t) * s1)); // BLOCKSIZE (Threads/Block)
 }
 
 // Die Summenfunktion (vom NVIDIA SDK)
@@ -228,7 +228,7 @@ __host__ void quark_compactTest_cpu_singleCompaction(int thr_id, uint32_t thread
 	int orgThreads = threads;
 	threads = (int)quark_compactTest_roundUpExp((uint32_t)threads);
 	// threadsPerBlock ausrechnen
-	int blockSize = 512;
+	int blockSize = 256;
 	int nSummen = threads / blockSize;
 
 	int thr1 = (threads+blockSize-1) / blockSize;
@@ -240,46 +240,59 @@ __host__ void quark_compactTest_cpu_singleCompaction(int thr_id, uint32_t thread
 
 	// Erster Initialscan
 	quark_compactTest_gpu_SCAN<<<thr1,blockSize, 0, gpustream[thr_id]>>>(d_tempBranch1Nonces[thr_id], 32, d_partSum[0][thr_id], function, orgThreads, startNounce, inpHashes, d_validNonceTable);	
+	CUDA_SAFE_CALL(cudaGetLastError());
 
 	// weitere Scans
 	if(callThrid)
 	{		
 		quark_compactTest_gpu_SCAN<<<thr2,blockSize, 0, gpustream[thr_id]>>>(d_partSum[0][thr_id], 32, d_partSum[1][thr_id]);
-		quark_compactTest_gpu_SCAN<<<1, thr2, 0, gpustream[thr_id]>>>(d_partSum[1][thr_id], (thr2>32) ? 32 : thr2);
-	}else
+		CUDA_SAFE_CALL(cudaGetLastError());
+		quark_compactTest_gpu_SCAN << <1, thr2, 0, gpustream[thr_id] >> >(d_partSum[1][thr_id], (thr2>32) ? 32 : thr2);
+		CUDA_SAFE_CALL(cudaGetLastError());
+	}
+	else
 	{
 		quark_compactTest_gpu_SCAN<<<thr3,blockSize2, 0, gpustream[thr_id]>>>(d_partSum[0][thr_id], (blockSize2>32) ? 32 : blockSize2);
+		CUDA_SAFE_CALL(cudaGetLastError());
 	}
 
 	if(callThrid)
+	{
 		cudaMemcpyAsync(nrm, &(d_partSum[1][thr_id])[thr2 - 1], sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
+		CUDA_SAFE_CALL(cudaGetLastError());
+	}
 	else
+	{
 		cudaMemcpyAsync(nrm, &(d_partSum[0][thr_id])[nSummen - 1], sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
-
+		CUDA_SAFE_CALL(cudaGetLastError());
+	}
 	
 	// Addieren
 	if(callThrid)
 	{
 		quark_compactTest_gpu_ADD<<<thr2-1, blockSize, 0, gpustream[thr_id]>>>(d_partSum[0][thr_id]+blockSize, d_partSum[1][thr_id], blockSize*thr2);
+		CUDA_SAFE_CALL(cudaGetLastError());
 	}
 	quark_compactTest_gpu_ADD<<<thr1-1, blockSize, 0, gpustream[thr_id]>>>(d_tempBranch1Nonces[thr_id]+blockSize, d_partSum[0][thr_id], threads);
-	
+	CUDA_SAFE_CALL(cudaGetLastError());
+
 	// Scatter
 	quark_compactTest_gpu_SCATTER<<<thr1,blockSize,0, gpustream[thr_id]>>>(d_tempBranch1Nonces[thr_id], d_nonces1, 
 		function, orgThreads, startNounce, inpHashes, d_validNonceTable);
+	CUDA_SAFE_CALL(cudaGetLastError());
 	cudaStreamSynchronize(gpustream[thr_id]);
 }
 
 ////// ACHTUNG: Diese funktion geht aktuell nur mit threads > 65536 (Am besten 256 * 1024 oder 256*2048)
 __host__ void quark_compactTest_cpu_dualCompaction(int thr_id, uint32_t threads, uint32_t *nrm,
 													 uint32_t *d_nonces1, uint32_t *d_nonces2,
-													 uint32_t startNounce, uint32_t *inpHashes, uint32_t *d_validNonceTable)
+													 uint32_t startNounce, const uint32_t *inpHashes, const uint32_t *d_validNonceTable)
 {
 	quark_compactTest_cpu_singleCompaction(thr_id, threads, &nrm[0], d_nonces1, h_QuarkTrueFunction[thr_id], startNounce, inpHashes, d_validNonceTable);
 	quark_compactTest_cpu_singleCompaction(thr_id, threads, &nrm[1], d_nonces2, h_QuarkFalseFunction[thr_id], startNounce, inpHashes, d_validNonceTable);
 }
 
-__host__ void quark_compactTest_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *inpHashes, uint32_t *d_validNonceTable,
+__host__ void quark_compactTest_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, const uint32_t *inpHashes, const uint32_t *d_validNonceTable,
 											uint32_t *d_nonces1, uint32_t *nrm1,
 											uint32_t *d_nonces2, uint32_t *nrm2)
 {
