@@ -26,7 +26,7 @@ extern void lyra2v2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNonc
 extern void lyra2v2_cpu_init(int thr_id, uint32_t threads, uint64_t* matrix);
 
 extern void bmw256_cpu_init(int thr_id, uint32_t threads);
-extern void bmw256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint32_t *resultnonces, uint64_t target);
+extern void bmw256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint32_t *resultnonces, uint32_t target);
 
 extern void cubehash256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint64_t *d_hash);
 
@@ -142,7 +142,7 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 		lyra2v2_cpu_hash_32(thr_id, throughput, pdata[19], d_hash);
 		skein256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash);
 		cubehash256_cpu_hash_32(thr_id, throughput,pdata[19], d_hash);
-		bmw256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash, foundNonce, ((uint64_t*)ptarget)[3]);
+		bmw256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash, foundNonce, ptarget[7]);
 		if(stop_mining)
 		{
 			mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);
