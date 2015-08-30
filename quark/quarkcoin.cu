@@ -38,11 +38,12 @@ extern void quark_doublegroestl512_cpu_hash_64(int thr_id, uint32_t threads, uin
 extern void quark_skein512_cpu_init(int thr_id);
 extern void quark_skein512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash);
 
+extern void quark_keccak512_cpu_init(int thr_id);
 extern void quark_keccakskein512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash);
-extern void quark_keccak512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash);
+extern void quark_keccak512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash, uint32_t target, uint32_t *h_found);
 extern void quark_jh512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash);
-extern void quark_jh512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash);
-extern void  quark_jh512_cpu_init(int thr_id, uint32_t threads);
+extern void quark_jh512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash, uint32_t target, uint32_t *h_found);
+extern void  quark_jh512_cpu_init(int thr_id);
 
 
 extern void quark_compactTest_cpu_init(int thr_id, uint32_t threads);
@@ -162,7 +163,7 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 
 		// Konstanten kopieren, Speicher belegen
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
-		CUDA_SAFE_CALL(cudaMallocHost(&foundnonces, 2 * 4));
+		CUDA_SAFE_CALL(cudaMallocHost(&foundnonces, 4 * 4));
 //		CUDA_SAFE_CALL(cudaMalloc(&d_branch1Nonces[thr_id], sizeof(uint32_t)*throughput));
 //		CUDA_SAFE_CALL(cudaMalloc(&d_branch2Nonces[thr_id], sizeof(uint32_t)*throughput));
 		uint32_t noncebuffersize = throughput * 7 / 10;
@@ -174,10 +175,9 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 		quark_blake512_cpu_init(thr_id);
 		quark_groestl512_cpu_init(thr_id, throughput);
 		quark_bmw512_cpu_init(thr_id, throughput);
-		cuda_check_cpu_init(thr_id, throughput);
 		quark_compactTest_cpu_init(thr_id, throughput);
-//		quark_keccak512_cpu_init(thr_id);
-		quark_jh512_cpu_init(thr_id, throughput);
+		quark_keccak512_cpu_init(thr_id);
+		quark_jh512_cpu_init(thr_id);
 		CUDA_SAFE_CALL(cudaGetLastError());
 		init[thr_id] = true;
 	}
@@ -185,7 +185,6 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 	uint32_t endiandata[20];
 	for (int k=0; k < 20; k++)
 		be32enc(&endiandata[k], pdata[k]);
-	cuda_check_cpu_setTarget(ptarget, thr_id);
 	quark_blake512_cpu_setBlock_80(thr_id, (uint64_t *)endiandata);
 
 	do {
@@ -224,14 +223,26 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 		// quarkNonces in branch1 und branch2 aufsplitten gemäss if (hash[0] & 0x8)
 		quark_compactTest_cpu_hash_64(thr_id, nrm3, pdata[19], d_hash[thr_id], d_branch3Nonces[thr_id],
 			d_branch1Nonces[thr_id], &nrm1,
-			d_branch3Nonces[thr_id], &nrm2);
+			d_branch2Nonces[thr_id], &nrm2);
 
-		quark_keccak512_cpu_hash_64_final(thr_id, nrm1, pdata[19], d_branch1Nonces[thr_id], d_hash[thr_id]);
-		quark_jh512_cpu_hash_64_final(thr_id, nrm2, pdata[19], d_branch3Nonces[thr_id], d_hash[thr_id]);
-		CUDA_SAFE_CALL(cudaGetLastError());
+		quark_keccak512_cpu_hash_64_final(thr_id, nrm1, pdata[19], d_branch1Nonces[thr_id], d_hash[thr_id], ptarget[7], foundnonces);
+		quark_jh512_cpu_hash_64_final(thr_id, nrm2, pdata[19], d_branch2Nonces[thr_id], d_hash[thr_id], ptarget[7], foundnonces+2);
+		CUDA_SAFE_CALL(cudaStreamSynchronize(gpustream[thr_id]));
+		if(foundnonces[0] == 0xffffffff)
+		{
+			foundnonces[0] = foundnonces[2];
+			foundnonces[1] = foundnonces[3];
+		}
+		else
+		{
+			if(foundnonces[1] == 0xffffffff)
+				foundnonces[1] = foundnonces[2];
+		}
 
-		cuda_check_quarkcoin(thr_id, nrm3, pdata[19], d_branch3Nonces[thr_id], d_hash[thr_id], foundnonces);
-		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
+		if(stop_mining)
+		{
+			mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);
+		}
 
 		if (foundnonces[0] != 0xffffffff)
 		{

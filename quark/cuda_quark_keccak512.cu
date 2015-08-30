@@ -10,6 +10,8 @@
 #define UINT2(x,y) (uint2) { x, y }
 #endif
 
+static uint32_t *d_found[MAX_GPUS];
+
 __constant__ uint2 c_keccak_round_constants35[24] = {
 		{ 0x00000001ul, 0x00000000 }, { 0x00008082ul, 0x00000000 },
 		{ 0x0000808aul, 0x80000000 }, { 0x80008000ul, 0x80000000 },
@@ -1768,7 +1770,7 @@ void quark_keccakskein512_gpu_hash_64(uint32_t threads, uint32_t startNounce, ui
 }
 
 __global__  __launch_bounds__(192, 4)
-void quark_keccak512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint2 *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
+void quark_keccak512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint2 *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector, uint32_t *const __restrict__ d_found, uint32_t target)
 {
     const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
@@ -1893,7 +1895,14 @@ void quark_keccak512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, u
 		s[18] ^= t[2] ^ ROL2(t[4], 1);
 		s[24] ^= t[3] ^ ROL2(t[0], 1);
 
-		inpHash[3] = ROL2(s[18], 21) ^ ((~ROL2(s[24], 14)) & s[0]);;
+		s[3] = ROL2(s[18], 21) ^ ((~ROL2(s[24], 14)) & s[0]);
+
+		if(s[3].y <= target)
+		{
+			uint32_t tmp = atomicExch(&(d_found[0]), nounce);
+			if(tmp != 0xffffffff)
+				d_found[1] = tmp;
+		}
 	}
 }
 
@@ -1908,15 +1917,21 @@ __host__ void quark_keccak512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t
     quark_keccak512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint2 *)d_hash, d_nonceVector);
 }
 
-__host__ void quark_keccak512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash)
+__host__ void quark_keccak512_cpu_init(int thr_id)
+{
+	CUDA_SAFE_CALL(cudaMalloc(&(d_found[thr_id]), 2 * sizeof(uint32_t)));
+}
+
+__host__ void quark_keccak512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash, uint32_t target, uint32_t *h_found)
 {
 	const uint32_t threadsperblock = 32;
 
 	// berechne wie viele Thread Blocks wir brauchen
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
-	quark_keccak512_gpu_hash_64_final << <grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint2 *)d_hash, d_nonceVector);
-
+	cudaMemsetAsync(d_found[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
+	quark_keccak512_gpu_hash_64_final << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce, (uint2 *)d_hash, d_nonceVector, d_found[thr_id], target);
+	CUDA_SAFE_CALL(cudaMemcpyAsync(h_found, d_found[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]));
 }
 
 __host__ void quark_keccakskein512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash)

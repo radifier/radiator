@@ -52,6 +52,7 @@ __constant__ static __align__(16) uint32_t c_E8_bslice32[42][8] = {
 		// 42 rounds...
 };
 
+static uint32_t *d_found[MAX_GPUS];
 
 #ifndef NOASM
 __device__ __forceinline__
@@ -346,7 +347,7 @@ void quark_jh512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *c
 // Die Hash-Funktion
 #define TPB2 256
 __global__ __launch_bounds__(TPB2, 2)
-void quark_jh512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
+void quark_jh512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector, uint32_t *const __restrict__ d_found, uint32_t target)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
@@ -398,7 +399,12 @@ void quark_jh512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint6
 		RoundFunction5(x, 35 + 5);
 		RoundFunction6(x, 35 + 6);
 
-		Hash[7] = x[5][3];
+		if(x[5][3] <= target)
+		{
+			uint32_t tmp = atomicExch(&(d_found[0]), nounce);
+			if(tmp != 0xffffffff)
+				d_found[1] = tmp;
+		}
 	}
 }
 
@@ -414,14 +420,16 @@ __host__ void quark_jh512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t sta
 }
 
 // Setup-Funktionen
-__host__ void  quark_jh512_cpu_init(int thr_id, uint32_t threads)
+__host__ void quark_jh512_cpu_init(int thr_id)
 {
+	cudaMalloc(&(d_found[thr_id]), 2 * sizeof(uint32_t));
 }
 
-__host__ void quark_jh512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash)
+__host__ void quark_jh512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash, uint32_t target, uint32_t *h_found)
 {
 	dim3 grid((threads + TPB2 - 1) / TPB2);
 	dim3 block(TPB2);
-
-	quark_jh512_gpu_hash_64_final << <grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash, d_nonceVector);
+	cudaMemsetAsync(d_found[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
+	quark_jh512_gpu_hash_64_final << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce, (uint64_t*)d_hash, d_nonceVector, d_found[thr_id], target);
+	cudaMemcpyAsync(h_found, d_found[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
 }
