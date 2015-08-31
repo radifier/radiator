@@ -55,7 +55,6 @@ static uint32_t __align__(32) c_Target[8];
 __constant__
 static uint64_t __align__(32) c_data[32];
 
-static uint32_t *d_hash[MAX_GPUS];
 static uint32_t *d_resNounce[MAX_GPUS];
 static uint32_t *h_resNounce[MAX_GPUS];
 static uint32_t extra_results[MAX_GPUS][2] = { UINT32_MAX };
@@ -441,6 +440,8 @@ static volatile bool init[MAX_GPUS] = { false };
 extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t max_nonce, uint32_t *hashes_done)
 {
+	static THREAD uint32_t *d_hash = nullptr;
+
 	const uint32_t first_nonce = pdata[19];
 	uint32_t endiandata[20];
 	int rc = 0;
@@ -456,7 +457,7 @@ extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 64 * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 64 * throughput));
 		CUDA_SAFE_CALL(cudaMallocHost(&h_resNounce[thr_id], 2*sizeof(uint32_t)));
 		CUDA_SAFE_CALL(cudaMalloc(&d_resNounce[thr_id], 2*sizeof(uint32_t)));
 
@@ -471,14 +472,14 @@ extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	do {
 
 		// GPU HASH
-		pentablake_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id]);
+		pentablake_cpu_hash_80(thr_id, throughput, pdata[19], d_hash);
 
-		pentablake_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		pentablake_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		pentablake_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		pentablake_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
+		pentablake_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
+		pentablake_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
+		pentablake_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
+		pentablake_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
 		CUDA_SAFE_CALL(cudaGetLastError());
-		uint32_t foundNonce = pentablake_check_hash(thr_id, throughput, pdata[19], d_hash[thr_id]);
+		uint32_t foundNonce = pentablake_check_hash(thr_id, throughput, pdata[19], d_hash);
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		if(foundNonce != UINT32_MAX)
 		{

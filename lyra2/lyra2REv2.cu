@@ -10,10 +10,6 @@ extern "C" {
 #include "miner.h"
 #include "cuda_helper.h"
 
-
-static _ALIGN(64) uint64_t *d_hash[MAX_GPUS];
-static  uint64_t *d_hash2[MAX_GPUS];
-
 extern void blakeKeccak256_cpu_hash_80(const int thr_id, const uint32_t threads, const uint32_t startNonce, uint64_t *Hash);
 extern void blake256_cpu_setBlock_80(int thr_id, uint32_t *pdata);
 
@@ -76,12 +72,13 @@ extern "C" void lyra2v2_hash(void *state, const void *input)
 	memcpy(state, hashA, 32);
 }
 
-static bool init[MAX_GPUS] = { false };
-
 int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 	const uint32_t *ptarget, uint32_t max_nonce,
 	uint32_t *hashes_done)
 {
+	static THREAD uint64_t *d_hash = nullptr;
+	static THREAD uint64_t *d_hash2 = nullptr;
+
 	const uint32_t first_nonce = pdata[19];
 	uint32_t intensity = 256 * 256 * 8;
 
@@ -112,22 +109,23 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 	if (opt_benchmark)
 		((uint32_t*)ptarget)[7] = 0x004f;
 
-	if (!init[thr_id])
+	static THREAD bool init = false;
+	if (!init)
 	{ 
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash2[thr_id], 16  * 4 * 4 * sizeof(uint64_t) * throughput));
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 8 * sizeof(uint32_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash2, 16  * 4 * 4 * sizeof(uint64_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 8 * sizeof(uint32_t) * throughput));
 
 //		keccak256_cpu_init(thr_id, throughput);
 		skein256_cpu_init(thr_id, throughput);
 		bmw256_cpu_init(thr_id, throughput);
-        lyra2v2_cpu_init(thr_id, throughput, d_hash2[thr_id]);
+        lyra2v2_cpu_init(thr_id, throughput, d_hash2);
 
-		init[thr_id] = true; 
+		init = true; 
 	}
 
 	uint32_t endiandata[20];
@@ -140,13 +138,13 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 	do {
 		uint32_t foundNonce[2] = { 0, 0 };
 
-		blakeKeccak256_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id]);
-//		keccak256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		cubehash256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		lyra2v2_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		skein256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		cubehash256_cpu_hash_32(thr_id, throughput,pdata[19], d_hash[thr_id]);
-		bmw256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id], foundNonce);
+		blakeKeccak256_cpu_hash_80(thr_id, throughput, pdata[19], d_hash);
+//		keccak256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash);
+		cubehash256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash);
+		lyra2v2_cpu_hash_32(thr_id, throughput, pdata[19], d_hash);
+		skein256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash);
+		cubehash256_cpu_hash_32(thr_id, throughput,pdata[19], d_hash);
+		bmw256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash, foundNonce);
 		if(stop_mining)
 		{
 			mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);

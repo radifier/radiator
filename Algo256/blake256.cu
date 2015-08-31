@@ -500,8 +500,6 @@ void blake256_cpu_setBlock_16(int thr_id, uint32_t *penddata, const uint32_t *mi
 }
 #endif
 
-static volatile bool init[MAX_GPUS] = { false };
-
 extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t max_nonce, uint32_t *hashes_done, int8_t blakerounds=14)
 {
@@ -531,7 +529,8 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 			pdata[k] = swab32(pdata[k]);
 	}
 
-	if (!init[thr_id]) 
+	static THREAD volatile bool init = false;
+	if(!init)
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
@@ -539,7 +538,7 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMallocHost(&h_resNonce, NBN * sizeof(uint32_t)));
 		CUDA_SAFE_CALL(cudaMalloc(&d_resNonce[thr_id], NBN * sizeof(uint32_t)));
-		init[thr_id] = true;
+		init = true;
 	}
 
 #if PRECALC64

@@ -14,8 +14,6 @@ extern "C"
 
 #include "cuda_helper.h"
 
-static THREAD uint32_t *h_nounce;
-
 extern void keccak256_cpu_init(int thr_id, uint32_t threads);
 extern void keccak256_setBlock_80(int thr_id, void *pdata,const void *ptarget);
 extern void keccak256_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *h_nounce);
@@ -34,12 +32,12 @@ extern "C" void keccak256_hash(void *state, const void *input)
 	memcpy(state, hash, 32);
 }
 
-static volatile bool init[MAX_GPUS] = { false };
-
 extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
 	uint32_t *hashes_done)
 {
+	static THREAD uint32_t *h_nounce = nullptr;
+
 	const uint32_t first_nonce = pdata[19];
 	uint32_t intensity = (device_sm[device_map[thr_id]] > 500) ? 1 << 28 : 1 << 27;;
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity); // 256*4096
@@ -49,7 +47,9 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 	if (opt_benchmark)
 		ptarget[7] = 0x0002;
 
-	if (!init[thr_id]) {
+	static THREAD volatile bool init = false;
+	if(!init)
+	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
@@ -57,7 +57,7 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaMallocHost(&h_nounce, 2 * sizeof(uint32_t)));
 		keccak256_cpu_init(thr_id, (int)throughput);
 //		CUDA_SAFE_CALL(cudaMallocHost(&h_nounce, 2 * sizeof(uint32_t)));
-		init[thr_id] = true;
+		init = true;
 	}
 
 	uint32_t endiandata[20];

@@ -10,8 +10,6 @@ extern "C" {
 
 #include "cuda_helper.h"
 
-static uint32_t *d_hash[MAX_GPUS];
-
 extern void qubit_luffa512_cpu_init(int thr_id, uint32_t threads);
 extern void qubit_luffa512_cpu_setBlock_80(int thr_id, void *pdata);
 extern void qubit_luffa512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
@@ -32,12 +30,12 @@ extern void doomhash(void *state, const void *input)
 	memcpy(state, hash, 32);
 }
 
-static volatile bool init[MAX_GPUS] = { false };
-
 extern int scanhash_doom(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
 	uint32_t *hashes_done)
 {
+	static THREAD uint32_t *d_hash = nullptr;
+
 	const uint32_t first_nonce = pdata[19];
 	uint32_t endiandata[20];
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1U << 22); // 256*256*8*8
@@ -46,18 +44,19 @@ extern int scanhash_doom(int thr_id, uint32_t *pdata,
 	if (opt_benchmark)
 		ptarget[7] = 0x0000f;
 
-	if (!init[thr_id])
+	static THREAD volatile bool init = false;
+	if(!init)
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughput));
 
 		qubit_luffa512_cpu_init(thr_id, (int) throughput);
 
-		init[thr_id] = true;
+		init = true;
 	}
 
 	for (int k=0; k < 20; k++)
@@ -67,7 +66,7 @@ extern int scanhash_doom(int thr_id, uint32_t *pdata,
 
 	do {
 
-		uint32_t foundNonce = qubit_luffa512_cpu_finalhash_80(thr_id, (int) throughput, pdata[19], d_hash[thr_id]);
+		uint32_t foundNonce = qubit_luffa512_cpu_finalhash_80(thr_id, (int) throughput, pdata[19], d_hash);
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		if(foundNonce != UINT32_MAX)
 		{

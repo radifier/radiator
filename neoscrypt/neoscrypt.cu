@@ -6,31 +6,31 @@ extern "C"
 #include "cuda_helper.h"
 #include "miner.h"
 #include <string.h>
-static uint32_t *d_hash[MAX_GPUS], hw_errors = 0;
-static uint32_t *foundNonce;
 
 extern void neoscrypt_setBlockTarget(int thr_id, uint32_t * data, const void *ptarget);
 extern void neoscrypt_cpu_init(int thr_id, uint32_t* hash);
 extern void neoscrypt_cpu_hash_k4(int stratum, int thr_id, int threads, uint32_t startNounce, int threadsperblock, uint32_t* foundnonce);
 //extern void neoscrypt_cpu_hash_k4_52(int stratum, int thr_id, int threads, uint32_t startNounce, int order, uint32_t* foundnonce);
 
-
 int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 					   uint32_t *ptarget, uint32_t max_nonce,
 					   uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
-	static uint32_t throughput;
-	static volatile bool init[MAX_GPUS] = { false };
+	static THREAD uint32_t throughput;
 
-
+	static THREAD volatile bool init = false;
+	static THREAD uint32_t *d_hash = nullptr;
+	static THREAD uint32_t hw_errors = 0;
+	static THREAD uint32_t *foundNonce = nullptr;
+	
 	if(opt_benchmark)
 	{
 		ptarget[7] = 0x01ff;
 		stratum = 0;
 	}
 
-	if(!init[thr_id])
+	if(!init)
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 
@@ -58,9 +58,9 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		//		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);	
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * 4));
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 32 * 130 * sizeof(uint64_t) * throughput));
-		neoscrypt_cpu_init(thr_id, d_hash[thr_id]);
-		init[thr_id] = true;
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 32 * 130 * sizeof(uint64_t) * throughput));
+		neoscrypt_cpu_init(thr_id, d_hash);
+		init = true;
 	}
 
 	uint32_t endiandata[20];

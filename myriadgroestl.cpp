@@ -14,9 +14,6 @@
 extern bool stop_mining;
 extern volatile bool mining_has_stopped[MAX_GPUS];
 
-static volatile bool init[MAX_GPUS] = { false };
-static uint32_t *h_found[MAX_GPUS];
-
 void myriadgroestl_cpu_init(int thr_id, uint32_t threads);
 void myriadgroestl_cpu_setBlock(int thr_id, void *data, void *pTargetIn);
 void myriadgroestl_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *nounce);
@@ -45,6 +42,8 @@ extern "C" void myriadhash(void *state, const void *input)
 extern int scanhash_myriad(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t max_nonce, uint32_t *hashes_done)
 {
+	static THREAD uint32_t *h_found = nullptr;
+
 	uint32_t start_nonce = pdata[19]++;
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1 << 20);
 	throughput = min(throughput, max_nonce - start_nonce) & 0xfffffc00;
@@ -53,14 +52,15 @@ extern int scanhash_myriad(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		ptarget[7] = 0x0000ff;
 
 	// init
-	if(!init[thr_id])
+	static THREAD volatile bool init = false;
+	if(!init)
 	{
 #if BIG_DEBUG
 #else
 		myriadgroestl_cpu_init(thr_id, throughput);
 #endif
-		cudaMallocHost(&(h_found[thr_id]), 4 * sizeof(uint32_t));
-		init[thr_id] = true;
+		cudaMallocHost(&(h_found), 4 * sizeof(uint32_t));
+		init = true;
 	}
 
 	uint32_t endiandata[32];
@@ -73,51 +73,51 @@ extern int scanhash_myriad(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	do {
 		const uint32_t Htarg = ptarget[7];
 
-		myriadgroestl_cpu_hash(thr_id, throughput, pdata[19], h_found[thr_id]);
+		myriadgroestl_cpu_hash(thr_id, throughput, pdata[19], h_found);
 
 		if(stop_mining) {mining_has_stopped[thr_id] = true; pthread_exit(nullptr);}
-		if(h_found[thr_id][0] != 0xffffffff)
+		if(h_found[0] != 0xffffffff)
 		{
 			const uint32_t Htarg = ptarget[7];
 			uint32_t vhash64[8];
-			be32enc(&endiandata[19], h_found[thr_id][0]);
+			be32enc(&endiandata[19], h_found[0]);
 			myriadhash(vhash64, endiandata);
 
 			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 			{
 				int res = 1;
 				*hashes_done = pdata[19] - start_nonce + throughput;
-				if (h_found[thr_id][1] != 0xffffffff)
+				if (h_found[1] != 0xffffffff)
 				{
-					be32enc(&endiandata[19], h_found[thr_id][1]);
+					be32enc(&endiandata[19], h_found[1]);
 					myriadhash(vhash64, endiandata);
 					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 					{
 
-						pdata[21] = h_found[thr_id][1];
+						pdata[21] = h_found[1];
 						res++;
 						if (opt_benchmark)
-							applog(LOG_INFO, "GPU #%d Found second nounce %08x", device_map[thr_id], h_found[thr_id][1]);
+							applog(LOG_INFO, "GPU #%d Found second nounce %08x", device_map[thr_id], h_found[1]);
 					}
 					else
 					{
 						if (vhash64[7] != Htarg)
 						{
-							applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], h_found[thr_id][1]);
+							applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], h_found[1]);
 						}
 					}
 
 				}
-				pdata[19] = h_found[thr_id][0];
+				pdata[19] = h_found[0];
 				if (opt_benchmark)
-					applog(LOG_INFO, "GPU #%d Found nounce %08x", device_map[thr_id], h_found[thr_id][0]);
+					applog(LOG_INFO, "GPU #%d Found nounce %08x", device_map[thr_id], h_found[0]);
 				return res;
 			}
 			else
 			{
 				if (vhash64[7] != Htarg)
 				{
-					applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], h_found[thr_id][0]);
+					applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], h_found[0]);
 				}
 			}
 		}

@@ -26,9 +26,6 @@ extern "C" {
 
 #include "cuda_helper.h"
 
-// Memory for the hash functions
-static uint32_t *d_hash[MAX_GPUS];
-
 extern void quark_blake512_cpu_init(int thr_id);
 extern void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata);
 extern void quark_blake512_cpu_setBlock_80_multi(int thr_id, uint64_t *pdata);
@@ -150,12 +147,12 @@ extern "C" void x14hash(void *output, const void *input)
 	memcpy(output, hash, 32);
 }
 
-static volatile bool init[MAX_GPUS] = { false };
-
 extern int scanhash_x14(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
 	uint32_t *hashes_done)
 {
+	static THREAD uint32_t *d_hash = nullptr;
+
 	const uint32_t first_nonce = pdata[19];
 	uint32_t endiandata[20];
 
@@ -168,7 +165,8 @@ extern int scanhash_x14(int thr_id, uint32_t *pdata,
 	if (opt_benchmark)
 		ptarget[7] = 0x000f;
 
-	if (!init[thr_id])
+	static THREAD volatile bool init = false;
+	if(!init)
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
@@ -184,10 +182,10 @@ extern int scanhash_x14(int thr_id, uint32_t *pdata,
 		x13_hamsi512_cpu_init(thr_id, throughput);
 		x13_fugue512_cpu_init(thr_id, throughput);
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughput));
 
 		cuda_check_cpu_init(thr_id, throughput);
-		init[thr_id] = true;
+		init = true;
 	}
 
 	for (int k = 0; k < 20; k++)
@@ -197,20 +195,20 @@ extern int scanhash_x14(int thr_id, uint32_t *pdata,
 	cuda_check_cpu_setTarget(ptarget, thr_id);
 
 	do {
-		quark_blake512_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		quark_bmw512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash[thr_id]);
-		quark_groestl512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash[thr_id]);
-		quark_skein512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash[thr_id]);
-		cuda_jh512Keccak512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		x11_luffaCubehash512_cpu_hash_64(thr_id, throughput, pdata[19],  d_hash[thr_id]);
-		x11_shavite512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id],simdthreads);
-		x11_echo512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		x13_hamsi512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		x13_fugue512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		x14_shabal512_cpu_hash_64(thr_id, throughput, pdata[19],  d_hash[thr_id]);
+		quark_blake512_cpu_hash_80(thr_id, throughput, pdata[19], d_hash);
+		quark_bmw512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash);
+		quark_groestl512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash);
+		quark_skein512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash);
+		cuda_jh512Keccak512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
+		x11_luffaCubehash512_cpu_hash_64(thr_id, throughput, pdata[19],  d_hash);
+		x11_shavite512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
+		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash,simdthreads);
+		x11_echo512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
+		x13_hamsi512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
+		x13_fugue512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
+		x14_shabal512_cpu_hash_64(thr_id, throughput, pdata[19],  d_hash);
 
-		uint32_t foundNonce = cuda_check_hash(thr_id, throughput, pdata[19], d_hash[thr_id]);
+		uint32_t foundNonce = cuda_check_hash(thr_id, throughput, pdata[19], d_hash);
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		if(foundNonce != UINT32_MAX)
 		{
@@ -222,7 +220,7 @@ extern int scanhash_x14(int thr_id, uint32_t *pdata,
 
 			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget)) {
 				int res = 1;
-				uint32_t secNonce = cuda_check_hash_suppl(thr_id, throughput, pdata[19], d_hash[thr_id], foundNonce);
+				uint32_t secNonce = cuda_check_hash_suppl(thr_id, throughput, pdata[19], d_hash, foundNonce);
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				if (secNonce != 0)
 				{

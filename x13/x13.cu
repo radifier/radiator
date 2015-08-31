@@ -23,9 +23,6 @@ extern "C"
 
 #include "cuda_helper.h"
 
-static uint32_t *d_hash[MAX_GPUS];
-static THREAD uint32_t *h_found;
-
 extern void quark_blake512_cpu_init(int thr_id);
 extern void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata);
 extern void quark_blake512_cpu_setBlock_80_multi(int thr_id, uint64_t *pdata);
@@ -156,8 +153,10 @@ extern int scanhash_x13(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
 	uint32_t *hashes_done)
 {
+	static THREAD uint32_t *d_hash = nullptr;
+	static THREAD uint32_t *h_found = nullptr;
+
 	const uint32_t first_nonce = pdata[19];
-	static volatile bool init[MAX_GPUS] = { false };
 	uint32_t endiandata[20];
 	int intensity = (device_sm[device_map[thr_id]] > 500) ? 256 * 256 * 26 : 256 * 256 * 13;
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity);
@@ -168,7 +167,8 @@ extern int scanhash_x13(int thr_id, uint32_t *pdata,
 	if (opt_benchmark)
 		ptarget[7] = 0xff;
 
-	if (!init[thr_id])
+	static THREAD volatile bool init = false;
+	if(!init)
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
@@ -183,11 +183,11 @@ extern int scanhash_x13(int thr_id, uint32_t *pdata,
 		x13_hamsi512_cpu_init(thr_id, throughput);
 		x13_fugue512_cpu_init(thr_id, throughput);
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16 * sizeof(uint32_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughput));
 		CUDA_SAFE_CALL(cudaMallocHost(&(h_found), 2 * sizeof(uint32_t)));
 
 //		cuda_check_cpu_init(thr_id, throughput);
-		init[thr_id] = true;
+		init = true;
 	}
 
 	for (int k = 0; k < 20; k++)
@@ -198,17 +198,17 @@ extern int scanhash_x13(int thr_id, uint32_t *pdata,
 	x13_fugue512_cpu_setTarget(thr_id, ptarget);
 
 	do {
-		quark_blake512_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		quark_bmw512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash[thr_id]);
-		quark_groestl512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash[thr_id]);
-		quark_skein512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash[thr_id]);
-		cuda_jh512Keccak512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		x11_luffaCubehash512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		x11_shavite512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id],simdthreads);
-		x11_echo512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		x13_hamsi512_cpu_hash_64(thr_id, throughput, pdata[19],  d_hash[thr_id]);
-		x13_fugue512_cpu_hash_64_final(thr_id, throughput, pdata[19], d_hash[thr_id], h_found);
+		quark_blake512_cpu_hash_80(thr_id, throughput, pdata[19], d_hash);
+		quark_bmw512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash);
+		quark_groestl512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash);
+		quark_skein512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash);
+		cuda_jh512Keccak512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
+		x11_luffaCubehash512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
+		x11_shavite512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
+		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash,simdthreads);
+		x11_echo512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
+		x13_hamsi512_cpu_hash_64(thr_id, throughput, pdata[19],  d_hash);
+		x13_fugue512_cpu_hash_64_final(thr_id, throughput, pdata[19], d_hash, h_found);
 
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		//	h_found[0] = 0xffffffff;

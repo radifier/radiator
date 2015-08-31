@@ -38,8 +38,6 @@ extern "C" void whirlxHash(void *state, const void *input)
 	memcpy(state, hash_xored, 32);
 }
 
-static volatile bool init[MAX_GPUS] = { false };
-
 int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_nonce, uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
@@ -50,14 +48,15 @@ int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t
 	if (opt_benchmark)
 		ptarget[7] = 0x5;
 
-	if (!init[thr_id])
+	static THREAD volatile bool init = false;
+	if(!init)
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		whirlpoolx_cpu_init(thr_id, throughput);
-		init[thr_id] = true;
+		init = true;
 	}
 
 	for (int k=0; k < 20; k++)

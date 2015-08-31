@@ -6,9 +6,6 @@ extern "C"
 #include "miner.h"
 #include "cuda_helper.h"
 
-static uint32_t *d_hash[MAX_GPUS];
-static uint32_t *foundNonce;
-
 extern void bitcredit_setBlockTarget(int thr_id, uint32_t * data, const uint32_t * midstate, const void *ptarget);
 extern void bitcredit_cpu_init(int thr_id, uint32_t threads, uint32_t* hash);
 extern void bitcredit_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *result);
@@ -43,17 +40,20 @@ int scanhash_bitcredit(int thr_id, uint32_t *pdata,
 	int intensity = 256 * 256 * 64 * 8;
 	const uint32_t throughput = min(device_intensity(device_map[thr_id], __func__, intensity), (max_nonce - first_nonce)) & 0xfffffc00; // 19=256*256*8;
 
-	static bool init[MAX_GPUS] = { false };
-	if(!init[thr_id])
+	static THREAD uint32_t *d_hash = nullptr;
+	static THREAD uint32_t *foundNonce = nullptr;
+
+	static THREAD bool init = false;
+	if(!init)
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 8 * sizeof(uint32_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 8 * sizeof(uint32_t) * throughput));
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * sizeof(uint32_t)));
-		bitcredit_cpu_init(thr_id, throughput, d_hash[thr_id]);
-		init[thr_id] = true;
+		bitcredit_cpu_init(thr_id, throughput, d_hash);
+		init = true;
 	}
 
 	uint32_t endiandata[42];

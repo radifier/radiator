@@ -1,8 +1,6 @@
 #include "miner.h"
 #include "cuda_helper.h"
 
-static THREAD uint32_t *h_nounce;
-
 extern void bitcoin_cpu_init(int thr_id);
 extern void bitcoin_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, const uint32_t *const ms, uint32_t merkle, uint32_t time, uint32_t compacttarget, uint32_t *const h_nounce);
 extern void bitcoin_midstate(const uint32_t *data, uint32_t *midstate);
@@ -122,12 +120,13 @@ void bitcoin_hash(uint32_t *output, const uint32_t *data, uint32_t nonce, const 
 	be32enc(&output[7], h + hc[7]);
 }
 
-static volatile bool init[MAX_GPUS] = { false };
 
 int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
 	uint32_t *hashes_done)
 {
+	static THREAD uint32_t *h_nounce = nullptr;
+
 	const uint32_t first_nonce = pdata[19];
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1U << 28);
 	throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
@@ -135,7 +134,8 @@ int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 	if (opt_benchmark)
 		ptarget[7] = 0x0005;
 
-	if (!init[thr_id])
+	static THREAD volatile bool init = false;
+	if(!init)
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
@@ -144,7 +144,7 @@ int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		bitcoin_cpu_init(thr_id);
 		CUDA_SAFE_CALL(cudaMallocHost(&h_nounce, 2 * sizeof(uint32_t)));
-		init[thr_id] = true;
+		init = true;
 	}
 
 	uint32_t ms[8];

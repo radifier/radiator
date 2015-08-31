@@ -26,8 +26,6 @@ extern "C" void my_fugue256_addbits_and_close(void *cc, unsigned ub, unsigned n,
     ((((x) << 24) & 0xff000000u) | (((x) << 8) & 0x00ff0000u)   | \
       (((x) >> 8) & 0x0000ff00u) | (((x) >> 24) & 0x000000ffu))
 
-static volatile bool init[MAX_GPUS] = { false };
-
 extern int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t max_nonce, uint32_t *hashes_done)
 {
@@ -40,10 +38,11 @@ extern int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		ptarget[7] = 0xf;
 
 	// init
-	if(!init[thr_id])
+	static THREAD volatile bool init = false;
+	if(!init)
 	{
 		fugue256_cpu_init(thr_id, throughput);
-		init[thr_id] = true;
+		init = true;
 	}
 
 	// Endian Drehung ist notwendig
