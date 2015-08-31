@@ -1344,14 +1344,14 @@ static void *miner_thread(void *userdata)
 	{
 		if(opt_affinity == -1)
 		{
-			if(!opt_quiet)
+			if(opt_debug)
 				applog(LOG_DEBUG, "Binding thread %d to cpu %d (mask %x)", thr_id,
 				thr_id%num_cpus, (1 << (thr_id)));
 			affine_to_cpu_mask(thr_id, 1 << (thr_id));
 		}
 		else if(opt_affinity != -1)
 		{
-			if(!opt_quiet)
+			if(opt_debug)
 				applog(LOG_DEBUG, "Binding thread %d to gpu mask %x", thr_id,
 				opt_affinity);
 			affine_to_cpu_mask(thr_id, opt_affinity);
