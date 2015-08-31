@@ -61,7 +61,7 @@ ccminer_SOURCES	= elist.h miner.h compat.h \
 			  bitcoin.cu cuda_bitcoin.cu\
 			  x15/cuda_whirlpoolx.cu x15/whirlpoolx.cu \
 			  neoscrypt/neoscrypt.cu neoscrypt/cuda_neoscrypt.cu \
-                          bitcredit/cuda_bitcredit.cu bitcredit/bitcredit.cu sph/sph_sha2.c
+                          bitcredit/cuda_bitcredit.cu bitcredit/bitcredit.cu
 
 # scrypt
 # ccminer_SOURCES += scrypt.cpp scrypt-jane.cpp \
