@@ -125,8 +125,6 @@ extern "C" void quarkhash(void *state, const void *input)
     memcpy(state, hash, 32);
 }
 
-static volatile bool init[MAX_GPUS] = { false };
-
 extern int scanhash_quark(int thr_id, uint32_t *pdata,
     uint32_t *ptarget, uint32_t max_nonce,
     uint32_t *hashes_done)
@@ -147,7 +145,8 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 	static THREAD uint32_t *d_branch2Nonces = nullptr;
 	static THREAD uint32_t *d_branch3Nonces = nullptr;
 
-	if (!init[thr_id])
+	static THREAD volatile bool init = false;
+	if(!init)
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
@@ -174,7 +173,7 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 		quark_keccak512_cpu_init(thr_id);
 		quark_jh512_cpu_init(thr_id);
 		CUDA_SAFE_CALL(cudaGetLastError());
-		init[thr_id] = true;
+		init = true;
 	}
 
 	uint32_t endiandata[20];
@@ -282,6 +281,6 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 		pdata[19] += throughput; CUDA_SAFE_CALL(cudaGetLastError());
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 
-	*hashes_done = pdata[19] - first_nonce + 1;
+	*hashes_done = pdata[19] - first_nonce ;
 	return 0;
 }
