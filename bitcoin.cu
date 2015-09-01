@@ -198,6 +198,6 @@ int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 		pdata[19] += throughput; CUDA_SAFE_CALL(cudaGetLastError());
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 
-	*hashes_done = pdata[19] - first_nonce;
+	*hashes_done = pdata[19] - first_nonce ;
 	return 0;
 }
