@@ -138,7 +138,15 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 
 	const uint32_t first_nonce = pdata[19];
 
-	uint32_t intensity = (device_sm[device_map[thr_id]] > 500) ? 256 * 256 * 22 : 256 * 128 * 39;
+	cudaDeviceProp props;
+	cudaGetDeviceProperties(&props, device_map[thr_id]);
+	unsigned int intensity;
+	if(strstr(props.name, "970"))		  intensity = (256 * 256 * 22);
+	else if(strstr(props.name, "980"))    intensity = (256 * 256 * 22);
+	else if(strstr(props.name, "750 Ti")) intensity = (256 * 256 * 22);
+	else if(strstr(props.name, "750"))    intensity = (256 * 256 * 19);
+	else if(strstr(props.name, "960"))    intensity = (256 * 256 * 19);
+	else intensity = (256 * 256 * 2);
 	const uint32_t throughput = min(device_intensity(device_map[thr_id], __func__, intensity), (max_nonce - first_nonce)) & 0xfffffc00; // 19=256*256*8;
 	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
 
@@ -160,7 +168,7 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 			return 0;
 		}
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 64 * throughput)); // why 64 ?
-		CUDA_SAFE_CALL(cudaMallocHost(&(h_found), 4 * sizeof(uint32_t)));
+		CUDA_SAFE_CALL(cudaMallocHost(&(h_found), 2 * sizeof(uint32_t)));
 		init = true;
 	}
 	uint32_t endiandata[20];
@@ -168,8 +176,9 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 		be32enc(&endiandata[k], pdata[k]);
 
 	quark_blake512_cpu_setBlock_80(thr_id, (uint64_t *)endiandata);
-	do {
-
+	CUDA_SAFE_CALL(cudaGetLastError());
+	do
+	{
 		quark_blake512_cpu_hash_80(thr_id, throughput, pdata[19], d_hash);
 		quark_bmw512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash);
 		quark_groestl512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash);
@@ -179,7 +188,7 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 		x11_shavite512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
 		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash, simdthreads);
 		x11_echo512_cpu_hash_64_final(thr_id, throughput, pdata[19], d_hash, ptarget[7], h_found);
-		cudaStreamSynchronize(gpustream[thr_id]);
+		CUDA_SAFE_CALL(cudaStreamSynchronize(gpustream[thr_id]));
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		if(h_found[0] != 0xffffffff)
 		{
@@ -226,9 +235,9 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 					}
 			}
 		}
-		pdata[19] += throughput; CUDA_SAFE_CALL(cudaGetLastError());
+		pdata[19] += throughput; 
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 
-	*hashes_done = pdata[19] - first_nonce + 1;
+	*hashes_done = pdata[19] - first_nonce ;
 	return 0;
 }
