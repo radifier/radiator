@@ -1000,10 +1000,7 @@ void x11_luffaCubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, ui
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if(thread < threads)
 	{
-		const uint32_t nounce = (startNounce + thread);
-
-		const int hashPosition = nounce - startNounce;
-		uint32_t *const Hash = (uint32_t*)&g_hash[8 * hashPosition];
+		uint32_t *const Hash = (uint32_t*)&g_hash[8 * thread];
 
 		uint32_t statebuffer[8];
 		uint32_t statechainv[40] =
@@ -1024,56 +1021,37 @@ void x11_luffaCubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, ui
 		finalization512(statechainv, Hash);
 		//Cubehash
 
-		uint32_t x0 = (0x2AEA2A61), x1 = (0x50F494D4), x2 = (0x2D538B8B), x3 = (0x4167D83E);
-		uint32_t x4 = (0x3FEE2313), x5 = (0xC701CF8C), x6 = (0xCC39968E), x7 = (0x50AC5695);
-		uint32_t x8 = (0x4D42C787), x9 = (0xA647A8B3), xa = (0x97CF0BEF), xb = (0x825B4537);
-		uint32_t xc = (0xEEF864D2), xd = (0xF22090C4), xe = (0xD0E5CD33), xf = (0xA23911AE);
-		uint32_t xg = (0xFCD398D9), xh = (0x148FE485), xi = (0x1B017BEF), xj = (0xB6444532);
-		uint32_t xk = (0x6A536159), xl = (0x2FF5781C), xm = (0x91FA7934), xn = (0x0DBADEA9);
-		uint32_t xo = (0xD65C8A2B), xp = (0xA5A70E75), xq = (0xB1C62456), xr = (0xBC796576);
-		uint32_t xs = (0x1921C8F7), xt = (0xE7989AF1), xu = (0x7795D246), xv = (0xD43E3B44);
-
-		x0 ^= Hash[0];
-		x1 ^= Hash[1];
-		x2 ^= Hash[2];
-		x3 ^= Hash[3];
-		x4 ^= Hash[4];
-		x5 ^= Hash[5];
-		x6 ^= Hash[6];
-		x7 ^= Hash[7];
+		uint32_t x0 = 0x2AEA2A61 ^ Hash[0];
+		uint32_t x1 = 0x50F494D4 ^ Hash[1];
+		uint32_t x2 = 0x2D538B8B ^ Hash[2];
+		uint32_t x3 = 0x4167D83E ^ Hash[3];
+		uint32_t x4 = 0x3FEE2313 ^ Hash[4];
+		uint32_t x5 = 0xC701CF8C ^ Hash[5];
+		uint32_t x6 = 0xCC39968E ^ Hash[6];
+		uint32_t x7 = 0x50AC5695 ^ Hash[7];
+		uint32_t x8 = 0x4D42C787, x9 = 0xA647A8B3, xa = 0x97CF0BEF, xb = 0x825B4537;
+		uint32_t xc = 0xEEF864D2, xd = 0xF22090C4, xe = 0xD0E5CD33, xf = 0xA23911AE;
+		uint32_t xg = 0xFCD398D9 + x0, xh = 0x148FE485 + x1, xi = 0x1B017BEF + x2, xj = 0xB6444532 + x3;
+		uint32_t xk = 0x6A536159 + x4, xl = 0x2FF5781C + x5, xm = 0x91FA7934 + x6, xn = 0x0DBADEA9 + x7;
+		uint32_t xo = 0xD65C8A2B + x8, xp = 0xA5A70E75 + x9, xq = 0xB1C62456 + xa, xr = 0xBC796576 + xb;
+		uint32_t xs = 0x1921C8F7 + xc, xt = 0xE7989AF1 + xd, xu = 0x7795D246 + xe, xv = 0xD43E3B44 + xf;
 
 
-		xg = (x0 + xg);
 			x0 = ROTL32(x0, 7);
-			xh = (x1 + xh);
 			x1 = ROTL32(x1, 7);
-			xi = (x2 + xi);
 			x2 = ROTL32(x2, 7);
-			xj = (x3 + xj); 
 			x3 = ROTL32(x3, 7); 
-			xk = (x4 + xk);
 			x4 = ROTL32(x4, 7);
-			xl = (x5 + xl);
 			x5 = ROTL32(x5, 7);
-			xm = (x6 + xm);
 			x6 = ROTL32(x6, 7);
-			xn = (x7 + xn);
 			x7 = ROTL32(x7, 7);
-			xo = (x8 + xo);
 			x8 = ROTL32(x8, 7);
-			xp = (x9 + xp);
 			x9 = ROTL32(x9, 7);
-			xq = (xa + xq);
 			xa = ROTL32(xa, 7);
-			xr = (xb + xr);
 			xb = ROTL32(xb, 7);
-			xs = (xc + xs);
 			xc = ROTL32(xc, 7);
-			xt = (xd + xt);
 			xd = ROTL32(xd, 7);
-			xu = (xe + xu);
 			xe = ROTL32(xe, 7);
-			xv = (xf + xv);
 			xf = ROTL32(xf, 7);
 			x8 ^= xg;
 			x9 ^= xh;

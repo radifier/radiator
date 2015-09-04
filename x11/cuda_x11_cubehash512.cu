@@ -208,30 +208,25 @@ __launch_bounds__(256, 5)
 #endif
 void x11_cubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *g_hash)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if(thread < threads)
 	{
-		uint32_t nounce = (startNounce + thread);
-		int hashPosition = nounce - startNounce;
-		uint32_t *Hash = &g_hash[16 * hashPosition];
+		uint32_t *Hash = &g_hash[16 * thread];
 
-		uint32_t x0 = (0x2AEA2A61), x1 = (0x50F494D4), x2 = (0x2D538B8B), x3 = (0x4167D83E);
-		uint32_t x4 = (0x3FEE2313), x5 = (0xC701CF8C), x6 = (0xCC39968E), x7 = (0x50AC5695);
-		uint32_t x8 = (0x4D42C787), x9 = (0xA647A8B3), xa = (0x97CF0BEF), xb = (0x825B4537);
-		uint32_t xc = (0xEEF864D2), xd = (0xF22090C4), xe = (0xD0E5CD33), xf = (0xA23911AE);
-		uint32_t xg = (0xFCD398D9), xh = (0x148FE485), xi = (0x1B017BEF), xj = (0xB6444532);
-		uint32_t xk = (0x6A536159), xl = (0x2FF5781C), xm = (0x91FA7934), xn = (0x0DBADEA9);
-		uint32_t xo = (0xD65C8A2B), xp = (0xA5A70E75), xq = (0xB1C62456), xr = (0xBC796576);
-		uint32_t xs = (0x1921C8F7), xt = (0xE7989AF1), xu = (0x7795D246), xv = (0xD43E3B44);
-
-		x0 ^= Hash[0];
-		x1 ^= Hash[1];
-		x2 ^= Hash[2];
-		x3 ^= Hash[3];
-		x4 ^= Hash[4];
-		x5 ^= Hash[5];
-		x6 ^= Hash[6];
-		x7 ^= Hash[7];
+		uint32_t x0 = 0x2AEA2A61 ^ Hash[0];
+		uint32_t x1 = 0x50F494D4 ^ Hash[1];
+		uint32_t x2 = 0x2D538B8B ^ Hash[2];
+		uint32_t x3 = 0x4167D83E ^ Hash[3];
+		uint32_t x4 = 0x3FEE2313 ^ Hash[4];
+		uint32_t x5 = 0xC701CF8C ^ Hash[5];
+		uint32_t x6 = 0xCC39968E ^ Hash[6];
+		uint32_t x7 = 0x50AC5695 ^ Hash[7];
+		uint32_t x8 = 0x4D42C787, x9 = 0xA647A8B3, xa = 0x97CF0BEF, xb = 0x825B4537;
+		uint32_t xc = 0xEEF864D2, xd = 0xF22090C4, xe = 0xD0E5CD33, xf = 0xA23911AE;
+		uint32_t xg = 0xFCD398D9, xh = 0x148FE485, xi = 0x1B017BEF, xj = 0xB6444532;
+		uint32_t xk = 0x6A536159, xl = 0x2FF5781C, xm = 0x91FA7934, xn = 0x0DBADEA9;
+		uint32_t xo = 0xD65C8A2B, xp = 0xA5A70E75, xq = 0xB1C62456, xr = 0xBC796576;
+		uint32_t xs = 0x1921C8F7, xt = 0xE7989AF1, xu = 0x7795D246, xv = 0xD43E3B44;
 
 #if __CUDA_ARCH__ > 500
 		#pragma unroll 
