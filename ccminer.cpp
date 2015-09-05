@@ -1523,7 +1523,7 @@ static void *miner_thread(void *userdata)
 
 		if(opt_debug)
 			applog(LOG_DEBUG, "GPU #%d: start=%08x end=%08x range=%08x",
-			device_map[thr_id], start_nonce, max_nonce, (max_nonce - start_nonce));
+			device_map[thr_id], start_nonce, max_nonce, (max_nonce - start_nonce + 1));
 
 		hashes_done = 0;
 		gettimeofday(&tv_start, NULL);
@@ -1729,7 +1729,7 @@ static void *miner_thread(void *userdata)
 		if(opt_debug && opt_benchmark)
 		{
 			// to debug nonce ranges
-			applog(LOG_DEBUG, "GPU #%d:  ends=%08x range=%llx", device_map[thr_id],
+			applog(LOG_DEBUG, "GPU #%d:  ends=%08x range=%08x", device_map[thr_id],
 				   start_nonce + hashes_done - 1, hashes_done);
 		}
 
