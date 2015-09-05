@@ -1450,7 +1450,6 @@ static void *miner_thread(void *userdata)
 		{
 			if(opt_debug)
 				applog(LOG_DEBUG, "thread %d: continue with old work", thr_id);
-			nonceptr[0]++; //??
 		}
 		work_restart[thr_id].restart = 0;
 		pthread_mutex_unlock(&g_work_lock);
@@ -1521,7 +1520,6 @@ static void *miner_thread(void *userdata)
 		// todo: keep it rounded for gpu threads ?
 
 		work.scanned_from = start_nonce;
-		nonceptr[0] = start_nonce;
 
 		if(opt_debug)
 			applog(LOG_DEBUG, "GPU #%d: start=%08x end=%08x range=%08x",
