@@ -1449,7 +1449,7 @@ static void *miner_thread(void *userdata)
 		else
 		{
 			if(opt_debug)
-				applog(LOG_DEBUG, "thread %d: continue with old work");
+				applog(LOG_DEBUG, "thread %d: continue with old work", thr_id);
 			nonceptr[0]++; //??
 		}
 		work_restart[thr_id].restart = 0;
