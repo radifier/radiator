@@ -355,7 +355,7 @@ void bmw256_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint2 *g_hash, u
 __host__
 void bmw256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint32_t *resultnonces, uint32_t Target)
 {
-	cudaMemset(d_GNonce[thr_id], 0x0, 2 * sizeof(uint32_t));
+	cudaMemsetAsync(d_GNonce[thr_id], 0x0, 2 * sizeof(uint32_t), gpustream[thr_id]);
 
 	// berechne wie viele Thread Blocks wir brauchen
 	dim3 grid((threads + TPB - 1) / TPB);
@@ -363,7 +363,8 @@ void bmw256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint
 
 	bmw256_gpu_hash_32 << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce, (uint2 *)g_hash, d_GNonce[thr_id], Target);
 	CUDA_SAFE_CALL(cudaGetLastError());
-	CUDA_SAFE_CALL(cudaMemcpy(d_gnounce[thr_id], d_GNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
+	CUDA_SAFE_CALL(cudaMemcpyAsync(d_gnounce[thr_id], d_GNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]));
+	cudaStreamSynchronize(gpustream[thr_id]);
 	resultnonces[0] = *(d_gnounce[thr_id]);
 	resultnonces[1] = *(d_gnounce[thr_id] + 1);
 }

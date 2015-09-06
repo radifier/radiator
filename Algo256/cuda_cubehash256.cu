@@ -471,5 +471,5 @@ void cubehash256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce,
 	dim3 grid((threads + (TPB) - 1) / (TPB));
 	dim3 block(TPB);
 
-    cubehash256_gpu_hash_32<<<grid, block>>>(threads, startNounce, (uint2 *)d_hash);
+	cubehash256_gpu_hash_32 << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce, (uint2 *)d_hash);
 }

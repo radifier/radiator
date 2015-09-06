@@ -681,5 +681,5 @@ void blakeKeccak256_cpu_hash_80(const int thr_id, const uint32_t threads, const 
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
 
-	blakeKeccak256_gpu_hash_80 << <grid, block >> > (threads, startNonce, (uint32_t *)Hash);
+	blakeKeccak256_gpu_hash_80 << <grid, block, 0, gpustream[thr_id] >> > (threads, startNonce, (uint32_t *)Hash);
 }

@@ -160,9 +160,19 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				if (foundNonce[1] != 0)
 				{
-					pdata[21] = foundNonce[1];
-					res++;
-					if (opt_benchmark)  applog(LOG_INFO, "GPU #%d Found second nonce %08x", thr_id, foundNonce[1]);
+					be32enc(&endiandata[19], foundNonce[1]);
+					lyra2v2_hash(vhash64, endiandata);
+					if(vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					{
+						pdata[21] = foundNonce[1];
+						res++;
+						if(opt_benchmark)  applog(LOG_INFO, "GPU #%d Found second nonce %08x", thr_id, foundNonce[1]);
+					}
+					else
+					{
+						if(vhash64[7] != Htarg) // don't show message if it is equal but fails fulltest
+							applog(LOG_WARNING, "GPU #%d: result does not validate on CPU!", thr_id);
+					}
 				}
 				pdata[19] = foundNonce[0];
 				if (opt_benchmark) applog(LOG_INFO, "GPU #%d Found nonce % 08x", thr_id, foundNonce[0]);
@@ -170,7 +180,7 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 			}
 			else
 			{
-				if (vhash64[7] > Htarg) // don't show message if it is equal but fails fulltest
+				if (vhash64[7] != Htarg) // don't show message if it is equal but fails fulltest
 					applog(LOG_WARNING, "GPU #%d: result does not validate on CPU!", thr_id);
 			}
 		}

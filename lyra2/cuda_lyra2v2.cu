@@ -565,22 +565,20 @@ void lyra2v2_cpu_init(int thr_id, uint32_t threads,uint64_t *hash)
 __host__ 
 void lyra2v2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint64_t *d_outputHash)
 {
-uint32_t tpb;
-	if (device_sm[device_map[thr_id]]<500) 
-      tpb = TPB3;
-	else if (device_sm[device_map[thr_id]]==500)
-      tpb = TPB50; 
-    else 
-      tpb = TPB52;
+	uint32_t tpb;
+	if(device_sm[device_map[thr_id]] < 500)
+		tpb = TPB3;
+	else if(device_sm[device_map[thr_id]] == 500)
+		tpb = TPB50;
+	else
+		tpb = TPB52;
 	dim3 grid((threads + tpb - 1) / tpb);
 	dim3 block(tpb);
 
-	if (device_sm[device_map[thr_id]] >= 500)
-		lyra2v2_gpu_hash_32 << <grid, block >> > (threads, startNounce, (uint2*)d_outputHash);
+	if(device_sm[device_map[thr_id]] >= 500)
+		lyra2v2_gpu_hash_32 <<<grid, block, 0, gpustream[thr_id] >>> (threads, startNounce, (uint2*)d_outputHash);
     else 
-    	lyra2v2_gpu_hash_32_v3 <<<grid, block>>> (threads, startNounce,(uint2*) d_outputHash);
-
-	//MyStreamSynchronize(NULL, order, thr_id);
+		lyra2v2_gpu_hash_32_v3 <<<grid, block, 0, gpustream[thr_id] >>> (threads, startNounce, (uint2*)d_outputHash);
 }
 
   
