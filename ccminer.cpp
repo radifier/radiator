@@ -220,9 +220,6 @@ uint64_t net_hashrate = 0;
 uint64_t net_blocks = 0;
 
 int opt_statsavg = 30;
-// strdup on char* to allow a common free() if used
-static char* opt_syslog_pfx = strdup(PROGRAM_NAME);
-char *opt_api_allow = strdup("127.0.0.1"); /* 0.0.0.0 for all ips */
 uint16_t opt_api_listen = 4068; /* 0 to disable */
 
 #ifdef HAVE_GETOPT_LONG
@@ -478,7 +475,9 @@ void proper_exit(int reason)
 		cuda_devicereset();
 	}
 	free(opt_syslog_pfx);
+		opt_syslog_pfx = NULL;
 	free(opt_api_allow);
+		opt_api_allow = NULL;
 	hashlog_purge_all();
 	stats_purge_all();
 
@@ -2555,6 +2554,10 @@ int main(int argc, char *argv[])
 	struct thr_info *thr;
 	long flags;
 	int i;
+	
+	// strdup on char* to allow a common free() if used
+	opt_syslog_pfx = strdup(PROGRAM_NAME);
+	opt_api_allow = strdup("127.0.0.1"); /* 0.0.0.0 for all ips */
 
 	printf("ccminer " PACKAGE_VERSION " for nVidia GPUs\n");
 #ifdef _MSC_VER
