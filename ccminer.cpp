@@ -209,8 +209,8 @@ struct stratum_ctx stratum = { 0 };
 bool stop_mining = false;
 volatile bool mining_has_stopped[MAX_GPUS] = { false };
 
-pthread_mutex_t applog_lock;
-static pthread_mutex_t stats_lock;
+pthread_mutex_t applog_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t stats_lock = PTHREAD_MUTEX_INITIALIZER;
 uint32_t accepted_count = 0L;
 uint32_t rejected_count = 0L;
 static double thr_hashrates[MAX_GPUS];
@@ -377,8 +377,8 @@ static struct option const options[] =
 };
 
 struct work _ALIGN(64) g_work;
-pthread_mutex_t g_work_lock;
 time_t g_work_time;
+static pthread_mutex_t g_work_lock = PTHREAD_MUTEX_INITIALIZER;
 
 
 #ifdef __linux /* Linux specific policy and affinity management */
@@ -2578,8 +2578,6 @@ int main(int argc, char *argv[])
 	rpc_user = strdup("");
 	rpc_pass = strdup("");
 
-	pthread_mutex_init(&applog_lock, NULL);
-
 	// number of cpus for thread affinity
 #if defined(WIN32)
 	SYSTEM_INFO sysinfo;
@@ -2630,8 +2628,6 @@ int main(int argc, char *argv[])
 	/* init stratum data.. */
 	memset(&stratum.url, 0, sizeof(stratum));
 
-	pthread_mutex_init(&stats_lock, NULL);
-	pthread_mutex_init(&g_work_lock, NULL);
 	pthread_mutex_init(&stratum.sock_lock, NULL);
 	pthread_mutex_init(&stratum.work_lock, NULL);
 
