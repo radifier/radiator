@@ -74,21 +74,21 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 		if(h_nounce[0] != UINT32_MAX)
 		{
 			uint32_t Htarg = ptarget[7];
-			uint32_t vhash64[8];
-			be32enc(&endiandata[19], h_nounce[0]);
+			uint32_t vhash64[8]={0};
+			if(opt_verify){ be32enc(&endiandata[19], h_nounce[0]);
 			keccak256_hash(vhash64, endiandata);
 
-			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+			} if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 			{
 				int res = 1;
 				// check if there was some other ones...
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				if (h_nounce[1] != 0xffffffff)
 				{
-					be32enc(&endiandata[19], h_nounce[1]);
+					if(opt_verify){ be32enc(&endiandata[19], h_nounce[1]);
 					keccak256_hash(vhash64, endiandata);
 
-					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					} if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 					{
 						pdata[21] = h_nounce[1];
 						res++;

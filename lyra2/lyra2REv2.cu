@@ -150,9 +150,12 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 		if(foundNonce[0] != 0)
 		{
 			const uint32_t Htarg = ptarget[7];
-			uint32_t vhash64[8];
-			be32enc(&endiandata[19], foundNonce[0]);
-			lyra2v2_hash(vhash64, endiandata);
+			uint32_t vhash64[8]={0};
+			if(opt_verify)
+			{
+				be32enc(&endiandata[19], foundNonce[0]);
+				lyra2v2_hash(vhash64, endiandata);
+			}
 			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 			{
 				int res = 1;
@@ -160,8 +163,11 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				if (foundNonce[1] != 0)
 				{
-					be32enc(&endiandata[19], foundNonce[1]);
-					lyra2v2_hash(vhash64, endiandata);
+					if(opt_verify)
+					{
+						be32enc(&endiandata[19], foundNonce[1]);
+						lyra2v2_hash(vhash64, endiandata);
+					}
 					if(vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 					{
 						pdata[21] = foundNonce[1];

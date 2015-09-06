@@ -87,7 +87,7 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		if(foundnonces[0] != 0xffffffff)
 		{
-			uint32_t vhash64[8];
+			uint32_t vhash64[8]={0};
 
 			endiandata[19] = swab32_if(foundnonces[0], swap);
 			

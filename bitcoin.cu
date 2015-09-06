@@ -156,9 +156,9 @@ int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		if(h_nounce[0] != UINT32_MAX)
 		{
-			uint32_t vhash64[8];
+			uint32_t vhash64[8]={0};
 			bitcoin_hash(vhash64, pdata, h_nounce[0], ms);
-			if (vhash64[7] == 0 && fulltest(vhash64, ptarget))
+			if (!opt_verify || (vhash64[7] == 0 && fulltest(vhash64, ptarget)))
 			{
 				int res = 1;
 				// check if there was some other ones...
@@ -166,7 +166,7 @@ int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 				if (h_nounce[1] != 0xffffffff)
 				{
 					bitcoin_hash(vhash64, pdata, h_nounce[1], ms);
-					if (vhash64[7] == 0 && fulltest(vhash64, ptarget))
+					if (!opt_verify || (vhash64[7] == 0 && fulltest(vhash64, ptarget)))
 					{
 						pdata[21] = h_nounce[1];
 						res++;

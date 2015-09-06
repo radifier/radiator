@@ -182,27 +182,26 @@ int scanhash_c11(int thr_id, uint32_t *pdata,
 		{
 			mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);
 		}
-		if(foundnonces[0] != 0xffffffff)
-		quark_skein512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash[thr_id]);
-		x11_luffaCubehash512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		x11_shavite512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id], simdthreads);
-		x11_echo512_cpu_hash_64_final(thr_id, throughput, pdata[19], d_hash[thr_id], ptarget[7], foundnonces);
 		if (foundnonces[0] != 0xffffffff)
 		{
 			const uint32_t Htarg = ptarget[7];
-			uint32_t vhash64[8];
-			be32enc(&endiandata[thr_id][19], foundnonces[0]);
-			c11hash(vhash64, endiandata[thr_id]);
-
+			uint32_t vhash64[8]={0};
+			if(opt_verify)
+			{
+				be32enc(&endiandata[thr_id][19], foundnonces[0]);
+				c11hash(vhash64, endiandata[thr_id]);
+			}
 			if(vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 			{
 				int res = 1;
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				if(foundnonces[1] != 0xffffffff)
 				{
-					be32enc(&endiandata[thr_id][19], foundnonces[1]);
-					c11hash(vhash64, endiandata[thr_id]);
+					if(opt_verify)
+					{
+						be32enc(&endiandata[thr_id][19], foundnonces[1]);
+						c11hash(vhash64, endiandata[thr_id]);
+					}
 					if(vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 					{
 						pdata[21] = foundnonces[1];

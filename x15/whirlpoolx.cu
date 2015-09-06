@@ -74,19 +74,19 @@ int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t
 		if(foundNonce[0] != UINT32_MAX)
 		{
 			const uint32_t Htarg = ptarget[7];
-			uint32_t vhash64[8];
+			uint32_t vhash64[8]={0};
 			/* check now with the CPU to confirm */
-			be32enc(&endiandata[19], foundNonce[0]);
+			if(opt_verify){ be32enc(&endiandata[19], foundNonce[0]);
 			whirlxHash(vhash64, endiandata);
-			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+			} if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 			{
 				int res = 1;
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				if (foundNonce[1] != UINT32_MAX)
 				{
-					be32enc(&endiandata[19], foundNonce[1]);
+					if(opt_verify){ be32enc(&endiandata[19], foundNonce[1]);
 					whirlxHash(vhash64, endiandata);
-					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					} if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 					{
 						pdata[21] = foundNonce[1];
 						res++;

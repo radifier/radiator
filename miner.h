@@ -481,6 +481,7 @@ struct thr_info {
 	struct cgpu_info gpu;
 };
 
+extern bool opt_verify;
 extern bool opt_benchmark;
 extern bool opt_debug;
 extern bool opt_quiet;

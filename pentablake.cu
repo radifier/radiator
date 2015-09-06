@@ -484,12 +484,15 @@ extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		if(foundNonce != UINT32_MAX)
 		{
 			const uint32_t Htarg = ptarget[7];
-			uint32_t vhashcpu[8];
+			uint32_t vhashcpu[8] = { 0 };
 
-			be32enc(&endiandata[19], foundNonce);
-			pentablakehash(vhashcpu, endiandata);
-
-			if (vhashcpu[7] <= Htarg && fulltest(vhashcpu, ptarget)) {
+			if(opt_verify)
+			{
+				be32enc(&endiandata[19], foundNonce);
+				pentablakehash(vhashcpu, endiandata);
+			}
+			if (vhashcpu[7] <= Htarg && fulltest(vhashcpu, ptarget))
+			{
 				rc = 1;
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				if (extra_results[thr_id][0] != UINT32_MAX) {

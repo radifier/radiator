@@ -153,6 +153,7 @@ static const char *algo_names[] = {
 	"neoscrypt"
 };
 
+bool opt_verify = true;
 bool opt_debug = false;
 bool opt_protocol = false;
 bool opt_benchmark = false;
@@ -311,6 +312,7 @@ Options:\n\
   -B, --background      run the miner in the background\n\
       --benchmark       run in offline benchmark mode\n\
       --cputest         debug hashes from cpu algorithms\n\
+      --no-cpu-verify   don't verify the found results\n\
   -c, --config=FILE     load a JSON-format configuration file\n\
   -V, --version         display version information and exit\n\
   -h, --help            display this help text and exit\n\
@@ -334,6 +336,7 @@ static struct option const options[] =
 #endif
 	{ "benchmark", 0, NULL, 1005 },
 	{ "cert", 1, NULL, 1001 },
+	{ "no-cpu-verify", 0, NULL, 1022 },
 	{ "config", 1, NULL, 'c' },
 	{ "cputest", 0, NULL, 1006 },
 	{ "cpu-affinity", 1, NULL, 1020 },
@@ -2356,6 +2359,9 @@ static void parse_arg(int key, char *arg)
 		if(v < 0 || v > 5)	/* sanity check */
 			show_usage_and_exit(1);
 		opt_priority = v;
+		break;
+	case 1022:
+		opt_verify = false;
 		break;
 	case 'd': // CB
 	{

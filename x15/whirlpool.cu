@@ -92,18 +92,18 @@ extern int scanhash_whc(int thr_id, uint32_t *pdata,
 		if(foundNonce[0] != UINT32_MAX)
 		{
 			const uint32_t Htarg = ptarget[7];
-			uint32_t vhash64[8];
-			be32enc(&endiandata[19], foundNonce[0]);
+			uint32_t vhash64[8]={0};
+			if(opt_verify){ be32enc(&endiandata[19], foundNonce[0]);
 			wcoinhash(vhash64, endiandata);
-			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+			} if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 			{
 				int res = 1;
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				if (foundNonce[1] != UINT32_MAX)
 				{
-					be32enc(&endiandata[19], foundNonce[1]);
+					if(opt_verify){ be32enc(&endiandata[19], foundNonce[1]);
 					wcoinhash(vhash64, endiandata);
-					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					} if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 					{
 
 						if (opt_benchmark) applog(LOG_INFO, "GPU #%d: found second nounce %08x", device_map[thr_id], foundNonce[1]);

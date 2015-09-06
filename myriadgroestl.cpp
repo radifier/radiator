@@ -79,19 +79,19 @@ extern int scanhash_myriad(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		if(h_found[0] != 0xffffffff)
 		{
 			const uint32_t Htarg = ptarget[7];
-			uint32_t vhash64[8];
-			be32enc(&endiandata[19], h_found[0]);
+			uint32_t vhash64[8]={0};
+			if(opt_verify){ be32enc(&endiandata[19], h_found[0]);
 			myriadhash(vhash64, endiandata);
 
-			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+			} if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 			{
 				int res = 1;
 				*hashes_done = pdata[19] - start_nonce + throughput;
 				if (h_found[1] != 0xffffffff)
 				{
-					be32enc(&endiandata[19], h_found[1]);
+					if(opt_verify){ be32enc(&endiandata[19], h_found[1]);
 					myriadhash(vhash64, endiandata);
-					if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					} if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 					{
 
 						pdata[21] = h_found[1];

@@ -81,14 +81,15 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		}
 		if(foundNonce[0] != 0xffffffff)
 		{
-			uint32_t vhash64[8];
-
-			if(stratum)
-				be32enc(&endiandata[19], foundNonce[0]);
-			else
-				endiandata[19] = foundNonce[0];
-			neoscrypt((unsigned char*)endiandata, (unsigned char*)vhash64, 0x80000620);
-
+			uint32_t vhash64[8]={0};
+			if(opt_verify)
+			{
+				if(stratum)
+					be32enc(&endiandata[19], foundNonce[0]);
+				else
+					endiandata[19] = foundNonce[0];
+				neoscrypt((unsigned char*)endiandata, (unsigned char*)vhash64, 0x80000620);
+			}
 			if(vhash64[7] <= ptarget[7] && fulltest(vhash64, ptarget))
 			{
 				*hashes_done = pdata[19] - first_nonce + throughput;
@@ -96,15 +97,18 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 				if(opt_benchmark) applog(LOG_INFO, "GPU #%d Found nounce %08x", thr_id, foundNonce[0]);
 				if(foundNonce[1] != 0xffffffff)
 				{
-					if(stratum)
+					if(opt_verify)
 					{
-						be32enc(&endiandata[19], foundNonce[1]);
+						if(stratum)
+						{
+							be32enc(&endiandata[19], foundNonce[1]);
+						}
+						else
+						{
+							endiandata[19] = foundNonce[1];
+						}
+						neoscrypt((unsigned char*)endiandata, (unsigned char*)vhash64, 0x80000620);
 					}
-					else
-					{
-						endiandata[19] = foundNonce[1];
-					}
-					neoscrypt((unsigned char*)endiandata, (unsigned char*)vhash64, 0x80000620);
 					if(vhash64[7] <= ptarget[7] && fulltest(vhash64, ptarget))
 					{
 						pdata[21] = foundNonce[1];

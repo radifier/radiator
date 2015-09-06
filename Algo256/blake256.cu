@@ -771,15 +771,17 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		if(foundNonce != UINT32_MAX)
 		{
-			uint32_t vhashcpu[8];
+			uint32_t vhashcpu[8] = { 0 };
 			uint32_t Htarg = (uint32_t)targetHigh;
 
 			for (int k=0; k < 19; k++)
 				be32enc(&endiandata[k], pdata[k]);
 
-			be32enc(&endiandata[19], foundNonce);
-			blake256hash(vhashcpu, endiandata, blakerounds);
-
+			if(opt_verify)
+			{
+				be32enc(&endiandata[19], foundNonce);
+				blake256hash(vhashcpu, endiandata, blakerounds);
+			}
 			//applog(LOG_BLUE, "%08x %16llx", vhashcpu[6], targetHigh);
 			if (vhashcpu[6] <= Htarg && fulltest(vhashcpu, ptarget))
 			{
@@ -789,8 +791,11 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 				pdata[19] = foundNonce;
 #if NBN > 1
 				if (extra_results[thr_id][0] != UINT32_MAX) {
-					be32enc(&endiandata[19], extra_results[thr_id][0]);
-					blake256hash(vhashcpu, endiandata, blakerounds);
+					if(opt_verify)
+					{
+						be32enc(&endiandata[19], extra_results[thr_id][0]);
+						blake256hash(vhashcpu, endiandata, blakerounds);
+					}
 					if (vhashcpu[6] <= Htarg /* && fulltest(vhashcpu, ptarget) */) {
 						pdata[21] = extra_results[thr_id][0];
 						applog(LOG_BLUE, "1:%x 2:%x", foundNonce, extra_results[thr_id][0]);

@@ -71,11 +71,11 @@ extern int scanhash_doom(int thr_id, uint32_t *pdata,
 		if(foundNonce != UINT32_MAX)
 		{
 			const uint32_t Htarg = ptarget[7];
-			uint32_t vhash64[8];
-			be32enc(&endiandata[19], foundNonce);
+			uint32_t vhash64[8]={0};
+			if(opt_verify){ be32enc(&endiandata[19], foundNonce);
 			doomhash(vhash64, endiandata);
 
-			if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget)) {
+			} if (vhash64[7] <= Htarg && fulltest(vhash64, ptarget)) {
 				*hashes_done = min(max_nonce - first_nonce, (uint64_t) pdata[19] - first_nonce + throughput);
 				pdata[19] = foundNonce;
 				return 1;
