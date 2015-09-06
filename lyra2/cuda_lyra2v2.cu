@@ -4,7 +4,9 @@
 #include <memory.h>
 #include "cuda_vector.h"
 
-#define TPB 16
+#define TPB52 16
+#define TPB50 32
+#define TPB3  32
  
 #define Nrow 4
 #define Ncol 4
@@ -348,16 +350,10 @@ static __device__ __forceinline__ void reduceDuplexRowtV3(const int rowIn, const
 }
 
 
-#if __CUDA_ARCH__ < 500
-__global__	__launch_bounds__(128, 1)
-#elif __CUDA_ARCH__ == 500
-__global__	__launch_bounds__(16, 1)
-#else
-__global__	__launch_bounds__(TPB, 1)
-#endif
+__global__	__launch_bounds__(TPB3, 1)
 void lyra2v2_gpu_hash_32_v3(uint32_t threads, uint32_t startNounce, uint2 *outputHash)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 
 	vectype state[4];
 
@@ -416,9 +412,9 @@ void lyra2v2_gpu_hash_32_v3(uint32_t threads, uint32_t startNounce, uint2 *outpu
 		//#pragma unroll 4
 		for (int i = 0; i < 4; i++)
 		{
-			uint32_t s1 = ps1 - 4 * memshift * i;
+			vectype *s1 = DMatrix + ps1 - 4 * memshift * i;
 			for (int j = 0; j < 3; j++)
-				(DMatrix + s1)[j] = (state)[j];
+				s1[j] = state[j];
 
 			round_lyra_v35(state);
 		}
@@ -435,10 +431,10 @@ void lyra2v2_gpu_hash_32_v3(uint32_t threads, uint32_t startNounce, uint2 *outpu
 			prev = i;
 		}
 
-		uint32_t shift = (memshift * rowa + 16 * memshift * thread);
+		vectype *shift = DMatrix + (memshift * rowa + 16 * memshift * thread);
 
 		for (int j = 0; j < 3; j++)
-			state[j] ^= __ldg4(&(DMatrix + shift)[j]);
+			state[j] ^= __ldg4(&shift[j]);
 
 		for (int i = 0; i < 12; i++)
 			round_lyra_v35(state);
@@ -455,16 +451,14 @@ void lyra2v2_gpu_hash_32_v3(uint32_t threads, uint32_t startNounce, uint2 *outpu
 
 
 
-#if __CUDA_ARCH__ < 500
-__global__	__launch_bounds__(64, 1)
-#elif __CUDA_ARCH__ == 500
-__global__	__launch_bounds__(32, 1)
+#if __CUDA_ARCH__ == 500
+__global__	__launch_bounds__(TPB50, 1)
 #else
-__global__	__launch_bounds__(TPB, 1)
+__global__	__launch_bounds__(TPB52, 1)
 #endif
 void lyra2v2_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint2 *outputHash)
 {
-	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 
 	   vectype state[4];
 
@@ -495,9 +489,6 @@ void lyra2v2_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint2 *outputHa
 
 	}
 
-#if __CUDA_ARCH__ == 350
-	if (thread < threads)
-#endif
 	{
  
 		 ((uint2*)state)[0] = __ldg(&outputHash[thread]);
@@ -518,13 +509,13 @@ void lyra2v2_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint2 *outputHa
 		 for (int i = 0; i<12; i++)
 			 round_lyra_v35(state);
 
-		uint32_t ps1 = (memshift * (Ncol - 1) + Nrow * Ncol * memshift * thread);
+		const uint32_t ps1 = (memshift * (Ncol - 1) + Nrow * Ncol * memshift * thread);
 
 		for (int i = 0; i < Ncol; i++)
 		{
-			uint32_t s1 = ps1 - memshift * i;
+			vectype *s1 = DMatrix + ps1 - memshift * i;
 			for (int j = 0; j < 3; j++)
-			    (DMatrix + s1)[j] = (state)[j];
+			    s1[j] = state[j];
 
 			round_lyra_v35(state);
 		}
@@ -534,8 +525,8 @@ void lyra2v2_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint2 *outputHa
 
 		reduceDuplexRowSetupV2(1, 0, 2, state,  thread);
 		reduceDuplexRowSetupV2(2, 1, 3, state,  thread);
-uint32_t rowa;
-int prev=3;
+		uint32_t rowa;
+		int prev=3;
 
          for (int i = 0; i < 4; i++)
         {
@@ -544,10 +535,10 @@ int prev=3;
         }
 
 
-		uint32_t shift = (memshift * Ncol * rowa + Nrow * Ncol * memshift * thread);
+		vectype *shift = DMatrix + (memshift * Ncol * rowa + Nrow * Ncol * memshift * thread);
 
 		for (int j = 0; j < 3; j++)
-			state[j] ^= __ldg4(&(DMatrix + shift)[j]);
+			state[j] ^= __ldg4(&shift[j]);
 
 		for (int i = 0; i < 12; i++)
         			round_lyra_v35(state);
@@ -576,11 +567,11 @@ void lyra2v2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uin
 {
 uint32_t tpb;
 	if (device_sm[device_map[thr_id]]<500) 
-      tpb = 64;
+      tpb = TPB3;
 	else if (device_sm[device_map[thr_id]]==500)
-      tpb = 32; 
+      tpb = TPB50; 
     else 
-      tpb = TPB;
+      tpb = TPB52;
 	dim3 grid((threads + tpb - 1) / tpb);
 	dim3 block(tpb);
 
