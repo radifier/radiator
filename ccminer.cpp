@@ -173,7 +173,7 @@ static int opt_retries = -1;
 static int opt_fail_pause = 30;
 int opt_timeout = 270;
 static int opt_scantime = 25;
-static json_t *opt_config;
+static json_t *opt_config = nullptr;
 static const bool opt_time = true;
 static enum sha_algos opt_algo = ALGO_X11;
 int opt_n_threads = 0;
@@ -185,21 +185,21 @@ bool opt_trust_pool = false;
 uint16_t opt_vote = 9999;
 int num_cpus;
 int active_gpus;
-char * device_name[MAX_GPUS];
+char * device_name[MAX_GPUS] = { nullptr };
 int device_map[MAX_GPUS] = { 0 };
 long  device_sm[MAX_GPUS] = { 0 };
 uint32_t gpus_intensity[MAX_GPUS] = { 0 };
 char *rpc_user = NULL;
-static char *rpc_url;
-static char *rpc_userpass;
-static char *rpc_pass;
+static char *rpc_url = nullptr;
+static char *rpc_userpass = nullptr;
+static char *rpc_pass = nullptr;
 static char *short_url = NULL;
-char *opt_cert;
-char *opt_proxy;
+char *opt_cert = nullptr;
+char *opt_proxy = nullptr;
 long opt_proxy_type;
-struct thr_info *thr_info;
+struct thr_info *thr_info = nullptr;
 static int work_thr_id;
-struct thr_api *thr_api;
+struct thr_api *thr_api = nullptr;
 int longpoll_thr_id = -1;
 int stratum_thr_id = -1;
 int api_thr_id = -1;
@@ -221,6 +221,9 @@ uint64_t net_blocks = 0;
 
 int opt_statsavg = 30;
 uint16_t opt_api_listen = 4068; /* 0 to disable */
+
+static char* opt_syslog_pfx = nullptr;
+char *opt_api_allow = nullptr;
 
 #ifdef HAVE_GETOPT_LONG
 #include <getopt.h>
@@ -475,9 +478,9 @@ void proper_exit(int reason)
 		cuda_devicereset();
 	}
 	free(opt_syslog_pfx);
-		opt_syslog_pfx = NULL;
+		opt_syslog_pfx = nullptr;
 	free(opt_api_allow);
-		opt_api_allow = NULL;
+		opt_api_allow = nullptr;
 	hashlog_purge_all();
 	stats_purge_all();
 
