@@ -1280,7 +1280,7 @@ out:
 }
 
 /**
-* Extract bloc height     L H... here len=3, height=0x1333e8
+* Extract block height     L H... here len=3, height=0x1333e8
 * "...0000000000ffffffff2703e83313062f503253482f043d61105408"
 */
 static uint32_t getblocheight(struct stratum_ctx *sctx)

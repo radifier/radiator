@@ -661,7 +661,7 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 	bool stale_work = false;
 	char s[384];
 
-	/* discard if a newer bloc was received */
+	/* discard if a newer block was received */
 	/*
 	stale_work = work->height && work->height < g_work.height;
 	if (have_stratum && !stale_work) {
@@ -679,7 +679,7 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 			if(work->height && work->height < wheight.height)
 			{
 				if(opt_debug)
-					applog(LOG_WARNING, "bloc %u was already solved", work->height, wheight.height);
+					applog(LOG_WARNING, "block %u was already solved", work->height, wheight.height);
 				return true;
 			}
 		}
@@ -807,7 +807,7 @@ static bool gbt_work_decode(const json_t *val, struct work *work)
 	if(err && !json_is_null(err))
 	{
 		allow_gbt = false;
-		applog(LOG_INFO, "GBT not supported, bloc height unavailable");
+		applog(LOG_INFO, "GBT not supported, block height unavailable");
 		return false;
 	}
 
@@ -1184,7 +1184,7 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 	work->xnonce2_len = sctx->xnonce2_size;
 	memcpy(work->xnonce2, sctx->job.xnonce2, sctx->xnonce2_size);
 
-	// also store the bloc number
+	// also store the block number
 	work->height = sctx->job.height;
 
 	/* Generate merkle root */
