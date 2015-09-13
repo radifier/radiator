@@ -2132,46 +2132,35 @@ static void parse_arg(int key, char *arg)
 			show_usage_and_exit(1);
 		{
 			int n = 0;
-			uint32_t adds = 0;
 			int ngpus = cuda_num_devices();
+			uint32_t last = 0;
 			char * pch = strtok(arg, ",");
-			if(!pch || pch == arg)
-			{
-				// single value, set intensity for all cards
-				uint32_t adds = 0;
-				if((d - v) > 0.0)
-				{
-					adds = (uint32_t)floor((d - v) * (1 << (v - 8))) * 256;
-				}
-				for(n = 0; n < ngpus; n++)
-					gpus_intensity[n] = (1 << v) + adds;
-				applog(LOG_INFO, "Intensity set to %.1f, %u cuda threads",
-					   d, gpus_intensity[0]);
-				break;
-			}
 			while(pch != NULL)
 			{
 				d = atof(pch);
 				v = (uint32_t)d;
 				if(v > 7)
 				{ /* 0 = default */
-					gpus_intensity[n] = (1 << v);
 					if((d - v) > 0.0)
 					{
-						adds = (uint32_t)floor((d - v) * (1 << (v - 8))) * 256;
-						gpus_intensity[n] += adds;
+						uint32_t adds = (uint32_t)floor((d - v) * (1 << (v - 8))) * 256;
+						gpus_intensity[n] = (1 << v) + adds;
 						applog(LOG_INFO, "Adding %u threads to intensity %u, %u cuda threads",
 							   adds, v, gpus_intensity[n]);
 					}
-					else
+					else if(gpus_intensity[n] != (1 << v))
 					{
+						gpus_intensity[n] = (1 << v);
 						applog(LOG_INFO, "Intensity set to %u, %u cuda threads",
 							   v, gpus_intensity[n]);
 					}
 				}
+				last = gpus_intensity[n];
 				n++;
 				pch = strtok(NULL, ",");
 			}
+			while(n < MAX_GPUS)
+				gpus_intensity[n++] = last;
 		}
 		break;
 	case 'D':
