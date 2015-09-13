@@ -62,69 +62,52 @@ static __device__ __forceinline__ void round_lyra_v35(vectype* s)
 
 }
 
-
- 
-static __device__ __forceinline__ void reduceDuplex(vectype state[4], uint32_t thread)
+static __device__ __forceinline__ void reduceDuplex50(vectype state[4], uint32_t thread)
 {
-
-
-	    vectype state1[3]; 
-		uint32_t ps1 = (Nrow * Ncol * memshift * thread);
-		uint32_t ps2 = (memshift * (Ncol-1) + memshift * Ncol + Nrow * Ncol * memshift * thread);
+	const uint32_t ps1 = Nrow * Ncol * memshift * thread;
+	const uint32_t ps2 = memshift * (Ncol - 1) + memshift * Ncol + Nrow * Ncol * memshift * thread;
 
 #pragma unroll 4
-	for (int i = 0; i < Ncol; i++)
+	for(int i = 0; i < Ncol * memshift; i += memshift)
 	{
-        uint32_t s1 = ps1 + i*memshift;
-        uint32_t s2 = ps2 - i*memshift;  
-		
-		for (int j = 0; j < 3; j++)
-			state1[j] = __ldg4(&(DMatrix+s1)[j]); 
- 
-		for (int j = 0; j < 3; j++)
-			state[j] ^= state1[j];
-		round_lyra_v35(state); 
-		for (int j = 0; j < 3; j++)
-			state1[j] ^= state[j];
+		uint32_t s1 = ps1 + i;
+		uint32_t s2 = ps2 - i;
 
-		for (int j = 0; j < 3; j++)
-			(DMatrix + s2)[j] = state1[j];
+#pragma unroll
+		for(int j = 0; j < 3; j++)
+			state[j] ^= __ldg4(&(DMatrix + s1)[j]);
 
+		round_lyra_v35(state);
+
+#pragma unroll
+		for(int j = 0; j < 3; j++)
+			(DMatrix + s2)[j] = __ldg4(&(DMatrix + s1)[j]) ^ state[j];
 	}
-
 }
 
 static __device__ __forceinline__ void reduceDuplexV3(vectype state[4], uint32_t thread)
 {
-
-
 	vectype state1[3];
-	uint32_t ps1 = (Nrow * Ncol * memshift * thread);
-//                     colomn             row
-	uint32_t ps2 = (memshift * (Ncol - 1) * Nrow + memshift * 1 + Nrow * Ncol * memshift * thread);
+	const uint32_t ps1 = Nrow * Ncol * memshift * thread;
+	const uint32_t ps2 = memshift * (Ncol - 1) * Nrow + memshift + Nrow * Ncol * memshift * thread;
 
 #pragma unroll 4
-	for (int i = 0; i < Ncol; i++)
+	for(int i = 0; i < Nrow * Ncol * memshift; i += Nrow * memshift)
 	{
-		uint32_t s1 = ps1 + Nrow * i *memshift;
-		uint32_t s2 = ps2 - Nrow * i *memshift;
+		uint32_t s1 = ps1 + i;
+		uint32_t s2 = ps2 - i;
 
-		for (int j = 0; j < 3; j++)
+		for(int j = 0; j < 3; j++)
 			state1[j] = __ldg4(&(DMatrix + s1)[j]);
 
-		for (int j = 0; j < 3; j++)
+		for(int j = 0; j < 3; j++)
 			state[j] ^= state1[j];
+
 		round_lyra_v35(state);
 
-		for (int j = 0; j < 3; j++)
-			state1[j] ^= state[j];
-
-
-		for (int j = 0; j < 3; j++)
-			(DMatrix + s2)[j] = state1[j];
-
+		for(int j = 0; j < 3; j++)
+			(DMatrix + s2)[j] = state1[j] ^ state[j];
 	}
-
 }
 
 static __device__ __forceinline__ void reduceDuplexRowSetupV2(const int rowIn, const int rowInOut, const int rowOut, vectype state[4], uint32_t thread)
@@ -521,7 +504,7 @@ void lyra2v2_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint2 *outputHa
 		}
 
 
-		reduceDuplex(state, thread);
+		reduceDuplex50(state, thread);
 
 		reduceDuplexRowSetupV2(1, 0, 2, state,  thread);
 		reduceDuplexRowSetupV2(2, 1, 3, state,  thread);
