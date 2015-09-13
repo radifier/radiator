@@ -2124,13 +2124,12 @@ static void parse_arg(int key, char *arg)
 		v = (uint32_t)d;
 		if(v < 0 || v > 31)
 			show_usage_and_exit(1);
-		else
 		{
 			int n = 0;
 			int ngpus = cuda_num_devices();
 			uint32_t last = 0;
-			char *pch = arg;
-			do
+			char * pch = strtok(arg, ",");
+			while(pch != NULL)
 			{
 				d = atof(pch);
 				v = (uint32_t)d;
@@ -2153,7 +2152,7 @@ static void parse_arg(int key, char *arg)
 				last = gpus_intensity[n];
 				n++;
 				pch = strtok(NULL, ",");
-			} while(pch != NULL);
+			}
 			while(n < MAX_GPUS)
 				gpus_intensity[n++] = last;
 		}
