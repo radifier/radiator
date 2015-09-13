@@ -1103,8 +1103,8 @@ static bool get_work(struct thr_info *thr, struct work *work)
 	if(opt_benchmark)
 	{
 		memset(work->data, 0x55, 76);
-		//work->data[17] = swab32((uint32_t)time(NULL));
 		memset(work->data + 19, 0x00, 52);
+		work->data[1] = (uint32_t)((double)rand() / (RAND_MAX + 1) * 0xffffffffu);
 		work->data[20] = 0x80000000;
 		work->data[31] = 0x00000280;
 		memset(work->target, 0x00, sizeof(work->target));
@@ -1368,12 +1368,6 @@ static void *miner_thread(void *userdata)
 		// &work.data[19]
 		int wcmplen = (opt_algo == ALGO_BITC) ? 140 : 76;
 		uint32_t *nonceptr = (uint32_t*)(((char*)work.data) + wcmplen);
-
-		if(opt_benchmark)
-		{
-			nonceptr[0] = nonceptr[0] & 0xfffffffU;	//reset Hashcounters
-			nonceptr[2] = nonceptr[2] & 0xfffffffU;
-		}
 
 		struct timeval tv_start, tv_end, diff;
 		uint32_t hashes_done = 0;
