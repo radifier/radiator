@@ -519,18 +519,25 @@ static bool jobj_binary(const json_t *obj, const char *key,
 
 static bool work_decode(const json_t *val, struct work *work)
 {
-	int data_size = sizeof(work->data), target_size = sizeof(work->target);
-	int midstate_size;
-	int adata_sz = ARRAY_SIZE(work->data), atarget_sz = ARRAY_SIZE(work->target);
+	int data_size;
+	int target_size = sizeof(work->target);
+	int midstate_size = sizeof(work->midstate);
+	int atarget_sz = ARRAY_SIZE(work->target);
 	int i;
 
-	data_size = (opt_algo == ALGO_NEO) ? 84 : data_size; //silly and lazy
-	adata_sz = (opt_algo == ALGO_NEO) ? 20 : adata_sz;
-	if(opt_algo == ALGO_BITC)
+	switch(opt_algo)
 	{
-		data_size = 168;
-		midstate_size = sizeof(work->midstate);
+		case ALGO_NEO:
+			data_size = 84;
+			break;
+		case ALGO_BITC:
+			data_size = 168;
+			break;
+		default:
+			data_size = 128;
+			break;
 	}
+	int adata_sz = data_size / 4;
 
 	if(unlikely(!jobj_binary(val, "data", work->data, data_size)))
 	{
@@ -760,7 +767,19 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 
 		/* build hex string */
 		char *str = NULL;
-		int data_size = (opt_algo == ALGO_NEO) ? 80 : sizeof(work->data);
+		int data_size;
+		switch(opt_algo)
+		{
+			case ALGO_NEO:
+				data_size = 84;
+				break;
+			case ALGO_BITC:
+				data_size = 168;
+				break;
+			default:
+				data_size = 128;
+				break;
+		}
 		if(opt_algo != ALGO_HEAVY && opt_algo != ALGO_MJOLLNIR)
 		{
 			for(int i = 0; i < (data_size >> 2); i++)

@@ -607,7 +607,7 @@ struct stratum_ctx {
 };
 
 struct work {
-	uint32_t data[32];
+	uint32_t data[64];
 	uint32_t midstate[8];
 	uint32_t target[8];
 	uint32_t maxvote;
