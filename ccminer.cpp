@@ -498,17 +498,19 @@ static bool jobj_binary(const json_t *obj, const char *key,
 	json_t *tmp;
 
 	tmp = json_object_get(obj, key);
-	if(unlikely(!tmp))
+	if(unlikely(tmp == NULL))
 	{
 		applog(LOG_ERR, "JSON key '%s' not found", key);
 		return false;
 	}
 	hexstr = json_string_value(tmp);
-	if(unlikely(!hexstr))
+	if(unlikely(hexstr == NULL))
 	{
 		applog(LOG_ERR, "JSON key '%s' is not a string", key);
 		return false;
 	}
+	if(strlen(hexstr)/2 > buflen)
+		return false;
 	if(!hex2bin((uchar*)buf, hexstr, buflen))
 		return false;
 
