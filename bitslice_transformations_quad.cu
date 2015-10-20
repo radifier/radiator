@@ -7,9 +7,7 @@
 		y=__byte_perm(x, y, 0x7632);
 
 #define SWAP4(x,y)\
-		t = (y<<4); \
-		t = (x ^ t); \
-		t = 0xf0f0f0f0UL & t; \
+		t = 0xf0f0f0f0UL & (x ^ (y<<4)); \
 		x = (x ^ t); \
 		t=  t>>4;\
 		y=  y ^ t;
@@ -22,27 +20,21 @@
 	    : "+r"(x) : "r"(y));
 #else
 #define SWAP4_final(x,y)\
-	t = (y << 4); \
-	t = (x ^ t); \
-	t = 0xf0f0f0f0UL & t; \
-	x = (x ^ t); 
+	t = 0xf0f0f0f0UL & (x ^ (y << 4)); \
+	x = (x ^ (0xf0f0f0f0UL & (x ^ (y << 4)))); 
 #endif
 
 #define SWAP2(x,y)\
-		t = (y<<2); \
-		t = (x ^ t); \
-		t = 0xccccccccUL & t; \
+		t = 0xccccccccUL & (x ^ (y<<2)); \
 		x = (x ^ t); \
 		t=  t>>2;\
 		y=  y ^ t;
 
 #define SWAP1(x,y)\
-		t = (y+y); \
-		t = (x ^ t); \
-		t = 0xaaaaaaaaUL & t; \
+		t = 0xaaaaaaaaUL & (x ^ (y<<1)); \
 		x = (x ^ t); \
-		t=  t>>1;\
-		y=  y ^ t;
+		t = t>>1;\
+		y = y ^ t;
 
 __device__ __forceinline__
 void to_bitslice_quad(uint32_t *const __restrict__ input, uint32_t *const __restrict__ output)

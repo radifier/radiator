@@ -256,7 +256,7 @@ __global__ void __launch_bounds__(256, 4)
 }
 
 __global__ void __launch_bounds__(2048, 1)
- myriadgroestl_gpu_hash_quad2(uint32_t threads, uint32_t startNounce, uint32_t *resNounce, uint32_t *hashBuffer)
+ myriadgroestl_gpu_hash_quad2(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ resNounce, const uint32_t *const __restrict__ hashBuffer)
 {
     const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
@@ -264,7 +264,7 @@ __global__ void __launch_bounds__(2048, 1)
         const uint32_t nounce = startNounce + thread;
 
         uint32_t out_state[16];
-        uint32_t *inpHash = &hashBuffer[16 * thread];
+        const uint32_t *inpHash = &hashBuffer[16 * thread];
 #pragma unroll 16
         for (int i=0; i < 16; i++)
             out_state[i] = inpHash[i];
@@ -286,8 +286,8 @@ __host__ void myriadgroestl_cpu_init(int thr_id, uint32_t threads)
 	CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 	cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 	cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
-	// Speicher für Gewinner-Nonce belegen
-    cudaMalloc(&d_resultNonce[thr_id], 4*sizeof(uint32_t)); 
+	CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
+	cudaMalloc(&d_resultNonce[thr_id], 4 * sizeof(uint32_t));
 
     // Speicher für temporäreHashes
 	CUDA_SAFE_CALL(cudaMalloc(&d_outputHashes[thr_id], 16 * sizeof(uint32_t)*threads));
