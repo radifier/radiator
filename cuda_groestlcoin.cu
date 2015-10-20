@@ -85,7 +85,7 @@ __host__ void groestlcoin_cpu_setBlock(int thr_id, void *data )
 	cudaMemsetAsync(d_resultNonce[thr_id], 0xFF, sizeof(uint32_t), gpustream[thr_id]);
 }
 
-__host__ void groestlcoin_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, void *outputHashes, uint32_t *nounce, uint32_t target)
+__host__ void groestlcoin_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *nounce, uint32_t target)
 {
     uint32_t threadsperblock = 512;
 

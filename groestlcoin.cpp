@@ -57,12 +57,10 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 {
 	static THREAD uint32_t *foundNounce = nullptr;
 
-    uint32_t start_nonce = pdata[19]++;
+    uint32_t start_nonce = pdata[19];
 	unsigned int intensity = (device_sm[device_map[thr_id]] > 500) ? 24 : 23;
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1U << intensity);
 	throughput = min(throughput, max_nonce - start_nonce) & 0xfffffc00;
-
-    uint32_t *outputHash = (uint32_t*)malloc(throughput * 16 * sizeof(uint32_t));
 
     if (opt_benchmark)
         ptarget[7] = 0x0000000f;
@@ -94,7 +92,7 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		// GPU
 		const uint32_t Htarg = ptarget[7];
 
-		groestlcoin_cpu_hash(thr_id, throughput, pdata[19], outputHash, foundNounce, ptarget[7]);
+		groestlcoin_cpu_hash(thr_id, throughput, pdata[19], foundNounce, ptarget[7]);
 
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		if(foundNounce[0] < 0xffffffff)
@@ -149,8 +147,7 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		}
 	} while(!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 
-    *hashes_done = pdata[19] - start_nonce + 1;
-    free(outputHash);
+    *hashes_done = pdata[19] - start_nonce;
     return 0;
 }
 
