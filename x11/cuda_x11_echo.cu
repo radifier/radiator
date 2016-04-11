@@ -13,91 +13,130 @@
 
 static uint32_t *d_found[MAX_GPUS];
 
+__constant__ uint32_t P[48] = {
+	0xe7e9f5f5,
+	0xf5e7e9f5,
+	0xb3b36b23,
+	0xb3dbe7af,
+
+	0xa4213d7e,
+	0xf5e7e9f5,
+	0xb3b36b23,
+	0xb3dbe7af,
+	//8-12
+	0x01425eb8,
+	0xf5e7e9f5,
+	0xb3b36b23,
+	0xb3dbe7af,
+
+	0x65978b09,
+	0xf5e7e9f5,
+	0xb3b36b23,
+	0xb3dbe7af,
+
+	//21-25
+	0x2cb6b661,
+	0x6b23b3b3,
+	0xcf93a7cf,
+	0x9d9d3751,
+
+	0x9ac2dea3,
+	0xf5e7e9f5,
+	0xb3b36b23,
+	0xb3dbe7af,
+
+	//34-38
+	0x579f9f33,
+	0xfbfbfbfb,
+	0xfbfbfbfb,
+	0xefefd3c7,
+
+	0xdbfde1dd,
+	0xf5e7e9f5,
+	0xb3b36b23,
+	0xb3dbe7af,
+
+	0x34514d9e,
+	0xf5e7e9f5,
+	0xb3b36b23,
+	0xb3dbe7af,
+
+
+	0xb134347e,
+	0xea6f7e7e,
+	0xbd7731bd,
+	0x8a8a1968,
+
+	0x14b8a457,
+	0xf5e7e9f5,
+	0xb3b36b23,
+	0xb3dbe7af,
+
+	0x265f4382,
+	0xf5e7e9f5,
+	0xb3b36b23,
+	0xb3dbe7af
+	//58-61
+};
+
 __device__ __forceinline__ void AES_2ROUND(
 	const uint32_t*const __restrict__ sharedMemory,
 	uint32_t &x0, uint32_t &x1, uint32_t &x2, uint32_t &x3,
 	const uint32_t k0)
 {
-	aes_round(sharedMemory,
-		x0, x1, x2, x3,
-		k0,
-		x0, x1, x2, x3);
+	uint32_t y0 =
+		sharedMemory[__byte_perm(x0, 0, 0x4440)] ^
+		sharedMemory[__byte_perm(x1, 0, 0x4441) + 256] ^
+		sharedMemory[__byte_perm(x2, 0, 0x4442) + 512] ^
+		sharedMemory[__byte_perm(x3, 0, 0x4443) + 768] ^ k0;
 
-	aes_round(sharedMemory,
-		x0, x1, x2, x3,
-		x0, x1, x2, x3);
+	uint32_t y1 =
+		sharedMemory[__byte_perm(x1, 0, 0x4440)] ^
+		sharedMemory[__byte_perm(x2, 0, 0x4441) + 256] ^
+		sharedMemory[__byte_perm(x3, 0, 0x4442) + 512] ^
+		sharedMemory[__byte_perm(x0, 0, 0x4443) + 768];
+
+	uint32_t y2 =
+		sharedMemory[__byte_perm(x2, 0, 0x4440)] ^
+		sharedMemory[__byte_perm(x3, 0, 0x4441) + 256] ^
+		sharedMemory[__byte_perm(x0, 0, 0x4442) + 512] ^
+		sharedMemory[__byte_perm(x1, 0, 0x4443) + 768];
+
+	uint32_t y3 =
+		sharedMemory[__byte_perm(x3, 0, 0x4440)] ^
+		sharedMemory[__byte_perm(x0, 0, 0x4441) + 256] ^
+		sharedMemory[__byte_perm(x1, 0, 0x4442) + 512] ^
+		sharedMemory[__byte_perm(x2, 0, 0x4443) + 768];
+
+	x0 =
+		sharedMemory[__byte_perm(y0, 0, 0x4440)] ^
+		sharedMemory[__byte_perm(y1, 0, 0x4441) + 256] ^
+		sharedMemory[__byte_perm(y2, 0, 0x4442) + 512] ^
+		sharedMemory[__byte_perm(y3, 0, 0x4443) + 768];
+
+	x1 =
+		sharedMemory[__byte_perm(y1, 0, 0x4440)] ^
+		sharedMemory[__byte_perm(y2, 0, 0x4441) + 256] ^
+		sharedMemory[__byte_perm(y3, 0, 0x4442) + 512] ^
+		sharedMemory[__byte_perm(y0, 0, 0x4443) + 768];
+
+	x2 =
+		sharedMemory[__byte_perm(y2, 0, 0x4440)] ^
+		sharedMemory[__byte_perm(y3, 0, 0x4441) + 256] ^
+		sharedMemory[__byte_perm(y0, 0, 0x4442) + 512] ^
+		sharedMemory[__byte_perm(y1, 0, 0x4443) + 768];
+
+	x3 =
+		sharedMemory[__byte_perm(y3, 0, 0x4440)] ^
+		sharedMemory[__byte_perm(y0, 0, 0x4441) + 256] ^
+		sharedMemory[__byte_perm(y1, 0, 0x4442) + 512] ^
+		sharedMemory[__byte_perm(y2, 0, 0x4443) + 768];
 }
 
 __device__ __forceinline__ void cuda_echo_round(
 	const uint32_t *const __restrict__ sharedMemory, uint32_t *const __restrict__  hash)
 {
-	const uint32_t P[48] = {
-		0xe7e9f5f5,
-		0xf5e7e9f5,
-		0xb3b36b23,
-		0xb3dbe7af,
-
-		0xa4213d7e,
-		0xf5e7e9f5,
-		0xb3b36b23,
-		0xb3dbe7af,
-		//8-12
-		0x01425eb8,
-		0xf5e7e9f5,
-		0xb3b36b23,
-		0xb3dbe7af,
-
-		0x65978b09,
-		0xf5e7e9f5,
-		0xb3b36b23,
-		0xb3dbe7af,
-
-		//21-25
-		0x2cb6b661,
-		0x6b23b3b3,
-		0xcf93a7cf,
-		0x9d9d3751,
-
-		0x9ac2dea3,
-		0xf5e7e9f5,
-		0xb3b36b23,
-		0xb3dbe7af,
-
-		//34-38
-		0x579f9f33,
-		0xfbfbfbfb,
-		0xfbfbfbfb,
-		0xefefd3c7,
-
-		0xdbfde1dd,
-		0xf5e7e9f5,
-		0xb3b36b23,
-		0xb3dbe7af,
-
-		0x34514d9e,
-		0xf5e7e9f5,
-		0xb3b36b23,
-		0xb3dbe7af,
-
-
-		0xb134347e,
-		0xea6f7e7e,
-		0xbd7731bd,
-		0x8a8a1968,
-
-		0x14b8a457,
-		0xf5e7e9f5,
-		0xb3b36b23,
-		0xb3dbe7af,
-
-		0x265f4382,
-		0xf5e7e9f5,
-		0xb3b36b23,
-		0xb3dbe7af
-		//58-61
-	};
 	uint32_t k0;
-
 
 	uint32_t h[16];
 	uint28 *phash = (uint28*)hash;
@@ -344,7 +383,7 @@ void echo_gpu_init(uint32_t *const __restrict__ sharedMemory)
 	}
 }
 
-__global__	__launch_bounds__(256, 4)
+__global__	__launch_bounds__(256, 3)
 void x11_echo512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ g_hash)
 {
 	__shared__ __align__(128) uint32_t sharedMemory[1024];
@@ -383,74 +422,7 @@ __host__ void x11_echo512_cpu_free(int32_t thr_id)
 {
 }
 
-
-__constant__ uint32_t P[48] = {
-	0xe7e9f5f5,
-	0xf5e7e9f5,
-	0xb3b36b23,
-	0xb3dbe7af,
-
-	0xa4213d7e,
-	0xf5e7e9f5,
-	0xb3b36b23,
-	0xb3dbe7af,
-	//8-12
-	0x01425eb8,
-	0xf5e7e9f5,
-	0xb3b36b23,
-	0xb3dbe7af,
-
-	0x65978b09,
-	0xf5e7e9f5,
-	0xb3b36b23,
-	0xb3dbe7af,
-
-	//21-25
-	0x2cb6b661,
-	0x6b23b3b3,
-	0xcf93a7cf,
-	0x9d9d3751,
-
-	0x9ac2dea3,
-	0xf5e7e9f5,
-	0xb3b36b23,
-	0xb3dbe7af,
-
-	//34-38
-	0x579f9f33,
-	0xfbfbfbfb,
-	0xfbfbfbfb,
-	0xefefd3c7,
-
-	0xdbfde1dd,
-	0xf5e7e9f5,
-	0xb3b36b23,
-	0xb3dbe7af,
-
-	0x34514d9e,
-	0xf5e7e9f5,
-	0xb3b36b23,
-	0xb3dbe7af,
-
-
-	0xb134347e,
-	0xea6f7e7e,
-	0xbd7731bd,
-	0x8a8a1968,
-
-	0x14b8a457,
-	0xf5e7e9f5,
-	0xb3b36b23,
-	0xb3dbe7af,
-
-	0x265f4382,
-	0xf5e7e9f5,
-	0xb3b36b23,
-	0xb3dbe7af
-	//58-61
-};
-
-__global__
+__global__ __launch_bounds__(256, 3)
 void x11_echo512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, const uint64_t *const __restrict__ g_hash, uint32_t *const __restrict__ d_found, uint32_t target)
 {
 
@@ -696,9 +668,9 @@ __host__ void x11_echo512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32
 	// berechne wie viele Thread Blocks wir brauchen
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
-	cudaMemsetAsync(d_found[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
+	CUDA_SAFE_CALL(cudaMemsetAsync(d_found[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]));
 
 	x11_echo512_gpu_hash_64_final << <grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash, d_found[thr_id], target);
-	//MyStreamSynchronize(NULL, order, thr_id);
-	CUDA_SAFE_CALL(cudaMemcpyAsync(h_found, d_found[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaStreamSynchronize(gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaMemcpy(h_found, d_found[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 }
