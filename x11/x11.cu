@@ -143,10 +143,10 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 	unsigned int intensity;
 	if(strstr(props.name, "970"))		  intensity = (256 * 256 * 22);
 	else if(strstr(props.name, "980"))    intensity = (256 * 256 * 22);
-	else if(strstr(props.name, "750 Ti")) intensity = (256 * 256 * 22);
+	else if(strstr(props.name, "750 Ti")) intensity = (256 * 256 * 20);
 	else if(strstr(props.name, "750"))    intensity = (256 * 256 * 19);
 	else if(strstr(props.name, "960"))    intensity = (256 * 256 * 19);
-	else intensity = (256 * 256 * 2);
+	else intensity = (256 * 256 * 16);
 	const uint32_t throughput = min(device_intensity(device_map[thr_id], __func__, intensity), (max_nonce - first_nonce)) & 0xfffffc00; // 19=256*256*8;
 	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
 
@@ -188,7 +188,6 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 		x11_shavite512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
 		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash, simdthreads);
 		x11_echo512_cpu_hash_64_final(thr_id, throughput, pdata[19], d_hash, ptarget[7], h_found);
-		CUDA_SAFE_CALL(cudaStreamSynchronize(gpustream[thr_id]));
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		if(h_found[0] != 0xffffffff)
 		{
