@@ -678,8 +678,8 @@ static void api()
 	uint16_t port = opt_api_listen; // 4068
 	char buf[MYBUFSIZ];
 	int c, n, bound;
-	char *connectaddr;
-	char *binderror;
+	char *connectaddr = nullptr;
+	char *binderror = nullptr;
 	char group;
 	time_t bindstart;
 	struct sockaddr_in serv;
@@ -687,11 +687,11 @@ static void api()
 	socklen_t clisiz;
 	bool addrok = false;
 	long long counter;
-	char *result;
-	char *params;
+	char *result = nullptr;
+	char *params = nullptr;
 	int i;
 
-	SOCKETTYPE *apisock;
+	SOCKETTYPE *apisock = nullptr;
 	if (!opt_api_listen && opt_debug) {
 		applog(LOG_DEBUG, "API disabled");
 		return;
