@@ -522,7 +522,7 @@ uint64_t ROTL64(const uint64_t x, const int offset)
 #else
 /* host */
 #if defined _MSC_VER && !defined __CUDA_ARCH__
-#define ROTL64(x, n) _rotr64(x, n)
+#define ROTL64(x, n) _rotl64(x, n)
 #else
 #define ROTL64(x, n)  (((x) << (n)) | ((x) >> (64 - (n))))
 #endif
