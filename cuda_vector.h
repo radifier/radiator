@@ -618,12 +618,11 @@ static __forceinline__ __device__ void operator^= (ulonglong32to64 &a, const ulo
 static __forceinline__ __device__ void operator+= (ulonglonglong &a, const ulonglonglong &b) { a = a + b; }
 static __forceinline__ __device__ void operator^= (ulonglonglong &a, const ulonglonglong &b) { a = a ^ b; }
 
-#if __CUDA_ARCH__ < 320
 
 #define rotate ROTL32
 #define rotateR ROTR32
 
-#else
+#if __CUDA_ARCH__ >= 320
 
 static __forceinline__ __device__ uint4 rotate4(uint4 vec4, uint32_t shift)
 {
@@ -644,23 +643,6 @@ static __forceinline__ __device__ uint4 rotate4R(uint4 vec4, uint32_t shift)
 	asm("shf.r.wrap.b32 %0, %1, %2, %3;" : "=r"(ret.w) : "r"(vec4.w), "r"(vec4.w), "r"(shift));
 	return ret;
 }
-
-static __forceinline__ __device__ uint32_t rotate(uint32_t vec4, uint32_t shift)
-{
-	uint32_t ret;
-	asm("shf.l.wrap.b32 %0, %1, %2, %3;" : "=r"(ret) : "r"(vec4), "r"(vec4), "r"(shift));
-	return ret;
-}
-
-
-static __forceinline__ __device__ uint32_t rotateR(uint32_t vec4, uint32_t shift)
-{
-	uint32_t ret;
-	asm("shf.r.wrap.b32 %0, %1, %2, %3;" : "=r"(ret) : "r"(vec4), "r"(vec4), "r"(shift));
-	return ret;
-}
-
-
 
 static __device__ __inline__ uint8 __ldg8(const uint8_t *ptr)
 {
