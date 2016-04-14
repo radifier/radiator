@@ -2569,7 +2569,11 @@ int main(int argc, char *argv[])
 	opt_syslog_pfx = strdup(PROGRAM_NAME);
 	opt_api_allow = strdup("127.0.0.1"); /* 0.0.0.0 for all ips */
 
-	printf("ccminer " PACKAGE_VERSION " for nVidia GPUs\n");
+#if defined _WIN64 || defined _LP64
+	printf("ccminer " PACKAGE_VERSION " (64bit) for nVidia GPUs\n");
+#else
+	printf("ccminer " PACKAGE_VERSION " (32bit) for nVidia GPUs\n");
+#endif
 #ifdef _MSC_VER
 	printf("Compiled with Visual C++ %d ", _MSC_VER / 100);
 #else
