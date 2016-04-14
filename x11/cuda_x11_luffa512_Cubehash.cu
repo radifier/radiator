@@ -39,11 +39,7 @@ typedef struct
     a[1+(8*j)] = a[0+(8*j)] ^ tmp;\
     a[0+(8*j)] = tmp;
 
-#if __CUDA_ARCH__ < 320
-#define LROT(x,bits) ((x << bits) | (x >> (32 - bits)))
-#else
-#define LROT(x, bits) __funnelshift_l(x, x, bits)
-#endif
+#define LROT ROTL32
 
 #define CUBEHASH_ROUNDS 16 /* this is r for CubeHashr/b */
 #define CUBEHASH_BLOCKBYTES 32 /* this is b for CubeHashr/b */
@@ -51,25 +47,11 @@ typedef struct
 #define ROTATEUPWARDS7(a)  LROT(a,7)
 #define ROTATEUPWARDS11(a) LROT(a,11)
 
-#define SWAP(v1, v2) \
-		a^=b;\
-		b ^= a;\
-		a ^= b;
-
 #define TWEAK(a0,a1,a2,a3,j)\
     a0 = LROT(a0,j);\
     a1 = LROT(a1,j);\
     a2 = LROT(a2,j);\
     a3 = LROT(a3,j);
-
-#define STEP(c0,c1)\
-    SUBCRUMB(chainv[0],chainv[1],chainv[2],chainv[3],tmp);\
-    SUBCRUMB(chainv[5],chainv[6],chainv[7],chainv[4],tmp);\
-    MIXWORD(chainv[0],chainv[4]);\
-    MIXWORD(chainv[1],chainv[5]);\
-    MIXWORD(chainv[2],chainv[6]);\
-    MIXWORD(chainv[3],chainv[7]);\
-    ADD_CONSTANT(chainv[0],chainv[4],c0,c1);
 
 #define SUBCRUMB(a0,a1,a2,a3,a4)\
     a4  = a0;\
@@ -103,6 +85,15 @@ typedef struct
 #define ADD_CONSTANT(a0,b0,c0,c1)\
     a0 ^= c0;\
     b0 ^= c1;
+
+#define STEP(c0,c1)\
+    SUBCRUMB(chainv[0],chainv[1],chainv[2],chainv[3],tmp);\
+    SUBCRUMB(chainv[5],chainv[6],chainv[7],chainv[4],tmp);\
+    MIXWORD(chainv[0],chainv[4]);\
+    MIXWORD(chainv[1],chainv[5]);\
+    MIXWORD(chainv[2],chainv[6]);\
+    MIXWORD(chainv[3],chainv[7]);\
+    ADD_CONSTANT(chainv[0],chainv[4],c0,c1);
 
 // Precalculated chaining values
 __device__ __constant__ uint32_t c_IV[40] =
@@ -158,7 +149,7 @@ __device__ __constant__ uint32_t c_CNS[80] = {
 
 /***************************************************/
 __device__ __forceinline__
-void rnd512(uint32_t *statebuffer, uint32_t *statechainv)
+void rnd512(uint32_t *const __restrict__ statebuffer, uint32_t *const __restrict__ statechainv)
 {
 	int i, j;
 	uint32_t t[40];
@@ -258,9 +249,9 @@ void rnd512(uint32_t *statebuffer, uint32_t *statechainv)
 	}
 
 #pragma unroll 1
-	for(i = 0; i<8; i++)
+	for(i = 0; i<=14; i+=2)
 	{
-		STEP(c_CNS[(2 * i)], c_CNS[(2 * i) + 1]);
+		STEP(c_CNS[i], c_CNS[i + 1]);
 	}
 
 #pragma unroll 8
@@ -273,9 +264,9 @@ void rnd512(uint32_t *statebuffer, uint32_t *statechainv)
 	TWEAK(chainv[4], chainv[5], chainv[6], chainv[7], 1);
 
 #pragma unroll 1
-	for(i = 0; i<8; i++)
+	for(i = 0; i<=14; i+=2)
 	{
-		STEP(c_CNS[(2 * i) + 16], c_CNS[(2 * i) + 16 + 1]);
+		STEP(c_CNS[i + 16], c_CNS[i + 16 + 1]);
 	}
 
 #pragma unroll 8
@@ -288,9 +279,9 @@ void rnd512(uint32_t *statebuffer, uint32_t *statechainv)
 	TWEAK(chainv[4], chainv[5], chainv[6], chainv[7], 2);
 
 #pragma unroll 1
-	for(i = 0; i<8; i++)
+	for(i = 0; i<=14; i+=2)
 	{
-		STEP(c_CNS[(2 * i) + 32], c_CNS[(2 * i) + 32 + 1]);
+		STEP(c_CNS[i + 32], c_CNS[i + 32 + 1]);
 	}
 
 #pragma unroll 8
@@ -303,9 +294,9 @@ void rnd512(uint32_t *statebuffer, uint32_t *statechainv)
 	TWEAK(chainv[4], chainv[5], chainv[6], chainv[7], 3);
 
 #pragma unroll 1
-	for(i = 0; i<8; i++)
+	for(i = 0; i<=14; i+=2)
 	{
-		STEP(c_CNS[(2 * i) + 48], c_CNS[(2 * i) + 48 + 1]);
+		STEP(c_CNS[i + 48], c_CNS[i + 48 + 1]);
 	}
 
 #pragma unroll 8
@@ -318,9 +309,9 @@ void rnd512(uint32_t *statebuffer, uint32_t *statechainv)
 	TWEAK(chainv[4], chainv[5], chainv[6], chainv[7], 4);
 
 #pragma unroll 1
-	for(i = 0; i<8; i++)
+	for(i = 0; i<=14; i+=2)
 	{
-		STEP(c_CNS[(2 * i) + 64], c_CNS[(2 * i) + 64 + 1]);
+		STEP(c_CNS[i + 64], c_CNS[i + 64 + 1]);
 	}
 
 #pragma unroll 8
@@ -332,7 +323,7 @@ void rnd512(uint32_t *statebuffer, uint32_t *statechainv)
 
 
 __device__ __forceinline__
-void rnd512_finalfirst(uint32_t *statechainv)
+void rnd512_finalfirst(uint32_t *const statechainv)
 {
 	int i, j;
 	uint32_t t[40];
@@ -579,7 +570,7 @@ void rnd512_first(uint32_t state[40], uint32_t buffer[8])
 
 /***************************************************/
 __device__ __forceinline__
-void rnd512_nullhash(uint32_t *state)
+void rnd512_nullhash(uint32_t *const state)
 {
 	int i, j;
 	uint32_t t[40];
@@ -740,21 +731,23 @@ void rnd512_nullhash(uint32_t *state)
 	}
 }
 __device__ __forceinline__
-void Update512(uint32_t *statebuffer, uint32_t *statechainv, const uint32_t *data)
+void Update512(uint32_t *const __restrict__ statebuffer, uint32_t *const __restrict__ statechainv, const uint32_t *const __restrict__ data)
 {
 #pragma unroll 8
-	for(int i = 0; i < 8; i++) statebuffer[i] = cuda_swab32(data[i]);
+	for(int i = 0; i < 8; i++)
+		statebuffer[i] = cuda_swab32(data[i]);
 	rnd512_first(statechainv, statebuffer);
 
 #pragma unroll 8
-	for(int i = 0; i < 8; i++) statebuffer[i] = cuda_swab32(data[i + 8]);
+	for(int i = 0; i < 8; i++)
+		statebuffer[i] = cuda_swab32(data[i + 8]);
 	rnd512(statebuffer, statechainv);
 }
 
 
 /***************************************************/
 __device__ __forceinline__
-void finalization512(uint32_t *statechainv, uint32_t *b)
+void finalization512(uint32_t *const __restrict__ statechainv, uint32_t *const __restrict__ b)
 {
 	int i, j;
 	rnd512_finalfirst(statechainv);
@@ -995,7 +988,7 @@ __launch_bounds__(256, 4)
 #else
 __launch_bounds__(256, 3)
 #endif
-void x11_luffaCubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash)
+void x11_luffaCubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *const g_hash)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if(thread < threads)
