@@ -136,7 +136,7 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 	throughput = min(throughput, max_nonce - first_nonce) & 0xfffffc00;
 
 	if (opt_benchmark)
-		ptarget[7] = 0x0ff;
+		ptarget[7] = 0x0000003f;
 
 	static THREAD uint32_t *foundnonces = nullptr;
 	static THREAD uint32_t *d_hash = nullptr;
