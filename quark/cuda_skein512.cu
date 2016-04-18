@@ -385,7 +385,7 @@ void quark_skein512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 	if (thread < threads)
 	{
 		// Skein
-		uint2 skein_p[8], h[9];
+		uint2 skein_p[8], h[8];
 
 		const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 
