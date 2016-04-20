@@ -332,7 +332,7 @@ void lyra2v2_gpu_hash_32_v3(uint32_t threads, uint32_t startNounce, uint2 *outpu
 	}
 
 #if __CUDA_ARCH__ == 350
-	if (thread < threads)
+//	if (thread < threads)
 #endif
 	{
 		((uint2*)state)[0] = outputHash[thread];

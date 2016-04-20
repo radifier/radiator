@@ -195,7 +195,7 @@ __global__	__launch_bounds__(TPB, 1)
 void cubehash256_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint2 *g_hash)
 {
     uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-    if (thread < threads)
+//    if (thread < threads)
     {
 
         uint2 Hash[4];

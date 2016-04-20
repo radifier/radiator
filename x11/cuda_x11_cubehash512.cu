@@ -209,7 +209,7 @@ __launch_bounds__(256, 5)
 void x11_cubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *g_hash)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	if(thread < threads)
+//	if(thread < threads)
 	{
 		uint32_t *Hash = &g_hash[16 * thread];
 

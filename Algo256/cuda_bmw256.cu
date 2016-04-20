@@ -327,7 +327,7 @@ __global__	__launch_bounds__(TPB,2)
 void bmw256_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint2 *g_hash, uint32_t *const __restrict__ nonceVector, uint32_t Target)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	if (thread < threads)
+//	if (thread < threads)
 	{
 		uint32_t backup = Target;
 		uint2 message[8]={0};

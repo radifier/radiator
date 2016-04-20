@@ -107,7 +107,7 @@ __global__	__launch_bounds__(512)
 void keccak256_gpu_hash_80(uint32_t threads, uint32_t startNounce,  uint32_t *const __restrict__ resNounce)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	if (thread < threads)
+//	if (thread < threads)
 	{
 		const uint32_t nounce = startNounce + thread;
 		uint2 bc[5], tmpxor[5], tmp1, tmp2;
@@ -253,7 +253,7 @@ __global__ __launch_bounds__(256,3)
 void keccak256_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint64_t *outputHash)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	if (thread < threads)
+//	if (thread < threads)
 	{
 		uint2 keccak_gpu_state[25];
 		#pragma unroll 25

@@ -217,7 +217,7 @@ void groestl256_gpu_hash32(uint32_t threads, uint32_t startNounce, const uint64_
 #endif
 
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	if (thread < threads)
+//	if (thread < threads)
 	{
 		// GROESTL
 		uint32_t message[16];

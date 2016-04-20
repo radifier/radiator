@@ -391,7 +391,7 @@ void x11_echo512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *c
 	echo_gpu_init(sharedMemory);
 
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-    if (thread < threads)
+//    if (thread < threads)
     {
         const uint32_t nounce = (startNounce + thread);
         const uint32_t hashPosition = nounce - startNounce;
@@ -427,7 +427,7 @@ void x11_echo512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, const
 {
 
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	if (thread < threads)
+//	if (thread < threads)
 	{
 
 		__shared__ __align__(128) uint32_t sharedMemory[1024];
