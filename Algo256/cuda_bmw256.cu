@@ -17,7 +17,7 @@ static uint32_t *d_GNonce[MAX_GPUS];
 #define SPH_ROTL32 ROTL32
 
 
-#define ROTL32host(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
+#define ROTL32host(x, n) ROTL32(x,n)
 // #define SPH_ROTL32 SPH_ROTL32
 #define ss0(x)  (shr((x), 1) ^ shl((x), 3) ^ SPH_ROTL32((x),  4) ^ SPH_ROTL32((x), 19))
 #define ss1(x)  (shr((x), 1) ^ shl((x), 2) ^ __byte_perm(x,0,0x2103) ^ SPH_ROTL32((x), 23))
