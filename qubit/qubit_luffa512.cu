@@ -781,7 +781,7 @@ __launch_bounds__(256, 4)
 void qubit_luffa512_gpu_hash_80(uint32_t threads, uint32_t startNounce, uint32_t *outputHash)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	if (thread < threads)
+//	if (thread < threads)
 	{
 		int i, j;
 		const uint32_t nounce = startNounce + thread;
@@ -848,7 +848,7 @@ __global__  __launch_bounds__(256,4)
 void qubit_luffa512_gpu_finalhash_80(uint32_t threads, uint32_t startNounce, void *outputHash, uint32_t *resNounce, int thr_id)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	if (thread < threads)
+//	if (thread < threads)
 	{
 		const uint32_t nounce = startNounce + thread;
 		union {

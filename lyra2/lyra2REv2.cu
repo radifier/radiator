@@ -103,7 +103,7 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 	{
 		intensity = 256 * 256 * 8;
 	}
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity);
+	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity) & 0xffffff00;
 
 	if (opt_benchmark)
 		((uint32_t*)ptarget)[7] = 0x004f;

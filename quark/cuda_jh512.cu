@@ -291,7 +291,7 @@ __global__ __launch_bounds__(256, 4)
 void quark_jh512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
 {
     const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-//    if (thread < threads)
+    if (thread < threads)
     {
         const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 		const uint32_t hashPosition = nounce - startNounce;
@@ -350,7 +350,7 @@ __global__ __launch_bounds__(TPB2, 2)
 void quark_jh512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector, uint32_t *const __restrict__ d_found, uint32_t target)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-//	if (thread < threads)
+	if (thread < threads)
 	{
 		const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
 

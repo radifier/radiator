@@ -2076,7 +2076,7 @@ __launch_bounds__(1024)
 void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ d_found, uint64_t target, int thr_id)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	if (thread < threads)
+//	if (thread < threads)
 	{
 		uint2 h0, h1, h2, h3, h4, h5, h6, h7, h8;
 		uint2 t0, t1, t2;
@@ -2342,7 +2342,7 @@ __global__
 void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ d_found, uint64_t target, int thr_id)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	if (thread < threads)
+//	if (thread < threads)
 	{
 		uint2 h0, h1, h2, h3, h4, h5, h6, h7, h8;
 		uint2 t0, t1, t2;

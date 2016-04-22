@@ -1426,7 +1426,7 @@ void x15_whirlpool_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t 
 	}
 
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	if (thread < threads)
+//	if (thread < threads)
 	{
 		const uint32_t nounce =  (startNounce + thread);
 		const uint2 InitVector_RC[10] =

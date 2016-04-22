@@ -557,7 +557,7 @@ void blake256_gpu_hash_16(const uint32_t threads, const uint32_t startNonce, uin
 	const uint64_t highTarget, const int rounds, const bool trace)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	if (thread < threads)
+//	if (thread < threads)
 	{
 		const uint32_t nonce = startNonce + thread;
 		uint32_t _ALIGN(16) h[8];
@@ -607,7 +607,7 @@ void blake256_gpu_hash_16_8(const uint32_t threads, const uint32_t startNonce, u
 const uint64_t highTarget, const int rounds, const bool trace)
 {
 	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	if (thread < threads)
+//	if (thread < threads)
 	{
 		const uint32_t nonce = startNonce + thread;
 		uint32_t _ALIGN(16) h[8];

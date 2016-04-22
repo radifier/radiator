@@ -154,7 +154,7 @@ __global__ __launch_bounds__(256,3)
 void x17_sha512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	if (thread < threads)
+//	if (thread < threads)
 	{
 		const uint32_t nounce = (startNounce + thread);
 		const uint32_t hashPosition = nounce - startNounce;

@@ -133,7 +133,7 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 	uint32_t intensity = 1 << 22;
 	intensity = intensity + ((1 << 22)*9/10);
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity); // 256*4096
-	throughput = min(throughput, max_nonce - first_nonce) & 0xfffffc00;
+	throughput = min(throughput, max_nonce - first_nonce);
 
 	if (opt_benchmark)
 		ptarget[7] = 0x0000003f;

@@ -23,7 +23,7 @@ void groestlcoin_gpu_hash_quad(uint32_t threads, uint32_t startNounce, uint32_t 
 {
     // durch 4 dividieren, weil jeweils 4 Threads zusammen ein Hash berechnen
     uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x) >> 2;
-    if (thread < threads)
+//    if (thread < threads)
     {
         // GROESTL
 		uint32_t paddedInput[8] = { 0 };

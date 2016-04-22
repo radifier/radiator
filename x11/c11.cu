@@ -138,7 +138,7 @@ int scanhash_c11(int thr_id, uint32_t *pdata,
 	int intensity = (device_sm[device_map[thr_id]] > 500) ? 256 * 256 * 21 : 256 * 256 * 10;
 	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
 
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity);
+	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity) & 0xfffffc00;
 
 	if(opt_benchmark)
 		ptarget[7] = 0x4f;

@@ -56,7 +56,7 @@ void quark_blake512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t
 #if USE_SHUFFLE
 	if (warpBlockID < ( (threads+15)>>4 ))
 #else
-//	if (thread < threads)
+	if (thread < threads)
 #endif
 	{
 		const uint32_t nounce = (g_nonceVector != NULL) ? g_nonceVector[thread] : (startNounce + thread);
