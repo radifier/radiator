@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <memory.h>
+#include "cuda_helper.h"
 #include "cuda_vector.h" 
 
 #define vectype uintx64bis
@@ -11,22 +12,28 @@
 #define __LDG_PTR   "r"
 #endif
 
+#ifdef _MSC_VER
+#define THREAD __declspec(thread)
+#else
+#define THREAD __thread
+#endif
+
+static THREAD cudaStream_t stream[2];
+
 __device__ __align__(16) vectypeS *  W;
 __device__  __align__(16) vectypeS * W2;
 
-__device__  vectypeS* Tr;
-__device__  vectypeS* Tr2;
+__device__ vectypeS* Tr;
+__device__ vectypeS* Tr2;
 __device__ vectypeS* Input;
 __device__ vectypeS* B2;
 
-//vectypeS *d_output;
 static uint32_t *d_NNonce[MAX_GPUS];
-uint32_t *d_nnounce[MAX_GPUS];
+
 __constant__  uint32_t pTarget[8];
 __constant__  uint32_t key_init[16];
 __constant__  uint32_t input_init[16];
-__constant__  uint32_t  c_data[80];
-//__constant__  uint8_t  c_data2[320];
+__constant__  uint32_t c_data[80];
 
 #define SALSA_SMALL_UNROLL 1
 #define CHACHA_SMALL_UNROLL 1
@@ -79,22 +86,6 @@ __constant__ uint32_t BLAKE2S_SIGMA[10][16] =
 	{10, 2, 8, 4, 7, 6, 1, 5, 15, 11, 9, 14, 3, 12, 13, 0},
 };
 
-/*
-__constant__ uint2 BLAKE2S_SIGMA2[80] =
-{
-0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ,
-14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3 ,
-11, 8, 12, 0, 5, 2, 15, 13, 10, 14, 3, 6, 7, 1, 9, 4 ,
-7, 9, 3, 1, 13, 12, 11, 14, 2, 6, 5, 10, 4, 0, 15, 8 ,
-9, 0, 5, 7, 2, 4, 10, 15, 14, 1, 11, 12, 6, 8, 3, 13 ,
-2, 12, 6, 10, 0, 11, 8, 3, 4, 13, 7, 5, 15, 14, 1, 9 ,
-12, 5, 1, 15, 14, 13, 4, 10, 0, 7, 6, 3, 9, 2, 8, 11 ,
-13, 11, 7, 14, 12, 1, 3, 9, 5, 0, 15, 4, 8, 6, 2, 10 ,
-6, 15, 14, 9, 11, 3, 0, 8, 12, 2, 13, 7, 1, 4, 10, 5 ,
-10, 2, 8, 4, 7, 6, 1, 5, 15, 11, 9, 14, 3, 12, 13, 0 ,
-};
-*/
-
 #define SALSA(a,b,c,d) { \
     t =a+d; t=rotate(t,  7);b^=t;    \
     t =b+a; t=rotate(t,  9);c^=t;    \
@@ -128,7 +119,7 @@ static __forceinline__ __device__ void shift256R4(uint32_t * ret, const uint8 &v
 	asm("shr.b32         %0, %1, %2;"     : "=r"(ret[8]) : "r"(vec4.s7), "r"(shift));
 }
 
-static __device__ __inline__ void chacha_step(uint32_t &a, uint32_t &b, uint32_t &c, uint32_t &d)
+/*static __device__ __inline__ void chacha_step(uint32_t &a, uint32_t &b, uint32_t &c, uint32_t &d)
 {
 	asm("{\n\t"
 			"add.u32 %0,%0,%1; \n\t"
@@ -145,6 +136,7 @@ static __device__ __inline__ void chacha_step(uint32_t &a, uint32_t &b, uint32_t
 			"shf.l.wrap.b32 %1, %1, %1, 7; \n\t}"
 			: "+r"(a), "+r"(b), "+r"(c), "+r"(d));
 }
+*/
 #if __CUDA_ARCH__ >=500  
 
 #define CHACHA_STEP(a,b,c,d) { \
@@ -166,26 +158,26 @@ c += d; b = rotate(b^c, 7); \
 
 #define CHACHA_CORE_PARALLEL(state)	 { \
  \
-    CHACHA_STEP(state.lo.s0, state.lo.s4, state.hi.s0, state.hi.s4); \
-    CHACHA_STEP(state.lo.s1, state.lo.s5, state.hi.s1, state.hi.s5); \
-    CHACHA_STEP(state.lo.s2, state.lo.s6, state.hi.s2, state.hi.s6); \
+	CHACHA_STEP(state.lo.s0, state.lo.s4, state.hi.s0, state.hi.s4); \
+	CHACHA_STEP(state.lo.s1, state.lo.s5, state.hi.s1, state.hi.s5); \
+	CHACHA_STEP(state.lo.s2, state.lo.s6, state.hi.s2, state.hi.s6); \
 	CHACHA_STEP(state.lo.s3, state.lo.s7, state.hi.s3, state.hi.s7); \
 	CHACHA_STEP(state.lo.s0, state.lo.s5, state.hi.s2, state.hi.s7); \
-    CHACHA_STEP(state.lo.s1, state.lo.s6, state.hi.s3, state.hi.s4); \
-    CHACHA_STEP(state.lo.s2, state.lo.s7, state.hi.s0, state.hi.s5); \
+	CHACHA_STEP(state.lo.s1, state.lo.s6, state.hi.s3, state.hi.s4); \
+	CHACHA_STEP(state.lo.s2, state.lo.s7, state.hi.s0, state.hi.s5); \
 	CHACHA_STEP(state.lo.s3, state.lo.s4, state.hi.s1, state.hi.s6); \
 \
 	}
 
 #define CHACHA_CORE_PARALLEL2(i0,state)	 { \
  \
-    CHACHA_STEP(state[2*i0].x.x, state[2*i0].z.x, state[2*i0+1].x.x, state[2*i0+1].z.x); \
-    CHACHA_STEP(state[2*i0].x.y, state[2*i0].z.y, state[2*i0+1].x.y, state[2*i0+1].z.y); \
-    CHACHA_STEP(state[2*i0].y.x, state[2*i0].w.x, state[2*i0+1].y.x, state[2*i0+1].w.x); \
+  CHACHA_STEP(state[2*i0].x.x, state[2*i0].z.x, state[2*i0+1].x.x, state[2*i0+1].z.x); \
+  CHACHA_STEP(state[2*i0].x.y, state[2*i0].z.y, state[2*i0+1].x.y, state[2*i0+1].z.y); \
+  CHACHA_STEP(state[2*i0].y.x, state[2*i0].w.x, state[2*i0+1].y.x, state[2*i0+1].w.x); \
 	CHACHA_STEP(state[2*i0].y.y, state[2*i0].w.y, state[2*i0+1].y.y, state[2*i0+1].w.y); \
 	CHACHA_STEP(state[2*i0].x.x, state[2*i0].z.y, state[2*i0+1].y.x, state[2*i0+1].w.y); \
-    CHACHA_STEP(state[2*i0].x.y, state[2*i0].w.x, state[2*i0+1].y.y, state[2*i0+1].z.x); \
-    CHACHA_STEP(state[2*i0].y.x, state[2*i0].w.y, state[2*i0+1].x.x, state[2*i0+1].z.y); \
+  CHACHA_STEP(state[2*i0].x.y, state[2*i0].w.x, state[2*i0+1].y.y, state[2*i0+1].z.x); \
+  CHACHA_STEP(state[2*i0].y.x, state[2*i0].w.y, state[2*i0+1].x.x, state[2*i0+1].z.y); \
 	CHACHA_STEP(state[2*i0].y.y, state[2*i0].z.x, state[2*i0+1].x.y, state[2*i0+1].w.x); \
 \
 	}
@@ -205,13 +197,13 @@ idx = BLAKE2S_SIGMA[idx0][idx1+1]; a += key[idx]; \
 	} 
 #else 
 #define BLAKE_G(idx0, idx1, a, b, c, d, key) { \
-idx = BLAKE2S_SIGMA[idx0][idx1]; a += key[idx]; \
-    a += b; d = rotate(d^a,16); \
+	idx = BLAKE2S_SIGMA[idx0][idx1]; a += key[idx]; \
+	a += b; d = rotate(d^a,16); \
 	c += d; b = rotateR(b^c, 12); \
-idx = BLAKE2S_SIGMA[idx0][idx1+1]; a += key[idx]; \
-    a += b; d = rotateR(d^a,8); \
+	idx = BLAKE2S_SIGMA[idx0][idx1+1]; a += key[idx]; \
+  a += b; d = rotateR(d^a,8); \
 	c += d; b = rotateR(b^c, 7); \
-		} 
+	} 
 #endif
 
 #if __CUDA_ARCH__ >= 500
@@ -265,63 +257,62 @@ idx = BLAKE2S_SIGMA[idx0][idx1+1]; a += key[idx]; \
 #else 
 #define BLAKE(a, b, c, d, key1,key2) { \
   \
-    a += key1; \
-    a += b; d = rotate(d^a,16); \
+  a += key1; \
+  a += b; d = rotate(d^a,16); \
 	c += d; b = rotateR(b^c, 12); \
-    a += key2; \
-    a += b; d = rotateR(d^a,8); \
+  a += key2; \
+  a += b; d = rotateR(d^a,8); \
 	c += d; b = rotateR(b^c, 7); \
 	} 
 
 #define BLAKE_G_PRE(idx0, idx1, a, b, c, d, key) { \
-    a += key[idx0]; \
-    a += b; d = rotate(d^a,16); \
+  a += key[idx0]; \
+  a += b; d = rotate(d^a,16); \
 	c += d; b = rotateR(b^c, 12); \
-    a += key[idx1]; \
-    a += b; d = rotateR(d^a,8); \
+  a += key[idx1]; \
+  a += b; d = rotateR(d^a,8); \
 	c += d; b = rotateR(b^c, 7); \
-				} 
+	} 
 
 #define BLAKE_G_PRE0(idx0, idx1, a, b, c, d, key) { \
      \
-    a += b; d = rotate(d^a,16); \
+  a += b; d = rotate(d^a,16); \
 	c += d; b = rotateR(b^c, 12); \
     \
-    a += b; d = rotateR(d^a,8); \
+  a += b; d = rotateR(d^a,8); \
 	c += d; b = rotateR(b^c, 7); \
-								} 
+	} 
 
 #define BLAKE_G_PRE1(idx0, idx1, a, b, c, d, key) { \
-    a += key[idx0]; \
-    a += b; d = rotate(d^a,16); \
+  a += key[idx0]; \
+  a += b; d = rotate(d^a,16); \
 	c += d; b = rotateR(b^c, 12); \
-    a += b; d = rotateR(d^a,8); \
+  a += b; d = rotateR(d^a,8); \
 	c += d; b = rotateR(b^c, 7); \
-								} 
+	} 
 
 #define BLAKE_G_PRE2(idx0, idx1, a, b, c, d, key) { \
      \
-    a += b; d = rotate(d^a,16); \
+  a += b; d = rotate(d^a,16); \
 	c += d; b = rotateR(b^c, 12); \
-    a += key[idx1]; \
-    a += b; d = rotateR(d^a,8); \
+  a += key[idx1]; \
+  a += b; d = rotateR(d^a,8); \
 	c += d; b = rotateR(b^c, 7); \
-								} 
+	} 
 #endif
 
 #define BLAKE_Ghost(idx0, idx1, a, b, c, d, key) { \
-idx = BLAKE2S_SIGMA_host[idx0][idx1]; a += key[idx]; \
-    a += b; d = ROTR32(d^a,16); \
+	idx = BLAKE2S_SIGMA_host[idx0][idx1]; a += key[idx]; \
+  a += b; d = ROTR32(d^a,16); \
 	c += d; b = ROTR32(b^c, 12); \
-idx = BLAKE2S_SIGMA_host[idx0][idx1+1]; a += key[idx]; \
-    a += b; d = ROTR32(d^a,8); \
+	idx = BLAKE2S_SIGMA_host[idx0][idx1+1]; a += key[idx]; \
+  a += b; d = ROTR32(d^a,8); \
 	c += d; b = ROTR32(b^c, 7); \
 } 
 
 static __forceinline__ __device__ void Blake2S(uint32_t *out, const uint32_t* __restrict__  inout, const  uint32_t * __restrict__ TheKey)
 {
 	uint16 V;
-	uint32_t tmpidx;
 	uint32_t idx;
 	uint8 tmpblock;
 
@@ -514,11 +505,7 @@ static __forceinline__ __device__ void Blake2S(uint32_t *out, const uint32_t* __
 static __forceinline__ __device__ void Blake2S_v2(uint32_t *out, const uint32_t* __restrict__  inout, const  uint32_t * __restrict__ TheKey)
 {
 	uint16 V;
-	uint32_t tmpidx;
-	uint2 idx;
 	uint8 tmpblock;
-	//	uint16 inout[1];
-	//	inout[0] = ((uint16*)inoutE)[0];
 
 	V.hi = BLAKE2S_IV_Vec;
 	V.lo = BLAKE2S_IV_Vec;
@@ -1155,7 +1142,6 @@ static __forceinline__ __device__ void fastkdf32_v1(int thread, const  uint32_t 
 	qbuf = bufidx / 4;
 	rbuf = bufidx & 3;
 	bitbuf = rbuf << 3;
-	uint32_t shifted[9];
 
 	for(int k = 7; k < 9; k++)
 	{
@@ -1168,7 +1154,7 @@ static __forceinline__ __device__ void fastkdf32_v1(int thread, const  uint32_t 
 
 static __forceinline__ __device__ void fastkdf32_v3(int thread, const  uint32_t  nonce, const uint32_t * __restrict__ salt, const uint32_t * __restrict__  s_data, uint32_t &output)
 {
-	uint32_t temp[9], crap1, crap2, crap3;
+	uint32_t temp[9];
 	uint8_t bufidx = 0;
 	uchar4 bufhelper;
 
@@ -1272,7 +1258,7 @@ static __forceinline__ __device__ void fastkdf32_v3(int thread, const  uint32_t 
 
 #define SHIFT 128
 #define TPB 128
-#define TPB2 128
+#define TPB2 64
 
 __global__ __launch_bounds__(TPB2, 1) void neoscrypt_gpu_hash_start(int stratum, int threads, uint32_t startNonce)
 {
@@ -1420,19 +1406,24 @@ __global__ __launch_bounds__(TPB2, 1) void neoscrypt_gpu_hash_ending(int stratum
 
 void neoscrypt_cpu_init_2stream(int thr_id, int threads, uint32_t *hash, uint32_t *hash2, uint32_t *Trans1, uint32_t *Trans2, uint32_t *Trans3, uint32_t *Bhash)
 {
-	cudaMemcpyToSymbol(B2, &Bhash, sizeof(Bhash), 0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(W, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(W2, &hash2, sizeof(hash2), 0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(Tr, &Trans1, sizeof(Trans1), 0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(Tr2, &Trans2, sizeof(Trans2), 0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(Input, &Trans3, sizeof(Trans3), 0, cudaMemcpyHostToDevice);
+	cudaStreamCreate(&stream[0]);
+	cudaStreamCreate(&stream[1]);
 
 	cudaMalloc(&d_NNonce[thr_id], 2 * sizeof(uint32_t));
+
+	cudaMemcpyToSymbolAsync(B2, &Bhash, sizeof(Bhash), 0, cudaMemcpyHostToDevice, stream[0]);
+	cudaMemcpyToSymbolAsync(W, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice, stream[0]);
+	cudaMemcpyToSymbolAsync(W2, &hash2, sizeof(hash2), 0, cudaMemcpyHostToDevice, stream[0]);
+	cudaMemcpyToSymbolAsync(Tr, &Trans1, sizeof(Trans1), 0, cudaMemcpyHostToDevice, stream[0]);
+	cudaMemcpyToSymbolAsync(Tr2, &Trans2, sizeof(Trans2), 0, cudaMemcpyHostToDevice, stream[0]);
+	cudaMemcpyToSymbolAsync(Input, &Trans3, sizeof(Trans3), 0, cudaMemcpyHostToDevice, stream[0]);
+
+	CUDA_SAFE_CALL(cudaGetLastError());
 }
 
 __host__ void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, int threads, uint32_t startNounce, uint32_t *result)
 {
-	cudaMemset(d_NNonce[thr_id], 0xff, 2 * sizeof(uint32_t));
+	cudaMemsetAsync(d_NNonce[thr_id], 0xff, 2 * sizeof(uint32_t), stream[0]);
 	
 	const int threadsperblock = TPB;
 	
@@ -1443,39 +1434,39 @@ __host__ void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, int thread
 	dim3 grid2((threads + threadsperblock2 - 1) / threadsperblock2);
 	dim3 block2(threadsperblock2);
 	
-	cudaStream_t stream[2];
-	cudaStreamCreate(&stream[0]);
-	cudaStreamCreate(&stream[1]);
-
 	neoscrypt_gpu_hash_start << <grid2, block2, 0, stream[0] >> >(stratum, threads, startNounce); //fastkdf
 
 	cudaDeviceSynchronize();
 
+	neoscrypt_gpu_hash_salsa1_stream1 << <grid, block, 0, stream[0] >> >(threads, startNounce); //chacha
 	neoscrypt_gpu_hash_chacha1_stream1 << <grid, block, 0, stream[1] >> >(threads, startNounce); //salsa
+
+	neoscrypt_gpu_hash_salsa2_stream1 << <grid, block, 0, stream[0] >> >(threads, startNounce); //chacha
 	neoscrypt_gpu_hash_chacha2_stream1 << <grid, block, 0, stream[1] >> >(threads, startNounce); //salsa
 
-	neoscrypt_gpu_hash_salsa1_stream1 << <grid, block, 0, stream[0] >> >(threads, startNounce); //chacha
-	neoscrypt_gpu_hash_salsa2_stream1 << <grid, block, 0, stream[0] >> >(threads, startNounce); //chacha
+	cudaDeviceSynchronize();
 
-	//	cudaDeviceSynchronize();
-	cudaStreamDestroy(stream[1]); //will do the synchronization
-	neoscrypt_gpu_hash_ending << <grid2, block2, 0, stream[0] >> >(stratum, threads, startNounce, d_NNonce[thr_id]); //fastkdf+end
+	neoscrypt_gpu_hash_ending << <grid2, block2 >> >(stratum, threads, startNounce, d_NNonce[thr_id]); //fastkdf+end
 
 	cudaMemcpy(result, d_NNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost);
 
-	cudaStreamDestroy(stream[0]);
+	CUDA_SAFE_CALL(cudaGetLastError());
 }
 
 __host__ void neoscrypt_setBlockTarget(uint32_t* pdata, const void *target)
 {
-	unsigned int PaddedMessage[80]; //brings balance to the force
+	uint32_t PaddedMessage[80]; //brings balance to the force
 	uint32_t input[16], key[16] = {0};
 
-	for(int i = 0; i<20; i++) PaddedMessage[i] = pdata[i];
-	for(int i = 0; i<20; i++) PaddedMessage[i + 20] = pdata[i];
-	for(int i = 0; i<20; i++) PaddedMessage[i + 40] = pdata[i];
+	for(int i = 0; i < 20; i++)
+	{
+		PaddedMessage[i     ] = pdata[i];
+		PaddedMessage[i + 20] = pdata[i];
+		PaddedMessage[i + 40] = pdata[i];
+	}
 	for(int i = 0; i<4; i++)  PaddedMessage[i + 60] = pdata[i];
 	for(int i = 0; i<16; i++) PaddedMessage[i + 64] = pdata[i];
+
 	PaddedMessage[19] = 0;
 	PaddedMessage[39] = 0;
 	PaddedMessage[59] = 0;
@@ -1489,5 +1480,6 @@ __host__ void neoscrypt_setBlockTarget(uint32_t* pdata, const void *target)
 	cudaMemcpyToSymbol(input_init, input, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
 	cudaMemcpyToSymbol(key_init, key, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
 
-	cudaMemcpyToSymbol(c_data, PaddedMessage, 40 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbol(c_data, PaddedMessage, 80 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
+	CUDA_SAFE_CALL(cudaGetLastError());
 }

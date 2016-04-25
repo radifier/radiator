@@ -48,7 +48,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			mining_has_stopped[thr_id] = true;
 			proper_exit(2);
 		}
-		unsigned int intensity;
+		unsigned int intensity = (256 * 64 * 1); // -i 14
 		if(strstr(props.name, "970"))
 		{
 			intensity = (256 * 64 * 5);
@@ -63,19 +63,19 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		}
 		else if(strstr(props.name, "750 Ti"))
 		{
-			intensity = 2 << 14;
+			intensity = (256 * 64 * 3);
 		}
 		else if(strstr(props.name, "750"))
 		{
-			intensity = 2 << 13;
+			intensity = (256 * 64 * 1);
 		}
 		else if(strstr(props.name, "960"))
 		{
-			intensity = 2 << 14;
+			intensity = (256 * 64 * 2);
 		}
 		else if(strstr(props.name, "950"))
 		{
-			intensity = 2 << 14;
+			intensity = (256 * 64 * 2);
 		}
 
 		throughput = device_intensity(device_map[thr_id], __func__, intensity) / 2;
@@ -128,8 +128,9 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			{
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				int res = 1;
-//				if(opt_benchmark)
+				if(opt_benchmark)
 					applog(LOG_INFO, "GPU #%d Found nonce %08x", device_map[thr_id], foundNonce[0]);
+				pdata[19] = foundNonce[0];
 				if(foundNonce[1] != 0xffffffff)
 				{
 					if(opt_verify)
@@ -148,7 +149,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 					{
 						pdata[21] = foundNonce[1];
 						res++;
-//						if(opt_benchmark)
+						if(opt_benchmark)
 							applog(LOG_INFO, "GPU #%d: Found second nonce %08x", device_map[thr_id], foundNonce[1]);
 					}
 					else
@@ -161,7 +162,6 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 					}
 
 				}
-				pdata[19] = foundNonce[0];
 				return res;
 			}
 			else
