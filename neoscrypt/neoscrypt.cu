@@ -7,9 +7,9 @@ extern "C"
 #include "miner.h"
 #include <string.h>
 
-extern void neoscrypt_setBlockTarget(int thr_id, uint32_t * data, const void *ptarget);
-extern void neoscrypt_cpu_init(int thr_id, uint32_t* hash);
-extern void neoscrypt_cpu_hash_k4(int stratum, int thr_id, int threads, uint32_t startNounce, int threadsperblock, uint32_t* foundnonce);
+extern void neoscrypt_setBlockTarget(uint32_t* pdata, const void *target);
+extern void neoscrypt_cpu_init_2stream(int thr_id, int threads, uint32_t *hash, uint32_t *hash2, uint32_t *Trans1, uint32_t *Trans2, uint32_t *Trans3, uint32_t *Bhash);
+extern void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, int threads, uint32_t startNounce, uint32_t *result);
 //extern void neoscrypt_cpu_hash_k4_52(int stratum, int thr_id, int threads, uint32_t startNounce, int order, uint32_t* foundnonce);
 
 int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
@@ -20,7 +20,12 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 	static THREAD uint32_t throughput;
 
 	static THREAD volatile bool init = false;
-	static THREAD uint32_t *d_hash = nullptr;
+	static uint32_t *d_hash1[MAX_GPUS];
+	static uint32_t *d_hash2[MAX_GPUS]; // 2 streams
+	static uint32_t *t_hash1[MAX_GPUS];
+	static uint32_t *t_hash2[MAX_GPUS]; // 2 streams
+	static uint32_t *test[MAX_GPUS]; // 2 streams
+	static uint32_t *b_hash[MAX_GPUS];
 	static THREAD uint32_t hw_errors = 0;
 	static THREAD uint32_t *foundNonce = nullptr;
 	
@@ -44,22 +49,51 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			proper_exit(2);
 		}
 		unsigned int intensity;
-		if(strstr(props.name, "970"))    intensity = (256 * 64 * 4);
-		else if(strstr(props.name, "980"))    intensity = (256 * 64 * 4);
-		else if(strstr(props.name, "750 Ti")) intensity = (256 * 32 * 6);
-		else if(strstr(props.name, "750"))    intensity = (256 * 32 * 7 / 2);
-		else if(strstr(props.name, "960"))    intensity = (256 * 32 * 7);
-		else intensity = (256 * 64 * 3);
-		
-		throughput = device_intensity(device_map[thr_id], __func__, intensity);
-		throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
+		if(strstr(props.name, "970"))
+		{
+			intensity = (256 * 64 * 5);
+		}
+		else if(strstr(props.name, "980"))
+		{
+			intensity = (256 * 64 * 5);
+		}
+		else if(strstr(props.name, "980 Ti"))
+		{
+			intensity = (256 * 64 * 5);
+		}
+		else if(strstr(props.name, "750 Ti"))
+		{
+			intensity = 2 << 14;
+		}
+		else if(strstr(props.name, "750"))
+		{
+			intensity = 2 << 13;
+		}
+		else if(strstr(props.name, "960"))
+		{
+			intensity = 2 << 14;
+		}
+		else if(strstr(props.name, "950"))
+		{
+			intensity = 2 << 14;
+		}
+
+		throughput = device_intensity(device_map[thr_id], __func__, intensity) / 2;
+		throughput = min(throughput, (max_nonce - first_nonce)) & 0xffffff00;
 
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		//		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);	
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * 4));
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 32 * 130 * sizeof(uint64_t) * throughput));
-		neoscrypt_cpu_init(thr_id, d_hash);
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash1[thr_id], 32 * 128 * sizeof(uint64_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash2[thr_id], 32 * 128 * sizeof(uint64_t) * throughput));
+
+		CUDA_SAFE_CALL(cudaMalloc(&t_hash1[thr_id], 32 * sizeof(uint64_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&t_hash2[thr_id], 32 * sizeof(uint64_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&test[thr_id], 32 * sizeof(uint64_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&b_hash[thr_id], 128 * sizeof(uint32_t) * throughput));
+
+		neoscrypt_cpu_init_2stream(thr_id, throughput, d_hash1[thr_id], d_hash2[thr_id], t_hash1[thr_id], t_hash2[thr_id], test[thr_id], b_hash[thr_id]);
 		init = true;
 	}
 
@@ -70,11 +104,11 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			be32enc(&endiandata[k], ((uint32_t*)pdata)[k]);
 		else endiandata[k] = pdata[k];
 	}
-	neoscrypt_setBlockTarget(thr_id, endiandata, ptarget);
+	neoscrypt_setBlockTarget(endiandata, ptarget);
 
 	do
 	{
-		neoscrypt_cpu_hash_k4(stratum, thr_id, throughput, pdata[19], (device_sm[device_map[thr_id]] > 500 ? 128 : 32), foundNonce);
+		neoscrypt_cpu_hash_k4_2stream(stratum, thr_id, throughput, pdata[19], foundNonce);
 		if(stop_mining)
 		{
 			mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);
@@ -94,7 +128,8 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			{
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				int res = 1;
-				if(opt_benchmark) applog(LOG_INFO, "GPU #%d Found nounce %08x", thr_id, foundNonce[0]);
+//				if(opt_benchmark)
+					applog(LOG_INFO, "GPU #%d Found nonce %08x", device_map[thr_id], foundNonce[0]);
 				if(foundNonce[1] != 0xffffffff)
 				{
 					if(opt_verify)
@@ -113,31 +148,31 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 					{
 						pdata[21] = foundNonce[1];
 						res++;
-						if(opt_benchmark)
-							applog(LOG_INFO, "GPU #%d: Found second nounce %08x", device_map[thr_id], foundNonce[1]);
+//						if(opt_benchmark)
+							applog(LOG_INFO, "GPU #%d: Found second nonce %08x", device_map[thr_id], foundNonce[1]);
 					}
 					else
 					{
 						if(vhash64[7] != ptarget[7])
 						{
-							applog(LOG_WARNING, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], foundNonce[1]);
+							applog(LOG_WARNING, "GPU #%d: Second nonce $%08X does not validate on CPU!", device_map[thr_id], foundNonce[1]);
 							hw_errors++;
 						}
 					}
 
 				}
 				pdata[19] = foundNonce[0];
-				if(opt_benchmark)
-					applog(LOG_INFO, "GPU #%d: Found nounce %08x", device_map[thr_id], foundNonce[0]);
 				return res;
 			}
 			else
 			{
 				if(vhash64[7] != ptarget[7])
-					applog(LOG_WARNING, "GPU #%d: result for nonce $%08X does not validate on CPU!", device_map[thr_id], foundNonce[0]);
-				hw_errors++;
+				{
+					applog(LOG_WARNING, "GPU #%d: Nonce $%08X does not validate on CPU!", device_map[thr_id], foundNonce[0]);
+					hw_errors++;
+				}
 			}
-			//			if(hw_errors > 0) applog(LOG_WARNING, "Hardware errors: %u", hw_errors);
+//						if(hw_errors > 0) applog(LOG_WARNING, "Hardware errors: %u", hw_errors);
 		}
 		pdata[19] += throughput;
 	} while(!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
