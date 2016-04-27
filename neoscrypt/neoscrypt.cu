@@ -8,7 +8,7 @@ extern "C"
 #include <string.h>
 
 extern void neoscrypt_setBlockTarget(uint32_t* pdata, const void *target);
-extern void neoscrypt_cpu_init_2stream(int thr_id, int threads, uint32_t *hash, uint32_t *hash2, uint32_t *Trans1, uint32_t *Trans2, uint32_t *Trans3, uint32_t *Bhash);
+extern void neoscrypt_cpu_init_2stream(int thr_id, int threads);
 extern void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, int threads, uint32_t startNounce, uint32_t *result);
 //extern void neoscrypt_cpu_hash_k4_52(int stratum, int thr_id, int threads, uint32_t startNounce, int order, uint32_t* foundnonce);
 
@@ -20,12 +20,6 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 	static THREAD uint32_t throughput;
 
 	static THREAD volatile bool init = false;
-	static uint32_t *d_hash1[MAX_GPUS];
-	static uint32_t *d_hash2[MAX_GPUS]; // 2 streams
-	static uint32_t *t_hash1[MAX_GPUS];
-	static uint32_t *t_hash2[MAX_GPUS]; // 2 streams
-	static uint32_t *test[MAX_GPUS]; // 2 streams
-	static uint32_t *b_hash[MAX_GPUS];
 	static THREAD uint32_t hw_errors = 0;
 	static THREAD uint32_t *foundNonce = nullptr;
 	
@@ -85,15 +79,8 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		//		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);	
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * 4));
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash1[thr_id], 32 * 128 * sizeof(uint64_t) * throughput));
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash2[thr_id], 32 * 128 * sizeof(uint64_t) * throughput));
 
-		CUDA_SAFE_CALL(cudaMalloc(&t_hash1[thr_id], 32 * sizeof(uint64_t) * throughput));
-		CUDA_SAFE_CALL(cudaMalloc(&t_hash2[thr_id], 32 * sizeof(uint64_t) * throughput));
-		CUDA_SAFE_CALL(cudaMalloc(&test[thr_id], 32 * sizeof(uint64_t) * throughput));
-		CUDA_SAFE_CALL(cudaMalloc(&b_hash[thr_id], 128 * sizeof(uint32_t) * throughput));
-
-		neoscrypt_cpu_init_2stream(thr_id, throughput, d_hash1[thr_id], d_hash2[thr_id], t_hash1[thr_id], t_hash2[thr_id], test[thr_id], b_hash[thr_id]);
+		neoscrypt_cpu_init_2stream(thr_id, throughput);
 		init = true;
 	}
 

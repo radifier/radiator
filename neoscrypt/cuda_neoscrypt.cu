@@ -22,15 +22,14 @@
 
 static THREAD cudaStream_t stream[2];
 
-__device__ __align__(16) vectypeS *  W;
+__device__  __align__(16) vectypeS *  W;
 __device__  __align__(16) vectypeS * W2;
+__device__  __align__(16) vectypeS* Tr;
+__device__  __align__(16) vectypeS* Tr2;
+__device__  __align__(16) vectypeS* Input;
+__device__  __align__(16) vectypeS* B2;
 
-__device__ vectypeS* Tr;
-__device__ vectypeS* Tr2;
-__device__ vectypeS* Input;
-__device__ vectypeS* B2;
-
-static uint32_t *d_NNonce[MAX_GPUS];
+static uint32_t *d_NNonce[MAX_GPUS]; 
 
 __constant__  uint32_t pTarget[8];
 __constant__  uint32_t key_init[16];
@@ -1419,21 +1418,32 @@ __global__ __launch_bounds__(TPB2, 8) void neoscrypt_gpu_hash_ending(int stratum
 	}
 }
 
-void neoscrypt_cpu_init_2stream(int thr_id, int threads, uint32_t *hash, uint32_t *hash2, uint32_t *Trans1, uint32_t *Trans2, uint32_t *Trans3, uint32_t *Bhash)
+void neoscrypt_cpu_init_2stream(int thr_id, int threads)
 {
-	cudaStreamCreate(&stream[0]);
-	cudaStreamCreate(&stream[1]);
+	uint32_t *hash1;
+	uint32_t *hash2; // 2 streams
+	uint32_t *Trans1;
+	uint32_t *Trans2; // 2 streams
+	uint32_t *Trans3; // 2 streams
+	uint32_t *Bhash;
 
-	cudaMalloc(&d_NNonce[thr_id], 2 * sizeof(uint32_t));
+	CUDA_SAFE_CALL(cudaStreamCreate(&stream[0]));
+	CUDA_SAFE_CALL(cudaStreamCreate(&stream[1]));
 
-	cudaMemcpyToSymbolAsync(B2, &Bhash, sizeof(Bhash), 0, cudaMemcpyHostToDevice, stream[0]);
-	cudaMemcpyToSymbolAsync(W, &hash, sizeof(hash), 0, cudaMemcpyHostToDevice, stream[0]);
-	cudaMemcpyToSymbolAsync(W2, &hash2, sizeof(hash2), 0, cudaMemcpyHostToDevice, stream[0]);
-	cudaMemcpyToSymbolAsync(Tr, &Trans1, sizeof(Trans1), 0, cudaMemcpyHostToDevice, stream[0]);
-	cudaMemcpyToSymbolAsync(Tr2, &Trans2, sizeof(Trans2), 0, cudaMemcpyHostToDevice, stream[0]);
-	cudaMemcpyToSymbolAsync(Input, &Trans3, sizeof(Trans3), 0, cudaMemcpyHostToDevice, stream[0]);
+	CUDA_SAFE_CALL(cudaMalloc(&d_NNonce[thr_id], 2 * sizeof(uint32_t)));
+	CUDA_SAFE_CALL(cudaMalloc(&hash1, 32 * 128 * sizeof(uint64_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&hash2, 32 * 128 * sizeof(uint64_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&Trans1, 32 * sizeof(uint64_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&Trans2, 32 * sizeof(uint64_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&Trans3, 32 * sizeof(uint64_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&Bhash, 128 * sizeof(uint32_t) * threads));
 
-	CUDA_SAFE_CALL(cudaGetLastError());
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(B2,    &Bhash,  sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(W,     &hash1,  sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(W2,    &hash2,  sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(Tr,    &Trans1, sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(Tr2,   &Trans2, sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(Input, &Trans3, sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
 }
 
 __host__ void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, int threads, uint32_t startNounce, uint32_t *result)
