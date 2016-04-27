@@ -1262,13 +1262,19 @@ __global__ __launch_bounds__(TPB2, 1) void neoscrypt_gpu_hash_start(int stratum,
 {
 	__shared__ uint32_t s_data[64];
 
+#if TPB2<64
+#error TPB2 too low
+#else
+#if TPB2>64
 	if(threadIdx.x<64)
+#endif
+#endif
 		s_data[threadIdx.x] = c_data[threadIdx.x];
 
-	int thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	const int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	const uint32_t nonce = startNonce + thread;
 
-	uint32_t ZNonce = (stratum) ? cuda_swab32(nonce) : nonce; //freaking morons !!!
+	const uint32_t ZNonce = (stratum) ? cuda_swab32(nonce) : nonce; //freaking morons !!!
 
 #if __CUDA_ARCH__ < 500
 	fastkdf256_v1(thread, ZNonce, s_data);
@@ -1374,11 +1380,17 @@ __global__ __launch_bounds__(TPB, 1) void neoscrypt_gpu_hash_salsa2_stream1(int 
 		(Tr2 + shiftTr)[i] = X[i];  // best checked
 }
 
-__global__ __launch_bounds__(TPB2, 1) void neoscrypt_gpu_hash_ending(int stratum, int threads, uint32_t startNonce, uint32_t *nonceVector)
+__global__ __launch_bounds__(TPB2, 8) void neoscrypt_gpu_hash_ending(int stratum, int threads, uint32_t startNonce, uint32_t *nonceVector)
 {
 	__shared__ uint32_t s_data[64];
 
+#if TPB2<64
+#error TPB2 too low
+#else
+#if TPB2>64
 	if(threadIdx.x<64)
+#endif
+#endif
 		s_data[threadIdx.x] = c_data[threadIdx.x];
 	//	__syncthreads();
 	const int thread = (blockDim.x * blockIdx.x + threadIdx.x);
