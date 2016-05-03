@@ -1,5 +1,5 @@
 
-ccMiner release 6.00(KlausT-mod) (August 22th, 2015)
+ccMiner release 6.01(KlausT-mod) (August 22th, 2015)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -200,6 +200,7 @@ features.
 2015-07-06 v5.00: -g option removed, some bug fixes and optimizations
 2015-07-08 v5.01: lyra2 optimization
 2015-08-22 v6.00: remove Lyra2RE, add Lyra2REv2, remove Animecoin, remove yesscrypt
+2016-05-03 v6.01: various bug fixes and optimizations
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
