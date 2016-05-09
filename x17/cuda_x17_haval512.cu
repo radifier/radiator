@@ -43,23 +43,47 @@
 
 #include "cuda_helper.h"
 
+static uint32_t *d_nonce[MAX_GPUS];
 
+#define SPH_ROTL32(x, n)   ROTL32(x, n)
+#define SPH_ROTR32(x, n)   ROTR32(x, n)
 
-#define SPH_ROTL32(x, n)   (((x) << (n)) | ((x) >> (32 - (n))))
-#define SPH_ROTR32(x, n)   SPH_ROTL32(x, (32 - (n)))
+#define F1(x6, x5, x4, x3, x2, x1, x0) \
+	(((x1) & ((x0) ^ (x4))) ^ ((x2) & (x5)) ^ ((x3) & (x6)) ^ (x0))
 
-static __constant__ uint32_t initVector[8];
+#define F2(x6, x5, x4, x3, x2, x1, x0) \
+	(((x2) & (((x1) & ~(x3)) ^ ((x4) & (x5)) ^ (x6) ^ (x0))) \
+	^ ((x4) & ((x1) ^ (x5))) ^ ((x3 & (x5)) ^ (x0)))
 
-static const uint32_t c_initVector[8] = {
-	SPH_C32(0x243F6A88),
-	SPH_C32(0x85A308D3),
-	SPH_C32(0x13198A2E),
-	SPH_C32(0x03707344),
-	SPH_C32(0xA4093822),
-	SPH_C32(0x299F31D0),
-	SPH_C32(0x082EFA98),
-	SPH_C32(0xEC4E6C89)
-};
+#define F3(x6, x5, x4, x3, x2, x1, x0) \
+	(((x3) & (((x1) & (x2)) ^ (x6) ^ (x0))) \
+	^ ((x1) & (x4)) ^ ((x2) & (x5)) ^ (x0))
+
+#define F4(x6, x5, x4, x3, x2, x1, x0) \
+	(((x3) & (((x1) & (x2)) ^ ((x4) | (x6)) ^ (x5))) \
+	^ ((x4) & ((~(x2) & (x5)) ^ (x1) ^ (x6) ^ (x0))) \
+	^ ((x2) & (x6)) ^ (x0))
+
+#define F5(x6, x5, x4, x3, x2, x1, x0) \
+	(((x0) & ~(((x1) & (x2) & (x3)) ^ (x5))) \
+	^ ((x1) & (x4)) ^ ((x2) & (x5)) ^ ((x3) & (x6)))
+
+#define FP5_1(x6, x5, x4, x3, x2, x1, x0) \
+	F1(x3, x4, x1, x0, x5, x2, x6)
+#define FP5_2(x6, x5, x4, x3, x2, x1, x0) \
+	F2(x6, x2, x1, x0, x3, x4, x5)
+#define FP5_3(x6, x5, x4, x3, x2, x1, x0) \
+	F3(x2, x6, x0, x4, x3, x1, x5)
+#define FP5_4(x6, x5, x4, x3, x2, x1, x0) \
+	F4(x1, x5, x3, x2, x0, x4, x6)
+#define FP5_5(x6, x5, x4, x3, x2, x1, x0) \
+	F5(x2, x5, x0, x6, x4, x3, x1)
+
+#define STEP(n, p, x7, x6, x5, x4, x3, x2, x1, x0, w, c) { \
+		uint32_t t = FP ## n ## _ ## p(x6, x5, x4, x3, x2, x1, x0); \
+		(x7) =(SPH_ROTR32(t, 7) + SPH_ROTR32((x7), 11) \
+			+ (w) + (c)); \
+	}
 
 #define PASS1(n, in) { \
 	STEP(n, 1, s7, s6, s5, s4, s3, s2, s1, s0, in[ 0], SPH_C32(0x00000000)); \
@@ -251,146 +275,125 @@ static const uint32_t c_initVector[8] = {
 	STEP(n, 5, s0, s7, s6, s5, s4, s3, s2, s1, in[15], SPH_C32(0x409F60C4)); \
 }
 
-#define F1(x6, x5, x4, x3, x2, x1, x0) \
-	(((x1) & ((x0) ^ (x4))) ^ ((x2) & (x5)) ^ ((x3) & (x6)) ^ (x0))
-
-#define F2(x6, x5, x4, x3, x2, x1, x0) \
-	(((x2) & (((x1) & ~(x3)) ^ ((x4) & (x5)) ^ (x6) ^ (x0))) \
-	^ ((x4) & ((x1) ^ (x5))) ^ ((x3 & (x5)) ^ (x0)))
-
-#define F3(x6, x5, x4, x3, x2, x1, x0) \
-	(((x3) & (((x1) & (x2)) ^ (x6) ^ (x0))) \
-	^ ((x1) & (x4)) ^ ((x2) & (x5)) ^ (x0))
-
-#define F4(x6, x5, x4, x3, x2, x1, x0) \
-	(((x3) & (((x1) & (x2)) ^ ((x4) | (x6)) ^ (x5))) \
-	^ ((x4) & ((~(x2) & (x5)) ^ (x1) ^ (x6) ^ (x0))) \
-	^ ((x2) & (x6)) ^ (x0))
-
-#define F5(x6, x5, x4, x3, x2, x1, x0) \
-	(((x0) & ~(((x1) & (x2) & (x3)) ^ (x5))) \
-	^ ((x1) & (x4)) ^ ((x2) & (x5)) ^ ((x3) & (x6)))
-
-#define FP5_1(x6, x5, x4, x3, x2, x1, x0) \
-	F1(x3, x4, x1, x0, x5, x2, x6)
-#define FP5_2(x6, x5, x4, x3, x2, x1, x0) \
-	F2(x6, x2, x1, x0, x3, x4, x5)
-#define FP5_3(x6, x5, x4, x3, x2, x1, x0) \
-	F3(x2, x6, x0, x4, x3, x1, x5)
-#define FP5_4(x6, x5, x4, x3, x2, x1, x0) \
-	F4(x1, x5, x3, x2, x0, x4, x6)
-#define FP5_5(x6, x5, x4, x3, x2, x1, x0) \
-	F5(x2, x5, x0, x6, x4, x3, x1)
-
-
-#define STEP(n, p, x7, x6, x5, x4, x3, x2, x1, x0, w, c) { \
-		uint32_t t = FP ## n ## _ ## p(x6, x5, x4, x3, x2, x1, x0); \
-		(x7) =(SPH_ROTR32(t, 7) + SPH_ROTR32((x7), 11) \
-			+ (w) + (c)); \
-	}
-
-
 __global__
-void x17_haval256_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash)
+void x17_haval256_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint32_t target, uint32_t *ret)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 //	if (thread < threads)
 	{
-		const uint32_t nounce =  (startNounce + thread);
+		const uint32_t nounce = (startNounce + thread);
 		const uint32_t hashPosition = nounce - startNounce;
 		uint32_t *inpHash = (uint32_t*)&g_hash[8 * hashPosition];
-		union {
-			uint8_t h1[64];
-			uint32_t h4[16];
-			uint64_t h8[8];
-		} hash;
+		uint32_t hash[16];
 
-		uint32_t u0, u1, u2, u3, u4, u5, u6, u7;
-		uint32_t s0,s1,s2,s3,s4,s5,s6,s7;
-		uint32_t buf[32];
+		uint32_t s0, s1, s2, s3, s4, s5, s6, s7;
+		uint32_t buf[32] = {0};
 
-		s0 = initVector[0];
-		s1 = initVector[1];
-		s2 = initVector[2];
-		s3 = initVector[3];
-		s4 = initVector[4];
-		s5 = initVector[5];
-		s6 = initVector[6];
-		s7 = initVector[7];
+		s0 = 0x243F6A88;
+		s1 = 0x85A308D3;
+		s2 = 0x13198A2E;
+		s3 = 0x03707344;
+		s4 = 0xA4093822;
+		s5 = 0x299F31D0;
+		s6 = 0x082EFA98;
+		s7 = 0xEC4E6C89;
 
-		u0 = s0;
-		u1 = s1;
-		u2 = s2;
-		u3 = s3;
-		u4 = s4;
-		u5 = s5;
-		u6 = s6;
-		u7 = s7;
-
-		#pragma unroll
-		for (int i=0; i<16; i++) {
-			hash.h4[i]= inpHash[i];
+#pragma unroll
+		for(int i = 0; i<16; i++)
+		{
+			hash[i] = inpHash[i];
 		}
 
-///////// input big /////////////////////
+		///////// input big /////////////////////
 
-		#pragma unroll
-		for (int i=0; i<32; i++) {
-			if (i<16) {
-				buf[i]=hash.h4[i];
-			} else {
-				buf[i]=0;
-			}
+#pragma unroll
+		for(int i = 0; i<16; i++)
+		{
+				buf[i] = hash[i];
 		}
 
-		buf[16]=0x00000001;
-		buf[29]=0x40290000;
-		buf[30]=0x00000200;
+		buf[16] = 0x00000001;
+		buf[29] = 0x40290000;
+		buf[30] = 0x00000200;
 
 		PASS1(5, buf);
 		PASS2(5, buf);
 		PASS3(5, buf);
 		PASS4(5, buf);
-		PASS5(5, buf);
+		STEP(5, 5, s7, s6, s5, s4, s3, s2, s1, s0, buf[27], SPH_C32(0xBA3BF050));
+		STEP(5, 5, s6, s5, s4, s3, s2, s1, s0, s7, buf[3], SPH_C32(0x7EFB2A98));
+		STEP(5, 5, s5, s4, s3, s2, s1, s0, s7, s6, buf[21], SPH_C32(0xA1F1651D));
+		STEP(5, 5, s4, s3, s2, s1, s0, s7, s6, s5, buf[26], SPH_C32(0x39AF0176));
+		STEP(5, 5, s3, s2, s1, s0, s7, s6, s5, s4, buf[17], SPH_C32(0x66CA593E));
+		STEP(5, 5, s2, s1, s0, s7, s6, s5, s4, s3, buf[11], SPH_C32(0x82430E88));
+		STEP(5, 5, s1, s0, s7, s6, s5, s4, s3, s2, buf[20], SPH_C32(0x8CEE8619));
+		STEP(5, 5, s0, s7, s6, s5, s4, s3, s2, s1, buf[29], SPH_C32(0x456F9FB4));
+			
+		STEP(5, 5, s7, s6, s5, s4, s3, s2, s1, s0, buf[19], SPH_C32(0x7D84A5C3));
+		STEP(5, 5, s6, s5, s4, s3, s2, s1, s0, s7, buf[0], SPH_C32(0x3B8B5EBE));
+		STEP(5, 5, s5, s4, s3, s2, s1, s0, s7, s6, buf[12], SPH_C32(0xE06F75D8));
+		STEP(5, 5, s4, s3, s2, s1, s0, s7, s6, s5, buf[7], SPH_C32(0x85C12073));
+		STEP(5, 5, s3, s2, s1, s0, s7, s6, s5, s4, buf[13], SPH_C32(0x401A449F));
+		STEP(5, 5, s2, s1, s0, s7, s6, s5, s4, s3, buf[8], SPH_C32(0x56C16AA6));
+		STEP(5, 5, s1, s0, s7, s6, s5, s4, s3, s2, buf[31], SPH_C32(0x4ED3AA62));
+		STEP(5, 5, s0, s7, s6, s5, s4, s3, s2, s1, buf[10], SPH_C32(0x363F7706));
+			
+		STEP(5, 5, s7, s6, s5, s4, s3, s2, s1, s0, buf[5], SPH_C32(0x1BFEDF72));
+		STEP(5, 5, s6, s5, s4, s3, s2, s1, s0, s7, buf[9], SPH_C32(0x429B023D));
+		STEP(5, 5, s5, s4, s3, s2, s1, s0, s7, s6, buf[14], SPH_C32(0x37D0D724));
+		STEP(5, 5, s4, s3, s2, s1, s0, s7, s6, s5, buf[30], SPH_C32(0xD00A1248));
+		STEP(5, 5, s3, s2, s1, s0, s7, s6, s5, s4, buf[18], SPH_C32(0xDB0FEAD3));
+		STEP(5, 5, s2, s1, s0, s7, s6, s5, s4, s3, buf[6], SPH_C32(0x49F1C09B));
+		STEP(5, 5, s1, s0, s7, s6, s5, s4, s3, s2, buf[28], SPH_C32(0x075372C9));
+		STEP(5, 5, s0, s7, s6, s5, s4, s3, s2, s1, buf[24], SPH_C32(0x80991B7B));
+			
+		STEP(5, 5, s7, s6, s5, s4, s3, s2, s1, s0, buf[2], SPH_C32(0x25D479D8));
+		/*
+		STEP(5, 5, s6, s5, s4, s3, s2, s1, s0, s7, buf[23], SPH_C32(0xF6E8DEF7));
+		STEP(5, 5, s5, s4, s3, s2, s1, s0, s7, s6, buf[16], SPH_C32(0xE3FE501A));
+		STEP(5, 5, s4, s3, s2, s1, s0, s7, s6, s5, buf[22], SPH_C32(0xB6794C3B));
+		STEP(5, 5, s3, s2, s1, s0, s7, s6, s5, s4, buf[4], SPH_C32(0x976CE0BD));
+		STEP(5, 5, s2, s1, s0, s7, s6, s5, s4, s3, buf[1], SPH_C32(0x04C006BA));
+		STEP(5, 5, s1, s0, s7, s6, s5, s4, s3, s2, buf[25], SPH_C32(0xC1A94FB6));
+		STEP(5, 5, s0, s7, s6, s5, s4, s3, s2, s1, buf[15], SPH_C32(0x409F60C4));
 
-		s0 = (s0 + u0);
-		s2 = (s2 + u2);
-		s3 = (s3 + u3);
-		s4 = (s4 + u4);
-		s5 = (s5 + u5);
-		s6 = (s6 + u6);
-		s7 = (s7 + u7);
+		inpHash[0] = s0 + 0x243F6A88;
+		inpHash[1] = s1 + 0x85A308D3;
+		inpHash[2] = s2 + 0x13198A2E;
+		inpHash[3] = s3 + 0x03707344;
+		inpHash[4] = s4 + 0xA4093822;
+		inpHash[5] = s5 + 0x299F31D0;
+		inpHash[6] = s6 + 0x082EFA98;
+		inpHash[7] = s7 + 0xEC4E6C89;
+		*/
+		if(s7 + 0xEC4E6C89 <= target)
+		{
+			uint32_t tmp = atomicExch(ret, nounce);
+			if(tmp != 0xffffffff)
+				ret[1] = tmp;
+		}
 
-		hash.h4[0]=s0;
-		hash.h4[1]=s1;
-			  hash.h4[2]=s2;
-		hash.h4[3]=s3;
-			  hash.h4[4]=s4;
-		hash.h4[5]=s5;
-		hash.h4[6]=s6;
-		hash.h4[7]=s7;
-
-		#pragma unroll 16
-		for (int u = 0; u < 16; u ++)
-			inpHash[u] = hash.h4[u];
 	} // threads
 }
 
 __host__
 void x17_haval256_cpu_init(int thr_id, uint32_t threads)
 {
-	cudaMemcpyToSymbolAsync(initVector, c_initVector, sizeof(c_initVector), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMalloc(&d_nonce[thr_id], 2 * sizeof(uint32_t));
 }
 
 __host__
-void x17_haval256_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce,  uint32_t *d_hash)
+void x17_haval256_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce,  uint32_t *d_hash, uint32_t target, uint32_t *result)
 {
 	const uint32_t threadsperblock = 256; // Alignment mit mixtab Grösse. NICHT ÄNDERN
 
 	// berechne wie viele Thread Blocks wir brauchen
 	dim3 grid((threads + threadsperblock-1)/threadsperblock);
 	dim3 block(threadsperblock);
+	cudaMemsetAsync(d_nonce[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
 
-	x17_haval256_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash);
+	x17_haval256_gpu_hash_64 <<<grid, block, 0, gpustream[thr_id] >>>(threads, startNounce, (uint64_t*)d_hash, target, d_nonce[thr_id]);
+	cudaMemcpyAsync(result, d_nonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
+	CUDA_SAFE_CALL(cudaStreamSynchronize(gpustream[thr_id]));
 
 }
