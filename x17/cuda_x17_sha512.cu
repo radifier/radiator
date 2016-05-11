@@ -44,20 +44,17 @@
 
 #define SWAP64(u64) cuda_swab64(u64)
 
-#define SPH_ROTL32(x, n)  ((x) << (n)) | ((x) >> (32 - (n)))
-#define SPH_ROTR32(x, n)  SPH_ROTL32(x, (32 - (n)))
+#define SPH_ROTL32(x, n)  ROTL32(x, n)
+#define SPH_ROTR32(x, n)  ROTR32(x, n)
 
-static __constant__ uint64_t H_512[8];
-
-static const uint64_t H512[8] = {
+static __constant__ uint64_t H_512[8] = {
 	SPH_C64(0x6A09E667F3BCC908), SPH_C64(0xBB67AE8584CAA73B),
-	SPH_C64(0x3C6EF372FE94F82B), SPH_C64(0xA54FF53A5F1D36F1),
-	SPH_C64(0x510E527FADE682D1), SPH_C64(0x9B05688C2B3E6C1F),
-	SPH_C64(0x1F83D9ABFB41BD6B), SPH_C64(0x5BE0CD19137E2179)
+		SPH_C64(0x3C6EF372FE94F82B), SPH_C64(0xA54FF53A5F1D36F1),
+		SPH_C64(0x510E527FADE682D1), SPH_C64(0x9B05688C2B3E6C1F),
+		SPH_C64(0x1F83D9ABFB41BD6B), SPH_C64(0x5BE0CD19137E2179)
 };
-static __constant__ uint64_t K_512[80];
 
-static const uint64_t K512[80] = {
+static __constant__ uint64_t K_512[80] = {
 	SPH_C64(0x428A2F98D728AE22), SPH_C64(0x7137449123EF65CD),
 	SPH_C64(0xB5C0FBCFEC4D3B2F), SPH_C64(0xE9B5DBA58189DBBC),
 	SPH_C64(0x3956C25BF348B538), SPH_C64(0x59F111F1B605D019),
@@ -100,24 +97,6 @@ static const uint64_t K512[80] = {
 	SPH_C64(0x5FCB6FAB3AD6FAEC), SPH_C64(0x6C44198C4A475817)
 };
 
-
-#define SHA3_STEP(ord,r,i) { \
-		uint64_t T1, T2; \
-		int a = 8-ord; \
-		T1 = r[(7+a)&7] + BSG5_1(r[(4+a)&7]) + CH(r[(4+a)&7], r[(5+a)&7], r[(6+a)&7]) + K_512[i] + W[i]; \
-		T2 = BSG5_0(r[(0+a)&7]) + MAJ(r[(0+a)&7], r[(1+a)&7], r[(2+a)&7]); \
-		r[(3+a)&7] = r[(3+a)&7] + T1; \
-		r[(7+a)&7] = T1 + T2; \
-	}
-
-#define SHA3_STEP2(truc,ord,r,i) { \
-		uint64_t T1, T2; \
-		int a = 8-ord; \
-		T1 = Tone(truc,r,W,a,i); \
-		T2 = BSG5_0(r[(0+a)&7]) + MAJ(r[(0+a)&7], r[(1+a)&7], r[(2+a)&7]); \
-		r[(3+a)&7] = r[(3+a)&7] + T1; \
-		r[(7+a)&7] = T1 + T2; \
-	}
 //#define BSG5_0(x)      (ROTR64(x, 28) ^ ROTR64(x, 34) ^ ROTR64(x, 39))
 #define BSG5_0(x)        xor3(ROTR64(x, 28),ROTR64(x, 34),ROTR64(x, 39))
 
@@ -135,83 +114,94 @@ static const uint64_t K512[80] = {
 //#define MAJ(X, Y, Z)   (((X) & (Y)) | (((X) | (Y)) & (Z)))
 #define MAJ(x, y, z)   andor(x,y,z)
 
+#define SHA3_STEP(ord,r,i) { \
+		uint64_t T1, T2; \
+		int a = 8-ord; \
+		T1 = r[(7+a)&7] + BSG5_1(r[(4+a)&7]) + CH(r[(4+a)&7], r[(5+a)&7], r[(6+a)&7]) + K_512[i] + W[i]; \
+		T2 = BSG5_0(r[(0+a)&7]) + MAJ(r[(0+a)&7], r[(1+a)&7], r[(2+a)&7]); \
+		r[(3+a)&7] = r[(3+a)&7] + T1; \
+		r[(7+a)&7] = T1 + T2; \
+	}
+
 __device__ __forceinline__
 uint64_t Tone(const uint64_t* sharedMemory, uint64_t r[8], uint64_t W[80], uint32_t a, uint32_t i)
 {
-	uint64_t h = r[(7 + a) & 7];
 	uint64_t e = r[(4 + a) & 7];
-	uint64_t f = r[(5 + a) & 7];
-	uint64_t g = r[(6 + a) & 7];
 	//uint64_t BSG51 = ROTR64(e, 14) ^ ROTR64(e, 18) ^ ROTR64(e, 41);
-	uint64_t BSG51 = xor3(ROTR64(e, 14),ROTR64(e, 18),ROTR64(e, 41));
+	uint64_t BSG51 = xor3(ROTR64(e, 14), ROTR64(e, 18), ROTR64(e, 41));
+
 	//uint64_t CHl     = (((f) ^ (g)) & (e)) ^ (g);
-	uint64_t CHl = xandx(e,f,g);
-	uint64_t result = h+BSG51+CHl+sharedMemory[i]+W[i];
+	uint64_t CHl = xandx(e, r[(5 + a) & 7], r[(6 + a) & 7]);
+	uint64_t result = r[(7 + a) & 7] + BSG51 + CHl + sharedMemory[i] + W[i];
 	return result;
 }
+
+#define SHA3_STEP2(truc,ord,r,i) { \
+		uint64_t T1, T2; \
+		int a = 8-ord; \
+		T1 = Tone(truc,r,W,a,i); \
+		T2 = BSG5_0(r[(0+a)&7]) + MAJ(r[(0+a)&7], r[(1+a)&7], r[(2+a)&7]); \
+		r[(3+a)&7] = r[(3+a)&7] + T1; \
+		r[(7+a)&7] = T1 + T2; \
+	}
 
 __global__ __launch_bounds__(256,3)
 void x17_sha512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-//	if (thread < threads)
+	//	if (thread < threads)
 	{
-		const uint32_t nounce = (startNounce + thread);
-		const uint32_t hashPosition = nounce - startNounce;
-		uint32_t *inpHash = (uint32_t*)&g_hash[8 * hashPosition];
-		union {
-			uint8_t h1[64];
-			uint32_t h4[16];
-			uint64_t h8[8];
-		} hash;
+		uint64_t *inpHash = &g_hash[8 * thread];
+		uint64_t hash[8];
 
-		#pragma unroll
-		for (int i=0;i<16;i++) {
-			hash.h4[i]= inpHash[i];
+#pragma unroll
+		for(int i = 0; i<8; i++)
+		{
+			hash[i] = inpHash[i];
 		}
-		uint64_t W[80];
+		uint64_t W[80] = {0};
 		uint64_t r[8];
 
-		#pragma unroll 71
-		for (int i=9;i<80;i++) {
-			W[i]=0;
-		}
-
-		#pragma unroll
-		for (int i = 0; i < 8; i ++) {
-			W[i] = SWAP64(hash.h8[i]);
+#pragma unroll
+		for(int i = 0; i < 8; i++)
+		{
+			W[i] = SWAP64(hash[i]);
 			r[i] = H_512[i];
 		}
 
 		W[8] = 0x8000000000000000;
-		W[15]= 0x0000000000000200;
+		W[15] = 0x0000000000000200;
 
-		#pragma unroll 64
-		for (int i = 16; i < 80; i ++)
-			W[i] = SSG5_1(W[i - 2]) + W[i - 7]
-			     + SSG5_0(W[i - 15]) + W[i - 16];
+#pragma unroll 64
+		for(int i = 16; i < 80; i++)
+			W[i] = SSG5_1(W[i - 2]) + W[i - 7] + SSG5_0(W[i - 15]) + W[i - 16];
 
-		#pragma unroll 10
-		for (int i = 0; i < 80; i += 8) {
-			#pragma unroll 8
-			for (int ord=0;ord<8;ord++) {
-				SHA3_STEP2(K_512,ord,r,i+ord);
+#pragma unroll 10
+		for(int i = 0; i < 80; i += 8)
+		{
+#pragma unroll 8
+			for(int ord = 0; ord<8; ord++)
+			{
+				SHA3_STEP2(K_512, ord, r, i + ord);
 			}
 		}
 
-		#pragma unroll 8
-		for (int i = 0; i < 8; i++) {
+#pragma unroll 8
+		for(int i = 0; i < 8; i++)
+		{
 			r[i] = r[i] + H_512[i];
 		}
 
-		#pragma unroll 8
-		for(int i=0;i<8;i++) {
-			hash.h8[i] = SWAP64(r[i]);
+#pragma unroll 8
+		for(int i = 0; i<8; i++)
+		{
+			hash[i] = SWAP64(r[i]);
 		}
 
-		#pragma unroll 16
-		for (int u = 0; u < 16; u ++) {
-			inpHash[u] = hash.h4[u];
+#pragma unroll 16
+		for(int u = 0; u < 8; u++)
+		{
+			inpHash[u] = hash[u];
 		}
 	}
 }
@@ -219,8 +209,6 @@ void x17_sha512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_
 __host__
 void x17_sha512_cpu_init(int thr_id, uint32_t threads)
 {
-	cudaMemcpyToSymbolAsync(K_512, K512, 80 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
-	cudaMemcpyToSymbolAsync(H_512, H512, sizeof(H512), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
 }
 
 __host__
