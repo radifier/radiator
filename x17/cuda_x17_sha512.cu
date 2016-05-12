@@ -145,7 +145,8 @@ uint64_t Tone(const uint64_t* sharedMemory, uint64_t r[8], uint64_t W[80], uint3
 		r[(7+a)&7] = T1 + T2; \
 	}
 
-__global__ __launch_bounds__(256,3)
+#define TPB 128
+__global__ __launch_bounds__(TPB,6)
 void x17_sha512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
@@ -212,11 +213,11 @@ void x17_sha512_cpu_init(int thr_id, uint32_t threads)
 }
 
 __host__
-void x17_sha512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash)
+void x17_sha512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint64_t *d_hash)
 {
-	const uint32_t threadsperblock = 64;
+	const uint32_t threadsperblock = TPB;
 
 	dim3 grid((threads + threadsperblock-1)/threadsperblock);
 	dim3 block(threadsperblock);
-	x17_sha512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash );
+	x17_sha512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash );
 }
