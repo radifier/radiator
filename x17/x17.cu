@@ -73,7 +73,7 @@ extern void x15_whirlpool_cpu_init(int thr_id, uint32_t threads, int flag);
 extern void x15_whirlpool_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 
 extern void x17_sha512_cpu_init(int thr_id, uint32_t threads);
-extern void x17_sha512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce,uint32_t *d_hash);
+extern void x17_sha512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce,uint64_t *d_hash);
 
 extern void x17_haval256_cpu_init(int thr_id, uint32_t threads);
 extern void x17_haval256_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash, uint32_t target, uint32_t *result);
@@ -243,7 +243,7 @@ extern int scanhash_x17(int thr_id, uint32_t *pdata,
 		x13_fugue512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
 		x14_shabal512_cpu_hash_64(thr_id, throughput, pdata[19],d_hash[thr_id]);
 		x15_whirlpool_cpu_hash_64(thr_id, throughput, pdata[19],d_hash[thr_id]);
-		x17_sha512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
+		x17_sha512_cpu_hash_64(thr_id, throughput, pdata[19], (uint64_t*)d_hash[thr_id]);
 		x17_haval256_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id], ptarget[7], h_found);
 
 		if(stop_mining)	{	mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);	}
