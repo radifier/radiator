@@ -23,9 +23,9 @@
 __global__ __launch_bounds__(TPB, 2)
 void quark_groestl512_gpu_hash_64_quad(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ g_hash, const uint32_t *const __restrict__ g_nonceVector)
 {
-	uint32_t msgBitsliced[8];
-	uint32_t state[8];
-	uint32_t hash[16];
+	uint32_t __align__(16) msgBitsliced[8];
+	uint32_t __align__(16) state[8];
+	uint32_t __align__(16) hash[16];
 	// durch 4 dividieren, weil jeweils 4 Threads zusammen ein Hash berechnen
     const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x) >> 2;
     if (thread < threads)
