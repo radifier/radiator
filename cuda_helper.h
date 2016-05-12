@@ -591,6 +591,13 @@ static __device__ __forceinline__ uint2 vectorizehigh(uint32_t v) {
 	result.y = v;
 	return result;
 }
+static __device__ __forceinline__ uint2 eorswap32(uint2 u, uint2 v)
+{
+	uint2 result;
+	result.y = u.x ^ v.x;
+	result.x = u.y ^ v.y;
+	return result;
+}
 
 static __device__ __forceinline__ uint2 operator^ (uint2 a, uint32_t b) { return make_uint2(a.x^ b, a.y); }
 static __device__ __forceinline__ uint2 operator^ (uint2 a, uint2 b) { return make_uint2(a.x ^ b.x, a.y ^ b.y); }
@@ -960,6 +967,13 @@ static __device__ __forceinline__ uint2 vectorizeswap(uint64_t v)
 	return result;
 }
 
+static __device__ __forceinline__ uint2 cuda_swap(uint2 v)
+{
+	uint32_t t = cuda_swab32(v.x);
+	v.x = cuda_swab32(v.y);
+	v.y = t;
+	return v;
+}
 
 __device__ __forceinline__ uint32_t devectorize16(ushort2 x)
 {
