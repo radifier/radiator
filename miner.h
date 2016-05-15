@@ -409,7 +409,8 @@ extern int scanhash_bitcredit(int thr_id, uint32_t *pdata,
 void *api_thread(void *userdata);
 void api_set_throughput(int thr_id, uint32_t throughput);
 
-struct cgpu_info {
+struct cgpu_info
+{
 	uint8_t gpu_id;
 	uint8_t thr_id;
 	int accepted;
@@ -425,7 +426,7 @@ struct cgpu_info {
 	int gpu_clock;
 	int gpu_memclock;
 	size_t gpu_mem;
-	uint32_t gpu_usage;
+	uint32_t gpu_power;
 	double gpu_vddc;
 	int16_t gpu_pstate;
 	int16_t gpu_bus;
@@ -481,6 +482,8 @@ struct thr_info {
 	struct cgpu_info gpu;
 };
 
+extern int cuda_version();
+extern int cuda_gpu_clocks(struct cgpu_info *gpu);
 extern bool opt_verify;
 extern bool opt_benchmark;
 extern bool opt_debug;
@@ -495,6 +498,7 @@ extern bool want_longpoll;
 extern bool have_longpoll;
 extern bool want_stratum;
 extern bool have_stratum;
+extern bool opt_stratum_stats;
 extern char *opt_cert;
 extern char *opt_proxy;
 extern long opt_proxy_type;
