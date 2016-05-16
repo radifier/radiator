@@ -227,7 +227,7 @@ uint64_t net_blocks = 0;
 
 int opt_statsavg = 30;
 uint16_t opt_api_listen = 4068; /* 0 to disable */
-bool opt_stratum_stats = false;
+bool opt_stratum_stats = true;
 static char* opt_syslog_pfx = nullptr;
 char *opt_api_allow = nullptr;
 
