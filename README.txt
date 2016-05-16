@@ -1,5 +1,5 @@
 
-ccMiner release 7.00(KlausT-mod) (May 16th, 2016)
+ccMiner release 7.01(KlausT-mod) (May 16th, 2016)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -203,8 +203,9 @@ features.
 2015-08-22 v6.00: remove Lyra2RE, add Lyra2REv2, remove Animecoin, remove yesscrypt
 2016-05-03 v6.01: various bug fixes and optimizations
 2016-05-12 v6.02: faster x17 and quark
-2016-05-22 v7.00: added Vanillacoin, optimized blake and blakecoin,
+2016-05-16 v7.00: added Vanillacoin, optimized blake and blakecoin,
                   added stratum methods used by yiimp.ccminer.org
+2016-05-16 v7.01  stratum.get_stats bug fix
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
