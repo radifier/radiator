@@ -700,11 +700,11 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 
 	if (opt_benchmark)
 	{
-		ptarget[7] = 0x0000ffff;
+		ptarget[7] = 0x00000000;
 		ptarget[6] = 0xffffffff;
 	}
 	uint32_t target6 = ptarget[6];
-	uint32_t target7 = ptarget[7];
+	uint32_t target7 = swab32(ptarget[7]); // don't ask me why
 
 	if (opt_tracegpu)
 	{
