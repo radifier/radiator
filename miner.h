@@ -482,6 +482,7 @@ struct thr_info {
 	struct cgpu_info gpu;
 };
 
+extern int cuda_num_devices();
 extern int cuda_version();
 extern int cuda_gpu_clocks(struct cgpu_info *gpu);
 extern bool opt_verify;
