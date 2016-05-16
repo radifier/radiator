@@ -114,6 +114,7 @@ enum sha_algos {
 	ALGO_X14,
 	ALGO_X15,
 	ALGO_X17,
+	ALGO_VANILLA,
 	ALGO_NEO
 };
 
@@ -150,6 +151,7 @@ static const char *algo_names[] = {
 	"x14",
 	"x15",
 	"x17",
+	"vanilla",
 	"neoscrypt"
 };
 
@@ -274,6 +276,7 @@ Options:\n\
 			x14         X14\n\
 			x15         X15\n\
 			x17         X17 (peoplecurrency)\n\
+			vanilla     Blake 256 8 rounds\n\
 			yescrypt    yescrypt\n\
 			whirl       Whirlcoin (old whirlpool)\n\
 			whirlpoolx  Vanillacoin \n\
@@ -1496,6 +1499,7 @@ static void *miner_thread(void *userdata)
 			case ALGO_BLAKECOIN:
 			case ALGO_BLAKE:
 			case ALGO_BITC:
+			case ALGO_VANILLA:
 				minmax = 0x70000000U;
 				break;
 			case ALGO_SKEIN:
@@ -1623,6 +1627,11 @@ static void *miner_thread(void *userdata)
 		case ALGO_BITCOIN:
 			rc = scanhash_bitcoin(thr_id, work.data, work.target,
 								  max_nonce, &hashes_done);
+			break;
+
+		case ALGO_VANILLA:
+			rc = scanhash_blake256(thr_id, work.data, work.target,
+														 max_nonce, &hashes_done, 8);
 			break;
 
 		case ALGO_BLAKECOIN:
