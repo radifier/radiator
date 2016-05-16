@@ -1,5 +1,5 @@
 
-ccMiner release 6.01(KlausT-mod) (August 22th, 2015)
+ccMiner release 7.00(KlausT-mod) (May 16th, 2016)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -95,6 +95,7 @@ its command line interface and options.
                           x14         use to mine X14Coin
                           x15         use to mine Halcyon
                           x17         use to mine X17
+						  vanilla     use to mine Vanillacoin
                           lyra2v2     use to mine Vertcoin
 
   -d, --devices         gives a comma separated list of CUDA device IDs
@@ -201,6 +202,9 @@ features.
 2015-07-08 v5.01: lyra2 optimization
 2015-08-22 v6.00: remove Lyra2RE, add Lyra2REv2, remove Animecoin, remove yesscrypt
 2016-05-03 v6.01: various bug fixes and optimizations
+2016-05-12 v6.02: faster x17 and quark
+2016-05-22 v7.00: added Vanillacoin, optimized blake and blakecoin,
+                  added stratum methods used by yiimp.ccminer.org
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
