@@ -1065,6 +1065,11 @@ unsigned int gpu_power(struct cgpu_info *gpu)
 		mw = pct; // to fix
 	}
 #endif
+	if(gpu->gpu_power > 0)
+	{
+		// average
+		mw = (gpu->gpu_power + mw) / 2;
+	}
 	return mw;
 }
 
