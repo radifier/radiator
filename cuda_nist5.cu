@@ -73,7 +73,7 @@ extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 
 	const uint32_t first_nonce = pdata[19];
 
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1 << 20); // 256*256*16
+	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1 << 19); // 256*256*16
 	throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
 
 	if (opt_benchmark)
@@ -95,7 +95,7 @@ extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughput));
 		CUDA_SAFE_CALL(cudaMallocHost(&(h_found), 2 * sizeof(uint32_t)));
 
-		cuda_check_cpu_init(thr_id, throughput);
+//		cuda_check_cpu_init(thr_id, throughput);
 		init = true;
 	}
 
@@ -104,7 +104,7 @@ extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 		be32enc(&endiandata[k], pdata[k]);
 
 	quark_blake512_cpu_setBlock_80(thr_id, (uint64_t *)endiandata);
-	cuda_check_cpu_setTarget(ptarget, thr_id);
+//	cuda_check_cpu_setTarget(ptarget, thr_id);
 
 	do {
 
