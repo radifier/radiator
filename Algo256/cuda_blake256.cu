@@ -82,11 +82,11 @@ static const uint32_t  c_u256[16] =
 	v[a] += (m[x] ^ u256[y]) + v[b]; \
 	v[d] = __byte_perm(v[d] ^ v[a],0, 0x1032); \
 	v[c] += v[d]; \
-	v[b] = SPH_ROTR32(v[b] ^ v[c], 12); \
+	v[b] = ROTR32(v[b] ^ v[c], 12); \
 	v[a] += (m[y] ^ u256[x]) + v[b]; \
 	v[d] = __byte_perm(v[d] ^ v[a],0, 0x0321); \
 	v[c] += v[d]; \
-	v[b] = SPH_ROTR32(v[b] ^ v[c], 7); \
+	v[b] = ROTR32(v[b] ^ v[c], 7); \
 		}
 
 __constant__ uint64_t keccak_round_constants[24] = {
