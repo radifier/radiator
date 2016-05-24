@@ -162,18 +162,25 @@ __device__ __forceinline__ uint64_t REPLACE_LOWORD(const uint64_t x, const uint3
 
 // endian change for 32bit
 #ifdef __CUDA_ARCH__
-__device__ __forceinline__ uint32_t cuda_swab32(const uint32_t x)
-{
-	/* device */
-	return __byte_perm(x, x, 0x0123);
-}
+	__device__ __forceinline__ uint32_t cuda_swab32(const uint32_t x)
+	{
+		/* device */
+		return __byte_perm(x, x, 0x0123);
+	}
 #else
 	/* host */
-	#define cuda_swab32(x) \
-	( ((x) << 24) | (((x) << 8) & 0x00ff0000u) | \
-		(((x) >> 8) & 0x0000ff00u) | ((x) >> 24))
+	#ifdef __GNUC__
+		#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))
+			#define cuda_swab32(x) __builtin_bswap32(x)
+		#endif
+	#else
+		#ifdef _MSC_VER
+			#define cuda_swab32(x) _byteswap_ulong(x)
+		#else
+			#define cuda_swab32(x) ( ((x) << 24) | (((x) << 8) & 0x00ff0000u) | (((x) >> 8) & 0x0000ff00u) | ((x) >> 24))
+		#endif
+	#endif
 #endif
-
 
 static __device__ uint32_t _HIWORD(const uint64_t x)
 {
@@ -223,15 +230,25 @@ __device__ __forceinline__ uint64_t cuda_swab64(uint64_t x)
 }
 #else
 	/* host */
-	#define cuda_swab64(x) \
-		((uint64_t)((((uint64_t)(x)) >> 56) | \
-			(((uint64_t)(x) & 0x00ff000000000000ULL) >> 40) | \
-			(((uint64_t)(x) & 0x0000ff0000000000ULL) >> 24) | \
-			(((uint64_t)(x) & 0x000000ff00000000ULL) >>  8) | \
-			(((uint64_t)(x) & 0x00000000ff000000ULL) <<  8) | \
-			(((uint64_t)(x) & 0x0000000000ff0000ULL) << 24) | \
-			(((uint64_t)(x) & 0x000000000000ff00ULL) << 40) | \
-			(((uint64_t)(x)) << 56)))
+	#ifdef __GNUC__
+		#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))
+			#define cuda_swab64(x) __builtin_bswap64(x)
+		#endif
+	#else
+		#ifdef _MSC_VER
+			#define cuda_swab64(x) _byteswap_uint64(x)
+		#else
+			#define cuda_swab64(x) \
+				((uint64_t)((((uint64_t)(x)) >> 56) | \
+				(((uint64_t)(x) & 0x00ff000000000000ULL) >> 40) | \
+				(((uint64_t)(x) & 0x0000ff0000000000ULL) >> 24) | \
+				(((uint64_t)(x) & 0x000000ff00000000ULL) >>  8) | \
+				(((uint64_t)(x) & 0x00000000ff000000ULL) <<  8) | \
+				(((uint64_t)(x) & 0x0000000000ff0000ULL) << 24) | \
+				(((uint64_t)(x) & 0x000000000000ff00ULL) << 40) | \
+				(((uint64_t)(x)) << 56)))
+		#endif
+	#endif
 #endif
 
 /*********************************************************************/
