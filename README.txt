@@ -1,5 +1,5 @@
 
-ccMiner release 7.01(KlausT-mod) (May 16th, 2016)
+ccMiner release 7.02(KlausT-mod) (May 16th, 2016)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -206,6 +206,8 @@ features.
 2016-05-16 v7.00: added Vanillacoin, optimized blake and blakecoin,
                   added stratum methods used by yiimp.ccminer.org
 2016-05-16 v7.01  stratum.get_stats bug fix
+2016-06-02 v7.02  fix default intensity for Nist5
+                  fix power usage statistics
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
