@@ -827,7 +827,7 @@ __host__ void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata)
 		PaddedMessage[i] = cuda_swab64(pdata[i]);
 		block[i] = PaddedMessage[i];
 	}
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(c_PaddedM, PaddedMessage, 10 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedM, PaddedMessage, 10 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 	
 	block[10] = 0x8000000000000000;
 	block[11] = 0;
