@@ -2605,6 +2605,7 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 	}
 }
 
+#define tp 128
 __host__
 void quark_skein512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash)
 {
@@ -2623,16 +2624,14 @@ void quark_skein512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNoun
 __host__
 void quark_skein512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash, uint32_t *h_nonce, uint32_t target)
 {
-	const int tp = 128;
 	dim3 grid((threads + tp - 1) / tp);
 	dim3 block(tp);
 
-	CUDA_SAFE_CALL(cudaMemsetAsync(d_nonce[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]));
+	cudaMemsetAsync(d_nonce[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
 
 	quark_skein512_gpu_hash_64_final << <grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash, d_nonceVector, d_nonce[thr_id], target);
-
-	CUDA_SAFE_CALL(cudaMemcpyAsync(h_nonce, d_nonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]));
-	CUDA_SAFE_CALL(cudaStreamSynchronize(gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaMemcpyAsync(h_nonce, d_nonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
+	/* skeincoin */
 }
 
 
