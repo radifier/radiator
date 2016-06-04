@@ -107,13 +107,17 @@ extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 //	cuda_check_cpu_setTarget(ptarget, thr_id);
 
 	do {
-
-		// Hash with CUDA
+		CUDA_SAFE_CALL(cudaGetLastError());
 		quark_blake512_cpu_hash_80(thr_id, throughput, pdata[19], d_hash);
+		CUDA_SAFE_CALL(cudaGetLastError());
 		quark_groestl512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash);
+		CUDA_SAFE_CALL(cudaGetLastError());
 		quark_jh512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash);
+		CUDA_SAFE_CALL(cudaGetLastError());
 		quark_keccak512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash);
+		CUDA_SAFE_CALL(cudaGetLastError());
 		quark_skein512_cpu_hash_64_final(thr_id, throughput, pdata[19], NULL, d_hash, h_found, ptarget[7]);
+		CUDA_SAFE_CALL(cudaGetLastError());
 
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		if(h_found[0] != 0xffffffff)
