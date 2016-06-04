@@ -9,7 +9,7 @@
 #define USE_SHUFFLE 0
 
 static uint2* c_PaddedMessage80[MAX_GPUS]; // padded message (80 bytes + padding)
-__constant__ uint2 __align__(16) c_PaddedM[16];
+__constant__ uint2 __align__(16) c_PaddedM[10];
 __constant__ uint28 Hostprecalc[4];
 __constant__ uint2 __align__(16) pre[224];
 
@@ -819,24 +819,16 @@ __host__ void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata)
 	};
 
 	uint64_t PaddedMessage[10];
-
-	for(int i = 0; i < 10; i++)
-		PaddedMessage[i] = cuda_swab64(pdata[i]);
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(c_PaddedM, PaddedMessage, 10 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice));
-
 	uint64_t block[16];
 	uint64_t prehost[224];
 
-	block[0] = PaddedMessage[0];
-	block[1] = PaddedMessage[1];
-	block[2] = PaddedMessage[2];
-	block[3] = PaddedMessage[3];
-	block[4] = PaddedMessage[4];
-	block[5] = PaddedMessage[5];
-	block[6] = PaddedMessage[6];
-	block[7] = PaddedMessage[7];
-	block[8] = PaddedMessage[8];
-	block[9] = PaddedMessage[9];
+	for(int i = 0; i < 10; i++)
+	{
+		PaddedMessage[i] = cuda_swab64(pdata[i]);
+		block[i] = PaddedMessage[i];
+	}
+	CUDA_SAFE_CALL(cudaMemcpyToSymbol(c_PaddedM, PaddedMessage, 10 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice));
+	
 	block[10] = 0x8000000000000000;
 	block[11] = 0;
 	block[12] = 0;
@@ -863,6 +855,7 @@ __host__ void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata)
 	v[1] += (block[0x4] ^ u512[0x8]);
 	v[2] += v[6];
 	v[3] += (block[0xd] ^ u512[6]) + v[7];
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(Hostprecalc, v, 16 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 
 	int i = 0;
 	RSPRECHOST(0xa, 0xe);
@@ -947,7 +940,7 @@ __host__ void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata)
 	RSPRECHOSTHI(0xe, 0x9)
 	RSPRECHOST(0xc, 0x3)
 	RSPRECHOST(0x0, 0xd)
-
+	
 	RSPRECHOST(0x1, 0x0)
 	RSPRECHOST(0x3, 0x2)
 	RSPRECHOST(0x5, 0x4)
@@ -956,7 +949,7 @@ __host__ void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata)
 	RSPRECHOST(0xb, 0xa)
 	RSPRECHOST(0xd, 0xc)
 	RSPRECHOST(0xf, 0xe)
-
+	
 	RSPRECHOST(0xa, 0xe)
 	RSPRECHOST(0x8, 0x4)
 	RSPRECHOSTHI(0xf, 0x9)
@@ -1002,8 +995,7 @@ __host__ void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata)
 	RSPRECHOST(0xe, 0xf)
 	RSPRECHOSTLO(0x9, 0x1)
 
-	CUDA_SAFE_CALL(cudaMemcpyToSymbol(Hostprecalc, v, 16 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice));
-	cudaMemcpyToSymbol(pre, prehost, 224 * 8, 0, cudaMemcpyHostToDevice);
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(pre, prehost, 224 * 8, 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }
 
 __host__ void quark_blake512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_outputHash)
