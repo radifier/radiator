@@ -76,6 +76,14 @@ extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1 << 19); // 256*256*16
 	throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
 
+	static THREAD uint32_t oldthroughput = 0xffffffff;
+	if(throughput > oldthroughput)
+	{
+		oldthroughput = throughput;
+		CUDA_SAFE_CALL(cudaFree(d_hash));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughput));
+	}
+
 	if (opt_benchmark)
 		ptarget[7] = 0x0Fu;
 
