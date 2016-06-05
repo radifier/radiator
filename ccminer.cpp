@@ -1401,7 +1401,7 @@ static void *miner_thread(void *userdata)
 		uint32_t hashes_done = 0;
 		uint32_t start_nonce;
 		uint32_t scan_time = have_longpoll ? LP_SCANTIME : opt_scantime;
-		uint64_t max64, minmax = 0x100000;
+		uint64_t max64, minmax;
 
 		if(have_stratum)
 		{
@@ -1482,58 +1482,75 @@ static void *miner_thread(void *userdata)
 		pthread_mutex_unlock(&g_work_lock);
 
 		/* adjust max_nonce to meet target scan time */
+		uint32_t max64time;
 		if(have_stratum)
-			max64 = LP_SCANTIME;
+			max64time = LP_SCANTIME;
 		else
-			max64 = max(1, scan_time + g_work_time - time(NULL));
+			max64time = (uint32_t)max(1, scan_time + g_work_time - time(NULL));
 
-		max64 *= (uint32_t)thr_hashrates[thr_id];
+		max64 = max64time * (uint32_t)thr_hashrates[thr_id];
 
 		/* on start, max64 should not be 0,
 		*    before hashrate is computed */
-		if(max64 < minmax)
+		switch(opt_algo)
 		{
-			switch(opt_algo)
-			{
 			case ALGO_KECCAK:
-			case ALGO_BLAKECOIN:
-			case ALGO_BLAKE:
-			case ALGO_BITC:
-			case ALGO_VANILLA:
-				minmax = 0x70000000U;
+				minmax = 83000000 * max64time;
 				break;
-			case ALGO_SKEIN:
+			case ALGO_BLAKE:
+				minmax = 260000000 * max64time;
+				break;
+			case ALGO_BITC:
+				minmax = 95000000 * max64time;
+				break;
+			case ALGO_BLAKECOIN:
+			case ALGO_VANILLA:
+				minmax = 470000000 * max64time;
+				break;
 			case ALGO_BITCOIN:
-			case ALGO_WHCX:
+				minmax = 100000000 * max64time;
+				break;
 			case ALGO_QUBIT:
 			case ALGO_QUARK:
-				minmax = 0x40000000U;
+				minmax = 3100000 * max64time;
 				break;
-			case ALGO_DOOM:
 			case ALGO_JACKPOT:
-			case ALGO_LUFFA_DOOM:
-				minmax = 0x2000000;
+				minmax = 2800000 * max64time;
 				break;
+			case ALGO_SKEIN:
+			case ALGO_WHCX:
+			case ALGO_DOOM:
+			case ALGO_LUFFA_DOOM:
+				minmax = 38000000 * max64time;
+				break;
+			case ALGO_NIST5:
 			case ALGO_S3:
+				minmax = 4600000 * max64time;
+				break;
 			case ALGO_X11:
 			case ALGO_C11:
-				minmax = 0x800000;
+				minmax = 1500000 * max64time;
 				break;
 			case ALGO_X13:
-				minmax = 0x400000;
+				minmax = 1200000 * max64time;
+				break;
+			case ALGO_X17:
+			case ALGO_X15:
+				minmax = 1000000 * max64time;
+				break;
+			case ALGO_LYRA2v2:
+				minmax = 1900000 * max64time;
 				break;
 			case ALGO_NEO:
-			case ALGO_X15:
-			case ALGO_LYRA2v2:
-				minmax = 0x300000;
+				minmax = 90000 * max64time;
 				break;
-			}
-			max64 = max(minmax - 1, max64);
+			default:
+				minmax = 4000 * max64time;
 		}
+		max64 = max(minmax, max64);
 
 		// we can't scan more than uint capacity
 		max64 = min(UINT32_MAX, max64);
-
 		start_nonce = nonceptr[0];
 
 		/* never let small ranges at end */
