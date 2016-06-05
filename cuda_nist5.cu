@@ -70,6 +70,7 @@ extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 {
 	static THREAD uint32_t *d_hash = nullptr;
 	static THREAD uint32_t *h_found = nullptr;
+	static THREAD uint32_t oldthroughput;
 
 	const uint32_t first_nonce = pdata[19];
 
@@ -82,6 +83,7 @@ extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 	static THREAD volatile bool init = false;
 	if(!init)
 	{
+		oldthroughput = throughput;
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
@@ -97,6 +99,12 @@ extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 
 //		cuda_check_cpu_init(thr_id, throughput);
 		init = true;
+	}
+	if(throughput > oldthroughput)
+	{
+		oldthroughput = throughput;
+		CUDA_SAFE_CALL(cudaFree(d_hash));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughput));
 	}
 
 	uint32_t endiandata[20];
