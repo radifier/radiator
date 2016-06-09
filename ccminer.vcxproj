@@ -359,6 +359,8 @@
     <ClInclude Include="elist.h" />
     <ClInclude Include="heavy\heavy.h" />
     <ClInclude Include="hefty1.h" />
+    <ClInclude Include="lyra2\cuda_lyra2v2_sm3.cuh" />
+    <ClInclude Include="lyra2\cuda_lyra2_vectors.h" />
     <ClInclude Include="miner.h" />
     <ClInclude Include="nvml.h" />
     <ClInclude Include="sph\neoscrypt.h" />

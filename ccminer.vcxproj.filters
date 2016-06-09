@@ -67,9 +67,6 @@
     <Filter Include="Source Files\CUDA\Algo256">
       <UniqueIdentifier>{9762c92c-9677-4044-8292-ff6ba4bfdd89}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\lyra2">
-      <UniqueIdentifier>{2ff6e4ce-7c92-4cb2-a3ad-c331e94fd81d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\CUDA\Lyra2">
       <UniqueIdentifier>{03b56ddb-6ebb-40b7-9a62-0a22c8c2865f}</UniqueIdentifier>
     </Filter>
@@ -78,6 +75,9 @@
     </Filter>
     <Filter Include="Source Files\CUDA\bitcredit">
       <UniqueIdentifier>{cfe20f7e-f3ee-4eea-8a07-1600a08dbe02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\CUDA\lyra2">
+      <UniqueIdentifier>{2ff6e4ce-7c92-4cb2-a3ad-c331e94fd81d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -372,10 +372,10 @@
       <Filter>Header Files\compat</Filter>
     </ClInclude>
     <ClInclude Include="lyra2\Lyra2.h">
-      <Filter>Header Files\lyra2</Filter>
+      <Filter>Header Files\CUDA\lyra2</Filter>
     </ClInclude>
     <ClInclude Include="lyra2\Sponge.h">
-      <Filter>Header Files\lyra2</Filter>
+      <Filter>Header Files\CUDA\lyra2</Filter>
     </ClInclude>
     <ClInclude Include="sph\sysendian.h">
       <Filter>Header Files</Filter>
@@ -388,6 +388,12 @@
     </ClInclude>
     <ClInclude Include="cuda_vector.h">
       <Filter>Header Files\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="lyra2\cuda_lyra2_vectors.h">
+      <Filter>Header Files\CUDA\lyra2</Filter>
+    </ClInclude>
+    <ClInclude Include="lyra2\cuda_lyra2v2_sm3.cuh">
+      <Filter>Header Files\CUDA\lyra2</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
