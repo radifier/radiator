@@ -44,9 +44,9 @@ __device__ __forceinline__ uint2 shuffle2(uint2 a, uint32_t b, uint32_t c)
 __device__ __forceinline__
 void Gfunc_v5(uint2 &a, uint2 &b, uint2 &c, uint2 &d)
 {
-	a += b; d ^= a; d = SWAPUINT2(d);
-	c += d; b ^= c; b = ROR2(b, 24);
-	a += b; d ^= a; d = ROR2(d, 16);
+	a += b; d = eorswap32(a, d);
+	c += d; b ^= c; b = ROR24(b);
+	a += b; d ^= a; d = ROR16(d);
 	c += d; b ^= c; b = ROR2(b, 63);
 }
 
