@@ -361,10 +361,10 @@ void lyra2v2_gpu_hash_32_1(uint32_t threads, uint2 *inputHash)
 		for(int i = 0; i<12; i++)
 			round_lyra_v5(state);
 
-		DMatrix[blockDim.x * gridDim.x * 0 + blockDim.x * blockIdx.x + threadIdx.x] = state[0];
-		DMatrix[blockDim.x * gridDim.x * 1 + blockDim.x * blockIdx.x + threadIdx.x] = state[1];
-		DMatrix[blockDim.x * gridDim.x * 2 + blockDim.x * blockIdx.x + threadIdx.x] = state[2];
-		DMatrix[blockDim.x * gridDim.x * 3 + blockDim.x * blockIdx.x + threadIdx.x] = state[3];
+		DMatrix[blockDim.x * gridDim.x * 0 + thread] = state[0];
+		DMatrix[blockDim.x * gridDim.x * 1 + thread] = state[1];
+		DMatrix[blockDim.x * gridDim.x * 2 + thread] = state[2];
+		DMatrix[blockDim.x * gridDim.x * 3 + thread] = state[3];
 	}
 }
 
@@ -414,10 +414,10 @@ void lyra2v2_gpu_hash_32_3(uint32_t threads, uint2 *outputHash)
 
 	if(thread < threads)
 	{
-		state[0] = __ldg4(&DMatrix[blockDim.x * gridDim.x * 0 + blockDim.x * blockIdx.x + threadIdx.x]);
-		state[1] = __ldg4(&DMatrix[blockDim.x * gridDim.x * 1 + blockDim.x * blockIdx.x + threadIdx.x]);
-		state[2] = __ldg4(&DMatrix[blockDim.x * gridDim.x * 2 + blockDim.x * blockIdx.x + threadIdx.x]);
-		state[3] = __ldg4(&DMatrix[blockDim.x * gridDim.x * 3 + blockDim.x * blockIdx.x + threadIdx.x]);
+		state[0] = __ldg4(&DMatrix[blockDim.x * gridDim.x * 0 + thread]);
+		state[1] = __ldg4(&DMatrix[blockDim.x * gridDim.x * 1 + thread]);
+		state[2] = __ldg4(&DMatrix[blockDim.x * gridDim.x * 2 + thread]);
+		state[3] = __ldg4(&DMatrix[blockDim.x * gridDim.x * 3 + thread]);
 
 		for(int i = 0; i < 12; i++)
 			round_lyra_v5(state);
