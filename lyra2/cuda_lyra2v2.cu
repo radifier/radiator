@@ -14,6 +14,8 @@ uint2 SWAPUINT2(uint2 value)
 	return make_uint2(value.y, value.x);
 }
 
+#define TPB5x 128
+
 #if __CUDA_ARCH__ >= 500
 
 #include "cuda_lyra2_vectors.h"
@@ -320,7 +322,7 @@ void reduceDuplexRowt2x4(const int rowInOut, uint2 state[4])
 }
 
 __global__
-__launch_bounds__(32, 1)
+__launch_bounds__(TPB5x, 1)
 void lyra2v2_gpu_hash_32_1(uint32_t threads, uint2 *inputHash)
 {
 	const uint32_t thread = blockDim.x * blockIdx.x + threadIdx.x;
@@ -403,7 +405,7 @@ void lyra2v2_gpu_hash_32_2(uint32_t threads)
 }
 
 __global__
-__launch_bounds__(32, 1)
+__launch_bounds__(TPB5x, 1)
 void lyra2v2_gpu_hash_32_3(uint32_t threads, uint2 *outputHash)
 {
 	const uint32_t thread = blockDim.x * blockIdx.x + threadIdx.x;
@@ -455,15 +457,15 @@ void lyra2v2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uin
 	if(cuda_arch[thr_id] >= 500)
 	{
 
-		const uint32_t tpb = 32;
+		const uint32_t tpb = TPB5x;
 
 		dim3 grid2((threads + tpb - 1) / tpb);
 		dim3 block2(tpb);
-		dim3 grid4((threads * 4 + tpb - 1) / tpb);
-		dim3 block4(4, tpb / 4);
+		dim3 grid4((threads * 4 + 32 - 1) / 32);
+		dim3 block4(4, 32 / 4);
 
 		lyra2v2_gpu_hash_32_1 << < grid2, block2, 0, gpustream[thr_id] >> > (threads, (uint2*)g_hash);
-		lyra2v2_gpu_hash_32_2 << < grid4, block4, 48 * sizeof(uint2) * tpb, gpustream[thr_id] >> > (threads);
+		lyra2v2_gpu_hash_32_2 << < grid4, block4, 48 * sizeof(uint2) * 32, gpustream[thr_id] >> > (threads);
 		lyra2v2_gpu_hash_32_3 << < grid2, block2, 0, gpustream[thr_id] >> > (threads, (uint2*)g_hash);
 
 	}
