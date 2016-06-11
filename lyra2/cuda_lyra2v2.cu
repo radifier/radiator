@@ -1,3 +1,9 @@
+/*
+* Lyra2 (v2) CUDA Implementation
+*
+* Based on tpruvot/djm34/VTC sources and incredible 2x boost by Nanashi Meiyo-Meijin (May 2016)
+*/
+
 #include <cstdio>
 #include <memory.h>
 
