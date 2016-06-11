@@ -1,5 +1,5 @@
 
-ccMiner release 7.02(KlausT-mod) (May 16th, 2016)
+ccMiner release 7.03(KlausT-mod) (June 11th, 2016)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -208,6 +208,8 @@ features.
 2016-05-16 v7.01  stratum.get_stats bug fix
 2016-06-02 v7.02  fix default intensity for Nist5
                   fix power usage statistics
+2016-06-11 v7.03  faster lyra2v2
+
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
