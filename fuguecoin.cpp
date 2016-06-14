@@ -29,10 +29,10 @@ extern "C" void my_fugue256_addbits_and_close(void *cc, unsigned ub, unsigned n,
 extern int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t max_nonce, uint32_t *hashes_done)
 {
-	uint32_t start_nonce = pdata[19]++;
+	uint32_t start_nonce = pdata[19];
 	unsigned int intensity = (device_sm[device_map[thr_id]] > 500) ? 22 : 19;
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1 << intensity); // 256*256*8
-	throughput = min(throughput, max_nonce - start_nonce) & 0xfffffc00;
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, 1 << intensity); // 256*256*8
+	uint32_t throughput = min(throughputmax, max_nonce - start_nonce) & 0xfffffc00;
 
 	if (opt_benchmark)
 		ptarget[7] = 0xf;
@@ -41,7 +41,7 @@ extern int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	static THREAD volatile bool init = false;
 	if(!init)
 	{
-		fugue256_cpu_init(thr_id, throughput);
+		fugue256_cpu_init(thr_id, throughputmax);
 		init = true;
 	}
 
@@ -72,8 +72,8 @@ extern int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 
 			if (hash[7] <= Htarg && fulltest(hash, ptarget))
 			{
+				*hashes_done = pdata[19] - start_nonce + throughput;
 				pdata[19] = foundNounce;
-				*hashes_done = foundNounce - start_nonce + 1;
 				return 1;
 			} else {
 				applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU!", device_map[thr_id], foundNounce);
@@ -89,7 +89,7 @@ extern int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		}
 	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 
-	*hashes_done = pdata[19] - start_nonce + 1;
+	*hashes_done = pdata[19] - start_nonce;
 	return 0;
 }
 
