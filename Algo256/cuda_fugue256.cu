@@ -722,6 +722,8 @@ fugue256_gpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, void *outp
 void fugue256_cpu_init(int thr_id, uint32_t threads)
 {
 	CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+	cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+	cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 
 	// Kopiere die Hash-Tabellen in den GPU-Speicher
 	texDef(mixTab0Tex, mixTab0m, mixtab0_cpu, sizeof(uint32_t)*256);
@@ -730,8 +732,8 @@ void fugue256_cpu_init(int thr_id, uint32_t threads)
 	texDef(mixTab3Tex, mixTab3m, mixtab3_cpu, sizeof(uint32_t)*256);
 
 	// Speicher für alle Ergebnisse belegen
-	cudaMalloc(&d_fugue256_hashoutput[thr_id], 8 * sizeof(uint32_t) * threads);
-	cudaMalloc(&d_resultNonce[thr_id], sizeof(uint32_t));
+	CUDA_SAFE_CALL(cudaMalloc(&d_fugue256_hashoutput[thr_id], 8 * sizeof(uint32_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&d_resultNonce[thr_id], sizeof(uint32_t)));
 }
 
 __host__ void fugue256_cpu_setBlock(int thr_id, void *data, void *pTargetIn)
