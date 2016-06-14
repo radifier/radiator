@@ -54,8 +54,8 @@ extern int scanhash_whc(int thr_id, uint32_t *pdata,
 
 	const uint32_t first_nonce = pdata[19];
 	uint32_t endiandata[20];
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1U << 20); // 19=256*256*8;
-	throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, 1U << 20); // 19=256*256*8;
+	uint32_t throughput = min(throughputmax, (max_nonce - first_nonce)) & 0xfffffc00;
 
 	if (opt_benchmark)
 		ptarget[7] = 0x0000ff;
@@ -68,8 +68,8 @@ extern int scanhash_whc(int thr_id, uint32_t *pdata,
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
-		cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughput);
-		x15_whirlpool_cpu_init(thr_id, throughput, 1 /* old whirlpool */);
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax));
+		x15_whirlpool_cpu_init(thr_id, throughputmax, 1 /* old whirlpool */);
 
 		init = true;
 	}

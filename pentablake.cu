@@ -445,8 +445,8 @@ extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	const uint32_t first_nonce = pdata[19];
 	uint32_t endiandata[20];
 	int rc = 0;
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 128U * 2560); // 18.5
-	throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, 128U * 2560); // 18.5
+	uint32_t throughput = min(throughputmax, (max_nonce - first_nonce)) & 0xfffffc00;
 
 	if (opt_benchmark)
 		ptarget[7] = 0x000F;
@@ -457,7 +457,7 @@ extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 64 * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 64 * throughputmax));
 		CUDA_SAFE_CALL(cudaMallocHost(&h_resNounce[thr_id], 2*sizeof(uint32_t)));
 		CUDA_SAFE_CALL(cudaMalloc(&d_resNounce[thr_id], 2*sizeof(uint32_t)));
 

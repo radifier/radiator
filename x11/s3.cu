@@ -65,8 +65,8 @@ extern int scanhash_s3(int thr_id, uint32_t *pdata,
 	// reduce by one the intensity on windows
 	intensity--;
 #endif
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1 << intensity);
-	throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, 1 << intensity);
+	uint32_t throughput = min(throughputmax, (max_nonce - first_nonce)) & 0xfffffc00;
 	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
 	if (opt_benchmark)
 		ptarget[7] = 0x0000000fu;
@@ -80,13 +80,13 @@ extern int scanhash_s3(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		get_cuda_arch(&cuda_arch[thr_id]);
 
-		x11_simd512_cpu_init(thr_id, throughput);
+		x11_simd512_cpu_init(thr_id, throughputmax);
 		quark_skein512_cpu_init(thr_id);
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax));
 		CUDA_SAFE_CALL(cudaMallocHost(&(h_found), 2 * sizeof(uint32_t)));
 
-		cuda_check_cpu_init(thr_id, throughput);
+		cuda_check_cpu_init(thr_id, throughputmax);
 
 		init = true;
 	}

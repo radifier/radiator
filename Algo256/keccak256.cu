@@ -40,8 +40,8 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 
 	const uint32_t first_nonce = pdata[19];
 	uint32_t intensity = (device_sm[device_map[thr_id]] > 500) ? 1 << 28 : 1 << 27;;
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity); // 256*4096
-	throughput = min(throughput, max_nonce - first_nonce) & 0xfffffc00;
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, intensity); // 256*4096
+	uint32_t throughput = min(throughputmax, max_nonce - first_nonce) & 0xfffffc00;
 
 
 	if (opt_benchmark)
@@ -55,7 +55,7 @@ extern int scanhash_keccak256(int thr_id, uint32_t *pdata,
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMallocHost(&h_nounce, 2 * sizeof(uint32_t)));
-		keccak256_cpu_init(thr_id, (int)throughput);
+		keccak256_cpu_init(thr_id, (int)throughputmax);
 //		CUDA_SAFE_CALL(cudaMallocHost(&h_nounce, 2 * sizeof(uint32_t)));
 		init = true;
 	}

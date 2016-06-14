@@ -38,8 +38,8 @@ extern int scanhash_doom(int thr_id, uint32_t *pdata,
 
 	const uint32_t first_nonce = pdata[19];
 	uint32_t endiandata[20];
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1U << 22); // 256*256*8*8
-	throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, 1U << 22); // 256*256*8*8
+	uint32_t throughput = min(throughputmax, (max_nonce - first_nonce)) & 0xfffffc00;
 
 	if (opt_benchmark)
 		ptarget[7] = 0x0000f;
@@ -52,9 +52,9 @@ extern int scanhash_doom(int thr_id, uint32_t *pdata,
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax));
 
-		qubit_luffa512_cpu_init(thr_id, (int) throughput);
+		qubit_luffa512_cpu_init(thr_id, (int) throughputmax);
 
 		init = true;
 	}

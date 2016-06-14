@@ -72,15 +72,15 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			intensity = (256 * 64 * 2);
 		}
 
-		throughput = device_intensity(device_map[thr_id], __func__, intensity) / 2;
-		throughput = min(throughput, (max_nonce - first_nonce)) & 0xffffff00;
+		uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, intensity) / 2;
+		throughput = min(throughputmax, (max_nonce - first_nonce)) & 0xffffff00;
 
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		//		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);	
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * 4));
 
-		neoscrypt_cpu_init_2stream(thr_id, throughput);
+		neoscrypt_cpu_init_2stream(thr_id, throughputmax);
 		init = true;
 	}
 

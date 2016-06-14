@@ -138,7 +138,8 @@ int scanhash_c11(int thr_id, uint32_t *pdata,
 	int intensity = (device_sm[device_map[thr_id]] > 500) ? 256 * 256 * 21 : 256 * 256 * 10;
 	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
 
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity) & 0xfffffc00;
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, intensity);
+	uint32_t throughput = min(throughputmax, (max_nonce - first_nonce)) & 0xfffffc00;
 
 	if(opt_benchmark)
 		ptarget[7] = 0x4f;
@@ -150,12 +151,12 @@ int scanhash_c11(int thr_id, uint32_t *pdata,
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
-		x11_echo512_cpu_init(thr_id, throughput);
-		if(x11_simd512_cpu_init(thr_id, throughput) != 0)
+		x11_echo512_cpu_init(thr_id, throughputmax);
+		if(x11_simd512_cpu_init(thr_id, throughputmax) != 0)
 		{
 			return 0;
 		}
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 64 * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 64 * throughputmax));
 		quark_blake512_cpu_init(thr_id);
 		init[thr_id] = true;
 	}

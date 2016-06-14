@@ -132,8 +132,8 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 
 	uint32_t intensity = 1 << 22;
 	intensity = intensity + ((1 << 22)*9/10);
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity); // 256*4096
-	throughput = min(throughput, max_nonce - first_nonce);
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, intensity); // 256*4096
+	uint32_t throughput = min(throughputmax, max_nonce - first_nonce);
 
 	if (opt_benchmark)
 		ptarget[7] = 0x0000003f;
@@ -155,20 +155,20 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 //		}
 
 		// Konstanten kopieren, Speicher belegen
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax));
 		CUDA_SAFE_CALL(cudaMallocHost(&foundnonces, 4 * 4));
 //		CUDA_SAFE_CALL(cudaMalloc(&d_branch1Nonces, sizeof(uint32_t)*throughput));
 //		CUDA_SAFE_CALL(cudaMalloc(&d_branch2Nonces, sizeof(uint32_t)*throughput));
-		uint32_t noncebuffersize = throughput * 7 / 10;
-		uint32_t noncebuffersize2 = (throughput * 7 / 10)*7/10;
+		uint32_t noncebuffersize = throughputmax * 7 / 10;
+		uint32_t noncebuffersize2 = (throughputmax * 7 / 10)*7/10;
 
 		CUDA_SAFE_CALL(cudaMalloc(&d_branch1Nonces, sizeof(uint32_t)*noncebuffersize2));
 		CUDA_SAFE_CALL(cudaMalloc(&d_branch2Nonces, sizeof(uint32_t)*noncebuffersize2));
 		CUDA_SAFE_CALL(cudaMalloc(&d_branch3Nonces, sizeof(uint32_t)*noncebuffersize));
 		quark_blake512_cpu_init(thr_id);
-		quark_groestl512_cpu_init(thr_id, throughput);
-		quark_bmw512_cpu_init(thr_id, throughput);
-		quark_compactTest_cpu_init(thr_id, throughput);
+		quark_groestl512_cpu_init(thr_id, throughputmax);
+		quark_bmw512_cpu_init(thr_id, throughputmax);
+		quark_compactTest_cpu_init(thr_id, throughputmax);
 		quark_keccak512_cpu_init(thr_id);
 		quark_jh512_cpu_init(thr_id);
 		CUDA_SAFE_CALL(cudaGetLastError());

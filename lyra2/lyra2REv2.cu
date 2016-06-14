@@ -103,7 +103,8 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 	{
 		intensity = 256 * 256 * 8;
 	}
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity) & 0xffffff00;
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, intensity);
+	uint32_t throughput = min(throughputmax, max_nonce - first_nonce) & 0xffffff00;
 
 	if (opt_benchmark)
 		((uint32_t*)ptarget)[7] = 0x004f;
@@ -116,13 +117,13 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash2, 16  * 4 * 4 * sizeof(uint64_t) * throughput));
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 8 * sizeof(uint32_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash2, 16  * 4 * 4 * sizeof(uint64_t) * throughputmax));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 8 * sizeof(uint32_t) * throughputmax));
 
-//		keccak256_cpu_init(thr_id, throughput);
-		skein256_cpu_init(thr_id, throughput);
-		bmw256_cpu_init(thr_id, throughput);
-        lyra2v2_cpu_init(thr_id, throughput, d_hash2);
+		// keccak256_cpu_init(thr_id, throughputmax);
+		skein256_cpu_init(thr_id, throughputmax);
+		bmw256_cpu_init(thr_id, throughputmax);
+		lyra2v2_cpu_init(thr_id, throughputmax, d_hash2);
 
 		init = true; 
 	}

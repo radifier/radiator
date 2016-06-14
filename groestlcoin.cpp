@@ -59,8 +59,8 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 
     uint32_t start_nonce = pdata[19];
 	unsigned int intensity = (device_sm[device_map[thr_id]] > 500) ? 24 : 23;
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1U << intensity);
-	throughput = min(throughput, max_nonce - start_nonce) & 0xfffffc00;
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, 1U << intensity);
+	uint32_t throughput = min(throughputmax, max_nonce - start_nonce) & 0xfffffc00;
 
     if (opt_benchmark)
         ptarget[7] = 0x0000000f;
@@ -74,7 +74,7 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
-		groestlcoin_cpu_init(thr_id, throughput);
+		groestlcoin_cpu_init(thr_id, throughputmax);
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNounce, 2 * 4));
 		init = true;
     }

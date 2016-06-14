@@ -146,7 +146,8 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 	else if(strstr(props.name, "750"))    intensity = (256 * 256 * 19);
 	else if(strstr(props.name, "960"))    intensity = (256 * 256 * 19);
 	else intensity = (256 * 256 * 16);
-	const uint32_t throughput = min(device_intensity(device_map[thr_id], __func__, intensity), (max_nonce - first_nonce)) & 0xfffffc00; // 19=256*256*8;
+	const uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, intensity); // 19=256*256*8;
+	uint32_t throughput = min(throughputmax, max_nonce - first_nonce) & 0xfffffc00;
 	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
 
 	if (opt_benchmark)
@@ -160,13 +161,13 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		get_cuda_arch(&cuda_arch[thr_id]);
-		quark_groestl512_cpu_init(thr_id, throughput);
-		quark_bmw512_cpu_init(thr_id, throughput);
-		x11_echo512_cpu_init(thr_id, throughput);
-		if (x11_simd512_cpu_init(thr_id, throughput) != 0) {
+		quark_groestl512_cpu_init(thr_id, throughputmax);
+		quark_bmw512_cpu_init(thr_id, throughputmax);
+		x11_echo512_cpu_init(thr_id, throughputmax);
+		if (x11_simd512_cpu_init(thr_id, throughputmax) != 0) {
 			return 0;
 		}
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 64 * throughput)); // why 64 ?
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 64 * throughputmax)); // why 64 ?
 		CUDA_SAFE_CALL(cudaMallocHost(&(h_found), 2 * sizeof(uint32_t)));
 		init = true;
 	}

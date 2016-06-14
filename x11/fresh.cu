@@ -75,8 +75,8 @@ extern int scanhash_fresh(int thr_id, uint32_t *pdata,
 	const uint32_t first_nonce = pdata[19];
 	uint32_t endiandata[20];
 
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1 << 19);
-	throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, 1 << 19);
+	uint32_t throughput = min(throughputmax, (max_nonce - first_nonce)) & 0xfffffc00;
 	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
 
 	if (opt_benchmark)
@@ -90,13 +90,13 @@ extern int scanhash_fresh(int thr_id, uint32_t *pdata,
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
-		x11_simd512_cpu_init(thr_id, throughput);
-		x11_echo512_cpu_init(thr_id, throughput);
+		x11_simd512_cpu_init(thr_id, throughputmax);
+		x11_echo512_cpu_init(thr_id, throughputmax);
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughput + 4));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax + 4));
 		CUDA_SAFE_CALL(cudaMallocHost(&(h_found), 4 * sizeof(uint32_t)));
 
-		cuda_check_cpu_init(thr_id, throughput);
+		cuda_check_cpu_init(thr_id, throughputmax);
 
 		init = true;
 	}

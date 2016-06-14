@@ -45,8 +45,8 @@ extern int scanhash_myriad(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	static THREAD uint32_t *h_found = nullptr;
 
 	uint32_t start_nonce = pdata[19];
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1 << 19);
-	throughput = min(throughput, max_nonce - start_nonce) & 0xfffffc00;
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, 1 << 19);
+	uint32_t throughput = min(throughputmax, max_nonce - start_nonce) & 0xfffffc00;
 
 	if (opt_benchmark)
 		ptarget[7] = 0x0000ff;
@@ -57,7 +57,7 @@ extern int scanhash_myriad(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	{
 #if BIG_DEBUG
 #else
-		myriadgroestl_cpu_init(thr_id, throughput);
+		myriadgroestl_cpu_init(thr_id, throughputmax);
 #endif
 		cudaMallocHost(&h_found, 4 * sizeof(uint32_t));
 		init = true;
