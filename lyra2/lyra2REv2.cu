@@ -23,9 +23,9 @@ extern void skeinCube256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t star
 
 
 extern void lyra2v2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNonce, uint64_t *d_outputHash);
-extern void lyra2v2_cpu_init(int thr_id, uint32_t threads, uint64_t* matrix);
+extern void lyra2v2_cpu_init(int thr_id, uint64_t* matrix);
 
-extern void bmw256_cpu_init(int thr_id, uint32_t threads);
+extern void bmw256_cpu_init(int thr_id);
 extern void bmw256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint32_t *resultnonces, uint32_t target);
 
 extern void cubehash256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint64_t *d_hash);
@@ -125,14 +125,21 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
-
+#if !defined _WIN64
+		// 2GB limit for cudaMalloc
+		if(throughputmax > 0x7fffffffULL / (16 * 4 * 4 * sizeof(uint64_t)))
+		{
+			applog(LOG_ERR, "intensity too high");
+			mining_has_stopped[thr_id] = true;
+			cudaStreamDestroy(gpustream[thr_id]);
+			proper_exit(2);
+		}
+#endif
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash2, 16  * 4 * 4 * sizeof(uint64_t) * throughputmax));
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 8 * sizeof(uint32_t) * throughputmax));
 
-		// keccak256_cpu_init(thr_id, throughputmax);
-		skein256_cpu_init(thr_id, throughputmax);
-		bmw256_cpu_init(thr_id, throughputmax);
-		lyra2v2_cpu_init(thr_id, throughputmax, d_hash2);
+		bmw256_cpu_init(thr_id);
+		lyra2v2_cpu_init(thr_id, d_hash2);
 
 		init = true; 
 	}

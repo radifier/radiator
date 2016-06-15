@@ -450,7 +450,7 @@ __global__ void lyra2v2_gpu_hash_32_3(uint32_t threads, uint2 *outputHash)
 
 
 __host__
-void lyra2v2_cpu_init(int thr_id, uint32_t threads, uint64_t *d_matrix)
+void lyra2v2_cpu_init(int thr_id, uint64_t *d_matrix)
 {
 	get_cuda_arch(&cuda_arch[thr_id]);
 	// just assign the device pointer allocated in main loop

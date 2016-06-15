@@ -3,9 +3,7 @@
 
 #include "cuda_helper.h"
 
-
-
-static uint32_t *d_gnounce[MAX_GPUS];
+static uint32_t *h_gnounce[MAX_GPUS];
 static uint32_t *d_GNonce[MAX_GPUS];
 
 #define shl(x, n)            ((x) << (n))
@@ -363,18 +361,18 @@ void bmw256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint
 
 	bmw256_gpu_hash_32 << <grid, block, 0, gpustream[thr_id] >> >(threads, startNounce, (uint2 *)g_hash, d_GNonce[thr_id], Target);
 	CUDA_SAFE_CALL(cudaGetLastError());
-	CUDA_SAFE_CALL(cudaMemcpyAsync(d_gnounce[thr_id], d_GNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaMemcpyAsync(h_gnounce[thr_id], d_GNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]));
 	cudaStreamSynchronize(gpustream[thr_id]);
-	resultnonces[0] = *(d_gnounce[thr_id]);
-	resultnonces[1] = *(d_gnounce[thr_id] + 1);
+	resultnonces[0] = *(h_gnounce[thr_id]);
+	resultnonces[1] = *(h_gnounce[thr_id] + 1);
 }
 
 
 __host__
-void bmw256_cpu_init(int thr_id, uint32_t threads)
+void bmw256_cpu_init(int thr_id)
 {
-	cudaMalloc(&d_GNonce[thr_id], 2 * sizeof(uint32_t));
-	cudaMallocHost(&d_gnounce[thr_id], 2 * sizeof(uint32_t));
+	CUDA_SAFE_CALL(cudaMalloc(&d_GNonce[thr_id], 2 * sizeof(uint32_t)));
+	CUDA_SAFE_CALL(cudaMallocHost(&h_gnounce[thr_id], 2 * sizeof(uint32_t)));
 }
 
 /*
