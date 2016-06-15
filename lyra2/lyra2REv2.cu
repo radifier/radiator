@@ -83,7 +83,16 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 
 	cudaDeviceProp props;
 	cudaGetDeviceProperties(&props, device_map[thr_id]);
-	if (strstr(props.name, "970"))
+
+	if(strstr(props.name, "1080"))
+	{
+		intensity = 256 * 256 * 22;
+	}
+	else if(strstr(props.name, "1070"))
+	{
+		intensity = 256 * 256 * 22;
+	}
+	else if(strstr(props.name, "970"))
 	{
 		intensity = 256 * 256 * 22;
 	}

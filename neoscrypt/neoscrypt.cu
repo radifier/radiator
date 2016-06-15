@@ -43,7 +43,15 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			proper_exit(2);
 		}
 		unsigned int intensity = (256 * 64 * 1); // -i 14
-		if(strstr(props.name, "970"))
+		if(strstr(props.name, "1080"))
+		{
+			intensity = 256 * 64 * 5;
+		}
+		else if(strstr(props.name, "1070"))
+		{
+			intensity = 256 * 64 * 5;
+		}
+		else if(strstr(props.name, "970"))
 		{
 			intensity = (256 * 64 * 5);
 		}
@@ -73,7 +81,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		}
 
 		uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, intensity) / 2;
-		throughput = min(throughputmax, (max_nonce - first_nonce)) & 0xffffff00;
+		throughput = min(throughputmax, (max_nonce - first_nonce)/2) & 0xffffff00;
 
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		//		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);	
