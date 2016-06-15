@@ -124,6 +124,17 @@ extern int scanhash_qubit(int thr_id, uint32_t *pdata,
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
+#if defined WIN32 && !defined _WIN64
+		// 2GB limit for cudaMalloc
+		if(throughputmax > 0x7fffffffULL / (64 * sizeof(uint4)))
+		{
+			applog(LOG_ERR, "intensity too high");
+			mining_has_stopped[thr_id] = true;
+			cudaStreamDestroy(gpustream[thr_id]);
+			proper_exit(2);
+		}
+#endif
+
 		qubit_luffa512_cpu_init(thr_id, throughputmax);
 		x11_simd512_cpu_init(thr_id, throughputmax);
 		x11_echo512_cpu_init(thr_id, throughputmax);

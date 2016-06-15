@@ -72,6 +72,16 @@ extern int scanhash_deep(int thr_id, uint32_t *pdata,
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
+#if defined WIN32 && !defined _WIN64
+		// 2GB limit for cudaMalloc
+		if(throughputmax > 0x7fffffffULL / (16 * sizeof(uint32_t)))
+		{
+			applog(LOG_ERR, "intensity too high");
+			mining_has_stopped[thr_id] = true;
+			cudaStreamDestroy(gpustream[thr_id]);
+			proper_exit(2);
+		}
+#endif
 
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax));
 

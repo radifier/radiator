@@ -57,6 +57,15 @@ extern int scanhash_myriad(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	{
 #if BIG_DEBUG
 #else
+#if defined WIN32 && !defined _WIN64
+		// 2GB limit for cudaMalloc
+		if(throughputmax > 0x7fffffffULL / (16 * sizeof(uint32_t)))
+		{
+			applog(LOG_ERR, "intensity too high");
+			mining_has_stopped[thr_id] = true;
+			proper_exit(2);
+		}
+#endif
 		myriadgroestl_cpu_init(thr_id, throughputmax);
 #endif
 		cudaMallocHost(&h_found, 4 * sizeof(uint32_t));

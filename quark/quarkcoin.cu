@@ -154,6 +154,17 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 		get_cuda_arch(&cuda_arch[thr_id]);
 //		}
 
+#if defined WIN32 && !defined _WIN64
+		// 2GB limit for cudaMalloc
+		if(throughputmax > 0x7fffffffULL / (16 * sizeof(uint32_t)))
+		{
+			applog(LOG_ERR, "intensity too high");
+			mining_has_stopped[thr_id] = true;
+			cudaStreamDestroy(gpustream[thr_id]);
+			proper_exit(2);
+		}
+#endif
+
 		// Konstanten kopieren, Speicher belegen
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax));
 		CUDA_SAFE_CALL(cudaMallocHost(&foundnonces, 4 * 4));
@@ -166,8 +177,6 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaMalloc(&d_branch2Nonces, sizeof(uint32_t)*noncebuffersize2));
 		CUDA_SAFE_CALL(cudaMalloc(&d_branch3Nonces, sizeof(uint32_t)*noncebuffersize));
 		quark_blake512_cpu_init(thr_id);
-		quark_groestl512_cpu_init(thr_id, throughputmax);
-		quark_bmw512_cpu_init(thr_id, throughputmax);
 		quark_compactTest_cpu_init(thr_id, throughputmax);
 		quark_keccak512_cpu_init(thr_id);
 		quark_jh512_cpu_init(thr_id);

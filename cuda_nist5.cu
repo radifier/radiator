@@ -89,6 +89,16 @@ extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		get_cuda_arch(&cuda_arch[thr_id]);
+#if defined WIN32 && !defined _WIN64
+		// 2GB limit for cudaMalloc
+		if(throughput > 0x7fffffffULL / (16 * sizeof(uint32_t)))
+		{
+			applog(LOG_ERR, "intensity too high");
+			mining_has_stopped[thr_id] = true;
+			cudaStreamDestroy(gpustream[thr_id]);
+			proper_exit(2);
+		}
+#endif
 
 		// Konstanten kopieren, Speicher belegen
 		quark_groestl512_cpu_init(thr_id, throughput);
