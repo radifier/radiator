@@ -1448,7 +1448,7 @@ void neoscrypt_cpu_init_2stream(int thr_id, int threads)
 
 __host__ void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, int threads, uint32_t startNounce, uint32_t *result)
 {
-	cudaMemsetAsync(d_NNonce[thr_id], 0xff, 2 * sizeof(uint32_t), stream[0]);
+	CUDA_SAFE_CALL(cudaMemsetAsync(d_NNonce[thr_id], 0xff, 2 * sizeof(uint32_t), stream[0]));
 	
 	const int threadsperblock = TPB;
 	
@@ -1458,10 +1458,10 @@ __host__ void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, int thread
 	const int threadsperblock2 = TPB2;
 	dim3 grid2((threads + threadsperblock2 - 1) / threadsperblock2);
 	dim3 block2(threadsperblock2);
-	
+
 	neoscrypt_gpu_hash_start << <grid2, block2, 0, stream[0] >> >(stratum, threads, startNounce); //fastkdf
 
-	cudaStreamSynchronize(stream[0]);
+	CUDA_SAFE_CALL(cudaStreamSynchronize(stream[0]));
 
 	neoscrypt_gpu_hash_salsa1_stream1 << <grid, block, 0, stream[0] >> >(threads, startNounce); //chacha
 	neoscrypt_gpu_hash_chacha1_stream1 << <grid, block, 0, stream[1] >> >(threads, startNounce); //salsa
@@ -1469,13 +1469,11 @@ __host__ void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, int thread
 	neoscrypt_gpu_hash_salsa2_stream1 << <grid, block, 0, stream[0] >> >(threads, startNounce); //chacha
 	neoscrypt_gpu_hash_chacha2_stream1 << <grid, block, 0, stream[1] >> >(threads, startNounce); //salsa
 
-	cudaDeviceSynchronize();
+	CUDA_SAFE_CALL(cudaDeviceSynchronize());
 
 	neoscrypt_gpu_hash_ending << <grid2, block2 >> >(stratum, threads, startNounce, d_NNonce[thr_id]); //fastkdf+end
 
-	cudaMemcpy(result, d_NNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost);
-
-	CUDA_SAFE_CALL(cudaGetLastError());
+	CUDA_SAFE_CALL(cudaMemcpy(result, d_NNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 }
 
 __host__ void neoscrypt_setBlockTarget(uint32_t* pdata, const void *target)

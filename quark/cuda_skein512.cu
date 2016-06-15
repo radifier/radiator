@@ -2710,7 +2710,7 @@ void skein512_cpu_hash_80_52(int thr_id, uint32_t threads, uint32_t startNounce,
 	dim3 block(1024);
 	cudaMemsetAsync(d_nonce[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
 	skein512_gpu_hash_80_52 << < grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_nonce[thr_id], target, thr_id);
-	cudaMemcpyAsync(h_found, d_nonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
+	CUDA_SAFE_CALL(cudaMemcpyAsync(h_found, d_nonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]));
 	cudaStreamSynchronize(gpustream[thr_id]);
 }
 __host__
@@ -2720,6 +2720,6 @@ void skein512_cpu_hash_80_50(int thr_id, uint32_t threads, uint32_t startNounce,
 	dim3 block(256);
 	cudaMemsetAsync(d_nonce[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
 	skein512_gpu_hash_80_50 << < grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_nonce[thr_id], target, thr_id);
-	cudaMemcpyAsync(h_found, d_nonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
+	CUDA_SAFE_CALL(cudaMemcpyAsync(h_found, d_nonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]));
 	cudaStreamSynchronize(gpustream[thr_id]);
 }
