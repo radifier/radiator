@@ -34,7 +34,7 @@ static uint32_t *d_NNonce[MAX_GPUS];
 __constant__  uint32_t pTarget[8];
 __constant__  uint32_t key_init[16];
 __constant__  uint32_t input_init[16];
-__constant__  uint32_t c_data[80];
+__constant__  uint32_t c_data[64];
 
 #define SALSA_SMALL_UNROLL 1
 #define CHACHA_SMALL_UNROLL 1
@@ -1269,6 +1269,7 @@ __global__ __launch_bounds__(TPB2, 1) void neoscrypt_gpu_hash_start(int stratum,
 #endif
 #endif
 		s_data[threadIdx.x] = c_data[threadIdx.x];
+	__syncthreads();
 
 	const int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	const uint32_t nonce = startNonce + thread;
@@ -1391,7 +1392,7 @@ __global__ __launch_bounds__(TPB2, 8) void neoscrypt_gpu_hash_ending(int stratum
 #endif
 #endif
 		s_data[threadIdx.x] = c_data[threadIdx.x];
-	//	__syncthreads();
+	__syncthreads();
 	const int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	const uint32_t nonce = startNonce + thread;
 
@@ -1412,7 +1413,7 @@ __global__ __launch_bounds__(TPB2, 8) void neoscrypt_gpu_hash_ending(int stratum
 #endif
 	if(outbuf <= pTarget[7])
 	{
-		uint32_t tmp = atomicExch(&nonceVector[0], nonce);
+		uint32_t tmp = atomicExch(nonceVector, nonce);
 		if(tmp != 0xffffffff)
 			nonceVector[1] = tmp;
 	}
@@ -1448,7 +1449,7 @@ void neoscrypt_cpu_init_2stream(int thr_id, int threads)
 
 __host__ void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, int threads, uint32_t startNounce, uint32_t *result)
 {
-	CUDA_SAFE_CALL(cudaMemsetAsync(d_NNonce[thr_id], 0xff, 2 * sizeof(uint32_t), stream[0]));
+	CUDA_SAFE_CALL(cudaMemsetAsync(d_NNonce[thr_id], 0xff, 2 * sizeof(uint32_t), stream[1]));
 	
 	const int threadsperblock = TPB;
 	
@@ -1478,17 +1479,17 @@ __host__ void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, int thread
 
 __host__ void neoscrypt_setBlockTarget(uint32_t* pdata, const void *target)
 {
-	uint32_t PaddedMessage[80]; //brings balance to the force
+	uint32_t PaddedMessage[64];
 	uint32_t input[16], key[16] = {0};
 
-	for(int i = 0; i < 20; i++)
+	for(int i = 0; i < 19; i++)
 	{
 		PaddedMessage[i     ] = pdata[i];
 		PaddedMessage[i + 20] = pdata[i];
 		PaddedMessage[i + 40] = pdata[i];
 	}
-	for(int i = 0; i<4; i++)  PaddedMessage[i + 60] = pdata[i];
-	for(int i = 0; i<16; i++) PaddedMessage[i + 64] = pdata[i];
+	for(int i = 0; i<4; i++)
+		PaddedMessage[i + 60] = pdata[i];
 
 	PaddedMessage[19] = 0;
 	PaddedMessage[39] = 0;
@@ -1503,6 +1504,6 @@ __host__ void neoscrypt_setBlockTarget(uint32_t* pdata, const void *target)
 	cudaMemcpyToSymbol(input_init, input, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
 	cudaMemcpyToSymbol(key_init, key, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
 
-	cudaMemcpyToSymbol(c_data, PaddedMessage, 80 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbol(c_data, PaddedMessage, 64 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
 	CUDA_SAFE_CALL(cudaGetLastError());
 }
