@@ -311,7 +311,7 @@ idx = BLAKE2S_SIGMA[idx0][idx1+1]; a += key[idx]; \
 	c += d; b = ROTR32(b^c, 7); \
 } 
 
-static __forceinline__ __device__ void Blake2S(uint32_t *out, const uint32_t* __restrict__  inout, const  uint32_t * __restrict__ TheKey)
+static __forceinline__ __device__ void Blake2S(uint32_t *out, const uint32_t* const __restrict__  inout, const  uint32_t * const __restrict__ TheKey)
 {
 	uint16 V;
 	uint32_t idx;
@@ -434,8 +434,7 @@ static __forceinline__ __device__ void Blake2S(uint32_t *out, const uint32_t* __
 	BLAKE_G_PRE1(3, 12, V.lo.s2, V.lo.s7, V.hi.s0, V.hi.s5, TheKey);
 	BLAKE_G_PRE2(13, 0, V.lo.s3, V.lo.s4, V.hi.s1, V.hi.s6, TheKey);
 
-	V.lo ^= V.hi;
-	V.lo ^= tmpblock;
+	V.lo ^= V.hi ^ tmpblock;
 
 	V.hi = BLAKE2S_IV_Vec;
 	tmpblock = V.lo;
@@ -497,8 +496,7 @@ static __forceinline__ __device__ void Blake2S(uint32_t *out, const uint32_t* __
 		BLAKE_G(x, 0x0E, V.lo.s3, V.lo.s4, V.hi.s1, V.hi.s6, inout);
 	}
 
-	V.lo ^= V.hi;
-	V.lo ^= tmpblock;
+	V.lo ^= V.hi ^ tmpblock;
 
 	((uint8*)out)[0] = V.lo;
 }
@@ -839,7 +837,7 @@ static __forceinline__ __host__ void Blake2Shost(uint32_t * inout, const uint32_
 	((uint8*)inout)[0] = V.lo;
 }
 
-static __forceinline__ __device__ void fastkdf256_v1(int thread, const uint32_t nonce, const uint32_t * __restrict__  s_data) //, vectypeS * output)
+static __forceinline__ __device__ void fastkdf256_v1(int thread, const uint32_t nonce, const uint32_t * const __restrict__  s_data) //, vectypeS * output)
 {
 	vectypeS output[8];
 	uint8_t bufidx;
@@ -883,27 +881,28 @@ static __forceinline__ __device__ void fastkdf256_v1(int thread, const uint32_t 
 
 		for(int k = 0; k < 9; ++k)
 		{
-			uint32_t indice = (k + qbuf) & 63;
-			temp[k] = ((uint32_t*)B)[indice];
-			temp[k] ^= shifted[k];
-			((uint32_t*)B)[indice] = temp[k];
+			uint32_t indice = (k + qbuf) & 0x0000003f;
+			temp[k] = B[indice] ^ shifted[k];
+			B[indice] = temp[k];
 		}
 
-		uint32_t a = ((uint32_t*)s_data)[qbuf % 64], b;
+		uint32_t a = s_data[qbuf & 0x0000003f], b;
 		//#pragma unroll
-		for(int k = 0; k<8; k++)
+		for(int k = 0; k<16; k+=2)
 		{
-			b = s_data[(qbuf + 2 * k + 1) % 64];
-			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[2 * k]) : "r"(a), "r"(b), "r"(bitbuf));
-			a = s_data[(qbuf + 2 * k + 2) % 64];
-			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[2 * k + 1]) : "r"(b), "r"(a), "r"(bitbuf));
+			b = s_data[(qbuf + k + 1) & 0x0000003f];
+			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[k]) : "r"(a), "r"(b), "r"(bitbuf));
+			a = s_data[(qbuf + k + 2) & 0x0000003f];
+			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[k + 1]) : "r"(b), "r"(a), "r"(bitbuf));
 		}
 
 		const uint32_t noncepos = 19 - qbuf % 20;
 		if(noncepos <= 16 && qbuf<60)
 		{
-			if(noncepos != 0)	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[noncepos - 1]) : "r"(data18), "r"(nonce), "r"(bitbuf));
-			if(noncepos != 16)	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[noncepos]) : "r"(nonce), "r"(data20), "r"(bitbuf));
+			if(noncepos != 0)
+				asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[noncepos - 1]) : "r"(data18), "r"(nonce), "r"(bitbuf));
+			if(noncepos != 16)
+				asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[noncepos]) : "r"(nonce), "r"(data20), "r"(bitbuf));
 		}
 
 		for(int k = 0; k<8; k++)
@@ -923,7 +922,7 @@ static __forceinline__ __device__ void fastkdf256_v1(int thread, const uint32_t 
 	bitbuf = rbuf << 3;
 
 	for(int i = 0; i<64; i++)
-		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(((uint32_t*)output)[i]) : "r"(((uint32_t*)(B))[(qbuf + i) % 64]), "r"(((uint32_t*)(B))[(qbuf + i + 1) % 64]), "r"(bitbuf));
+		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(((uint32_t*)output)[i]) : "r"(B[(qbuf + i) & 0x0000003f]), "r"(B[(qbuf + i + 1) & 0x0000003f4]), "r"(bitbuf));
 
 	((ulonglong4*)output)[0] ^= ((ulonglong4*)input)[0];
 
@@ -936,7 +935,7 @@ static __forceinline__ __device__ void fastkdf256_v1(int thread, const uint32_t 
 		(Input + 8 * thread)[i] = output[i];
 }
 
-static __forceinline__ __device__ void fastkdf256_v2(int thread, const uint32_t nonce, const  uint32_t* __restrict__ s_data) //, vectypeS * output)
+static __forceinline__ __device__ void fastkdf256_v2(int thread, const uint32_t nonce, const uint32_t* const __restrict__ s_data) //, vectypeS * output)
 {
 	vectypeS output[8];
 	uint8_t bufidx;
@@ -949,12 +948,12 @@ static __forceinline__ __device__ void fastkdf256_v2(int thread, const uint32_t 
 
 #define Bshift 16*thread
 
-	uint32_t* B = (uint32_t*)&B2[Bshift];
+	uint32_t *const B = (uint32_t*)&B2[Bshift];
 	((uintx64*)(B))[0] = ((uintx64*)s_data)[0];
 
-	((uint32_t*)B)[19] = nonce;
-	((uint32_t*)B)[39] = nonce;
-	((uint32_t*)B)[59] = nonce;
+	B[19] = nonce;
+	B[39] = nonce;
+	B[59] = nonce;
 
 	((ulonglong4*)input)[0] = ((ulonglong4*)input_init)[0];
 	((uint28*)key)[0] = ((uint28*)key_init)[0];
@@ -980,27 +979,26 @@ static __forceinline__ __device__ void fastkdf256_v2(int thread, const uint32_t 
 		uint32_t temp[9];
 
 		for(int k = 0; k < 9; ++k)
-			temp[k] = __ldg(&B[(k + qbuf) & 63]);
+			temp[k] = __ldg(&B[(k + qbuf) & 0x0000003f]) ^ shifted[k];
 
-		for(int k = 0; k < 9; ++k)
-			temp[k] ^= shifted[k];
-
-		uint32_t a = s_data[qbuf % 64], b;
+		uint32_t a = s_data[qbuf & 0x0000003f], b;
 		//#pragma unroll
 
-		for(int k = 0; k<8; k++)
+		for(int k = 0; k<16; k+=2)
 		{
-			b = s_data[(qbuf + 2 * k + 1) % 64];
-			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[2 * k]) : "r"(a), "r"(b), "r"(bitbuf));
-			a = s_data[(qbuf + 2 * k + 2) % 64];
-			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[2 * k + 1]) : "r"(b), "r"(a), "r"(bitbuf));
+			b = s_data[(qbuf + k + 1) & 0x0000003f];
+			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[k]) : "r"(a), "r"(b), "r"(bitbuf));
+			a = s_data[(qbuf + k + 2) & 0x0000003f];
+			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[k + 1]) : "r"(b), "r"(a), "r"(bitbuf));
 		}
 
 		const uint32_t noncepos = 19 - qbuf % 20;
 		if(noncepos <= 16 && qbuf<60)
 		{
-			if(noncepos != 0)	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[noncepos - 1]) : "r"(data18), "r"(nonce), "r"(bitbuf));
-			if(noncepos != 16)	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[noncepos]) : "r"(nonce), "r"(data20), "r"(bitbuf));
+			if(noncepos != 0)
+				asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[noncepos - 1]) : "r"(data18), "r"(nonce), "r"(bitbuf));
+			if(noncepos != 16)
+				asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[noncepos]) : "r"(nonce), "r"(data20), "r"(bitbuf));
 		}
 
 		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[0]) : "r"(temp[0]), "r"(temp[1]), "r"(bitbuf));
@@ -1015,7 +1013,7 @@ static __forceinline__ __device__ void fastkdf256_v2(int thread, const uint32_t 
 		Blake2S_v2(input, input, key);
 
 		for(int k = 0; k < 9; k++)
-			B[(k + qbuf) & 63] = temp[k];
+			B[(k + qbuf) & 0x0000003f] = temp[k];
 	}
 
 	bufhelper = ((uchar4*)input)[0];
@@ -1031,12 +1029,13 @@ static __forceinline__ __device__ void fastkdf256_v2(int thread, const uint32_t 
 
 	for(int i = 0; i<64; i++)
 	{
-		const uint32_t a = (qbuf + i) & 63, b = (qbuf + i + 1) & 63;
+		const uint32_t a = (qbuf + i) & 0x0000003f, b = (qbuf + i + 1) & 0x0000003f;
 		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(((uint32_t*)output)[i]) : "r"(__ldg(&B[a])), "r"(__ldg(&B[b])), "r"(bitbuf));
 	}
 
 	output[0] ^= ((uint28*)input)[0];
-	for(int i = 0; i<8; i++) output[i] ^= ((uint28*)s_data)[i];
+	for(int i = 0; i<8; i++)
+		output[i] ^= ((uint28*)s_data)[i];
 	//	((ulonglong16 *)output)[0] ^= ((ulonglong16*)s_data)[0];
 	((uint32_t*)output)[19] ^= nonce;
 	((uint32_t*)output)[39] ^= nonce;
@@ -1044,7 +1043,7 @@ static __forceinline__ __device__ void fastkdf256_v2(int thread, const uint32_t 
 	((ulonglong16 *)(Input + 8 * thread))[0] = ((ulonglong16*)output)[0];
 }
 
-static __forceinline__ __device__ void fastkdf32_v1(int thread, const  uint32_t  nonce, const uint32_t * __restrict__ salt, const uint32_t * __restrict__  s_data, uint32_t &output)
+static __forceinline__ __device__ void fastkdf32_v1(int thread, const  uint32_t  nonce, const uint32_t * const __restrict__ salt, const uint32_t *const __restrict__  s_data, uint32_t &output)
 {
 	uint8_t bufidx;
 	uchar4 bufhelper;
@@ -1052,112 +1051,7 @@ static __forceinline__ __device__ void fastkdf32_v1(int thread, const  uint32_t 
 
 #define Bshift 16*thread
 
-	uint32_t* B0 = (uint32_t*)&B2[Bshift];
-	uint32_t cdata7 = s_data[7];
-	const uint32_t data18 = s_data[18];
-	const uint32_t data20 = s_data[0];
-
-	((uintx64*)B0)[0] = ((uintx64*)salt)[0];
-	uint32_t input[BLAKE2S_BLOCK_SIZE / 4]; uint32_t key[BLAKE2S_BLOCK_SIZE / 4] = {0};
-	((uint816*)input)[0] = ((uint816*)s_data)[0];
-	((uint48*)key)[0] = ((uint48*)salt)[0];
-	uint32_t qbuf, rbuf, bitbuf;
-
-#pragma nounroll  
-	for(int i = 0; i < 31; i++)
-	{
-#if __CUDA_ARCH__ < 500
-		Blake2S(input, input, key);
-#else 
-		Blake2S_v2(input, input, key);
-#endif
-		bufidx = 0;
-		bufhelper = ((uchar4*)input)[0];
-		for(int x = 1; x < BLAKE2S_OUT_SIZE / 4; ++x)
-		{
-			bufhelper += ((uchar4*)input)[x];
-		}
-		bufidx = bufhelper.x + bufhelper.y + bufhelper.z + bufhelper.w;
-		qbuf = bufidx / 4;
-		rbuf = bufidx & 3;
-		bitbuf = rbuf << 3;
-		uint32_t shifted[9];
-
-		shift256R4(shifted, ((uint8*)input)[0], bitbuf);
-
-		for(int k = 0; k < 9; k++)
-		{
-			temp[k] = ((uint32_t *)B0)[(k + qbuf) % 64];
-		}
-
-		((uint28*)temp)[0] ^= ((uint28*)shifted)[0];
-		temp[8] ^= shifted[8];
-
-		uint32_t a = s_data[qbuf % 64], b;
-		//#pragma unroll
-		for(int k = 0; k<8; k++)
-		{
-			b = s_data[(qbuf + 2 * k + 1) % 64];
-			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[2 * k]) : "r"(a), "r"(b), "r"(bitbuf));
-			a = s_data[(qbuf + 2 * k + 2) % 64];
-			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[2 * k + 1]) : "r"(b), "r"(a), "r"(bitbuf));
-		}
-
-		const uint32_t noncepos = 19 - qbuf % 20;
-		if(noncepos <= 16 && qbuf<60)
-		{
-			if(noncepos != 0)	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[noncepos - 1]) : "r"(data18), "r"(nonce), "r"(bitbuf));
-			if(noncepos != 16)	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[noncepos]) : "r"(nonce), "r"(data20), "r"(bitbuf));
-		}
-		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[0]) : "r"(temp[0]), "r"(temp[1]), "r"(bitbuf));
-		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[1]) : "r"(temp[1]), "r"(temp[2]), "r"(bitbuf));
-		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[2]) : "r"(temp[2]), "r"(temp[3]), "r"(bitbuf));
-		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[3]) : "r"(temp[3]), "r"(temp[4]), "r"(bitbuf));
-		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[4]) : "r"(temp[4]), "r"(temp[5]), "r"(bitbuf));
-		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[5]) : "r"(temp[5]), "r"(temp[6]), "r"(bitbuf));
-		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[6]) : "r"(temp[6]), "r"(temp[7]), "r"(bitbuf));
-		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[7]) : "r"(temp[7]), "r"(temp[8]), "r"(bitbuf));
-
-		for(int k = 0; k < 9; k++)
-		{
-			((uint32_t *)B0)[(k + qbuf) & 63] = temp[k];
-		}
-	}
-
-#if __CUDA_ARCH__ < 500
-	Blake2S(input, input, key);
-#else 
-	Blake2S_v2(input, input, key);
-#endif
-	bufidx = 0;
-	bufhelper = ((uchar4*)input)[0];
-	for(int x = 1; x < BLAKE2S_OUT_SIZE / 4; ++x)
-	{
-		bufhelper += ((uchar4*)input)[x];
-	}
-	bufidx = bufhelper.x + bufhelper.y + bufhelper.z + bufhelper.w;
-	qbuf = bufidx / 4;
-	rbuf = bufidx & 3;
-	bitbuf = rbuf << 3;
-
-	for(int k = 7; k < 9; k++)
-	{
-		temp[k] = ((uint32_t *)B0)[(k + qbuf) % 64];
-	}
-	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(output) : "r"(temp[7]), "r"(temp[8]), "r"(bitbuf));
-	output ^= input[7];
-	output ^= cdata7;
-}
-
-static __forceinline__ __device__ void fastkdf32_v3(int thread, const  uint32_t  nonce, const uint32_t * __restrict__ salt, const uint32_t * __restrict__  s_data, uint32_t &output)
-{
-	uint32_t temp[9];
-	uint8_t bufidx;
-	uchar4 bufhelper;
-
-#define Bshift 16*thread
-
-	uint32_t* B0 = (uint32_t*)&B2[Bshift];
+	uint32_t* const B0 = (uint32_t*)&B2[Bshift];
 	const uint32_t cdata7 = s_data[7];
 	const uint32_t data18 = s_data[18];
 	const uint32_t data20 = s_data[0];
@@ -1192,20 +1086,20 @@ static __forceinline__ __device__ void fastkdf32_v3(int thread, const  uint32_t 
 
 		for(int k = 0; k < 9; k++)
 		{
-			temp[k] = __ldg(&((uint32_t*)B0)[(k + qbuf) % 64]);
+			temp[k] = B0[(k + qbuf) & 0x0000003f];
 		}
 
 		((uint28*)temp)[0] ^= ((uint28*)shifted)[0];
 		temp[8] ^= shifted[8];
 
-		uint32_t a = s_data[qbuf % 64], b;
+		uint32_t a = s_data[qbuf & 0x0000003f], b;
 		//#pragma unroll
-		for(int k = 0; k<8; k++)
+		for(int k = 0; k<16; k+=2)
 		{
-			b = s_data[(qbuf + 2 * k + 1) % 64];
-			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[2 * k]) : "r"(a), "r"(b), "r"(bitbuf));
-			a = s_data[(qbuf + 2 * k + 2) % 64];
-			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[2 * k + 1]) : "r"(b), "r"(a), "r"(bitbuf));
+			b = s_data[(qbuf + k + 1) & 0x0000003f];
+			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[k]) : "r"(a), "r"(b), "r"(bitbuf));
+			a = s_data[(qbuf + k + 2) & 0x0000003f];
+			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[k + 1]) : "r"(b), "r"(a), "r"(bitbuf));
 		}
 
 		const uint32_t noncepos = 19 - qbuf % 20;
@@ -1214,7 +1108,6 @@ static __forceinline__ __device__ void fastkdf32_v3(int thread, const  uint32_t 
 			if(noncepos != 0)	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[noncepos - 1]) : "r"(data18), "r"(nonce), "r"(bitbuf));
 			if(noncepos != 16)	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[noncepos]) : "r"(nonce), "r"(data20), "r"(bitbuf));
 		}
-
 		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[0]) : "r"(temp[0]), "r"(temp[1]), "r"(bitbuf));
 		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[1]) : "r"(temp[1]), "r"(temp[2]), "r"(bitbuf));
 		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[2]) : "r"(temp[2]), "r"(temp[3]), "r"(bitbuf));
@@ -1226,7 +1119,7 @@ static __forceinline__ __device__ void fastkdf32_v3(int thread, const  uint32_t 
 
 		for(int k = 0; k < 9; k++)
 		{
-			((uint32_t*)B0)[(k + qbuf) % 64] = temp[k];
+			B0[(k + qbuf) & 0x0000003f] = temp[k];
 		}
 	}
 
@@ -1246,11 +1139,117 @@ static __forceinline__ __device__ void fastkdf32_v3(int thread, const  uint32_t 
 	rbuf = bufidx & 3;
 	bitbuf = rbuf << 3;
 
-	temp[7] = __ldg(&B0[(qbuf + 7) % 64]);
-	temp[8] = __ldg(&B0[(qbuf + 8) % 64]);
+	for(int k = 7; k < 9; k++)
+	{
+		temp[k] = B0[(k + qbuf) & 0x0000003f];
+	}
 	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(output) : "r"(temp[7]), "r"(temp[8]), "r"(bitbuf));
-	output ^= input[7];
-	output ^= cdata7;
+	output ^= input[7] ^ cdata7;
+}
+
+static __forceinline__ __device__ void fastkdf32_v3(int thread, const  uint32_t  nonce, const uint32_t * __restrict__ salt, const uint32_t * __restrict__  s_data, uint32_t &output)
+{
+	uint32_t temp[9];
+	uint8_t bufidx;
+	uchar4 bufhelper;
+
+#define Bshift 16*thread
+
+	uint32_t*const B0 = (uint32_t*)&B2[Bshift];
+	const uint32_t cdata7 = s_data[7];
+	const uint32_t data18 = s_data[18];
+	const uint32_t data20 = s_data[0];
+
+	((uintx64*)B0)[0] = ((uintx64*)salt)[0];
+	uint32_t input[BLAKE2S_BLOCK_SIZE / 4]; uint32_t key[BLAKE2S_BLOCK_SIZE / 4] = {0};
+	((uint816*)input)[0] = ((uint816*)s_data)[0];
+	((uint48*)key)[0] = ((uint48*)salt)[0];
+	uint32_t qbuf, rbuf, bitbuf;
+
+#pragma nounroll  
+	for(int i = 0; i < 31; i++)
+	{
+#if __CUDA_ARCH__ < 500
+		Blake2S(input, input, key);
+#else 
+		Blake2S_v2(input, input, key);
+#endif
+		bufidx = 0;
+		bufhelper = ((uchar4*)input)[0];
+		for(int x = 1; x < BLAKE2S_OUT_SIZE / 4; ++x)
+		{
+			bufhelper += ((uchar4*)input)[x];
+		}
+		bufidx = bufhelper.x + bufhelper.y + bufhelper.z + bufhelper.w;
+		qbuf = bufidx / 4;
+		rbuf = bufidx & 3;
+		bitbuf = rbuf << 3;
+		uint32_t shifted[9];
+
+		shift256R4(shifted, ((uint8*)input)[0], bitbuf);
+
+		for(int k = 0; k < 9; k++)
+		{
+			temp[k] = __ldg(&B0[(k + qbuf) & 0x0000003f]);
+		}
+
+		((uint28*)temp)[0] ^= ((uint28*)shifted)[0];
+		temp[8] ^= shifted[8];
+
+		uint32_t a = s_data[qbuf & 0x0000003f], b;
+		//#pragma unroll
+		for(int k = 0; k<16; k+=2)
+		{
+			b = s_data[(qbuf + k + 1) & 0x0000003f];
+			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[k]) : "r"(a), "r"(b), "r"(bitbuf));
+			a = s_data[(qbuf + k + 2) & 0x0000003f];
+			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[k + 1]) : "r"(b), "r"(a), "r"(bitbuf));
+		}
+
+		const uint32_t noncepos = 19 - qbuf % 20;
+		if(noncepos <= 16 && qbuf<60)
+		{
+			if(noncepos != 0)
+				asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[noncepos - 1]) : "r"(data18), "r"(nonce), "r"(bitbuf));
+			if(noncepos != 16)
+				asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[noncepos]) : "r"(nonce), "r"(data20), "r"(bitbuf));
+		}
+
+		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[0]) : "r"(temp[0]), "r"(temp[1]), "r"(bitbuf));
+		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[1]) : "r"(temp[1]), "r"(temp[2]), "r"(bitbuf));
+		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[2]) : "r"(temp[2]), "r"(temp[3]), "r"(bitbuf));
+		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[3]) : "r"(temp[3]), "r"(temp[4]), "r"(bitbuf));
+		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[4]) : "r"(temp[4]), "r"(temp[5]), "r"(bitbuf));
+		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[5]) : "r"(temp[5]), "r"(temp[6]), "r"(bitbuf));
+		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[6]) : "r"(temp[6]), "r"(temp[7]), "r"(bitbuf));
+		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[7]) : "r"(temp[7]), "r"(temp[8]), "r"(bitbuf));
+
+		for(int k = 0; k < 9; k++)
+		{
+			B0[(k + qbuf) & 0x0000003f] = temp[k];
+		}
+	}
+
+#if __CUDA_ARCH__ < 500
+	Blake2S(input, input, key);
+#else 
+	Blake2S_v2(input, input, key);
+#endif
+	bufidx = 0;
+	bufhelper = ((uchar4*)input)[0];
+	for(int x = 1; x < BLAKE2S_OUT_SIZE / 4; ++x)
+	{
+		bufhelper += ((uchar4*)input)[x];
+	}
+	bufidx = bufhelper.x + bufhelper.y + bufhelper.z + bufhelper.w;
+	qbuf = bufidx / 4;
+	rbuf = bufidx & 3;
+	bitbuf = rbuf << 3;
+
+	temp[7] = __ldg(&B0[(qbuf + 7) & 0x0000003f]);
+	temp[8] = __ldg(&B0[(qbuf + 8) & 0x0000003f]);
+	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(output) : "r"(temp[7]), "r"(temp[8]), "r"(bitbuf));
+	output ^= input[7] ^ cdata7;
 }
 
 #define SHIFT 128
@@ -1287,8 +1286,8 @@ __global__ __launch_bounds__(TPB2, 1) void neoscrypt_gpu_hash_start(int stratum,
 __global__ __launch_bounds__(TPB, 1) void neoscrypt_gpu_hash_chacha1_stream1(int threads, uint32_t startNonce)
 {
 	int thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	int shift = SHIFT * 8 * thread;
-	unsigned int shiftTr = 8 * thread;
+	const int shift = SHIFT * 8 * thread;
+	const unsigned int shiftTr = 8 * thread;
 
 	vectypeS X[8];
 	for(int i = 0; i<8; i++)
