@@ -1,5 +1,5 @@
 
-ccMiner release 7.03(KlausT-mod) (June 11th, 2016)
+ccMiner release 7.04(KlausT-mod) (June 11th, 2016)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -205,10 +205,12 @@ features.
 2016-05-12 v6.02: faster x17 and quark
 2016-05-16 v7.00: added Vanillacoin, optimized blake and blakecoin,
                   added stratum methods used by yiimp.ccminer.org
-2016-05-16 v7.01  stratum.get_stats bug fix
-2016-06-02 v7.02  fix default intensity for Nist5
+2016-05-16 v7.01: stratum.get_stats bug fix
+2016-06-02 v7.02: fix default intensity for Nist5
                   fix power usage statistics
-2016-06-11 v7.03  faster lyra2v2
+2016-06-11 v7.03: faster lyra2v2
+2016-06-18 v7.04: Neoscrypt optimization
+                  Bug Fixes 
 
 >>> AUTHORS <<<
 
