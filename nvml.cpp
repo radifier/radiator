@@ -291,6 +291,7 @@ nvml_handle * nvml_create()
 	return nvmlh;
 }
 
+#define MAXCLOCKS 255
 /* apply config clocks to an used device */
 int nvml_set_clocks(nvml_handle *nvmlh, int dev_id)
 {
@@ -309,17 +310,36 @@ int nvml_set_clocks(nvml_handle *nvmlh, int dev_id)
 	}
 
 	uint32_t mem_prev = clock_prev_mem[dev_id];
-	if (!mem_prev)
-		nvmlh->nvmlDeviceGetApplicationsClock(nvmlh->devs[n], NVML_CLOCK_MEM, &mem_prev);
+	if(!mem_prev)
+	{
+		rc = nvmlh->nvmlDeviceGetApplicationsClock(nvmlh->devs[n], NVML_CLOCK_MEM, &mem_prev);
+		if(rc != NVML_SUCCESS)
+		{
+			applog(LOG_WARNING, "GPU #%d: unable to query memory clock", dev_id);
+			return -1;
+		}
+	}
 	uint32_t gpu_prev = clock_prev[dev_id];
-	if (!gpu_prev)
-		nvmlh->nvmlDeviceGetApplicationsClock(nvmlh->devs[n], NVML_CLOCK_GRAPHICS, &gpu_prev);
+	if(!gpu_prev)
+	{
+		rc = nvmlh->nvmlDeviceGetApplicationsClock(nvmlh->devs[n], NVML_CLOCK_GRAPHICS, &gpu_prev);
+		if(rc != NVML_SUCCESS)
+		{
+			applog(LOG_WARNING, "GPU #%d: unable to query graphics clock", dev_id);
+			return -1;
+		}
+	}
 
-	nvmlh->nvmlDeviceGetDefaultApplicationsClock(nvmlh->devs[n], NVML_CLOCK_MEM, &mem_clk);
+	rc = nvmlh->nvmlDeviceGetDefaultApplicationsClock(nvmlh->devs[n], NVML_CLOCK_MEM, &mem_clk);
+	if(rc != NVML_SUCCESS)
+	{
+		applog(LOG_WARNING, "GPU #%d: unable to query default memory clock", dev_id);
+		return -1;
+	}
 	rc = nvmlh->nvmlDeviceGetDefaultApplicationsClock(nvmlh->devs[n], NVML_CLOCK_GRAPHICS, &gpu_clk);
 	if (rc != NVML_SUCCESS) {
-		applog(LOG_WARNING, "GPU #%d: unable to query application clocks", dev_id);
-		return -EINVAL;
+		applog(LOG_WARNING, "GPU #%d: unable to query default graphics clock", dev_id);
+		return -1;
 	}
 
 	if (opt_debug)
@@ -330,24 +350,31 @@ int nvml_set_clocks(nvml_handle *nvmlh, int dev_id)
 	if (device_gpu_clocks[dev_id]) gpu_clk = device_gpu_clocks[dev_id];
 
 	// these functions works for the 960 and the 970 (346.72+), not for the 750 Ti
-	uint32_t nclocks = 0, clocks[127] = { 0 };
-	nvmlh->nvmlDeviceGetSupportedMemoryClocks(nvmlh->devs[n], &nclocks, NULL);
-	nclocks = min(nclocks, 127);
-	if (nclocks)
-		nvmlh->nvmlDeviceGetSupportedMemoryClocks(nvmlh->devs[n], &nclocks, clocks);
+	uint32_t nclocks = MAXCLOCKS;
+	uint32_t clocks[MAXCLOCKS] = {0};
+
+	rc = nvmlh->nvmlDeviceGetSupportedMemoryClocks(nvmlh->devs[n], &nclocks, clocks);
+	if(rc != NVML_SUCCESS)
+	{
+		applog(LOG_WARNING, "GPU #%d: unable to query supported memory clocks", dev_id);
+		return -1;
+	}
 	for (uint8_t u=0; u < nclocks; u++) {
 		// ordered by pstate (so highest is first memory clock - P0)
-		if (clocks[u] <= mem_clk) {
+		if(clocks[u] <= mem_clk)
+		{
 			mem_clk = clocks[u];
 			break;
 		}
 	}
 
-	nclocks = 0;
-	nvmlh->nvmlDeviceGetSupportedGraphicsClocks(nvmlh->devs[n], mem_clk, &nclocks, NULL);
-	nclocks = min(nclocks, 127);
-	if (nclocks)
-		nvmlh->nvmlDeviceGetSupportedGraphicsClocks(nvmlh->devs[n], mem_clk, &nclocks, clocks);
+	nclocks = MAXCLOCKS;
+	rc = nvmlh->nvmlDeviceGetSupportedGraphicsClocks(nvmlh->devs[n], mem_clk, &nclocks, clocks);
+	if(rc != NVML_SUCCESS)
+	{
+		applog(LOG_WARNING, "GPU #%d: unable to query supported graphics clocks", dev_id);
+		return -1;
+	}
 	for (uint8_t u=0; u < nclocks; u++) {
 		// ordered desc, so get first
 		if (clocks[u] <= gpu_clk) {
@@ -441,7 +468,6 @@ int nvml_set_pstate(nvml_handle *nvmlh, int dev_id)
 	if (device_gpu_clocks[dev_id]) gpu_clk = device_gpu_clocks[dev_id];
 
 	// these functions works for the 960 and the 970 (346.72+), not for the 750 Ti
-	#define MAXCLOCKS 127
 	uint32_t clocks[MAXCLOCKS] = {0};
 	uint32_t nclocks = MAXCLOCKS;
 	int8_t wanted_pstate = device_pstate[dev_id];
@@ -451,26 +477,32 @@ int nvml_set_pstate(nvml_handle *nvmlh, int dev_id)
 		applog(LOG_WARNING, "GPU #%d: nvmlDeviceGetSupportedMemoryClocks: %s", dev_id, nvmlh->nvmlErrorString(rc));
 		return -1;
 	}
-	for(uint8_t u = 0; u < nclocks; u++)
+	if(wanted_pstate < 0)
+		return -1;
+	if(wanted_pstate < nclocks)
 	{
-		// ordered by pstate (so highest P0 first)
-		if (u == wanted_pstate) {
-			mem_clk = clocks[u];
-			break;
-		}
+		mem_clk = clocks[wanted_pstate];
+	}
+	else
+	{
+		applog(LOG_WARNING, "GPU #%d: pstate %d is unsupported");
+		return -1;
 	}
 
 	nclocks = MAXCLOCKS;
-	nvmlh->nvmlDeviceGetSupportedGraphicsClocks(nvmlh->devs[n], mem_clk, &nclocks, clocks);
+	rc = nvmlh->nvmlDeviceGetSupportedGraphicsClocks(nvmlh->devs[n], mem_clk, &nclocks, clocks);
 	if(rc != NVML_SUCCESS)
 	{
 		applog(LOG_WARNING, "GPU #%d: nvmlDeviceGetSupportedGraphicsClocks: %s", dev_id, nvmlh->nvmlErrorString(rc));
 		return -1;
 	}
+	if(device_gpu_clocks[dev_id] == 0)
+		gpu_clk = 9999;
 	for(uint8_t u = 0; u < nclocks; u++)
 	{
 		// ordered desc, so get first
-		if (clocks[u] <= gpu_clk) {
+		if(clocks[u] <= gpu_clk)
+		{
 			gpu_clk = clocks[u];
 			break;
 		}
