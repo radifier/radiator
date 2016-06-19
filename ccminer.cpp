@@ -322,8 +322,15 @@ Options:\n\
       --no-cpu-verify   don't verify the found results\n\
   -c, --config=FILE     load a JSON-format configuration file\n\
   -V, --version         display version information and exit\n\
-  -h, --help            display this help text and exit\n\
-";
+  -h, --help            display this help text and exit\n"
+#if defined(USE_WRAPNVML) && (defined(__linux) || defined(_WIN64)) /* via nvml */
+"\
+      --mem-clock=N     Set the gpu memory max clock (346.72+ driver)\n\
+      --gpu-clock=N     Set the gpu engine max clock (346.72+ driver)\n\
+      --pstate=N        Set the gpu power state (352.21+ driver)\n\
+			--plimit=N        Set the gpu power limit(352.21 + driver)\n"
+#endif
+"";
 
 static char const short_options[] =
 #ifndef WIN32
@@ -380,7 +387,11 @@ static struct option const options[] =
 	{ "diff-multiplier", 1, NULL, 'm' },
 	{ "diff-factor", 1, NULL, 'f' },
 	{ "diff", 1, NULL, 'f' }, // compat
-	{ 0, 0, 0, 0 }
+	{"gpu-clock", 1, NULL, 1070},
+	{"mem-clock", 1, NULL, 1071},
+	{"pstate", 1, NULL, 1072},
+	{"plimit", 1, NULL, 1073},
+	{0, 0, 0, 0}
 };
 
 struct work _ALIGN(64) g_work;
@@ -2455,6 +2466,54 @@ static void parse_arg(int key, char *arg)
 		show_version_and_exit();
 	case 'h':
 		show_usage_and_exit(0);
+	case 1070: /* --gpu-clock */
+	{
+		char *pch = strtok(arg, ",");
+		int n = 0;
+		while(pch != NULL && n < MAX_GPUS)
+		{
+			int dev_id = device_map[n++];
+			device_gpu_clocks[dev_id] = atoi(pch);
+			pch = strtok(NULL, ",");
+		}
+	}
+	break;
+	case 1071: /* --mem-clock */
+	{
+		char *pch = strtok(arg, ",");
+		int n = 0;
+		while(pch != NULL && n < MAX_GPUS)
+		{
+			int dev_id = device_map[n++];
+			device_mem_clocks[dev_id] = atoi(pch);
+			pch = strtok(NULL, ",");
+		}
+	}
+	break;
+	case 1072: /* --pstate */
+	{
+		char *pch = strtok(arg, ",");
+		int n = 0;
+		while(pch != NULL && n < MAX_GPUS)
+		{
+			int dev_id = device_map[n++];
+			device_pstate[dev_id] = (int8_t)atoi(pch);
+			pch = strtok(NULL, ",");
+		}
+	}
+	break;
+	case 1073: /* --plimit */
+	{
+		char *pch = strtok(arg, ",");
+		int n = 0;
+		while(pch != NULL && n < MAX_GPUS)
+		{
+			int dev_id = device_map[n++];
+			device_plimit[dev_id] = atoi(pch);
+			pch = strtok(NULL, ",");
+		}
+	}
+	break;
 	default:
 		show_usage_and_exit(1);
 	}
