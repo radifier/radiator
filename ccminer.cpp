@@ -194,7 +194,7 @@ uint32_t gpus_intensity[MAX_GPUS] = {0};
 uint32_t device_gpu_clocks[MAX_GPUS] = {0};
 uint32_t device_mem_clocks[MAX_GPUS] = {0};
 uint32_t device_plimit[MAX_GPUS] = {0};
-int8_t device_pstate[MAX_GPUS] = {-1};
+int8_t device_pstate[MAX_GPUS];
 char *rpc_user = NULL;
 static char *rpc_url = nullptr;
 static char *rpc_userpass = nullptr;
@@ -2683,6 +2683,9 @@ int main(int argc, char *argv[])
 
 	rpc_user = strdup("");
 	rpc_pass = strdup("");
+
+	for(int i = 0; i < MAX_GPUS; i++)
+		device_pstate[i] = -1;
 
 	// number of cpus for thread affinity
 #if defined(WIN32)
