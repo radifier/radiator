@@ -211,11 +211,20 @@ nvml_handle * nvml_create()
 		free(nvmlh);
 		return NULL;
 	}
+	nvmlReturn_t rc;
+	rc = nvmlh->nvmlInit();
+	if(rc != NVML_SUCCESS)
+	{
+		applog(LOG_WARNING, "nvmlInit() failed: %s", nvmlh->nvmlErrorString(rc));
+		return NULL;
+	}
 
-	nvmlh->nvmlInit();
-	if (nvmlh->nvmlSystemGetDriverVersion)
-		nvmlh->nvmlSystemGetDriverVersion(driver_version, sizeof(driver_version));
-	nvmlh->nvmlDeviceGetCount(&nvmlh->nvml_gpucount);
+	rc = nvmlh->nvmlSystemGetDriverVersion(driver_version, sizeof(driver_version));
+	if(rc != NVML_SUCCESS)
+		applog(LOG_WARNING, "nvmlSystemGetDriverVersion() failed: %s", nvmlh->nvmlErrorString(rc));
+	rc = nvmlh->nvmlDeviceGetCount(&nvmlh->nvml_gpucount);
+	if(rc != NVML_SUCCESS)
+		applog(LOG_WARNING, "nvmlDeviceGetCount() failed: %s", nvmlh->nvmlErrorString(rc));
 
 	/* Query CUDA device count, in case it doesn't agree with NVML, since  */
 	/* CUDA will only report GPUs with compute capability greater than 1.0 */
@@ -237,8 +246,11 @@ nvml_handle * nvml_create()
 	nvmlh->app_clocks = (nvmlEnableState_t*) calloc(nvmlh->nvml_gpucount, sizeof(nvmlEnableState_t));
 
 	/* Obtain GPU device handles we're going to need repeatedly... */
-	for (i=0; i<nvmlh->nvml_gpucount; i++) {
-		nvmlh->nvmlDeviceGetHandleByIndex(i, &nvmlh->devs[i]);
+	for (i=0; i<nvmlh->nvml_gpucount; i++)
+	{
+		rc = nvmlh->nvmlDeviceGetHandleByIndex(i, &nvmlh->devs[i]);
+		if(rc != NVML_SUCCESS)
+			applog(LOG_WARNING, "GPU %d: nvmlDeviceGetHandleByIndex() failed: %s", i, nvmlh->nvmlErrorString(rc));
 	}
 
 	/* Query PCI info for each NVML device, and build table for mapping of */
@@ -253,14 +265,20 @@ nvml_handle * nvml_create()
 		nvmlh->nvml_pci_subsys_id[i] = pciinfo.pci_subsystem_id;
 
 		nvmlh->app_clocks[i] = NVML_FEATURE_UNKNOWN;
-		if (nvmlh->nvmlDeviceSetAPIRestriction) {
-			nvmlh->nvmlDeviceSetAPIRestriction(nvmlh->devs[i], NVML_RESTRICTED_API_SET_APPLICATION_CLOCKS,
+		if (nvmlh->nvmlDeviceSetAPIRestriction)
+		{
+			rc = nvmlh->nvmlDeviceSetAPIRestriction(nvmlh->devs[i], NVML_RESTRICTED_API_SET_APPLICATION_CLOCKS,
 				NVML_FEATURE_ENABLED);
+			if(rc != NVML_SUCCESS && opt_debug)
+				applog(LOG_WARNING, "Device %d: nvmlDeviceSetAPIRestriction() failed: %s", nvmlh->devs[i], nvmlh->nvmlErrorString(rc));
 			/* there is only this API_SET_APPLICATION_CLOCKS on the 750 Ti (340.58) */
 		}
-		if (nvmlh->nvmlDeviceGetAPIRestriction) {
-			nvmlh->nvmlDeviceGetAPIRestriction(nvmlh->devs[i], NVML_RESTRICTED_API_SET_APPLICATION_CLOCKS,
+		if (nvmlh->nvmlDeviceGetAPIRestriction)
+		{
+			rc = nvmlh->nvmlDeviceGetAPIRestriction(nvmlh->devs[i], NVML_RESTRICTED_API_SET_APPLICATION_CLOCKS,
 				&nvmlh->app_clocks[i]);
+			if(rc != NVML_SUCCESS)
+				applog(LOG_WARNING, "Device %d: nvmlDeviceGetAPIRestriction() failed: %s", nvmlh->devs[i], nvmlh->nvmlErrorString(rc));
 		}
 	}
 
