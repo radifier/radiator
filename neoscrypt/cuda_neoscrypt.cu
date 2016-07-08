@@ -88,10 +88,10 @@ __constant__ uint32_t BLAKE2S_SIGMA[10][16] =
 };
 
 #define SALSA(a,b,c,d) { \
-    t =a+d; t=rotate(t,  7);b^=t;    \
-    t =b+a; t=rotate(t,  9);c^=t;    \
-    t =c+b; t=rotate(t, 13);d^=t;    \
-    t =d+c; t=rotate(t, 18);a^=t;     \
+    b^=rotate(a+d,  7);    \
+    c^=rotate(b+a,  9);    \
+    d^=rotate(c+b, 13);    \
+    a^=rotate(d+c, 18);     \
 }
 
 #define SALSA_CORE(state) { \
