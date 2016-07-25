@@ -104,6 +104,7 @@ enum sha_algos {
 	ALGO_PENTABLAKE,
 	ALGO_QUARK,
 	ALGO_QUBIT,
+	ALGO_SIA,
 	ALGO_SKEIN,
 	ALGO_S3,
 	ALGO_SPREADX11,
@@ -141,6 +142,7 @@ static const char *algo_names[] = {
 	"penta",
 	"quark",
 	"qubit",
+	"sia",
 	"skein",
 	"s3",
 	"spread",
@@ -268,6 +270,7 @@ Options:\n\
 			penta       Pentablake hash (5x Blake 512)\n\
 			quark       Quark\n\
 			qubit       Qubit\n\
+			sia         Siacoin\n\
 			skein       Skein SHA2 (Skeincoin)\n\
 			s3          S3 (1Coin)\n\
 			spread      Spread\n\
@@ -1405,8 +1408,23 @@ static void *miner_thread(void *userdata)
 	while(1)
 	{
 		// &work.data[19]
-		int wcmplen = (opt_algo == ALGO_BITC) ? 140 : 76;
-		uint32_t *nonceptr = (uint32_t*)(((char*)work.data) + wcmplen);
+		int wcmplen;
+		switch(opt_algo)
+		{
+			case ALGO_BITC:
+				wcmplen = 140;
+				break;
+			case ALGO_SIA:
+				wcmplen = 80;
+				break;
+			default:
+				wcmplen = 76;
+		}
+		uint32_t *nonceptr;
+		if(opt_algo!=ALGO_SIA)
+			nonceptr = (uint32_t*)(((char*)work.data) + wcmplen);
+		else
+			nonceptr = (uint32_t*)(((char*)work.data) + 32);
 
 		struct timeval tv_start, tv_end, diff;
 		uint32_t hashes_done = 0;
@@ -1509,6 +1527,7 @@ static void *miner_thread(void *userdata)
 				minmax = 83000000 * max64time;
 				break;
 			case ALGO_BLAKE:
+			case ALGO_SIA:
 				minmax = 260000000 * max64time;
 				break;
 			case ALGO_BITC:
@@ -1583,8 +1602,11 @@ static void *miner_thread(void *userdata)
 
 		hashes_done = 0;
 		gettimeofday(&tv_start, NULL);
-
-		uint32_t databackup = nonceptr[2];
+		uint32_t databackup;
+		if(opt_algo != ALGO_SIA)
+			databackup = nonceptr[2];
+		else
+			databackup = nonceptr[12];
 		/* scan nonces for a proof-of-work hash */
 		switch(opt_algo)
 		{
@@ -1745,6 +1767,10 @@ static void *miner_thread(void *userdata)
 			rc = scanhash_bitcredit(thr_id, work.data, work.target, work.midstate, max_nonce, &hashes_done);
 			break;
 
+		case ALGO_SIA:
+			rc = scanhash_sia(thr_id, work.data, work.target, max_nonce, &hashes_done);
+			break;
+
 		default:
 			/* should never happen */
 			goto out;
@@ -1752,12 +1778,18 @@ static void *miner_thread(void *userdata)
 
 		/* record scanhash elapsed time */
 		gettimeofday(&tv_end, NULL);
-
 		if(rc && opt_debug)
 			applog(LOG_NOTICE, CL_CYN "found => %08x" CL_GRN " %08x", nonceptr[0], swab32(nonceptr[0])); // data[19]
-		if(rc > 1 && opt_debug)
-			applog(LOG_NOTICE, CL_CYN "found => %08x" CL_GRN " %08x", nonceptr[2], swab32(nonceptr[2])); // data[21]
-
+		if(opt_algo != ALGO_SIA)
+		{
+			if(rc > 1 && opt_debug)
+				applog(LOG_NOTICE, CL_CYN "found => %08x" CL_GRN " %08x", nonceptr[2], swab32(nonceptr[2])); // data[21]
+		}
+		else
+		{
+			if(rc > 1 && opt_debug)
+				applog(LOG_NOTICE, CL_CYN "found => %08x" CL_GRN " %08x", nonceptr[19], swab32(nonceptr[19])); // data[21]
+		}
 		timeval_subtract(&diff, &tv_end, &tv_start);
 
 		if(diff.tv_sec > 0 || (diff.tv_sec == 0 && diff.tv_usec>2000)) // avoid totally wrong hash rates
@@ -1828,8 +1860,16 @@ static void *miner_thread(void *userdata)
 		if(rc && !opt_benchmark)
 		{
 			uint32_t found2;
-			found2 = nonceptr[2];
-			nonceptr[2] = databackup;
+			if(opt_algo != ALGO_SIA)
+			{
+				found2 = nonceptr[2];
+				nonceptr[2] = databackup;
+			}
+			else
+			{
+				found2 = nonceptr[19];
+				nonceptr[19] = databackup;
+			}
 			if(!submit_work(mythr, &work))
 				break;
 
@@ -1845,12 +1885,23 @@ static void *miner_thread(void *userdata)
 			}
 
 			// second nonce found, submit too (on pool only!)
-			if(rc > 1 && nonceptr[2])
+			if(opt_algo != ALGO_SIA)
 			{
-				nonceptr[0] = found2;
-				if(!submit_work(mythr, &work))
-					break;
+				if(rc > 1 && nonceptr[2])
+				{
+					nonceptr[0] = found2;
+					if(!submit_work(mythr, &work))
+						break;
+				}
 			}
+			else
+				if(rc > 1 && nonceptr[19])
+				{
+					nonceptr[0] = found2;
+					if(!submit_work(mythr, &work))
+						break;
+				}
+
 		}
 		nonceptr[0] = start_nonce + hashes_done;
 		loopcnt++;

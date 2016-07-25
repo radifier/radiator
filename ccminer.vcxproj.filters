@@ -79,6 +79,9 @@
     <Filter Include="Header Files\CUDA\lyra2">
       <UniqueIdentifier>{2ff6e4ce-7c92-4cb2-a3ad-c331e94fd81d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\CUDA\Sia">
+      <UniqueIdentifier>{62428d9b-4cac-44ca-a0c9-4b91f6c249d0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="compat\jansson\dump.c">
@@ -236,6 +239,9 @@
     </ClCompile>
     <ClCompile Include="sph\sph_sha2.c">
       <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="Sia\sia.cpp">
+      <Filter>Source Files\CUDA\Sia</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -607,13 +613,20 @@
     <CudaCompile Include="bitcredit\cuda_bitcredit.cu">
       <Filter>Source Files\CUDA\bitcredit</Filter>
     </CudaCompile>
-    <CudaCompile Include="x15\cuda_whirlpoolx.cu" />
-    <CudaCompile Include="x15\whirlpoolx.cu" />
     <CudaCompile Include="neoscrypt\cuda_neoscrypt.cu">
       <Filter>Source Files\CUDA\neoscrypt</Filter>
     </CudaCompile>
     <CudaCompile Include="neoscrypt\neoscrypt.cu">
       <Filter>Source Files\CUDA\neoscrypt</Filter>
+    </CudaCompile>
+    <CudaCompile Include="x15\whirlpoolx.cu">
+      <Filter>Source Files\CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="x15\cuda_whirlpoolx.cu">
+      <Filter>Source Files\CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Sia\cuda_sia.cu">
+      <Filter>Source Files\CUDA\Sia</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>
