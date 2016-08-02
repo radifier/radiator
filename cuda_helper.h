@@ -123,7 +123,7 @@ __device__ __forceinline__ uint64_t MAKE_UINT64(uint32_t LO, uint32_t HI)
 		: "=l"(result) : "r"(LO), "r"(HI));
 	return result;
 #else
-	return LO + (uint64_t)HI << 32;
+	return LO + ((uint64_t)HI << 32);
 #endif
 }
 

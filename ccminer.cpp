@@ -179,7 +179,7 @@ int opt_timeout = 270;
 static int opt_scantime = 25;
 static json_t *opt_config = nullptr;
 static const bool opt_time = true;
-static enum sha_algos opt_algo = ALGO_X11;
+enum sha_algos opt_algo;
 int opt_n_threads = 0;
 int opt_affinity = -1;
 int opt_priority = 0;
@@ -310,6 +310,7 @@ Options:\n\
       --no-gbt          disable getblocktemplate support (height check in solo)\n\
       --no-longpoll     disable X-Long-Polling support\n\
       --no-stratum      disable X-Stratum support\n\
+	-e                    disable extranonce\n\
   -q, --quiet           disable per-thread hashmeter output\n\
       --no-color        disable colored output\n\
   -D, --debug           enable debug output\n\
@@ -729,9 +730,26 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 		uint32_t ntime, nonce;
 		uint16_t nvote;
 		char *ntimestr, *noncestr, *xnonce2str, *nvotestr;
-		le32enc(&ntime, work->data[17]);
-		le32enc(&nonce, work->data[19]);
-		noncestr = bin2hex((const uchar*)(&nonce), 4);
+
+		if(opt_algo != ALGO_SIA)
+		{
+			le32enc(&ntime, work->data[17]);
+			le32enc(&nonce, work->data[19]);
+			noncestr = bin2hex((const uchar*)(&nonce), 4);
+			ntimestr = bin2hex((const uchar*)(&ntime), 4);
+		}
+		else
+		{
+			le32enc(&ntime, work->data[10]);
+			uint64_t ntime64 = ntime;
+			le32enc(&nonce, work->data[ 8]);
+			uint64_t nonce64 = nonce;
+			le32enc(&nonce, work->data[9]);
+			nonce64 += (uint64_t)nonce << 32;
+			noncestr = bin2hex((const uchar*)(&nonce64), 8);
+			ntimestr = bin2hex((const uchar*)(&ntime64), 8);
+		}
+
 
 		if(check_dups)
 			sent = hashlog_already_submittted(work->job_id, nonce);
@@ -750,7 +768,6 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 			return true;
 		}
 
-		ntimestr = bin2hex((const uchar*)(&ntime), 4);
 		xnonce2str = bin2hex(work->xnonce2, work->xnonce2_len);
 
 		if(opt_algo == ALGO_HEAVY)
@@ -1144,12 +1161,26 @@ static bool get_work(struct thr_info *thr, struct work *work)
 
 	if(opt_benchmark)
 	{
-		memset(work->data, 0x55, 76);
-		memset(work->data + 19, 0x00, 52);
-		work->data[1] = (uint32_t)((double)rand() / (RAND_MAX + 1) * 0xffffffffu);
-		work->data[20] = 0x80000000;
-		work->data[31] = 0x00000280;
-		memset(work->target, 0x00, sizeof(work->target));
+		if(opt_algo != ALGO_SIA)
+		{
+			memset(work->data, 0x55, 76);
+			memset(work->data + 19, 0x00, 52);
+			work->data[1] = (uint32_t)((double)rand() / (RAND_MAX + 1) * 0xffffffffu);
+			work->data[20] = 0x80000000;
+			work->data[31] = 0x00000280;
+			memset(work->target, 0x00, sizeof(work->target));
+		}
+		else
+		{
+			memset(work->data, 0, 4);
+			work->data[1] = (uint32_t)((double)rand() / (RAND_MAX + 1) * 0xffffffffu);
+			memset(work->data+8, 0x55, 24);
+			memset(work->data + 32, 0, 8);
+			memset(work->data + 40, 0x55, 4);
+			memset(work->data + 44, 0, 4);
+			memset(work->data + 48, 0x55, 32);
+			memset(work->target, 0x00, sizeof(work->target));
+		}
 		return true;
 	}
 
@@ -1209,7 +1240,8 @@ err_out:
 
 static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 {
-	uchar merkle_root[64];
+	extern void siahash(const void *data, unsigned int len, void *hash);
+	uchar merkle_root[65];
 	int i;
 
 	if(!sctx->job.job_id)
@@ -1232,28 +1264,45 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 	/* Generate merkle root */
 	switch(opt_algo)
 	{
-	case ALGO_HEAVY:
-	case ALGO_MJOLLNIR:
-		heavycoin_hash(merkle_root, sctx->job.coinbase, (int)sctx->job.coinbase_size);
-		break;
-	case ALGO_FUGUE256:
-	case ALGO_GROESTL:
-	case ALGO_KECCAK:
-	case ALGO_BLAKECOIN:
-	case ALGO_WHC:
-		SHA256((uchar*)sctx->job.coinbase, sctx->job.coinbase_size, (uchar*)merkle_root);
-		break;
-	default:
-		sha256d(merkle_root, sctx->job.coinbase, (int)sctx->job.coinbase_size);
+		case ALGO_HEAVY:
+		case ALGO_MJOLLNIR:
+			heavycoin_hash(merkle_root, sctx->job.coinbase, (int)sctx->job.coinbase_size);
+			break;
+		case ALGO_FUGUE256:
+		case ALGO_GROESTL:
+		case ALGO_KECCAK:
+		case ALGO_BLAKECOIN:
+		case ALGO_WHC:
+			SHA256((uchar*)sctx->job.coinbase, sctx->job.coinbase_size, (uchar*)merkle_root);
+			break;
+		case ALGO_SIA:
+		{
+			merkle_root[0] = (uchar)0;
+			memcpy(merkle_root+1, sctx->job.coinbase, sctx->job.coinbase_size);
+			siahash(sctx->job.coinbase, (unsigned int)sctx->job.coinbase_size, merkle_root + 33);
+			break;
+		}
+		default:
+			sha256d(merkle_root, sctx->job.coinbase, (int)sctx->job.coinbase_size);
 	}
+	if(opt_algo != ALGO_SIA)
+		merkle_root[0] = (uchar)1;
 
 	for(i = 0; i < sctx->job.merkle_count; i++)
 	{
-		memcpy(merkle_root + 32, sctx->job.merkle[i], 32);
-		if(opt_algo == ALGO_HEAVY || opt_algo == ALGO_MJOLLNIR)
-			heavycoin_hash(merkle_root, merkle_root, 64);
+		if(opt_algo != ALGO_SIA)
+		{
+			memcpy(merkle_root + 32, sctx->job.merkle[i], 32);
+			if(opt_algo == ALGO_HEAVY || opt_algo == ALGO_MJOLLNIR)
+				heavycoin_hash(merkle_root, merkle_root, 64);
+			else
+				sha256d(merkle_root, merkle_root, 64);
+		}
 		else
-			sha256d(merkle_root, merkle_root, 64);
+		{
+			memcpy(merkle_root + 1, sctx->job.merkle[i], 32);
+			siahash(merkle_root, 64, merkle_root+33);
+		}
 	}
 
 	/* Increment extranonce2 */
@@ -1262,24 +1311,42 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 	{
 		sctx->job.xnonce2[i]++;
 	}
+	static uint32_t highnonce = 0;
+	if(opt_algo == ALGO_SIA)
+		highnonce++;
 
 	/* Assemble block header */
 	memset(work->data, 0, sizeof(work->data));
-	work->data[0] = le32dec(sctx->job.version);
-	for(i = 0; i < 8; i++)
-		work->data[1 + i] = le32dec((uint32_t *)sctx->job.prevhash + i);
-	for(i = 0; i < 8; i++)
-		work->data[9 + i] = be32dec((uint32_t *)merkle_root + i);
-	work->data[17] = le32dec(sctx->job.ntime);
-	work->data[18] = le32dec(sctx->job.nbits);
-	if(opt_algo == ALGO_MJOLLNIR || opt_algo == ALGO_HEAVY)
+	if(opt_algo != ALGO_SIA)
 	{
-		for(i = 0; i < 20; i++)
-			work->data[i] = be32dec((uint32_t *)&work->data[i]);
-	}
+		work->data[0] = le32dec(sctx->job.version);
+		for(i = 0; i < 8; i++)
+			work->data[1 + i] = le32dec((uint32_t *)sctx->job.prevhash + i);
+		for(i = 0; i < 8; i++)
+			work->data[9 + i] = be32dec((uint32_t *)merkle_root + i);
+		work->data[17] = le32dec(sctx->job.ntime);
+		work->data[18] = le32dec(sctx->job.nbits);
 
-	work->data[20] = 0x80000000;
-	work->data[31] = (opt_algo == ALGO_MJOLLNIR) ? 0x000002A0 : 0x00000280;
+		if(opt_algo == ALGO_MJOLLNIR || opt_algo == ALGO_HEAVY)
+		{
+			for(i = 0; i < 20; i++)
+				work->data[i] = be32dec((uint32_t *)&work->data[i]);
+		}
+
+		work->data[20] = 0x80000000;
+		work->data[31] = (opt_algo == ALGO_MJOLLNIR) ? 0x000002A0 : 0x00000280;
+	}
+	else
+	{
+		for(i = 0; i < 8; i++)
+			work->data[i] = le32dec((uint32_t *)sctx->job.prevhash + i);
+		work->data[ 8] = 0; // nonce
+		work->data[ 9] = highnonce;
+		work->data[10] = le32dec(sctx->job.ntime);
+		work->data[11] = 0; 
+		for(i = 0; i < 8; i++)
+			work->data[12 + i] = be32dec((uint32_t *)merkle_root + i);
+	}
 
 	// HeavyCoin (vote / reward)
 	if(opt_algo == ALGO_HEAVY)
@@ -1291,11 +1358,13 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 		// applog(LOG_DEBUG, "DEBUG: vote=%hx reward=%hx", ext[0], ext[1]);
 	}
 
-	pthread_mutex_unlock(&sctx->work_lock);
-
 	if(opt_debug)
 	{
-		char *tm = atime2str(swab32(work->data[17]) - sctx->srvtime_diff);
+		char *tm;
+		if(opt_algo!=ALGO_SIA)
+			tm = atime2str(swab32(work->data[17]) - sctx->srvtime_diff);
+		else
+			tm = atime2str(work->data[10] - sctx->srvtime_diff);
 		char *xnonce2str = bin2hex(work->xnonce2, sctx->xnonce2_size);
 		applog(LOG_DEBUG, "DEBUG: job_id=%s xnonce2=%s time=%s",
 			   work->job_id, xnonce2str, tm);
@@ -1325,6 +1394,7 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 	default:
 		diff_to_target(work->target, sctx->job.diff / opt_difficulty);
 	}
+	pthread_mutex_unlock(&sctx->work_lock);
 	return true;
 }
 
@@ -1434,23 +1504,25 @@ static void *miner_thread(void *userdata)
 
 		if(have_stratum)
 		{
+			pthread_mutex_lock(&g_work_lock);
 			if(loopcnt == 0 || time(NULL) >= (g_work_time + opt_scantime))
 				extrajob = true;
-			pthread_mutex_lock(&g_work_lock);
 			if(nonceptr[0] >= end_nonce - 0x10000 || extrajob)
 			{
 				extrajob = false;
 				while(!stratum_gen_work(&stratum, &g_work))
 				{
+					pthread_mutex_unlock(&g_work_lock);
 					if(opt_debug)
-						applog(LOG_DEBUG, "thread %d: waiting for work", thr_id);
+						applog(LOG_WARNING, "thread %d: waiting for work", thr_id);
 					sleep(3);
+					pthread_mutex_lock(&g_work_lock);
 				}
+				pthread_mutex_unlock(&g_work_lock);
 			}
 		}
 		else
 		{
-			pthread_mutex_lock(&g_work_lock);
 			if((time(NULL) - g_work_time) >= scan_time || nonceptr[0] >= (end_nonce - 0x10000))
 			{
 				if(opt_debug && g_work_time && !opt_quiet)
@@ -1463,10 +1535,11 @@ static void *miner_thread(void *userdata)
 					applog(LOG_ERR, "work retrieval failed, exiting mining thread %d", mythr->id);
 					goto out;
 				}
+				pthread_mutex_unlock(&g_work_lock);
 				g_work_time = time(NULL);
 			}
 		}
-
+		pthread_mutex_lock(&g_work_lock);
 		if(!opt_benchmark && (g_work.height != work.height || memcmp(work.target, g_work.target, sizeof(work.target))))
 		{
 			calc_diff(&g_work, 0);
@@ -1508,7 +1581,6 @@ static void *miner_thread(void *userdata)
 				applog(LOG_DEBUG, "thread %d: continue with old work", thr_id);
 		}
 		work_restart[thr_id].restart = 0;
-		pthread_mutex_unlock(&g_work_lock);
 
 		/* adjust max_nonce to meet target scan time */
 		uint32_t max64time;
@@ -1516,6 +1588,7 @@ static void *miner_thread(void *userdata)
 			max64time = LP_SCANTIME;
 		else
 			max64time = (uint32_t)max(1, scan_time + g_work_time - time(NULL));
+		pthread_mutex_unlock(&g_work_lock);
 
 		max64 = max64time * (uint32_t)thr_hashrates[thr_id];
 
@@ -2103,6 +2176,7 @@ static void *stratum_thread(void *userdata)
 			pthread_mutex_lock(&g_work_lock);
 			stratum_gen_work(&stratum, &g_work);
 			g_work_time = time(NULL);
+			pthread_mutex_unlock(&g_work_lock);
 			if(stratum.job.clean)
 			{
 				if(!opt_quiet)
@@ -2118,7 +2192,6 @@ static void *stratum_thread(void *userdata)
 				applog(LOG_BLUE, "%s asks job %d for block %d", short_url,
 					   strtoul(stratum.job.job_id, NULL, 16), stratum.job.height);
 			}
-			pthread_mutex_unlock(&g_work_lock);
 		}
 
 		if(!stratum_socket_full(&stratum, 120))

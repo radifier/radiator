@@ -55,7 +55,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 6.5.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.5.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -153,7 +153,6 @@
       <Optimization>Full</Optimization>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <CompileAsManaged>false</CompileAsManaged>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -164,7 +163,7 @@
       <StringPooling>true</StringPooling>
       <FloatingPointModel>Precise</FloatingPointModel>
       <SDLCheck>false</SDLCheck>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
       <EnablePREfast>false</EnablePREfast>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -212,7 +211,6 @@
       <Optimization>Full</Optimization>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <CompileAsManaged>false</CompileAsManaged>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -223,7 +221,7 @@
       <OmitFramePointers>false</OmitFramePointers>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>true</MinimalRebuild>
@@ -231,7 +229,6 @@
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Console</SubSystem>
@@ -291,7 +288,7 @@
     <CudaCompile Include="cuda_bitcoin.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
-    <ClCompile Include="Sia\sia.cpp" />
+    <CudaCompile Include="Sia\sia.cu" />
     <ClCompile Include="sph\neoscrypt.c" />
     <ClCompile Include="sph\sha256_Y.c" />
     <ClCompile Include="sph\sph_sha2.c" />
@@ -364,6 +361,7 @@
     <ClInclude Include="lyra2\cuda_lyra2_vectors.h" />
     <ClInclude Include="miner.h" />
     <ClInclude Include="nvml.h" />
+    <ClInclude Include="Sia\sia.h" />
     <ClInclude Include="sph\neoscrypt.h" />
     <ClInclude Include="sph\sha256_Y.h" />
     <ClInclude Include="sph\sph_blake.h" />
@@ -551,7 +549,7 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 6.5.targets" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.5.targets" />
   </ImportGroup>
   <!-- Copy the required dlls -->
   <Target Name="AfterBuild">

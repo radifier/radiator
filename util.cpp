@@ -36,6 +36,46 @@
 #include "elist.h"
 using namespace std;
 
+enum sha_algos
+{
+	ALGO_BITC,
+	ALGO_BITCOIN,
+	ALGO_BLAKE,
+	ALGO_BLAKECOIN,
+	ALGO_C11,
+	ALGO_DEEP,
+	ALGO_DMD_GR,
+	ALGO_DOOM,
+	ALGO_FRESH,
+	ALGO_FUGUE256,		/* Fugue256 */
+	ALGO_GROESTL,
+	ALGO_HEAVY,		/* Heavycoin hash */
+	ALGO_KECCAK,
+	ALGO_JACKPOT,
+	ALGO_LUFFA_DOOM,
+	ALGO_LYRA2v2,
+	ALGO_MJOLLNIR,		/* Hefty hash */
+	ALGO_MYR_GR,
+	ALGO_NIST5,
+	ALGO_PENTABLAKE,
+	ALGO_QUARK,
+	ALGO_QUBIT,
+	ALGO_SIA,
+	ALGO_SKEIN,
+	ALGO_S3,
+	ALGO_SPREADX11,
+	ALGO_WHC,
+	ALGO_WHCX,
+	ALGO_X11,
+	ALGO_X13,
+	ALGO_X14,
+	ALGO_X15,
+	ALGO_X17,
+	ALGO_VANILLA,
+	ALGO_NEO
+};
+extern enum sha_algos opt_algo;
+
 bool opt_tracegpu = false;
 
 struct data_buffer
@@ -73,6 +113,20 @@ struct thread_q
 	pthread_mutex_t		mutex;
 	pthread_cond_t		cond;
 };
+
+// input and output may point to the same location
+void hexstringreverse(void *output, const void *input, size_t length)
+{
+	uint16_t tmp1;
+	uint16_t tmp2;
+	for(size_t i = 0; i < length / 4; i++)
+	{
+		tmp1 = *(((uint16_t*)input) + i);
+		tmp2 = *(((uint16_t*)output) + (length / 2 - i));
+		*(((uint16_t*)input) + i) = tmp2;
+		*(((uint16_t*)output) + (length / 2 - i)) = tmp1;
+	}
+}
 
 void applog(int prio, const char *fmt, ...)
 {
@@ -778,7 +832,7 @@ static bool send_line(curl_socket_t sock, char *s)
 		FD_SET(sock, &wd);
 		if(select((int)sock + 1, NULL, &wd, NULL, &timeout) < 1)
 			return false;
-		n = send(sock, s + sent, len, 0);
+		n = send(sock, s + sent, (int)len, 0);
 		if(n < 0)
 		{
 			if(!socket_blocks())
@@ -1020,7 +1074,7 @@ static const char *get_stratum_session_id(json_t *val)
 	arr_val = json_array_get(val, 0);
 	if(!arr_val || !json_is_array(arr_val))
 		return NULL;
-	n = json_array_size(arr_val);
+	n = (int)json_array_size(arr_val);
 	for(i = 0; i < n; i++)
 	{
 		const char *notify;
@@ -1212,21 +1266,18 @@ bool stratum_authorize(struct stratum_ctx *sctx, const char *user, const char *p
 		applog(LOG_ERR, "JSON decode failed(%d): %s", err.line, err.text);
 		goto out;
 	}
-
 	if(json_integer_value(json_object_get(val, "id")) != 2)
 	{
 		applog(LOG_WARNING, "Stratum authorize answer id is not correct!");
 	}
 	res_val = json_object_get(val, "result");
 	err_val = json_object_get(val, "error");
-
 	if(!res_val || json_is_false(res_val) ||
-	   (err_val && !json_is_null(err_val)))
+		 (err_val && !json_is_null(err_val)))
 	{
 		applog(LOG_ERR, "Stratum authentication failed");
 		goto out;
 	}
-
 	sctx->tm_connected = time(NULL);
 	ret = true;
 	if(extranonce)
@@ -1313,13 +1364,14 @@ static uint32_t getblocheight(struct stratum_ctx *sctx)
 
 static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 {
-	const char *job_id, *prevhash, *coinb1, *coinb2, *version, *nbits, *stime, *nreward;
+	const char *job_id, *prevhash, *coinb1, *coinb2, *version, *nbits, *nreward;
+	char *stime;
 	size_t coinb1_size, coinb2_size;
 	bool clean, ret = false;
 	int merkle_count, i;
 	json_t *merkle_arr;
 	uchar **merkle = NULL;
-	int ntime;
+	int32_t ntime;
 
 	job_id = json_string_value(json_array_get(params, 0));
 	prevhash = json_string_value(json_array_get(params, 1));
@@ -1328,24 +1380,46 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 	merkle_arr = json_array_get(params, 4);
 	if(!merkle_arr || !json_is_array(merkle_arr))
 		goto out;
-	merkle_count = json_array_size(merkle_arr);
-	version = json_string_value(json_array_get(params, 5));
+	merkle_count = (int)json_array_size(merkle_arr);
+	if(opt_algo != ALGO_SIA)
+		version = json_string_value(json_array_get(params, 5));
+	else
+		version = "00000001"; //unused
 	nbits = json_string_value(json_array_get(params, 6));
-	stime = json_string_value(json_array_get(params, 7));
+	stime = (char *)json_string_value(json_array_get(params, 7));
 	clean = json_is_true(json_array_get(params, 8));
 	nreward = json_string_value(json_array_get(params, 9));
 
 	if(!job_id || !prevhash || !coinb1 || !coinb2 || !version || !nbits || !stime ||
-	   strlen(prevhash) != 64 || strlen(version) != 8 ||
-	   strlen(nbits) != 8 || strlen(stime) != 8)
+		 strlen(prevhash) != 64 || strlen(version) != 8 || strlen(nbits) != 8)
 	{
 		applog(LOG_ERR, "Stratum notify: invalid parameters");
 		goto out;
 	}
+	if(opt_algo == ALGO_SIA)
+	{
+		if(strlen(stime) != 16)
+		{
+			applog(LOG_ERR, "Stratum notify: invalid time parameter");
+			goto out;
+		}
+	}
+	else
+	{
+		if(strlen(stime) != 8)
+		{
+			applog(LOG_ERR, "Stratum notify: invalid time parameter");
+			goto out;
+		}
+	}
 
 	/* store stratum server time diff */
 	hex2bin((uchar *)&ntime, stime, 4);
-	ntime = swab32(ntime) - (uint32_t)time(0);
+	if(opt_algo!=ALGO_SIA)
+		ntime = swab32(ntime) - (uint32_t)time(0);
+	else
+		ntime = ntime - (uint32_t)time(0);
+
 	if(ntime > sctx->srvtime_diff)
 	{
 		sctx->srvtime_diff = ntime;
@@ -2070,4 +2144,25 @@ void print_hash_tests(void)
 	printf("\n");
 
 	do_gpu_tests();
+}
+
+void bin2hex(char *s, const unsigned char *p, size_t len)
+{
+	for(size_t i = 0; i < len; i++)
+		sprintf(s + (i * 2), "%02x", (unsigned int)p[i]);
+}
+
+char *abin2hex(const unsigned char *p, size_t len)
+{
+	char *s = (char*)malloc((len * 2) + 1);
+	if(!s)
+		return NULL;
+	bin2hex(s, p, len);
+	return s;
+}
+void applog_hex(void *data, int len)
+{
+	char* hex = abin2hex((uchar*)data, len);
+	applog(LOG_INFO, "data: %s", hex);
+	free(hex);
 }
