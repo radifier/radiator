@@ -36,44 +36,6 @@
 #include "elist.h"
 using namespace std;
 
-enum sha_algos
-{
-	ALGO_BITC,
-	ALGO_BITCOIN,
-	ALGO_BLAKE,
-	ALGO_BLAKECOIN,
-	ALGO_C11,
-	ALGO_DEEP,
-	ALGO_DMD_GR,
-	ALGO_DOOM,
-	ALGO_FRESH,
-	ALGO_FUGUE256,		/* Fugue256 */
-	ALGO_GROESTL,
-	ALGO_HEAVY,		/* Heavycoin hash */
-	ALGO_KECCAK,
-	ALGO_JACKPOT,
-	ALGO_LUFFA_DOOM,
-	ALGO_LYRA2v2,
-	ALGO_MJOLLNIR,		/* Hefty hash */
-	ALGO_MYR_GR,
-	ALGO_NIST5,
-	ALGO_PENTABLAKE,
-	ALGO_QUARK,
-	ALGO_QUBIT,
-	ALGO_SIA,
-	ALGO_SKEIN,
-	ALGO_S3,
-	ALGO_SPREADX11,
-	ALGO_WHC,
-	ALGO_WHCX,
-	ALGO_X11,
-	ALGO_X13,
-	ALGO_X14,
-	ALGO_X15,
-	ALGO_X17,
-	ALGO_VANILLA,
-	ALGO_NEO
-};
 extern enum sha_algos opt_algo;
 
 bool opt_tracegpu = false;
@@ -1420,6 +1382,8 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 	else
 		ntime = ntime - (uint32_t)time(0);
 
+	pthread_mutex_lock(&sctx->work_lock);
+
 	if(ntime > sctx->srvtime_diff)
 	{
 		sctx->srvtime_diff = ntime;
@@ -1438,13 +1402,12 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 				free(merkle[i]);
 			free(merkle);
 			applog(LOG_ERR, "Stratum notify: invalid Merkle branch");
+			pthread_mutex_unlock(&sctx->work_lock);
 			goto out;
 		}
 		merkle[i] = (uchar*)malloc(32);
 		hex2bin(merkle[i], s, 32);
 	}
-
-	pthread_mutex_lock(&sctx->work_lock);
 
 	coinb1_size = strlen(coinb1) / 2;
 	coinb2_size = strlen(coinb2) / 2;
@@ -1464,7 +1427,10 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 	sctx->job.job_id = strdup(job_id);
 	hex2bin(sctx->job.prevhash, prevhash, 32);
 
-	sctx->job.height = getblocheight(sctx);
+	if(opt_algo != ALGO_SIA)
+		sctx->job.height = getblocheight(sctx);
+	else
+		sctx->job.height = 1;
 
 	for(i = 0; i < sctx->job.merkle_count; i++)
 		free(sctx->job.merkle[i]);
@@ -2163,6 +2129,6 @@ char *abin2hex(const unsigned char *p, size_t len)
 void applog_hex(void *data, int len)
 {
 	char* hex = abin2hex((uchar*)data, len);
-	applog(LOG_INFO, "data: %s", hex);
+	applog(LOG_INFO, "%s", hex);
 	free(hex);
 }

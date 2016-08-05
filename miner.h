@@ -636,6 +636,45 @@ struct work {
 	uint32_t scanned_to;
 };
 
+enum sha_algos
+{
+	ALGO_BITC,
+	ALGO_BITCOIN,
+	ALGO_BLAKE,
+	ALGO_BLAKECOIN,
+	ALGO_C11,
+	ALGO_DEEP,
+	ALGO_DMD_GR,
+	ALGO_DOOM,
+	ALGO_FRESH,
+	ALGO_FUGUE256,		/* Fugue256 */
+	ALGO_GROESTL,
+	ALGO_HEAVY,		/* Heavycoin hash */
+	ALGO_KECCAK,
+	ALGO_JACKPOT,
+	ALGO_LUFFA_DOOM,
+	ALGO_LYRA2v2,
+	ALGO_MJOLLNIR,		/* Hefty hash */
+	ALGO_MYR_GR,
+	ALGO_NIST5,
+	ALGO_PENTABLAKE,
+	ALGO_QUARK,
+	ALGO_QUBIT,
+	ALGO_SIA,
+	ALGO_SKEIN,
+	ALGO_S3,
+	ALGO_SPREADX11,
+	ALGO_WHC,
+	ALGO_WHCX,
+	ALGO_X11,
+	ALGO_X13,
+	ALGO_X14,
+	ALGO_X15,
+	ALGO_X17,
+	ALGO_VANILLA,
+	ALGO_NEO
+};
+
 bool stratum_socket_full(struct stratum_ctx *sctx, int timeout);
 bool stratum_send_line(struct stratum_ctx *sctx, char *s);
 char *stratum_recv_line(struct stratum_ctx *sctx);

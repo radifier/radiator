@@ -240,9 +240,6 @@
     <ClCompile Include="sph\sph_sha2.c">
       <Filter>Source Files\sph</Filter>
     </ClCompile>
-    <ClCompile Include="Sia\sia.cpp">
-      <Filter>Source Files\CUDA\Sia</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="compat.h">
@@ -400,6 +397,9 @@
     </ClInclude>
     <ClInclude Include="lyra2\cuda_lyra2v2_sm3.cuh">
       <Filter>Header Files\CUDA\lyra2</Filter>
+    </ClInclude>
+    <ClInclude Include="Sia\sia.h">
+      <Filter>Source Files\CUDA\Sia</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -628,5 +628,6 @@
     <CudaCompile Include="Sia\cuda_sia.cu">
       <Filter>Source Files\CUDA\Sia</Filter>
     </CudaCompile>
+    <CudaCompile Include="Sia\sia.cu" />
   </ItemGroup>
 </Project>
