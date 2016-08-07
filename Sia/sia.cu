@@ -208,8 +208,7 @@ void siahash(const void *data, unsigned int len, void *hash)
 int scanhash_sia(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_nonce, uint32_t *hashes_done)
 {
 	static THREAD uint32_t *h_nounce = nullptr;
-	applog(LOG_INFO, "GPU #%d: mining", device_map[thr_id]);
-	const uint32_t first_nonce = swab32(pdata[9]);
+	const uint32_t first_nonce = pdata[8];
 	static THREAD uint32_t throughputmax;
 
 	if(opt_benchmark)
@@ -241,7 +240,7 @@ int scanhash_sia(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_no
 	do
 	{
 		uint64_t headerHash[4] = {0};
-		sia_gpu_hash(gpustream[thr_id], thr_id, throughput, headerHash, h_nounce, ((uint64_t*)ptarget)[3], swab64(*((uint64_t*)(((uint8_t*)pdata) + 32))));
+		sia_gpu_hash(gpustream[thr_id], thr_id, throughput, headerHash, h_nounce, ((uint64_t*)ptarget)[3], ((uint64_t*)pdata)[4]);
 		if(stop_mining)
 		{
 			cudaDeviceSynchronize();
@@ -254,27 +253,27 @@ int scanhash_sia(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_no
 		{
 			const uint32_t Htarg = ptarget[7];
 			uint32_t vhash64[8] = {0};
-			if(opt_verify)
+			if(false) // if(opt_verify)
 			{
-				be32enc(&endiandata[19], (uint32_t)(h_nounce[0]));
-				siahash(vhash64, 80, endiandata);
-
-			} if(vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+				be32enc(&endiandata[19], h_nounce[0]);
+				siahash(endiandata, 80, vhash64);
+			}
+			if(vhash64[7] <= Htarg) // && fulltest(vhash64, ptarget))
 			{
 				int res = 1;
-				*hashes_done = swab32(pdata[9]) - first_nonce + throughput;
-				if(opt_benchmark || opt_debug)  applog(LOG_INFO, "GPU #%d: Found nonce", device_map[thr_id]);
+				*hashes_done = pdata[8] - first_nonce + throughput;
+				if(opt_benchmark || opt_debug)  applog(LOG_INFO, "GPU #%d: Found nonce %08x", device_map[thr_id], h_nounce[0]);
 				// check if there was some other ones...
 				if(h_nounce[1] != 0)
 				{
-					if(opt_verify)
+					if(false) // if(opt_verify)
 					{
-						be32enc(&endiandata[19], (uint32_t)(h_nounce[1]));
+						be32enc(&endiandata[19], h_nounce[1]);
 						siahash(vhash64, 80, endiandata);
 
-					} if(vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
+					} if(vhash64[7] <= Htarg) // && fulltest(vhash64, ptarget))
 					{
-						pdata[20] = swab32(h_nounce[1]);
+						pdata[20] = h_nounce[1];
 						res++;
 						if(opt_benchmark || opt_debug)  applog(LOG_INFO, "GPU #%d: Found second nonce", device_map[thr_id]);
 					}
@@ -284,7 +283,8 @@ int scanhash_sia(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_no
 							applog(LOG_INFO, "GPU #%d: result does not validate on CPU!", device_map[thr_id]);
 					}
 				}
-				pdata[9] = swab32(h_nounce[0]);
+				pdata[8] = h_nounce[0];
+//				applog(LOG_INFO, "hashes done = %08x", *hashes_done);
 				return res;
 			}
 			else
@@ -293,11 +293,10 @@ int scanhash_sia(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_no
 					applog(LOG_INFO, "GPU #%d: result does not validate on CPU!", device_map[thr_id]);
 			}
 		}
-		pdata[9] = swab32(swab32(pdata[9]) + throughput); CUDA_SAFE_CALL(cudaGetLastError());
+		pdata[8] += throughput;
+		CUDA_SAFE_CALL(cudaGetLastError());
 
-	} while(!work_restart[thr_id].restart && ((uint64_t)max_nonce >((uint64_t)(swab32(pdata[9])) + (uint64_t)throughput)));
-	*hashes_done = swab32(pdata[9]) - first_nonce;
-
-	applog(LOG_INFO, "GPU #%d: not mining", device_map[thr_id]);
+	} while(!work_restart[thr_id].restart && ((uint64_t)max_nonce >((uint64_t)pdata[8] + (uint64_t)throughput)));
+	*hashes_done = pdata[8] - first_nonce;
 	return 0;
 }

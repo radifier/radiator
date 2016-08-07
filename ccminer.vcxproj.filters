@@ -628,6 +628,8 @@
     <CudaCompile Include="Sia\cuda_sia.cu">
       <Filter>Source Files\CUDA\Sia</Filter>
     </CudaCompile>
-    <CudaCompile Include="Sia\sia.cu" />
+    <CudaCompile Include="Sia\sia.cu">
+      <Filter>Source Files\CUDA\Sia</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>
