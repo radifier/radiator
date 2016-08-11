@@ -51,7 +51,7 @@ static uint64_t __swap_hilo(const uint64_t source)
 
 __device__ unsigned int numberofresults;
 
-__global__ void __launch_bounds__(blocksize, 3) siakernel(uint64_t * __restrict__ hashOut, uint32_t * __restrict__ nonceOut, uint64_t target, uint64_t startnonce)
+__global__ void __launch_bounds__(blocksize, 3) siakernel(uint32_t * __restrict__ nonceOut, uint64_t target, uint64_t startnonce)
 {
 	uint64_t v[16];
 	uint64_t start = startnonce + (blockDim.x * blockIdx.x + threadIdx.x)*npt;
@@ -262,29 +262,18 @@ __global__ void __launch_bounds__(blocksize, 3) siakernel(uint64_t * __restrict_
 		{
 			int i = atomicAdd(&numberofresults, 1);
 			if(i < MAXRESULTS)
-			{
 				nonceOut[i] = n & 0xffffffff;
-				v[1] = v[1] + v[6] + header[0]; v[12] = __swap_hilo(v[12] ^ v[1]); v[11] = v[11] + v[12];
-				v[1] = v[1] + __byte_perm_64(v[6] ^ v[11], 0x6543, 0x2107) + header[2];
-				v[3] = v[3] + v[4] + header[5]; v[14] = __swap_hilo(v[14] ^ v[3]); v[9] = v[9] + v[14];
-				v[3] = v[3] + __byte_perm_64(v[4] ^ v[9], 0x6543, 0x2107) + header[3];
-				hashOut[i * 4 + 0] = 0x6A09E667F2BDC928 ^ v[0] ^ (v[8] + __byte_perm_64(v[13] ^ v[2], 0x5432, 0x1076));
-				hashOut[i * 4 + 1] = 0xbb67ae8584caa73b ^ v[1] ^ (v[9] + __byte_perm_64(v[14] ^ v[3], 0x5432, 0x1076));
-				hashOut[i * 4 + 2] = 0x3c6ef372fe94f82b ^ v[2] ^ (v[10] + __byte_perm_64(v[15] ^ v[0], 0x5432, 0x1076));
-				hashOut[i * 4 + 3] = 0xa54ff53a5f1d36f1 ^ v[3] ^ (v[11] + __byte_perm_64(v[12] ^ v[1], 0x5432, 0x1076));
-			}
 			return;
 		}
 	}
 }
 
-void sia_gpu_hash(cudaStream_t cudastream, int thr_id, uint32_t threads, uint64_t *headerHash, uint32_t *nonceOut, uint64_t target, uint64_t startnonce)
+void sia_gpu_hash(cudaStream_t cudastream, int thr_id, uint32_t threads, uint32_t *nonceOut, uint64_t target, uint64_t startnonce)
 {
 	CUDA_SAFE_CALL(cudaMemsetAsync(nonceOut_d, 0, 4 * MAXRESULTS, cudastream));
-	siakernel << <threads / blocksize / npt, blocksize, 0, cudastream >> >(hash_d, nonceOut_d, target, startnonce);
+	siakernel << <threads / blocksize / npt, blocksize, 0, cudastream >> >(nonceOut_d, target, startnonce);
 	CUDA_SAFE_CALL(cudaGetLastError());
 	CUDA_SAFE_CALL(cudaMemcpyAsync(nonceOut, nonceOut_d, 4 * MAXRESULTS, cudaMemcpyDeviceToHost, cudastream));
-	CUDA_SAFE_CALL(cudaMemcpyAsync(headerHash, hash_d, 4 * 8, cudaMemcpyDeviceToHost, cudastream));
 	CUDA_SAFE_CALL(cudaStreamSynchronize(cudastream));
 }
 

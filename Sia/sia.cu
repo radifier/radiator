@@ -242,8 +242,7 @@ int scanhash_sia(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_no
 
 	do
 	{
-		uint64_t headerHash[4] = {0};
-		sia_gpu_hash(gpustream[thr_id], thr_id, throughput, headerHash, h_nounce, ((uint64_t*)ptarget)[3], ((uint64_t*)pdata)[4]);
+		sia_gpu_hash(gpustream[thr_id], thr_id, throughput, h_nounce, ((uint64_t*)ptarget)[3], ((uint64_t*)pdata)[4]);
 		if(stop_mining)
 		{
 			cudaDeviceSynchronize();

@@ -82,6 +82,9 @@
     <Filter Include="Source Files\CUDA\Sia">
       <UniqueIdentifier>{62428d9b-4cac-44ca-a0c9-4b91f6c249d0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\CUDA\sia">
+      <UniqueIdentifier>{85b17b96-98a4-4fc5-baa8-c1a6b10f2d99}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="compat\jansson\dump.c">
@@ -399,7 +402,7 @@
       <Filter>Header Files\CUDA\lyra2</Filter>
     </ClInclude>
     <ClInclude Include="Sia\sia.h">
-      <Filter>Source Files\CUDA\Sia</Filter>
+      <Filter>Header Files\CUDA\sia</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
