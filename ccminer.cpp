@@ -702,7 +702,7 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 		}
 		else
 		{
-			le32enc(&ntime, work->data[11]);
+			le32enc(&ntime, work->data[10]);
 			uint64_t ntime64 = ntime;
 			le32enc(&nonce, work->data[8]);
 			uint64_t nonce64 = nonce;
@@ -1127,7 +1127,7 @@ static bool get_work(struct thr_info *thr, struct work *work)
 		{
 			memset(work->data, 0x55, 76);
 			memset(work->data + 19, 0x00, 52);
-			work->data[1] = (uint32_t)((double)rand() / (RAND_MAX + 1) * 0xffffffffu);
+			work->data[1] = (uint32_t)((double)rand() / (1ULL + RAND_MAX) * 0xffffffffu);
 			work->data[20] = 0x80000000;
 			work->data[31] = 0x00000280;
 			memset(work->target, 0x00, sizeof(work->target));
@@ -1135,7 +1135,7 @@ static bool get_work(struct thr_info *thr, struct work *work)
 		else
 		{
 			memset(work->data, 0, 4);
-			work->data[1] = (uint32_t)((double)rand() / (RAND_MAX + 1) * 0xffffffffu);
+			work->data[1] = (uint32_t)((double)rand() / (1ULL + RAND_MAX) * 0xffffffffu);
 			memset(work->data+2, 0x55, 24);
 			memset(work->data + 8, 0, 8);
 			memset(work->data + 10, 0, 4);
@@ -1306,8 +1306,8 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 			work->data[i] = le32dec((uint32_t *)sctx->job.prevhash + i);
 		work->data[8] = 0; // nonce
 		work->data[9] = highnonce;
-		work->data[10] = 0;
-		work->data[11] = le32dec(sctx->job.ntime);
+		work->data[10] = le32dec(sctx->job.ntime);
+		work->data[11] = 0;
 		for(i = 0; i < 8; i++)
 			work->data[12 + i] = le32dec((uint32_t *)(merkle_root + 33) + i);
 	}
@@ -1328,7 +1328,7 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 		if(opt_algo != ALGO_SIA)
 			tm = atime2str(swab32(work->data[17]) - sctx->srvtime_diff);
 		else
-			tm = atime2str(work->data[11] - sctx->srvtime_diff);
+			tm = atime2str(work->data[10] - sctx->srvtime_diff);
 		char *xnonce2str = bin2hex(work->xnonce2, sctx->xnonce2_size);
 		applog(LOG_DEBUG, "DEBUG: job_id=%s xnonce2=%s time=%s",
 					 work->job_id, xnonce2str, tm);
