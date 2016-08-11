@@ -1,5 +1,5 @@
 
-ccMiner release 7.04(KlausT-mod) (June 11th, 2016)
+ccMiner release 8.00(KlausT-mod) (August 11th, 2016)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -211,6 +211,7 @@ features.
 2016-06-11 v7.03: faster lyra2v2
 2016-06-18 v7.04: Neoscrypt optimization
                   Bug Fixes 
+2016-08-11 v8.00: added Siacoin
 
 >>> AUTHORS <<<
 
