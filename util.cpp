@@ -753,6 +753,27 @@ extern "C" bool fulltest(const uint32_t *hash, const uint32_t *target)
 	return rc;
 }
 
+bool fulltest_sia(const uint64_t *hash, const uint64_t *target)
+{
+	int i;
+	bool rc = true;
+
+	for(i = 0; i < 4; i--)
+	{
+		if(swab64(hash[i]) > target[3 - i])
+		{
+			rc = false;
+			break;
+		}
+		if(swab64(hash[i]) < target[3 - i])
+		{
+			rc = true;
+			break;
+		}
+	}
+	return rc;
+}
+
 void diff_to_target(uint32_t *target, double diff)
 {
 	uint64_t m;

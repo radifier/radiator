@@ -35,6 +35,9 @@ using namespace std;
 #include <cuda_profiler_api.h>
 #include "sia.h"
 
+extern void applog_hex(void *data, int len);
+extern bool fulltest_sia(const uint64_t *hash, const uint64_t *target);
+
 #define B2B_GET64(p)                            \
     (((uint64_t) ((uint8_t *) (p))[0]) ^        \
     (((uint64_t) ((uint8_t *) (p))[1]) << 8) ^  \
@@ -235,7 +238,7 @@ int scanhash_sia(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_no
 
 	uint32_t endiandata[20];
 	for(int k = 0; k < 20; k++)
-		be32enc(&endiandata[k], pdata[k]);
+		le32enc(&endiandata[k], pdata[k]);
 
 	do
 	{
@@ -251,14 +254,14 @@ int scanhash_sia(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_no
 		}
 		if(h_nounce[0] != 0)
 		{
-			const uint32_t Htarg = ptarget[7];
-			uint32_t vhash64[8] = {0};
-			if(false) // if(opt_verify)
+			const uint64_t Htarg = ((uint64_t*)ptarget)[3];
+			uint64_t vhash64[4] = {0};
+			if(opt_verify)
 			{
-				be32enc(&endiandata[19], h_nounce[0]);
+				le32enc(&endiandata[8], h_nounce[0]);
 				siahash(endiandata, 80, vhash64);
 			}
-			if(vhash64[7] <= Htarg) // && fulltest(vhash64, ptarget))
+			if(swab64(vhash64[0]) <= Htarg && fulltest_sia(vhash64, (uint64_t*)ptarget))
 			{
 				int res = 1;
 				*hashes_done = pdata[8] - first_nonce + throughput;
@@ -266,12 +269,13 @@ int scanhash_sia(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_no
 				// check if there was some other ones...
 				if(h_nounce[1] != 0)
 				{
-					if(false) // if(opt_verify)
+					if(opt_verify)
 					{
-						be32enc(&endiandata[19], h_nounce[1]);
+						le32enc(&endiandata[8], h_nounce[1]);
 						siahash(vhash64, 80, endiandata);
 
-					} if(vhash64[7] <= Htarg) // && fulltest(vhash64, ptarget))
+					}
+					if(swab64(vhash64[0]) <= Htarg && fulltest_sia(vhash64, (uint64_t*)ptarget))
 					{
 						pdata[20] = h_nounce[1];
 						res++;
@@ -279,7 +283,7 @@ int scanhash_sia(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_no
 					}
 					else
 					{
-						if(vhash64[7] != Htarg) // don't show message if it is equal but fails fulltest
+						if(vhash64[0] != Htarg) // don't show message if it is equal but fails fulltest
 							applog(LOG_INFO, "GPU #%d: result does not validate on CPU!", device_map[thr_id]);
 					}
 				}
@@ -289,7 +293,7 @@ int scanhash_sia(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_no
 			}
 			else
 			{
-				if(vhash64[7] != Htarg) // don't show message if it is equal but fails fulltest
+				if(vhash64[0] != Htarg) // don't show message if it is equal but fails fulltest
 					applog(LOG_INFO, "GPU #%d: result does not validate on CPU!", device_map[thr_id]);
 			}
 		}

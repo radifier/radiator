@@ -1203,7 +1203,7 @@ err_out:
 static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 {
 	extern void siahash(const void *data, unsigned int len, void *hash);
-	uchar *merkle_root;
+	uchar merkle_root[1024];
 	int i;
 
 	if(!sctx->job.job_id)
@@ -1223,8 +1223,6 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 	// also store the block number
 	work->height = sctx->job.height;
 
-	size_t merkle_root_size = max(sctx->job.coinbase_size + 1, 64);
-	merkle_root = (uchar *)malloc(merkle_root_size);
 	/* Generate merkle root */
 	switch(opt_algo)
 	{
@@ -1240,10 +1238,12 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 			SHA256((uchar*)sctx->job.coinbase, sctx->job.coinbase_size, (uchar*)merkle_root);
 			break;
 		case ALGO_SIA:
+		{
 			merkle_root[0] = (uchar)0;
 			memcpy(merkle_root + 1, sctx->job.coinbase, sctx->job.coinbase_size);
 			siahash(merkle_root, (unsigned int)sctx->job.coinbase_size + 1, merkle_root + 33);
 			break;
+		}
 		default:
 			sha256d(merkle_root, sctx->job.coinbase, (int)sctx->job.coinbase_size);
 	}
@@ -1358,7 +1358,6 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 	default:
 		diff_to_target(work->target, sctx->job.diff / opt_difficulty);
 	}
-	free(merkle_root);
 	return true;
 }
 
