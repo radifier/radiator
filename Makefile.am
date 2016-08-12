@@ -45,6 +45,8 @@ ccminer_SOURCES	= elist.h miner.h compat.h \
 			  quark/quarkcoin.cu \
 			  quark/cuda_quark_compactionTest.cu  \
 			  cuda_nist5.cu pentablake.cu skein.cu \
+			  Sia/sia.cu
+			  Sia/cuda_sia.cu
 			  sph/bmw.c sph/blake.c sph/groestl.c sph/jh.c sph/keccak.c sph/skein.c \
 			  sph/cubehash.c sph/echo.c sph/luffa.c sph/sha2.c sph/shavite.c sph/simd.c \
 			  sph/hamsi.c sph/hamsi_helper.c sph/sph_hamsi.h \
@@ -61,7 +63,7 @@ ccminer_SOURCES	= elist.h miner.h compat.h \
 			  bitcoin.cu cuda_bitcoin.cu\
 			  x15/cuda_whirlpoolx.cu x15/whirlpoolx.cu \
 			  neoscrypt/neoscrypt.cu neoscrypt/cuda_neoscrypt.cu \
-                          bitcredit/cuda_bitcredit.cu bitcredit/bitcredit.cu
+              bitcredit/cuda_bitcredit.cu bitcredit/bitcredit.cu
 
 # scrypt
 # ccminer_SOURCES += scrypt.cpp scrypt-jane.cpp \
