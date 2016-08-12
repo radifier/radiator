@@ -9,7 +9,7 @@
  * any later version.  See COPYING for more details.
  */
 
-#include "cpuminer-config.h"
+#include "ccminer-config.h"
 #include "cuda_runtime_api.h"
 
 #include <cstdio>
