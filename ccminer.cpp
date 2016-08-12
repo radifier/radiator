@@ -2153,8 +2153,8 @@ static void *stratum_thread(void *userdata)
 			}
 			else if(opt_debug && !opt_quiet)
 			{
-				applog(LOG_BLUE, "%s asks job %d for block %d", short_url,
-					   strtoul(stratum.job.job_id, NULL, 16), stratum.job.height);
+				applog(LOG_BLUE, "%s asks job %s for block %d", short_url,
+					   stratum.job.job_id, stratum.job.height);
 			}
 			pthread_mutex_unlock(&g_work_lock);
 		}
