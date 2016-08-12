@@ -228,7 +228,7 @@ int scanhash_sia(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_no
 		CUDA_SAFE_CALL(cudaMallocHost(&h_nounce, MAXRESULTS * sizeof(uint32_t)));
 		sia_gpu_init(thr_id);
 
-		throughputmax = device_intensity(device_map[thr_id], __func__, 1U << 24);
+		throughputmax = device_intensity(device_map[thr_id], __func__, 1U << 28);
 		init = true;
 	}
 	uint32_t throughput = min(throughputmax, (max_nonce - first_nonce));
