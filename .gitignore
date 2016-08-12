@@ -1,4 +1,3 @@
-
 ccminer
 *.o
 
@@ -7,7 +6,6 @@ autom4te.cache
 
 Makefile
 Makefile.in
-INSTALL
 aclocal.m4
 configure
 configure.lineno
@@ -15,7 +13,7 @@ depcomp
 missing
 install-sh
 stamp-h1
-cpuminer-config.h*
+ccminer-config.h.in
 compile
 config.log
 config.status
@@ -49,6 +47,4 @@ x64/Release/
 .loadpath
 .cproject
 .buildpath
-
-compat/curl-for-windows/
 
