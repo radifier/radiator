@@ -10,7 +10,7 @@
 */
 
 //#define _GNU_SOURCE
-#include "cpuminer-config.h"
+#include "ccminer-config.h"
 
 #include <cstdio>
 #include <cstdlib>

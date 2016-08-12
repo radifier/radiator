@@ -1,7 +1,7 @@
 #ifndef __MINER_H__
 #define __MINER_H__
 
-#include "cpuminer-config.h"
+#include "ccminer-config.h"
 #ifndef __cplusplus
 #include <stdbool.h>
 #endif
