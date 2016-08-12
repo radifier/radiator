@@ -45,8 +45,7 @@ ccminer_SOURCES	= elist.h miner.h compat.h \
 			  quark/quarkcoin.cu \
 			  quark/cuda_quark_compactionTest.cu  \
 			  cuda_nist5.cu pentablake.cu skein.cu \
-			  Sia/sia.cu \
-			  Sia/cuda_sia.cu \
+			  Sia/sia.cu Sia/cuda_sia.cu \
 			  sph/bmw.c sph/blake.c sph/groestl.c sph/jh.c sph/keccak.c sph/skein.c \
 			  sph/cubehash.c sph/echo.c sph/luffa.c sph/sha2.c sph/shavite.c sph/simd.c \
 			  sph/hamsi.c sph/hamsi_helper.c sph/sph_hamsi.h \
@@ -60,10 +59,10 @@ ccminer_SOURCES	= elist.h miner.h compat.h \
 			  x15/whirlpool.cu \
 			  x17/x17.cu x17/cuda_x17_haval512.cu x17/cuda_x17_sha512.cu \
 			  x11/s3.cu x11/c11.cu \
-			  bitcoin.cu cuda_bitcoin.cu\
+			  bitcoin.cu cuda_bitcoin.cu \
 			  x15/cuda_whirlpoolx.cu x15/whirlpoolx.cu \
 			  neoscrypt/neoscrypt.cu neoscrypt/cuda_neoscrypt.cu \
-              bitcredit/cuda_bitcredit.cu bitcredit/bitcredit.cu
+			  bitcredit/cuda_bitcredit.cu bitcredit/bitcredit.cu
 
 # scrypt
 # ccminer_SOURCES += scrypt.cpp scrypt-jane.cpp \
@@ -140,3 +139,6 @@ JHA/cuda_jha_compactionTest.o: JHA/cuda_jha_compactionTest.cu
 skein.o: skein.cu
 	$(NVCC) $(nvcc_FLAGS) --maxrregcount=64 -o $@ -c $<
 
+# This kernel requires at least sm_32
+neoscrypt/cuda_neoscrypt.o: neoscrypt/cuda_neoscrypt.cu
+	$(NVCC)  -gencode=arch=compute_52,code=\"sm_52,compute_52\" -gencode=arch=compute_50,code=\"sm_50,compute_50\" -gencode=arch=compute_35,code=\"sm_35,compute_35\" -gencode=arch=compute_32,code=\"sm_32,compute_32\" @CUDA_INCLUDES@ -I. @CUDA_CFLAGS@ $(JANSSON_INCLUDES) --ptxas-options="-v" -o $@ -c $<
