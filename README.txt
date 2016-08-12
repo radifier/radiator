@@ -1,5 +1,5 @@
 
-ccMiner release 8.00(KlausT-mod) (August 11th, 2016)
+ccMiner release 8.01(KlausT-mod) (August 11th, 2016)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -89,6 +89,7 @@ its command line interface and options.
                           quark       use to mine Quarkcoin
                           qubit       use to mine Qubit Algo
                           s3          use to mine 1coin
+                          sia         use to mine Siacoin (at siamining.com pool)
                           skein       use to mine Skeincoin
                           whirl       use to mine Whirlcoin
                           x11         use to mine DarkCoin

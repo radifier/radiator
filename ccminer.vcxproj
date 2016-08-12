@@ -333,6 +333,7 @@
     <ClCompile Include="sph\whirlpool.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ccminer-config.h" />
     <ClInclude Include="compat.h" />
     <ClInclude Include="compat\getopt\getopt.h" />
     <ClInclude Include="compat\inttypes.h" />
@@ -350,7 +351,6 @@
     <ClInclude Include="compat\sys\time.h" />
     <ClInclude Include="compat\unistd.h" />
     <ClInclude Include="compat\winansi.h" />
-    <ClInclude Include="cpuminer-config.h" />
     <ClInclude Include="cuda_groestlcoin.h" />
     <ClInclude Include="cuda_helper.h" />
     <ClInclude Include="cuda_vector.h" />

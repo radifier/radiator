@@ -232,7 +232,7 @@ Options:\n\
 			penta       Pentablake hash (5x Blake 512)\n\
 			quark       Quark\n\
 			qubit       Qubit\n\
-			sia         Siacoin\n\
+			sia         Siacoin (at pools conpatible to siamining.com) \n\
 			skein       Skein SHA2 (Skeincoin)\n\
 			s3          S3 (1Coin)\n\
 			spread      Spread\n\
