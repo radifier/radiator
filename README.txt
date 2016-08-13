@@ -1,5 +1,5 @@
 
-ccMiner release 8.01(KlausT-mod) (August 11th, 2016)
+ccMiner release 8.01(KlausT-mod) (August 12th, 2016)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -67,77 +67,86 @@ that the most of our comments are in german.
 This code is based on the pooler cpuminer 2.3.2 release and inherits
 its command line interface and options.
 
-  -a, --algo=ALGO       specify the algorithm to use
-                          anime       use to mine Animecoin
-						  bitcoin     use to mine Bitcoin
-                          blake       use to mine NEOS (Blake 256)
-                          blakecoin   use to mine Old Blake 256
-                          deep        use to mine Deepcoin
-                          dmd-gr      use to mine Diamond-Groestl
-                          fresh       use to mine Freshcoin
-                          fugue256    use to mine Fuguecoin
-                          groestl     use to mine Groestlcoin
-                          heavy       use to mine Heavycoin
-                          jackpot     use to mine Jackpotcoin
-                          keccak      use to mine Maxcoin
-                          luffa       use to mine Doomcoin
-                          mjollnir    use to mine Mjollnircoin
-                          myr-gr      use to mine Myriad-Groestl
-                          neoscrypt   use to mine FeatherCoin
-                          nist5       use to mine TalkCoin
-                          penta       use to mine Joincoin / Pentablake
-                          quark       use to mine Quarkcoin
-                          qubit       use to mine Qubit Algo
-                          s3          use to mine 1coin
-                          sia         use to mine Siacoin (at siamining.com pool)
-                          skein       use to mine Skeincoin
-                          whirl       use to mine Whirlcoin
-                          x11         use to mine DarkCoin
-                          x14         use to mine X14Coin
-                          x15         use to mine Halcyon
-                          x17         use to mine X17
-						  vanilla     use to mine Vanillacoin
-                          lyra2v2     use to mine Vertcoin
-
-  -d, --devices         gives a comma separated list of CUDA device IDs
-                        to operate on. Device IDs start counting from 0!
-                        Alternatively give string names of your card like
-                        gtx780ti or gt640#2 (matching 2nd gt640 in the PC).
-
-  -i, --intensity       GPU threads per call 8-31 (default: 0=auto)
-                        Decimals are allowed for fine tuning
-  -f, --diff            Divide difficulty by this factor (std is 1)
-  -v, --vote            Heavycoin block vote (default: 512)
-  -o, --url=URL         URL of mining server
-  -O, --userpass=U:P    username:password pair for mining server
-  -u, --user=USERNAME   username for mining server
-  -p, --pass=PASSWORD   password for mining server
-      --cert=FILE       certificate for mining server using SSL
-  -x, --proxy=[PROTOCOL://]HOST[:PORT]  connect through a proxy
-  -t, --threads=N       number of miner threads (default: number of nVidia GPUs in your system)
-  -g                    number of mining threads per GPU (default: 1)
-  -r, --retries=N       number of times to retry if a network call fails
-                          (default: retry indefinitely)
-  -R, --retry-pause=N   time to pause between retries, in seconds (default: 15)
-  -T, --timeout=N       network timeout, in seconds (default: 270)
-  -s, --scantime=N      upper bound on time spent scanning current work when
-                        long polling is unavailable, in seconds (default: 5)
-  -N, --statsavg        number of samples used to display hashrate (default: 30)
-      --no-gbt          disable getblocktemplate support (height check in solo)
-      --no-longpoll     disable X-Long-Polling support
-      --no-stratum      disable X-Stratum support
-  -q, --quiet           disable per-thread hashmeter output
-  -D, --debug           enable debug output
-  -P, --protocol-dump   verbose dump of protocol-level activities
-  -b, --api-bind        IP/Port for the miner API (default: 127.0.0.1:4068)
-      --benchmark       run in offline benchmark mode
-      --cputest         debug hashes from cpu algorithms
-      --cpu-affinity    set process affinity to specific cpu core(s) mask
-      --cpu-priority    set process priority (default: 0 idle, 2 normal to 5 highest)
-  -c, --config=FILE     load a JSON-format configuration file
-      --no-color        disable colored console output
-  -V, --version         display version information and exit
-  -h, --help            display this help text and exit
+   -a, --algo=ALGO specify the hash algorithm to use\n\
+			bitcoin     Bitcoin\n\
+			blake       Blake 256 (SFR/NEOS)\n\
+			blakecoin   Fast Blake 256 (8 rounds)\n\
+			c11         X11 variant\n\
+			credit      Credit\n\
+			deep        Deepcoin\n\
+			dmd-gr      Diamond-Groestl\n\
+			fresh       Freshcoin (shavite 80)\n\
+			fugue256    Fuguecoin\n\
+			groestl     Groestlcoin\n\
+			heavy       Heavycoin\n\
+			jackpot     Jackpot\n\
+			keccak      Keccak-256 (Maxcoin)\n\
+			luffa       Doomcoin\n\
+			lyra2v2     VertCoin\n\
+			mjollnir    Mjollnircoin\n\
+			myr-gr      Myriad-Groestl\n\
+            neoscrypt   neoscrypt (FeatherCoin)\n\
+			nist5       NIST5 (TalkCoin)\n\
+			penta       Pentablake hash (5x Blake 512)\n\
+			quark       Quark\n\
+			qubit       Qubit\n\
+			sia         Siacoin (at pools compatible to siamining.com) \n\
+			skein       Skein SHA2 (Skeincoin)\n\
+			s3          S3 (1Coin)\n\
+			spread      Spread\n\
+			x11         X11 (DarkCoin)\n\
+			x13         X13 (MaruCoin)\n\
+			x14         X14\n\
+			x15         X15\n\
+			x17         X17 (peoplecurrency)\n\
+			vanilla     Blake 256 8 rounds\n\
+			yescrypt    yescrypt\n\
+			whirl       Whirlcoin (old whirlpool)\n\
+			whirlpoolx  Vanillacoin \n\
+  -d, --devices         Comma separated list of CUDA devices to use. \n\
+                        Device IDs start counting from 0! Alternatively takes\n\
+                        string names of your cards like gtx780ti or gt640#2\n\
+                        (matching 2nd gt640 in the PC)\n\
+  -i  --intensity=N     GPU intensity 8-31 (default: auto) \n\
+                        Decimals are allowed for fine tuning \n\
+  -f, --diff-factor     Divide difficulty by this factor (default 1.0) \n\
+  -m, --diff-multiplier Multiply difficulty by this value (default 1.0) \n\
+  -v, --vote=VOTE       block reward vote (for HeavyCoin)\n\
+  -o, --url=URL         URL of mining server\n\
+  -O, --userpass=U:P    username:password pair for mining server\n\
+  -u, --user=USERNAME   username for mining server\n\
+  -p, --pass=PASSWORD   password for mining server\n\
+      --cert=FILE       certificate for mining server using SSL\n\
+  -x, --proxy=[PROTOCOL://]HOST[:PORT]  connect through a proxy\n\
+  -t, --threads=N       number of miner threads (default: number of nVidia GPUs)\n\
+  -r, --retries=N       number of times to retry if a network call fails\n\
+                          (default: retry indefinitely)\n\
+  -R, --retry-pause=N   time to pause between retries, in seconds (default: 30)\n\
+  -T, --timeout=N       network timeout, in seconds (default: 270)\n\
+  -s, --scantime=N      upper bound on time spent scanning current work when\n\
+                        long polling is unavailable, in seconds (default: 5)\n\
+  -n, --ndevs           list cuda devices\n\
+  -N, --statsavg        number of samples used to display hashrate (default: 30)\n\
+      --no-gbt          disable getblocktemplate support (height check in solo)\n\
+      --no-longpoll     disable X-Long-Polling support\n\
+      --no-stratum      disable X-Stratum support\n\
+  -e                    disable extranonce\n\
+  -q, --quiet           disable per-thread hashmeter output\n\
+      --no-color        disable colored output\n\
+  -D, --debug           enable debug output\n\
+  -P, --protocol-dump   verbose dump of protocol-level activities\n\
+      --cpu-affinity    set process affinity to cpu core(s), mask 0x3 for cores 0 and 1\n\
+      --cpu-priority    set process priority (default: 0 idle, 2 normal to 5 highest)\n\
+  -b, --api-bind        IP/Port for the miner API (default: 127.0.0.1:4068)\n\
+  -S, --syslog          use system log for output messages\n\
+      --syslog-prefix=... allow to change syslog tool name\n\
+  -B, --background      run the miner in the background\n\
+      --benchmark       run in offline benchmark mode\n\
+      --cputest         debug hashes from cpu algorithms\n\
+      --no-cpu-verify   don't verify the found results\n\
+  -c, --config=FILE     load a JSON-format configuration file\n\
+  -V, --version         display version information and exit\n\
+  -h, --help            display this help text and exit\n"
 
 
 >>> Examples <<<
@@ -213,6 +222,8 @@ features.
 2016-06-18 v7.04: Neoscrypt optimization
                   Bug Fixes 
 2016-08-11 v8.00: added Siacoin
+2016-08-12 v8.01: increse default intensity for Sia
+                  fix Linux build
 
 >>> AUTHORS <<<
 
