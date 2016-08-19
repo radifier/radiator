@@ -660,17 +660,19 @@ void blake256_cpu_hash_80(const int thr_id, const uint32_t threads, const uint32
 __host__
 void blake256_cpu_setBlock_80(int thr_id, uint32_t *pdata)
 {
-	uint32_t h[8] = {
+	uint32_t h[8] =
+	{
 		0x6A09E667, 0xBB67AE85,
 		0x3C6EF372, 0xA54FF53A,
 		0x510E527F, 0x9B05688C,
 		0x1F83D9AB, 0x5BE0CD19
 	};
+
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_data, pdata + 16, 3 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+
 	blake256_compress1st(h, pdata);
 
-	cudaMemcpyToSymbolAsync(cpu_h, h, sizeof(h), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
-	cudaMemcpyToSymbolAsync(c_data, pdata+16, 3*sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
-	CUDA_SAFE_CALL(cudaGetLastError());
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(cpu_h, h, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }
 
 __host__
