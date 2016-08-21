@@ -125,7 +125,7 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 		intensity = 256 * 256 * 8;
 	}
 	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, intensity);
-	uint32_t throughput = min(throughputmax, max_nonce - first_nonce) & 0xffffff00;
+	uint32_t throughput = min(throughputmax, max_nonce - first_nonce) & 0xfffffe00;
 
 	if (opt_benchmark)
 		((uint32_t*)ptarget)[7] = 0x004f;
