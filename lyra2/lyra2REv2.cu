@@ -107,9 +107,9 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 	}
 	else if (strstr(props.name, "980"))
 	{
-		intensity = 256 * 256 * 22;
-#ifdef _WIN64
 		intensity = 256 * 256 * 15;
+#ifdef _WIN64
+		intensity = 256 * 256 * 22;
 #endif
 	}
 	else if (strstr(props.name, "750 Ti"))
