@@ -2737,6 +2737,25 @@ BOOL WINAPI ConsoleHandler(DWORD dwType)
 }
 #endif
 
+static int msver(void)
+{
+	int version;
+#ifdef _MSC_VER
+	switch(_MSC_VER)
+	{
+		case 1500: version = 2008; break;
+		case 1600: version = 2010; break;
+		case 1700: version = 2012; break;
+		case 1800: version = 2013; break;
+		case 1900: version = 2015; break;
+		default: version = _MSC_VER / 100;
+	}
+#else
+	version = 0;
+#endif
+	return version;
+}
+
 int main(int argc, char *argv[])
 {
 	struct thr_info *thr;
@@ -2753,7 +2772,7 @@ int main(int argc, char *argv[])
 	printf("ccminer " PACKAGE_VERSION " (32bit) for nVidia GPUs\n");
 #endif
 #ifdef _MSC_VER
-	printf("Compiled with Visual C++ %d ", _MSC_VER / 100);
+	printf("Compiled with Visual Studio %d ", msver());
 #else
 #ifdef __clang__
 	printf("Compiled with Clang %s ", __clang_version__);
