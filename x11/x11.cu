@@ -140,12 +140,16 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 	cudaDeviceProp props;
 	cudaGetDeviceProperties(&props, device_map[thr_id]);
 	unsigned int intensity;
+#if defined WIN32 && !defined _WIN64
+	intensity = 256 * 256 * 16;
+#else
 	if(strstr(props.name, "970"))		  intensity = (256 * 256 * 22);
 	else if(strstr(props.name, "980"))    intensity = (256 * 256 * 22);
 	else if(strstr(props.name, "750 Ti")) intensity = (256 * 256 * 20);
 	else if(strstr(props.name, "750"))    intensity = (256 * 256 * 19);
 	else if(strstr(props.name, "960"))    intensity = (256 * 256 * 19);
 	else intensity = (256 * 256 * 16);
+#endif
 	const uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, intensity); // 19=256*256*8;
 	uint32_t throughput = min(throughputmax, max_nonce - first_nonce) & 0xfffffc00;
 	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
@@ -177,7 +181,7 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 		if (x11_simd512_cpu_init(thr_id, throughputmax) != 0) {
 			return 0;
 		}
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 64 * throughputmax)); // why 64 ?
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 64 * throughputmax));
 		CUDA_SAFE_CALL(cudaMallocHost(&(h_found), 2 * sizeof(uint32_t)));
 		init = true;
 	}
