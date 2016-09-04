@@ -27,9 +27,7 @@ do {                                                                  \
 		}                                                                 \
 } while (0)
 
-#define SWAP32(x) \
-    ((((x) << 24) & 0xff000000u) | (((x) << 8) & 0x00ff0000u)   | \
-      (((x) >> 8) & 0x0000ff00u) | (((x) >> 24) & 0x000000ffu))
+#define SWAP32(x) swab32(x)
 
 // CPU-groestl
 extern "C" void groestlhash(void *state, const void *input)

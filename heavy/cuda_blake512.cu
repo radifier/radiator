@@ -39,15 +39,11 @@ const uint8_t host_sigma[16][16] =
   { 2, 12, 6, 10, 0, 11, 8, 3, 4, 13, 7, 5, 15, 14, 1, 9 }
 };
 
-/* in cuda_helper */
-#define SWAP32(x) cuda_swab32(x)
-#define SWAP64(x) cuda_swab64(x)
-
 __constant__ uint64_t c_SecondRound[15];
 
 const uint64_t host_SecondRound[15] =
 {
-  0,0,0,0,0,0,0,0,0,0,0,0,0,SWAP64(1),0
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0x0100000000000000,0
 };
 
 __constant__ uint64_t c_u512[16];
@@ -179,7 +175,7 @@ template <int BLOCKSIZE> __global__ void blake512_gpu_hash(uint32_t threads, uin
 		// zweite Runde
 #pragma unroll 15
 		for (int i=0; i < 15; ++i) buf[i] = c_SecondRound[i];
-		buf[15] = SWAP64(8*(BLOCKSIZE+32)); // Blocksize in Bits einsetzen
+		buf[15] = cuda_swab64(8 * (BLOCKSIZE + 32)); // Blocksize in Bits einsetzen
 		blake512_compress<BLOCKSIZE>( h, buf, 1, c_sigma, c_u512 );
 
 		// Hash rauslassen

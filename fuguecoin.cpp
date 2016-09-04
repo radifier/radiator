@@ -22,9 +22,7 @@ extern "C" void my_fugue256_addbits_and_close(void *cc, unsigned ub, unsigned n,
 // vorbereitete Kontexte nach den ersten 80 Bytes
 // sph_fugue256_context  ctx_fugue_const[MAX_GPUS];
 
-#define SWAP32(x) \
-    ((((x) << 24) & 0xff000000u) | (((x) << 8) & 0x00ff0000u)   | \
-      (((x) >> 8) & 0x0000ff00u) | (((x) >> 24) & 0x000000ffu))
+#define SWAP32(x) swab32(x)
 
 extern int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t max_nonce, uint32_t *hashes_done)
