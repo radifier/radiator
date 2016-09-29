@@ -1393,7 +1393,7 @@ __global__ __launch_bounds__(TPB2, 8) void neoscrypt_gpu_hash_ending(int stratum
 
 #pragma unroll
 	for(int i = 0; i<8; i++)
-		Z[i] = __ldg4(&(Tr2 + shiftTr)[i]) ^ __ldg4(&(Tr + shiftTr)[i]);
+		Z[i] = (Tr2 + shiftTr)[i] ^ (Tr + shiftTr)[i];
 
 #if __CUDA_ARCH__ < 500		 
 	fastkdf32_v1(thread, ZNonce, (uint32_t*)Z, s_data, outbuf);
