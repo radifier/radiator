@@ -837,7 +837,7 @@ static __forceinline__ __host__ void Blake2Shost(uint32_t * inout, const uint32_
 #if __CUDA_ARCH__ < 500
 static __forceinline__ __device__ void fastkdf256_v1(uint32_t thread, const uint32_t nonce, const uint32_t * __restrict__  s_data) //, vectypeS * output)
 {
-	vectypeS output[8];
+	vectypeS __align__(16) output[8];
 	uint8_t bufidx;
 	uchar4 bufhelper;
 	uint32_t B[64];
@@ -1034,7 +1034,7 @@ static __forceinline__ __device__ void fastkdf32_v1(uint32_t thread, const  uint
 #else
 static __forceinline__ __device__ void fastkdf256_v2(uint32_t thread, const uint32_t nonce, const uint32_t* __restrict__ s_data) //, vectypeS * output)
 {
-	vectypeS output[8];
+	vectypeS __align__(16) output[8];
 	uint8_t bufidx;
 	uchar4 bufhelper;
 	const uint32_t data18 = s_data[18];
@@ -1279,7 +1279,7 @@ __global__ __launch_bounds__(TPB, 1) void neoscrypt_gpu_hash_chacha1_stream1(uin
 	const int shift = SHIFT * 8 * thread;
 	const unsigned int shiftTr = 8 * thread;
 
-	vectypeS X[8];
+	vectypeS __align__(16) X[8];
 	for(int i = 0; i<8; i++)
 		X[i] = __ldg4(&(Input + shiftTr)[i]);
 
@@ -1302,7 +1302,7 @@ __global__ __launch_bounds__(TPB, 1) void neoscrypt_gpu_hash_chacha2_stream1(uin
 	const int shift = SHIFT * 8 * thread;
 	const int shiftTr = 8 * thread;
 
-	vectypeS X[8];
+	vectypeS __align__(16) X[8];
 #pragma unroll
 	for(int i = 0; i<8; i++)
 		X[i] = __ldg4(&(Tr + shiftTr)[i]);
@@ -1327,7 +1327,7 @@ __global__ __launch_bounds__(TPB, 1) void neoscrypt_gpu_hash_salsa1_stream1(uint
 	const int shift = SHIFT * 8 * thread;
 	const int shiftTr = 8 * thread;
 
-	vectypeS Z[8];
+	vectypeS __align__(16) Z[8];
 #pragma unroll
 	for(int i = 0; i<8; i++)
 		Z[i] = __ldg4(&(Input + shiftTr)[i]);
@@ -1350,7 +1350,7 @@ __global__ __launch_bounds__(TPB, 1) void neoscrypt_gpu_hash_salsa2_stream1(uint
 	const int shift = SHIFT * 8 * thread;
 	const int shiftTr = 8 * thread;
 
-	vectypeS X[8];
+	vectypeS __align__(16) X[8];
 #pragma unroll
 	for(int i = 0; i<8; i++)
 		X[i] = __ldg4(&(Tr2 + shiftTr)[i]);
@@ -1386,7 +1386,7 @@ __global__ __launch_bounds__(TPB2, 8) void neoscrypt_gpu_hash_ending(int stratum
 	const uint32_t nonce = startNonce + thread;
 
 	const int shiftTr = 8 * thread;
-	vectypeS Z[8];
+	vectypeS __align__(16) Z[8];
 	uint32_t outbuf;
 
 	const uint32_t ZNonce = (stratum) ? cuda_swab32(nonce) : nonce;
