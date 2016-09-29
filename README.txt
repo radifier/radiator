@@ -1,5 +1,5 @@
 
-ccMiner release 8.01(KlausT-mod) (August 12th, 2016)
+ccMiner release 8.02(KlausT-mod) (September 29th, 2016)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -224,6 +224,8 @@ features.
 2016-08-11 v8.00: added Siacoin
 2016-08-12 v8.01: increse default intensity for Sia
                   fix Linux build
+2016-09-29 c8.02: change to CUDA 8.0 on Windows
+                  various small changes
 
 >>> AUTHORS <<<
 
