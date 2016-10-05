@@ -39,6 +39,8 @@ x64/Release/
 *.opensdf
 *.sdf
 *.pdb
+*.db
+*.opendb
 
 .settings/
 .project
