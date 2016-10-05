@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
@@ -27,7 +27,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CLRSupport>false</CLRSupport>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
@@ -35,14 +35,14 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CLRSupport>false</CLRSupport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CLRSupport>false</CLRSupport>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
@@ -50,7 +50,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CLRSupport>false</CLRSupport>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -156,7 +156,7 @@
       <CompileAsManaged>false</CompileAsManaged>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;CURL_STATICLIB;USE_WRAPNVML;SCRYPT_KECCAK512;SCRYPT_CHACHA;SCRYPT_CHOOSE_COMPILETIME;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>HAVE_STRUCT_TIMESPEC;WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;CURL_STATICLIB;USE_WRAPNVML;SCRYPT_KECCAK512;SCRYPT_CHACHA;SCRYPT_CHOOSE_COMPILETIME;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.;compat;compat\curl-for-windows\curl\include;compat\jansson;compat\getopt;compat\pthreads;compat\curl-for-windows\openssl\openssl\include;compat\curl-for-windows\zlib;%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir)</AdditionalIncludeDirectories>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
@@ -214,7 +214,7 @@
       <CompileAsManaged>false</CompileAsManaged>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;CURL_STATICLIB;USE_WRAPNVML;SCRYPT_KECCAK512;SCRYPT_CHACHA;SCRYPT_CHOOSE_COMPILETIME;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>HAVE_STRUCT_TIMESPEC;WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;CURL_STATICLIB;USE_WRAPNVML;SCRYPT_KECCAK512;SCRYPT_CHACHA;SCRYPT_CHOOSE_COMPILETIME;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.;compat;compat\curl-for-windows\curl\include;compat\jansson;compat\getopt;compat\pthreads;compat\curl-for-windows\openssl\openssl\include;compat\curl-for-windows\zlib;%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir)</AdditionalIncludeDirectories>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <FloatingPointModel>Precise</FloatingPointModel>
