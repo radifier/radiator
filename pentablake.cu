@@ -108,7 +108,7 @@ const uint64_t c_u512[16] =
 
 #define G(a,b,c,d,x) { \
 	uint32_t idx1 = c_sigma[i][x]; \
-	uint32_t idx2 = c_sigma[i][x+1]; \
+	uint32_t idx2 = c_sigma[i][x + 1]; \
 	v[a] += (m[idx1] ^ c_u512[idx2]) + v[b]; \
 	v[d] = SWAPDWORDS(v[d] ^ v[a]); \
 	v[c] += v[d]; \

@@ -66,7 +66,7 @@ static const uint32_t  c_u256[16] =
 
 #define hostGS(a,b,c,d,x) { \
 	const uint8_t idx1 = c_sigma[r][x]; \
-	const uint8_t idx2 = c_sigma[r][x+1]; \
+	const uint8_t idx2 = c_sigma[r][x + 1]; \
 	v[a] += (m[idx1] ^ c_u256[idx2]) + v[b]; \
 	v[d] = ROTR32(v[d] ^ v[a], 16); \
 	v[c] += v[d]; \

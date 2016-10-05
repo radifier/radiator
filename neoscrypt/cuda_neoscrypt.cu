@@ -199,11 +199,11 @@ c += d; b = rotate(b^c, 7); \
 #else 
 #define BLAKE_G(idx0, idx1, a, b, c, d, key) { \
 	idx = BLAKE2S_SIGMA[idx0][idx1]; a += key[idx]; \
-	a += b; d = rotate(d^a,16); \
-	c += d; b = rotateR(b^c, 12); \
-	idx = BLAKE2S_SIGMA[idx0][idx1+1]; a += key[idx]; \
-  a += b; d = rotateR(d^a,8); \
-	c += d; b = rotateR(b^c, 7); \
+	a += b; d = rotate(d ^ a,16); \
+	c += d; b = rotateR(b ^ c, 12); \
+	idx = BLAKE2S_SIGMA[idx0][idx1 + 1]; a += key[idx]; \
+  a += b; d = rotateR(d ^ a,8); \
+	c += d; b = rotateR(b ^ c, 7); \
 } 
 #endif
 
@@ -300,12 +300,12 @@ c += d; b = rotate(b^c, 7); \
 #define BLAKE_Ghost(idx0, idx1, a, b, c, d, key) { \
 	idx = BLAKE2S_SIGMA_host[idx0][idx1]; \
 	a += b + key[idx]; \
-	d = ROTR32(d^a, 16); \
-	c += d; b = ROTR32(b^c, 12); \
-	idx = BLAKE2S_SIGMA_host[idx0][idx1+1]; \
+	d = ROTR32(d ^ a, 16); \
+	c += d; b = ROTR32(b ^ c, 12); \
+	idx = BLAKE2S_SIGMA_host[idx0][idx1 + 1]; \
 	a += b + key[idx]; \
-	d = ROTR32(d^a, 8); \
-	c += d; b = ROTR32(b^c, 7); \
+	d = ROTR32(d ^ a, 8); \
+	c += d; b = ROTR32(b ^ c, 7); \
 } 
 #if __CUDA_ARCH__ < 500
 static __forceinline__ __device__ void Blake2S(uint32_t *out, const uint32_t* __restrict__  inout, const  uint32_t * __restrict__ TheKey)
