@@ -1,8 +1,9 @@
 #pragma once
 
 #define MAXRESULTS 8
-#define npt 128
-#define blocksize 256
+
+#define npt 1
+#define blocksize 320
 
 void sia_gpu_init(int thr_id);
 void sia_precalc(cudaStream_t cudastream, const uint64_t *blockHeader);
