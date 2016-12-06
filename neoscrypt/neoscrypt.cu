@@ -17,7 +17,8 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 					   uint32_t *hashes_done)
 {
 	const uint32_t first_nonce = pdata[19];
-	static THREAD uint32_t throughput;
+	uint32_t throughput;
+	static THREAD uint32_t throughputmax;
 
 	static THREAD volatile bool init = false;
 	static THREAD uint32_t hw_errors = 0;
@@ -80,12 +81,9 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			intensity = (256 * 64 * 2);
 		}
 
-		uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, intensity) / 2;
-		throughput = min(throughputmax, (max_nonce - first_nonce)/2) & 0xffffff00;
-
+		throughputmax = device_intensity(device_map[thr_id], __func__, intensity) / 2;
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		//		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);	
-		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * 4));
 
 #if defined WIN32 && !defined _WIN64
@@ -94,7 +92,6 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		{
 			applog(LOG_ERR, "intensity too high");
 			mining_has_stopped[thr_id] = true;
-			cudaStreamDestroy(gpustream[thr_id]);
 			proper_exit(2);
 		}
 #endif
@@ -102,6 +99,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		neoscrypt_cpu_init_2stream(thr_id, throughputmax);
 		init = true;
 	}
+	throughput = min(throughputmax, (max_nonce - first_nonce) / 2) & 0xffffff00;
 
 	uint32_t endiandata[20];
 	for(int k = 0; k < 20; k++)
@@ -117,7 +115,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		neoscrypt_cpu_hash_k4_2stream(stratum, thr_id, throughput, pdata[19], foundNonce);
 		if(stop_mining)
 		{
-			mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);
+			mining_has_stopped[thr_id] = true; pthread_exit(nullptr);
 		}
 		if(foundNonce[0] != 0xffffffff)
 		{
