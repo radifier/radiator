@@ -969,6 +969,6 @@ void neoscrypt(const uchar *password, uchar *output, uint profile) {
             break;
 
     }
-
+	free(stack);
 }
 
