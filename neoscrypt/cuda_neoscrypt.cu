@@ -1489,10 +1489,10 @@ __host__ void neoscrypt_setBlockTarget(uint32_t* pdata, const void *target)
 
 	Blake2Shost(input, key);
 
-	cudaMemcpyToSymbol(pTarget, target, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(input_init, input, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(key_init, key, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(pTarget, target, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, stream[1]);
+	cudaMemcpyToSymbolAsync(input_init, input, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, stream[0]);
+	cudaMemcpyToSymbolAsync(key_init, key, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, stream[1]);
 
-	cudaMemcpyToSymbol(c_data, PaddedMessage, 64 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbolAsync(c_data, PaddedMessage, 64 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, stream[0]);
 	CUDA_SAFE_CALL(cudaGetLastError());
 }
