@@ -5,11 +5,11 @@
 #include "cuda_vector.h"
 
 
-#ifdef NOASM
+// #ifdef NOASM
 #include "cuda_x11_aes_noasm.cu"
-#else
-#include "cuda_x11_aes.cu"
-#endif
+// #else
+// #include "cuda_x11_aes.cu"
+// #endif
 
 static uint32_t *d_found[MAX_GPUS];
 

@@ -7,20 +7,20 @@
 
 __constant__ uint32_t c_PaddedMessage80[32]; // padded message (80 bytes + padding)
 
-#ifdef NOASM
+// #ifdef NOASM
 #include "cuda_x11_aes_noasm.cu"
-#else
-#include "cuda_x11_aes.cu"
-#endif
+// #else
+// #include "cuda_x11_aes.cu"
+// #endif
 
 __device__ __forceinline__
- void AES_ROUND_NOKEY(
+void AES_ROUND_NOKEY(
 	const uint32_t*const __restrict__ sharedMemory,
 	uint32_t &x0, uint32_t &x1, uint32_t &x2, uint32_t &x3)
 {
 	aes_round(sharedMemory,
-		x0, x1, x2, x3,
-		x0, x1, x2, x3);
+			  x0, x1, x2, x3,
+			  x0, x1, x2, x3);
 }
 
 __device__ __forceinline__
@@ -30,8 +30,8 @@ void KEY_EXPAND_ELT(
 {
 	uint32_t y0, y1, y2, y3;
 	aes_round(sharedMemory,
-		k0, k1, k2, k3,
-		y0, y1, y2, y3);
+			  k0, k1, k2, k3,
+			  y0, y1, y2, y3);
 
 	k0 = y1;
 	k1 = y2;
@@ -56,63 +56,69 @@ void shavite_gpu_init(uint32_t *sharedMemory)
 	}
 }
 __global__ __launch_bounds__(TPB, 3)
-void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *const __restrict__ g_hash)
+void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t *const __restrict__ g_hash)
 {
 	__shared__  __align__(128) uint32_t sharedMemory[1024];
 
 	shavite_gpu_init(sharedMemory);
 
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	if (thread < threads)
+	if(thread < threads)
 	{
-		const uint32_t nounce = (startNounce + thread);
+		uint32_t *Hash = &g_hash[thread * 16];
 
-		const uint32_t hashPosition = nounce - startNounce;
-		uint32_t *const Hash = (uint32_t*)&g_hash[hashPosition*8];
+		uint32_t rk[32];
+		uint32_t msg[16];
 
-		uint32_t rk[32] =
+		uint28 *phash = (uint28*)Hash;
+		uint28 *outpt = (uint28*)msg;
+		outpt[0] = phash[0];
+		outpt[1] = phash[1];
+
+		uint32_t state[16] =
 		{
-			Hash[0], Hash[1], Hash[2], Hash[3], Hash[4], Hash[5], Hash[6], Hash[7], Hash[8], Hash[9], Hash[10], Hash[11], Hash[12], Hash[13], Hash[14], Hash[15]
+			0x72FCCDD8, 0x79CA4727, 0x128A077B, 0x40D55AEC,
+			0xD1901A06, 0x430AE307, 0xB29F5CD1, 0xDF07FBFC,
+			0x8E45D73D, 0x681AB538, 0xBDE86578, 0xDD577E47,
+			0xE275EADE, 0x502D9FCD, 0xB9357178, 0x022A4B9A
 		};
 
-		uint32_t x0 = Hash[0] ^ 0xD1901A06;
-		uint32_t x1 = Hash[1] ^ 0x430AE307;
-		uint32_t x2 = Hash[2] ^ 0xB29F5CD1;
-		uint32_t x3 = Hash[3] ^ 0xDF07FBFC;
-		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
+		uint32_t x0 = 0xD1901A06;
+		uint32_t x1 = 0x430AE307;
+		uint32_t x2 = 0xB29F5CD1;
+		uint32_t x3 = 0xDF07FBFC;
 
-		x0 ^= Hash[4];
-		x1 ^= Hash[5];
-		x2 ^= Hash[6];
-		x3 ^= Hash[7];
-		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
+		for(int i = 0; i < 16; i += 4)
+		{
 
-		x0 ^= Hash[8];
-		x1 ^= Hash[9];
-		x2 ^= Hash[10];
-		x3 ^= Hash[11];
-		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
+			rk[i + 0] = msg[i + 0];
+			x0 ^= msg[i + 0];
+			rk[i + 1] = msg[i + 1];
+			x1 ^= msg[i + 1];
+			rk[i + 2] = msg[i + 2];
+			x2 ^= msg[i + 2];
+			rk[i + 3] = msg[i + 3];
+			x3 ^= msg[i + 3];
+			AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
+		}
+		state[0] ^= x0;
+		state[1] ^= x1;
+		state[2] ^= x2;
+		state[3] ^= x3;
 
-		x0 ^= Hash[12];
-		x1 ^= Hash[13];
-		x2 ^= Hash[14];
-		x3 ^= Hash[15];
-		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-
-		uint32_t p0 = x0 ^ 0x72FCCDD8;
-		uint32_t p1 = x1 ^ 0x79CA4727;
-		uint32_t p2 = x2 ^ 0x128A077B;
-		uint32_t p3 = x3 ^ 0x40D55AEC;
-
+		// 1
 		KEY_EXPAND_ELT(sharedMemory, rk[0], rk[1], rk[2], rk[3]);
 
 		rk[3] ^= (0x02000000UL ^ 0xFFFFFFFFUL);	//rk[31];
 		rk[0] ^= 512;
+		//	rk[3] ^= 0xFFFFFFFF;
 
-		x0 = p0 ^ rk[0];
-		x1 = p1 ^ rk[1];
-		x2 = p2 ^ rk[2];
-		x3 = p3 ^ rk[3];
+		x0 = state[0] ^ rk[0];
+		x1 = state[1] ^ rk[1];
+		x2 = state[2] ^ rk[2];
+		x3 = state[3] ^ rk[3];
+
+
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		KEY_EXPAND_ELT(sharedMemory, rk[4], rk[5], rk[6], rk[7]);
 		rk[4] ^= rk[0];
@@ -145,24 +151,25 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		x3 ^= rk[15];
 
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		uint32_t p8 = 0x8E45D73D ^ 0x32be246f;
-		uint32_t p9 = 0x681AB538 ^ 0xe33ad1e5;
-		uint32_t pA = 0xBDE86578 ^ 0xd659b13e;
-		uint32_t pB = 0xDD577E47 ^ 0xb6a1a92c;
 
-		uint32_t pC = x0 ^ 0xE275EADE;
-		uint32_t pD = x1 ^ 0x502D9FCD;
-		uint32_t pE = x2 ^ 0xB9357178;
-		uint32_t pF = x3 ^ 0x022A4B9A;
+		state[8] ^= 0x32be246fUL;
+		state[9] ^= 0xe33ad1e5UL;
+		state[10] ^= 0xd659b13eUL;
+		state[11] ^= 0xb6a1a92cUL;
+
+		state[12] ^= x0;
+		state[13] ^= x1;
+		state[14] ^= x2;
+		state[15] ^= x3;
 
 		rk[16] = rk[12] ^ 0x63636363UL;
 		rk[17] = rk[13] ^ 0x63636363UL;
 		rk[18] = rk[14] ^ 0x63636363UL;
 		rk[19] = rk[15] ^ 0x8acdcd24UL;
-		x0 = p8 ^ rk[16];
-		x1 = p9 ^ rk[17];
-		x2 = pA ^ rk[18];
-		x3 = pB ^ rk[19];
+		x0 = state[8] ^ rk[16];
+		x1 = state[9] ^ rk[17];
+		x2 = state[10] ^ rk[18];
+		x3 = state[11] ^ rk[19];
 		rk[20] = 0x63636363UL ^ rk[16];
 		rk[21] = 0x63636363UL ^ rk[17];
 		rk[22] = 0x63636363UL ^ rk[18];
@@ -177,6 +184,8 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[30] = 0x63636363UL ^ rk[26];
 		rk[31] = 0x4b5f7777UL ^ rk[27];
 
+
+
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 
 		x0 ^= rk[20];
@@ -184,6 +193,7 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		x2 ^= rk[22];
 		x3 ^= rk[23];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
+
 
 		x0 ^= rk[24];
 		x1 ^= rk[25];
@@ -197,19 +207,19 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		x3 ^= rk[31];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 
-		uint32_t p4 = x0 ^ 0xD1901A06;
-		uint32_t p5 = x1 ^ 0x430AE307;
-		uint32_t p6 = x2 ^ 0xB29F5CD1;
-		uint32_t p7 = x3 ^ 0xDF07FBFC;
+		state[4] ^= x0;
+		state[5] ^= x1;
+		state[6] ^= x2;
+		state[7] ^= x3;
 
 		rk[0] ^= rk[25];
-		x0 = pC ^ rk[0];
+		x0 = state[12] ^ rk[0];
 		rk[1] ^= rk[26];
-		x1 = pD ^ rk[1];
+		x1 = state[13] ^ rk[1];
 		rk[2] ^= rk[27];
-		x2 = pE ^ rk[2];
+		x2 = state[14] ^ rk[2];
 		rk[3] ^= rk[28];
-		x3 = pF ^ rk[3];
+		x3 = state[15] ^ rk[3];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		rk[4] ^= rk[29];
 		x0 ^= rk[4];
@@ -238,18 +248,18 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[15] ^= rk[8];
 		x3 ^= rk[15];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p8 ^= x0;
-		p9 ^= x1;
-		pA ^= x2;
-		pB ^= x3;
+		state[8] ^= x0;
+		state[9] ^= x1;
+		state[10] ^= x2;
+		state[11] ^= x3;
 		rk[16] ^= rk[9];
-		x0 = p4 ^ rk[16];
+		x0 = state[4] ^ rk[16];
 		rk[17] ^= rk[10];
-		x1 = p5 ^ rk[17];
+		x1 = state[5] ^ rk[17];
 		rk[18] ^= rk[11];
-		x2 = p6 ^ rk[18];
+		x2 = state[6] ^ rk[18];
 		rk[19] ^= rk[12];
-		x3 = p7 ^ rk[19];
+		x3 = state[7] ^ rk[19];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		rk[20] ^= rk[13];
 		x0 ^= rk[20];
@@ -278,20 +288,20 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[31] ^= rk[24];
 		x3 ^= rk[31];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p0 ^= x0;
-		p1 ^= x1;
-		p2 ^= x2;
-		p3 ^= x3;
+		state[0] ^= x0;
+		state[1] ^= x1;
+		state[2] ^= x2;
+		state[3] ^= x3;
 		/* round 3, 7, 11 */
 		KEY_EXPAND_ELT(sharedMemory, rk[0], rk[1], rk[2], rk[3]);
 		rk[0] ^= rk[28];
 		rk[1] ^= rk[29];
 		rk[2] ^= rk[30];
 		rk[3] ^= rk[31];
-		x0 = p8 ^ rk[0];
-		x1 = p9 ^ rk[1];
-		x2 = pA ^ rk[2];
-		x3 = pB ^ rk[3];
+		x0 = state[8] ^ rk[0];
+		x1 = state[9] ^ rk[1];
+		x2 = state[10] ^ rk[2];
+		x3 = state[11] ^ rk[3];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		KEY_EXPAND_ELT(sharedMemory, rk[4], rk[5], rk[6], rk[7]);
 		rk[4] ^= rk[0];
@@ -323,19 +333,19 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		x2 ^= rk[14];
 		x3 ^= rk[15];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p4 ^= x0;
-		p5 ^= x1;
-		p6 ^= x2;
-		p7 ^= x3;
+		state[4] ^= x0;
+		state[5] ^= x1;
+		state[6] ^= x2;
+		state[7] ^= x3;
 		KEY_EXPAND_ELT(sharedMemory, rk[16], rk[17], rk[18], rk[19]);
 		rk[16] ^= rk[12];
 		rk[17] ^= rk[13];
 		rk[18] ^= rk[14];
 		rk[19] ^= rk[15];
-		x0 = p0 ^ rk[16];
-		x1 = p1 ^ rk[17];
-		x2 = p2 ^ rk[18];
-		x3 = p3 ^ rk[19];
+		x0 = state[0] ^ rk[16];
+		x1 = state[1] ^ rk[17];
+		x2 = state[2] ^ rk[18];
+		x3 = state[3] ^ rk[19];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		KEY_EXPAND_ELT(sharedMemory, rk[20], rk[21], rk[22], rk[23]);
 		rk[20] ^= rk[16];
@@ -367,19 +377,19 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		x2 ^= rk[30];
 		x3 ^= rk[31];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		pC ^= x0;
-		pD ^= x1;
-		pE ^= x2;
-		pF ^= x3;
+		state[12] ^= x0;
+		state[13] ^= x1;
+		state[14] ^= x2;
+		state[15] ^= x3;
 		/* round 4, 8, 12 */
 		rk[0] ^= rk[25];
-		x0 = p4 ^ rk[0];
+		x0 = state[4] ^ rk[0];
 		rk[1] ^= rk[26];
-		x1 = p5 ^ rk[1];
+		x1 = state[5] ^ rk[1];
 		rk[2] ^= rk[27];
-		x2 = p6 ^ rk[2];
+		x2 = state[6] ^ rk[2];
 		rk[3] ^= rk[28];
-		x3 = p7 ^ rk[3];
+		x3 = state[7] ^ rk[3];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		rk[4] ^= rk[29];
 		x0 ^= rk[4];
@@ -409,18 +419,18 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		x3 ^= rk[15];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 
-		p0 ^= x0;
-		p1 ^= x1;
-		p2 ^= x2;
-		p3 ^= x3;
+		state[0] ^= x0;
+		state[1] ^= x1;
+		state[2] ^= x2;
+		state[3] ^= x3;
 		rk[16] ^= rk[9];
-		x0 = pC ^ rk[16];
+		x0 = state[12] ^ rk[16];
 		rk[17] ^= rk[10];
-		x1 = pD ^ rk[17];
+		x1 = state[13] ^ rk[17];
 		rk[18] ^= rk[11];
-		x2 = pE ^ rk[18];
+		x2 = state[14] ^ rk[18];
 		rk[19] ^= rk[12];
-		x3 = pF ^ rk[19];
+		x3 = state[15] ^ rk[19];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		rk[20] ^= rk[13];
 		x0 ^= rk[20];
@@ -449,10 +459,10 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[31] ^= rk[24];
 		x3 ^= rk[31];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p8 ^= x0;
-		p9 ^= x1;
-		pA ^= x2;
-		pB ^= x3;
+		state[8] ^= x0;
+		state[9] ^= x1;
+		state[10] ^= x2;
+		state[11] ^= x3;
 
 		// 2
 		KEY_EXPAND_ELT(sharedMemory, rk[0], rk[1], rk[2], rk[3]);
@@ -460,10 +470,10 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[1] ^= rk[29];
 		rk[2] ^= rk[30];
 		rk[3] ^= rk[31];
-		x0 = p0 ^ rk[0];
-		x1 = p1 ^ rk[1];
-		x2 = p2 ^ rk[2];
-		x3 = p3 ^ rk[3];
+		x0 = state[0] ^ rk[0];
+		x1 = state[1] ^ rk[1];
+		x2 = state[2] ^ rk[2];
+		x3 = state[3] ^ rk[3];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		KEY_EXPAND_ELT(sharedMemory, rk[4], rk[5], rk[6], rk[7]);
 		rk[4] ^= rk[0];
@@ -496,19 +506,19 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		x2 ^= rk[14];
 		x3 ^= rk[15];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		pC ^= x0;
-		pD ^= x1;
-		pE ^= x2;
-		pF ^= x3;
+		state[12] ^= x0;
+		state[13] ^= x1;
+		state[14] ^= x2;
+		state[15] ^= x3;
 		KEY_EXPAND_ELT(sharedMemory, rk[16], rk[17], rk[18], rk[19]);
 		rk[16] ^= rk[12];
 		rk[17] ^= rk[13];
 		rk[18] ^= rk[14];
 		rk[19] ^= rk[15];
-		x0 = p8 ^ rk[16];
-		x1 = p9 ^ rk[17];
-		x2 = pA ^ rk[18];
-		x3 = pB ^ rk[19];
+		x0 = state[8] ^ rk[16];
+		x1 = state[9] ^ rk[17];
+		x2 = state[10] ^ rk[18];
+		x3 = state[11] ^ rk[19];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		KEY_EXPAND_ELT(sharedMemory, rk[20], rk[21], rk[22], rk[23]);
 		rk[20] ^= rk[16];
@@ -540,19 +550,19 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		x2 ^= rk[30];
 		x3 ^= rk[31];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p4 ^= x0;
-		p5 ^= x1;
-		p6 ^= x2;
-		p7 ^= x3;
+		state[4] ^= x0;
+		state[5] ^= x1;
+		state[6] ^= x2;
+		state[7] ^= x3;
 
 		rk[0] ^= rk[25];
-		x0 = pC ^ rk[0];
+		x0 = state[12] ^ rk[0];
 		rk[1] ^= rk[26];
-		x1 = pD ^ rk[1];
+		x1 = state[13] ^ rk[1];
 		rk[2] ^= rk[27];
-		x2 = pE ^ rk[2];
+		x2 = state[14] ^ rk[2];
 		rk[3] ^= rk[28];
-		x3 = pF ^ rk[3];
+		x3 = state[15] ^ rk[3];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		rk[4] ^= rk[29];
 		x0 ^= rk[4];
@@ -581,18 +591,18 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[15] ^= rk[8];
 		x3 ^= rk[15];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p8 ^= x0;
-		p9 ^= x1;
-		pA ^= x2;
-		pB ^= x3;
+		state[8] ^= x0;
+		state[9] ^= x1;
+		state[10] ^= x2;
+		state[11] ^= x3;
 		rk[16] ^= rk[9];
-		x0 = p4 ^ rk[16];
+		x0 = state[4] ^ rk[16];
 		rk[17] ^= rk[10];
-		x1 = p5 ^ rk[17];
+		x1 = state[5] ^ rk[17];
 		rk[18] ^= rk[11];
-		x2 = p6 ^ rk[18];
+		x2 = state[6] ^ rk[18];
 		rk[19] ^= rk[12];
-		x3 = p7 ^ rk[19];
+		x3 = state[7] ^ rk[19];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		rk[20] ^= rk[13];
 		x0 ^= rk[20];
@@ -621,20 +631,20 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[31] ^= rk[24];
 		x3 ^= rk[31];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p0 ^= x0;
-		p1 ^= x1;
-		p2 ^= x2;
-		p3 ^= x3;
+		state[0] ^= x0;
+		state[1] ^= x1;
+		state[2] ^= x2;
+		state[3] ^= x3;
 		/* round 3, 7, 11 */
 		KEY_EXPAND_ELT(sharedMemory, rk[0], rk[1], rk[2], rk[3]);
 		rk[0] ^= rk[28];
 		rk[1] ^= rk[29];
 		rk[2] ^= rk[30];
 		rk[3] ^= rk[31];
-		x0 = p8 ^ rk[0];
-		x1 = p9 ^ rk[1];
-		x2 = pA ^ rk[2];
-		x3 = pB ^ rk[3];
+		x0 = state[8] ^ rk[0];
+		x1 = state[9] ^ rk[1];
+		x2 = state[10] ^ rk[2];
+		x3 = state[11] ^ rk[3];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		KEY_EXPAND_ELT(sharedMemory, rk[4], rk[5], rk[6], rk[7]);
 		rk[4] ^= rk[0];
@@ -666,19 +676,19 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		x2 ^= rk[14];
 		x3 ^= rk[15];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p4 ^= x0;
-		p5 ^= x1;
-		p6 ^= x2;
-		p7 ^= x3;
+		state[4] ^= x0;
+		state[5] ^= x1;
+		state[6] ^= x2;
+		state[7] ^= x3;
 		KEY_EXPAND_ELT(sharedMemory, rk[16], rk[17], rk[18], rk[19]);
 		rk[16] ^= rk[12];
 		rk[17] ^= rk[13];
 		rk[18] ^= rk[14];
 		rk[19] ^= rk[15];
-		x0 = p0 ^ rk[16];
-		x1 = p1 ^ rk[17];
-		x2 = p2 ^ rk[18];
-		x3 = p3 ^ rk[19];
+		x0 = state[0] ^ rk[16];
+		x1 = state[1] ^ rk[17];
+		x2 = state[2] ^ rk[18];
+		x3 = state[3] ^ rk[19];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		KEY_EXPAND_ELT(sharedMemory, rk[20], rk[21], rk[22], rk[23]);
 		rk[20] ^= rk[16];
@@ -710,19 +720,19 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		x2 ^= rk[30];
 		x3 ^= rk[31];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		pC ^= x0;
-		pD ^= x1;
-		pE ^= x2;
-		pF ^= x3;
+		state[12] ^= x0;
+		state[13] ^= x1;
+		state[14] ^= x2;
+		state[15] ^= x3;
 		/* round 4, 8, 12 */
 		rk[0] ^= rk[25];
-		x0 = p4 ^ rk[0];
+		x0 = state[4] ^ rk[0];
 		rk[1] ^= rk[26];
-		x1 = p5 ^ rk[1];
+		x1 = state[5] ^ rk[1];
 		rk[2] ^= rk[27];
-		x2 = p6 ^ rk[2];
+		x2 = state[6] ^ rk[2];
 		rk[3] ^= rk[28];
-		x3 = p7 ^ rk[3];
+		x3 = state[7] ^ rk[3];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		rk[4] ^= rk[29];
 		x0 ^= rk[4];
@@ -751,18 +761,18 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[15] ^= rk[8];
 		x3 ^= rk[15];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p0 ^= x0;
-		p1 ^= x1;
-		p2 ^= x2;
-		p3 ^= x3;
+		state[0] ^= x0;
+		state[1] ^= x1;
+		state[2] ^= x2;
+		state[3] ^= x3;
 		rk[16] ^= rk[9];
-		x0 = pC ^ rk[16];
+		x0 = state[12] ^ rk[16];
 		rk[17] ^= rk[10];
-		x1 = pD ^ rk[17];
+		x1 = state[13] ^ rk[17];
 		rk[18] ^= rk[11];
-		x2 = pE ^ rk[18];
+		x2 = state[14] ^ rk[18];
 		rk[19] ^= rk[12];
-		x3 = pF ^ rk[19];
+		x3 = state[15] ^ rk[19];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		rk[20] ^= rk[13];
 		x0 ^= rk[20];
@@ -791,10 +801,10 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[31] ^= rk[24];
 		x3 ^= rk[31];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p8 ^= x0;
-		p9 ^= x1;
-		pA ^= x2;
-		pB ^= x3;
+		state[8] ^= x0;
+		state[9] ^= x1;
+		state[10] ^= x2;
+		state[11] ^= x3;
 
 		// 3
 		KEY_EXPAND_ELT(sharedMemory, rk[0], rk[1], rk[2], rk[3]);
@@ -802,10 +812,10 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[1] ^= rk[29];
 		rk[2] ^= rk[30];
 		rk[3] ^= rk[31];
-		x0 = p0 ^ rk[0];
-		x1 = p1 ^ rk[1];
-		x2 = p2 ^ rk[2];
-		x3 = p3 ^ rk[3];
+		x0 = state[0] ^ rk[0];
+		x1 = state[1] ^ rk[1];
+		x2 = state[2] ^ rk[2];
+		x3 = state[3] ^ rk[3];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		KEY_EXPAND_ELT(sharedMemory, rk[4], rk[5], rk[6], rk[7]);
 		rk[4] ^= rk[0];
@@ -837,19 +847,19 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		x2 ^= rk[14];
 		x3 ^= rk[15];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		pC ^= x0;
-		pD ^= x1;
-		pE ^= x2;
-		pF ^= x3;
+		state[12] ^= x0;
+		state[13] ^= x1;
+		state[14] ^= x2;
+		state[15] ^= x3;
 		KEY_EXPAND_ELT(sharedMemory, rk[16], rk[17], rk[18], rk[19]);
 		rk[16] ^= rk[12];
 		rk[17] ^= rk[13];
 		rk[18] ^= rk[14];
 		rk[19] ^= rk[15];
-		x0 = p8 ^ rk[16];
-		x1 = p9 ^ rk[17];
-		x2 = pA ^ rk[18];
-		x3 = pB ^ rk[19];
+		x0 = state[8] ^ rk[16];
+		x1 = state[9] ^ rk[17];
+		x2 = state[10] ^ rk[18];
+		x3 = state[11] ^ rk[19];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		KEY_EXPAND_ELT(sharedMemory, rk[20], rk[21], rk[22], rk[23]);
 		rk[20] ^= rk[16];
@@ -877,25 +887,25 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[30] ^= rk[26];
 		rk[31] ^= ~rk[27];
 		rk[30] ^= 512;
-//		rk[31] ^= 0xFFFFFFFF;
+		//		rk[31] ^= 0xFFFFFFFF;
 		x0 ^= rk[28];
 		x1 ^= rk[29];
 		x2 ^= rk[30];
 		x3 ^= rk[31];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p4 ^= x0;
-		p5 ^= x1;
-		p6 ^= x2;
-		p7 ^= x3;
+		state[4] ^= x0;
+		state[5] ^= x1;
+		state[6] ^= x2;
+		state[7] ^= x3;
 
 		rk[0] ^= rk[25];
-		x0 = pC ^ rk[0];
+		x0 = state[12] ^ rk[0];
 		rk[1] ^= rk[26];
-		x1 = pD ^ rk[1];
+		x1 = state[13] ^ rk[1];
 		rk[2] ^= rk[27];
-		x2 = pE ^ rk[2];
+		x2 = state[14] ^ rk[2];
 		rk[3] ^= rk[28];
-		x3 = pF ^ rk[3];
+		x3 = state[15] ^ rk[3];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		rk[4] ^= rk[29];
 		x0 ^= rk[4];
@@ -924,18 +934,18 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[15] ^= rk[8];
 		x3 ^= rk[15];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p8 ^= x0;
-		p9 ^= x1;
-		pA ^= x2;
-		pB ^= x3;
+		state[8] ^= x0;
+		state[9] ^= x1;
+		state[10] ^= x2;
+		state[11] ^= x3;
 		rk[16] ^= rk[9];
-		x0 = p4 ^ rk[16];
+		x0 = state[4] ^ rk[16];
 		rk[17] ^= rk[10];
-		x1 = p5 ^ rk[17];
+		x1 = state[5] ^ rk[17];
 		rk[18] ^= rk[11];
-		x2 = p6 ^ rk[18];
+		x2 = state[6] ^ rk[18];
 		rk[19] ^= rk[12];
-		x3 = p7 ^ rk[19];
+		x3 = state[7] ^ rk[19];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		rk[20] ^= rk[13];
 		x0 ^= rk[20];
@@ -964,10 +974,10 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[31] ^= rk[24];
 		x3 ^= rk[31];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p0 ^= x0;
-		p1 ^= x1;
-		p2 ^= x2;
-		p3 ^= x3;
+		state[0] ^= x0;
+		state[1] ^= x1;
+		state[2] ^= x2;
+		state[3] ^= x3;
 
 		/* round 3, 7, 11 */
 		KEY_EXPAND_ELT(sharedMemory, rk[0], rk[1], rk[2], rk[3]);
@@ -975,10 +985,10 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[1] ^= rk[29];
 		rk[2] ^= rk[30];
 		rk[3] ^= rk[31];
-		x0 = p8 ^ rk[0];
-		x1 = p9 ^ rk[1];
-		x2 = pA ^ rk[2];
-		x3 = pB ^ rk[3];
+		x0 = state[8] ^ rk[0];
+		x1 = state[9] ^ rk[1];
+		x2 = state[10] ^ rk[2];
+		x3 = state[11] ^ rk[3];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		KEY_EXPAND_ELT(sharedMemory, rk[4], rk[5], rk[6], rk[7]);
 		rk[4] ^= rk[0];
@@ -1010,19 +1020,19 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		x2 ^= rk[14];
 		x3 ^= rk[15];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p4 ^= x0;
-		p5 ^= x1;
-		p6 ^= x2;
-		p7 ^= x3;
+		state[4] ^= x0;
+		state[5] ^= x1;
+		state[6] ^= x2;
+		state[7] ^= x3;
 		KEY_EXPAND_ELT(sharedMemory, rk[16], rk[17], rk[18], rk[19]);
 		rk[16] ^= rk[12];
 		rk[17] ^= rk[13];
 		rk[18] ^= rk[14];
 		rk[19] ^= rk[15];
-		x0 = p0 ^ rk[16];
-		x1 = p1 ^ rk[17];
-		x2 = p2 ^ rk[18];
-		x3 = p3 ^ rk[19];
+		x0 = state[0] ^ rk[16];
+		x1 = state[1] ^ rk[17];
+		x2 = state[2] ^ rk[18];
+		x3 = state[3] ^ rk[19];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		KEY_EXPAND_ELT(sharedMemory, rk[20], rk[21], rk[22], rk[23]);
 		rk[20] ^= rk[16];
@@ -1054,19 +1064,19 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		x2 ^= rk[30];
 		x3 ^= rk[31];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		pC ^= x0;
-		pD ^= x1;
-		pE ^= x2;
-		pF ^= x3;
+		state[12] ^= x0;
+		state[13] ^= x1;
+		state[14] ^= x2;
+		state[15] ^= x3;
 		/* round 4, 8, 12 */
 		rk[0] ^= rk[25];
-		x0 = p4 ^ rk[0];
+		x0 = state[4] ^ rk[0];
 		rk[1] ^= rk[26];
-		x1 = p5 ^ rk[1];
+		x1 = state[5] ^ rk[1];
 		rk[2] ^= rk[27];
-		x2 = p6 ^ rk[2];
+		x2 = state[6] ^ rk[2];
 		rk[3] ^= rk[28];
-		x3 = p7 ^ rk[3];
+		x3 = state[7] ^ rk[3];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		rk[4] ^= rk[29];
 		x0 ^= rk[4];
@@ -1095,18 +1105,18 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[15] ^= rk[8];
 		x3 ^= rk[15];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p0 ^= x0;
-		p1 ^= x1;
-		p2 ^= x2;
-		p3 ^= x3;
+		state[0] ^= x0;
+		state[1] ^= x1;
+		state[2] ^= x2;
+		state[3] ^= x3;
 		rk[16] ^= rk[9];
-		x0 = pC ^ rk[16];
+		x0 = state[12] ^ rk[16];
 		rk[17] ^= rk[10];
-		x1 = pD ^ rk[17];
+		x1 = state[13] ^ rk[17];
 		rk[18] ^= rk[11];
-		x2 = pE ^ rk[18];
+		x2 = state[14] ^ rk[18];
 		rk[19] ^= rk[12];
-		x3 = pF ^ rk[19];
+		x3 = state[15] ^ rk[19];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		rk[20] ^= rk[13];
 		x0 ^= rk[20];
@@ -1135,10 +1145,10 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[31] ^= rk[24];
 		x3 ^= rk[31];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p8 ^= x0;
-		p9 ^= x1;
-		pA ^= x2;
-		pB ^= x3;
+		state[8] ^= x0;
+		state[9] ^= x1;
+		state[10] ^= x2;
+		state[11] ^= x3;
 
 		/* round 13 */
 		KEY_EXPAND_ELT(sharedMemory, rk[0], rk[1], rk[2], rk[3]);
@@ -1146,10 +1156,10 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		rk[1] ^= rk[29];
 		rk[2] ^= rk[30];
 		rk[3] ^= rk[31];
-		x0 = p0 ^ rk[0];
-		x1 = p1 ^ rk[1];
-		x2 = p2 ^ rk[2];
-		x3 = p3 ^ rk[3];
+		x0 = state[0] ^ rk[0];
+		x1 = state[1] ^ rk[1];
+		x2 = state[2] ^ rk[2];
+		x3 = state[3] ^ rk[3];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		KEY_EXPAND_ELT(sharedMemory, rk[4], rk[5], rk[6], rk[7]);
 		rk[4] ^= rk[0];
@@ -1181,19 +1191,19 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		x2 ^= rk[14];
 		x3 ^= rk[15];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		pC ^= x0;
-		pD ^= x1;
-		pE ^= x2;
-		pF ^= x3;
+		state[12] ^= x0;
+		state[13] ^= x1;
+		state[14] ^= x2;
+		state[15] ^= x3;
 		KEY_EXPAND_ELT(sharedMemory, rk[16], rk[17], rk[18], rk[19]);
 		rk[16] ^= rk[12];
 		rk[17] ^= rk[13];
 		rk[18] ^= rk[14];
 		rk[19] ^= rk[15];
-		x0 = p8 ^ rk[16];
-		x1 = p9 ^ rk[17];
-		x2 = pA ^ rk[18];
-		x3 = pB ^ rk[19];
+		x0 = state[8] ^ rk[16];
+		x1 = state[9] ^ rk[17];
+		x2 = state[10] ^ rk[18];
+		x3 = state[11] ^ rk[19];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
 		KEY_EXPAND_ELT(sharedMemory, rk[20], rk[21], rk[22], rk[23]);
 		rk[20] ^= rk[16];
@@ -1225,26 +1235,27 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t
 		x2 ^= rk[30];
 		x3 ^= rk[31];
 		AES_ROUND_NOKEY(sharedMemory, x0, x1, x2, x3);
-		p4 ^= x0;
-		p5 ^= x1;
-		p6 ^= x2;
-		p7 ^= x3;
-		Hash[0] = 0x72FCCDD8 ^ p8;
-		Hash[1] = 0x79CA4727 ^ p9;
-		Hash[2] = 0x128A077B ^ pA;
-		Hash[3] = 0x40D55AEC ^ pB;
-		Hash[4] = 0xD1901A06 ^ pC;
-		Hash[5] = 0x430AE307 ^ pD;
-		Hash[6] = 0xB29F5CD1 ^ pE;
-		Hash[7] = 0xDF07FBFC ^ pF;
-		Hash[8] = 0x8E45D73D ^ p0;
-		Hash[9] = 0x681AB538 ^ p1;
-		Hash[10] = 0xBDE86578 ^ p2;
-		Hash[11] = 0xDD577E47 ^ p3;
-		Hash[12] = 0xE275EADE ^ p4;
-		Hash[13] = 0x502D9FCD ^ p5;
-		Hash[14] = 0xB9357178 ^ p6;
-		Hash[15] = 0x022A4B9A ^ p7;
+		state[4] ^= x0;
+		state[5] ^= x1;
+		state[6] ^= x2;
+		state[7] ^= x3;
+
+		Hash[0] = 0x72FCCDD8 ^ state[8];
+		Hash[1] = 0x79CA4727 ^ state[9];
+		Hash[2] = 0x128A077B ^ state[10];
+		Hash[3] = 0x40D55AEC ^ state[11];
+		Hash[4] = 0xD1901A06 ^ state[12];
+		Hash[5] = 0x430AE307 ^ state[13];
+		Hash[6] = 0xB29F5CD1 ^ state[14];
+		Hash[7] = 0xDF07FBFC ^ state[15];
+		Hash[8] = 0x8E45D73D ^ state[0];
+		Hash[9] = 0x681AB538 ^ state[1];
+		Hash[10] = 0xBDE86578 ^ state[2];
+		Hash[11] = 0xDD577E47 ^ state[3];
+		Hash[12] = 0xE275EADE ^ state[4];
+		Hash[13] = 0x502D9FCD ^ state[5];
+		Hash[14] = 0xB9357178 ^ state[6];
+		Hash[15] = 0x022A4B9A ^ state[7];
 	}
 }
 
@@ -2516,7 +2527,9 @@ __host__ void x11_shavite512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t 
 	dim3 grid((threads + TPB-1)/TPB);
 	dim3 block(TPB);
 
-	x11_shavite512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash);
+	x11_shavite512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, d_hash);
+
+	CUDA_SAFE_CALL(cudaGetLastError());
 }
 
 __host__ void x11_shavite512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_outputHash)
