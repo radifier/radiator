@@ -412,7 +412,7 @@ json_t *json_rpc_call(CURL *curl, const char *url,
 	char* httpdata;
 	char len_hdr[64], hashrate_hdr[64];
 	char curl_err_str[CURL_ERROR_SIZE] = { 0 };
-	long timeout = longpoll ? opt_timeout : 30;
+	long timeout = longpoll ? 30 : opt_timeout;
 	struct header_info hi = { 0 };
 	bool lp_scanning = longpoll_scan && !have_longpoll;
 
@@ -992,7 +992,7 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(curl, CURLOPT_URL, sctx->curl_url);
 	curl_easy_setopt(curl, CURLOPT_FRESH_CONNECT, 1);
-	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 30);
+	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, opt_timeout);
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, sctx->curl_err_str);
 	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
 	curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1);
