@@ -137,7 +137,7 @@ static bool opt_background = false;
 bool opt_quiet = false;
 static int opt_retries = -1;
 static int opt_fail_pause = 30;
-int opt_timeout = 20;
+int opt_timeout = 270;
 static int opt_scantime = 25;
 static json_t *opt_config = nullptr;
 static const bool opt_time = true;
@@ -2159,7 +2159,7 @@ static void *stratum_thread(void *userdata)
 			pthread_mutex_unlock(&g_work_lock);
 		}
 
-		if(!stratum_socket_full(&stratum, 10))
+		if(!stratum_socket_full(&stratum, 120))
 		{
 			applog(LOG_ERR, "Stratum connection timed out");
 			s = NULL;
