@@ -8,6 +8,8 @@ using namespace std;
 
 
 #define TPBf 128
+#define TPB52 1024
+#define TPB50 256
 
 static __constant__ uint64_t c_PaddedMessage80[2]; // padded message (80 bytes + padding)
 __constant__ uint2 precalcvalues[9];
@@ -243,24 +245,23 @@ static uint32_t *d_nonce[MAX_GPUS];
 #define SKBT(t, s, v)   XCAT(t, XCAT(XCAT(XCAT(M3_, s), _), v))
 
 #define TFBIG_KINIT(k0, k1, k2, k3, k4, k5, k6, k7, k8, t0, t1, t2) { \
-		k8 = ((k0 ^ k1) ^ (k2 ^ k3)) ^ ((k4 ^ k5) ^ (k6 ^ k7)) \
-			^ make_uint2( 0xA9FC1A22UL,0x1BD11BDA); \
+		k8 = k0 ^ k1 ^ k2 ^ k3 ^ k4 ^ k5 ^ k6 ^ k7 ^ make_uint2(0xA9FC1A22UL, 0x1BD11BDA); \
 		t2 = t0 ^ t1; \
 	}
 //vectorize(0x1BD11BDAA9FC1A22ULL);
 #define TFBIG_ADDKEY(w0, w1, w2, w3, w4, w5, w6, w7, k, t, s) { \
-		w0 = (w0 + SKBI(k, s, 0)); \
-		w1 = (w1 + SKBI(k, s, 1)); \
-		w2 = (w2 + SKBI(k, s, 2)); \
-		w3 = (w3 + SKBI(k, s, 3)); \
-		w4 = (w4 + SKBI(k, s, 4)); \
-		w5 = (w5 + SKBI(k, s, 5) + SKBT(t, s, 0)); \
-		w6 = (w6 + SKBI(k, s, 6) + SKBT(t, s, 1)); \
-		w7 = (w7 + SKBI(k, s, 7) + vectorizelow(s)); \
+		w0 += SKBI(k, s, 0); \
+		w1 += SKBI(k, s, 1); \
+		w2 += SKBI(k, s, 2); \
+		w3 += SKBI(k, s, 3); \
+		w4 += SKBI(k, s, 4); \
+		w5 += SKBI(k, s, 5) + SKBT(t, s, 0); \
+		w6 += SKBI(k, s, 6) + SKBT(t, s, 1); \
+		w7 += SKBI(k, s, 7) + vectorizelow(s); \
 	}
 
 #define TFBIG_MIX(x0, x1, rc) { \
-		x0 = x0 + x1; \
+		x0 += x1; \
 		x1 = ROL2(x1, rc) ^ x0; \
 	}
 
@@ -290,35 +291,34 @@ static uint32_t *d_nonce[MAX_GPUS];
 /* uint2 variant for SM3.2+ */
 
 #define TFBIG_KINIT_UI2(k0, k1, k2, k3, k4, k5, k6, k7, k8, t0, t1, t2) { \
-		k8 = ((k0 ^ k1) ^ (k2 ^ k3)) ^ ((k4 ^ k5) ^ (k6 ^ k7)) \
-			^ vectorize(SPH_C64(0x1BD11BDAA9FC1A22)); \
+		k8 = k0 ^ k1 ^ k2 ^ k3 ^ k4 ^ k5 ^ k6 ^ k7 ^ vectorize(SPH_C64(0x1BD11BDAA9FC1A22)); \
 		t2 = t0 ^ t1; \
 		}
 
 #define TFBIG_ADDKEY_UI2(w0, w1, w2, w3, w4, w5, w6, w7, k, t, s) { \
-		w0 = (w0 + SKBI(k, s, 0)); \
-		w1 = (w1 + SKBI(k, s, 1)); \
-		w2 = (w2 + SKBI(k, s, 2)); \
-		w3 = (w3 + SKBI(k, s, 3)); \
-		w4 = (w4 + SKBI(k, s, 4)); \
-		w5 = (w5 + SKBI(k, s, 5) + SKBT(t, s, 0)); \
-		w6 = (w6 + SKBI(k, s, 6) + SKBT(t, s, 1)); \
-		w7 = (w7 + SKBI(k, s, 7) + vectorize(s)); \
+		w0 += SKBI(k, s, 0); \
+		w1 += SKBI(k, s, 1); \
+		w2 += SKBI(k, s, 2); \
+		w3 += SKBI(k, s, 3); \
+		w4 += SKBI(k, s, 4); \
+		w5 += SKBI(k, s, 5) + SKBT(t, s, 0); \
+		w6 += SKBI(k, s, 6) + SKBT(t, s, 1); \
+		w7 += SKBI(k, s, 7) + vectorize(s); \
 		}
 
 #define TFBIG_ADDKEY_PRE(w0, w1, w2, w3, w4, w5, w6, w7, k, t, s) { \
-		w0 = (w0 + SKBI(k, s, 0)); \
-		w1 = (w1 + SKBI(k, s, 1)); \
-		w2 = (w2 + SKBI(k, s, 2)); \
-		w3 = (w3 + SKBI(k, s, 3)); \
-		w4 = (w4 + SKBI(k, s, 4)); \
-		w5 = (w5 + SKBI(k, s, 5) + SKBT(t, s, 0)); \
-		w6 = (w6 + SKBI(k, s, 6) + SKBT(t, s, 1)); \
-		w7 = (w7 + SKBI(k, s, 7) + (s)); \
+		w0 += SKBI(k, s, 0); \
+		w1 += SKBI(k, s, 1); \
+		w2 += SKBI(k, s, 2); \
+		w3 += SKBI(k, s, 3); \
+		w4 += SKBI(k, s, 4); \
+		w5 += SKBI(k, s, 5) + SKBT(t, s, 0); \
+		w6 += SKBI(k, s, 6) + SKBT(t, s, 1); \
+		w7 += SKBI(k, s, 7) + (s); \
 				}
 
 #define TFBIG_MIX_UI2(x0, x1, rc) { \
-		x0 = x0 + x1; \
+		x0 += x1; \
 		x1 = ROL2(x1, rc) ^ x0; \
 		}
 
@@ -2031,11 +2031,6 @@ __host__ void quark_skein512_cpu_free(int32_t thr_id)
 }
 
 
-static __device__ __constant__ uint32_t sha256_hashTable[] = {
-	0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
-};
-
-
 /* Elementary functions used by SHA256 */
 #define SWAB32(x)     cuda_swab32(x)
 
@@ -2070,25 +2065,24 @@ __constant__ uint32_t sha256_constantTable[64] = {
 };
 
 __global__
-__launch_bounds__(1024)
+__launch_bounds__(TPB52)
 void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ d_nonce, uint64_t target, int thr_id)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 //	if (thread < threads)
 	{
-		uint2 h0, h1, h2, h3, h4, h5, h6, h7, h8;
-		uint2 t0, t1, t2;
+		uint2 h8;
 		uint2 p[8];
 
-		h0 = precalcvalues[0];
-		h1 = precalcvalues[1];
-		h2 = precalcvalues[2];
-		h3 = precalcvalues[3];
-		h4 = precalcvalues[4];
-		h5 = precalcvalues[5];
-		h6 = precalcvalues[6];
-		h7 = precalcvalues[7];
-		t2 = precalcvalues[8];
+		uint2 h0 = precalcvalues[0];
+		uint2 h1 = precalcvalues[1];
+		uint2 h2 = precalcvalues[2];
+		uint2 h3 = precalcvalues[3];
+		uint2 h4 = precalcvalues[4];
+		uint2 h5 = precalcvalues[5];
+		uint2 h6 = precalcvalues[6];
+		uint2 h7 = precalcvalues[7];
+		uint2 t2 = precalcvalues[8];
 
 		const uint2 nounce2 = make_uint2(_LOWORD(c_PaddedMessage80[1]), cuda_swab32(startNounce + thread));
 
@@ -2100,8 +2094,8 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 		for (int i = 2; i < 8; i++)
 			p[i] = make_uint2(0,0);
 
-		t0 = vectorizelow(0x50ull); // SPH_T64(bcount << 6) + (sph_u64)(extra);
-		t1 = vectorizehigh(0xB0000000ul); // (bcount >> 58) + ((sph_u64)(etype) << 55);
+		uint2 t0 = vectorizelow(0x50ull); // SPH_T64(bcount << 6) + (sph_u64)(extra);
+		uint2 t1 = vectorizehigh(0xB0000000ul); // (bcount >> 58) + ((sph_u64)(etype) << 55);
 		TFBIG_KINIT_UI2(h0, h1, h2, h3, h4, h5, h6, h7, h8, t0, t1, t2);
 		TFBIG_4e_UI2(0);
 		TFBIG_4o_UI2(1);
@@ -2169,15 +2163,12 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 		uint32_t W1[16];
 		uint32_t W2[16];
 
-		uint32_t regs[8];
-		uint32_t hash[8];
-
-		// Init with Hash-Table
-#pragma unroll 8
-		for (int k = 0; k < 8; k++)
-		{
-			hash[k] = regs[k] = sha256_hashTable[k];
-		}
+		uint32_t regs[8] = {
+			0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+		};
+		uint32_t hash[8] = {
+			0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+		};
 
 #pragma unroll 16
 		for (int k = 0; k<16; k++)
@@ -2191,10 +2182,14 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j] + W1[j];
 			T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-#pragma unroll 7
-			for (int k = 6; k >= 0; k--) regs[k + 1] = regs[k];
+			regs[7] = regs[6];
+			regs[6] = regs[5];
+			regs[5] = regs[4];
+			regs[4] = regs[3] + T1;
+			regs[3] = regs[2];
+			regs[2] = regs[1];
+			regs[1] = regs[0];
 			regs[0] = T1 + T2;
-			regs[4] += T1;
 		}
 
 		// Progress W2...W3
@@ -2221,10 +2216,14 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j + 16] + W2[j];
 			T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-#pragma unroll 7
-			for (int l = 6; l >= 0; l--) regs[l + 1] = regs[l];
+			regs[7] = regs[6];
+			regs[6] = regs[5];
+			regs[5] = regs[4];
+			regs[4] = regs[3] + T1;
+			regs[3] = regs[2];
+			regs[2] = regs[1];
+			regs[1] = regs[0];
 			regs[0] = T1 + T2;
-			regs[4] += T1;
 		}
 
 		////// PART 2
@@ -2250,10 +2249,14 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j + 32] + W1[j];
 			T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-#pragma unroll 7
-			for (int l = 6; l >= 0; l--) regs[l + 1] = regs[l];
+			regs[7] = regs[6];
+			regs[6] = regs[5];
+			regs[5] = regs[4];
+			regs[4] = regs[3] + T1;
+			regs[3] = regs[2];
+			regs[2] = regs[1];
+			regs[1] = regs[0];
 			regs[0] = T1 + T2;
-			regs[4] += T1;
 		}
 
 		////// PART 3
@@ -2279,10 +2282,14 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j + 48] + W2[j];
 			T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-#pragma unroll 7
-			for (int l = 6; l >= 0; l--) regs[l + 1] = regs[l];
+			regs[7] = regs[6];
+			regs[6] = regs[5];
+			regs[5] = regs[4];
+			regs[4] = regs[3] + T1;
+			regs[3] = regs[2];
+			regs[2] = regs[1];
+			regs[1] = regs[0];
 			regs[0] = T1 + T2;
-			regs[4] += T1;
 		}
 
 #pragma unroll 8
@@ -2298,26 +2305,54 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 
 		// Progress W1
 		uint32_t T1, T2;
+		T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[0] + sha256_endingTable[0];
+		T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
+
+		regs[7] = regs[6];
+		regs[6] = regs[5];
+		regs[5] = regs[4];
+		regs[4] = regs[3] + T1;
+		regs[3] = regs[2];
+		regs[2] = regs[1];
+		regs[1] = regs[0];
+		regs[0] = T1 + T2;
 #pragma unroll 
-		for (int j = 0; j<56; j++)
+		for(int j = 1; j<15; j++)
+		{
+			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j];
+			T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
+
+			regs[7] = regs[6];
+			regs[6] = regs[5];
+			regs[5] = regs[4];
+			regs[4] = regs[3] + T1;
+			regs[3] = regs[2];
+			regs[2] = regs[1];
+			regs[1] = regs[0];
+			regs[0] = T1 + T2;
+		}
+#pragma unroll 
+		for (int j = 15; j<56; j++)
 		{
 			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j] + sha256_endingTable[j];
 			T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-#pragma unroll 7
-			for (int k = 6; k >= 0; k--)
-				regs[k + 1] = regs[k];
+			regs[7] = regs[6];
+			regs[6] = regs[5];
+			regs[5] = regs[4];
+			regs[4] = regs[3] + T1;
+			regs[3] = regs[2];
+			regs[2] = regs[1];
+			regs[1] = regs[0];
 			regs[0] = T1 + T2;
-			regs[4] += T1;
 		}
+
 		T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[56] + sha256_endingTable[56];
-		T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
-		regs[7] = T1 + T2;
+		regs[7] = T1 + S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 		regs[3] += T1;
 
 		T1 = regs[6] + S1(regs[3]) + Ch(regs[3], regs[4], regs[5]) + sha256_constantTable[57] + sha256_endingTable[57];
-		T2 = S0(regs[7]) + Maj(regs[7], regs[0], regs[1]);
-		regs[6] = T1 + T2;
+		regs[6] = T1 + S0(regs[7]) + Maj(regs[7], regs[0], regs[1]);
 		regs[2] += T1;
 		//************
 		regs[1] += regs[5] + S1(regs[2]) + Ch(regs[2], regs[3], regs[4]) + sha256_constantTable[58] + sha256_endingTable[58];
@@ -2336,25 +2371,26 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 		}
 	}
 }
+
 __global__
+__launch_bounds__(TPB50)
 void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ d_nonce, uint64_t target, int thr_id)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 //	if (thread < threads)
 	{
-		uint2 h0, h1, h2, h3, h4, h5, h6, h7, h8;
-		uint2 t0, t1, t2;
+		uint2 h8;
 		uint2 p[8];
 
-		h0 = precalcvalues[0];
-		h1 = precalcvalues[1];
-		h2 = precalcvalues[2];
-		h3 = precalcvalues[3];
-		h4 = precalcvalues[4];
-		h5 = precalcvalues[5];
-		h6 = precalcvalues[6];
-		h7 = precalcvalues[7];
-		t2 = precalcvalues[8];
+		uint2 h0 = precalcvalues[0];
+		uint2 h1 = precalcvalues[1];
+		uint2 h2 = precalcvalues[2];
+		uint2 h3 = precalcvalues[3];
+		uint2 h4 = precalcvalues[4];
+		uint2 h5 = precalcvalues[5];
+		uint2 h6 = precalcvalues[6];
+		uint2 h7 = precalcvalues[7];
+		uint2 t2 = precalcvalues[8];
 
 		const uint2 nounce2 = make_uint2(_LOWORD(c_PaddedMessage80[1]), cuda_swab32(startNounce + thread));
 
@@ -2366,8 +2402,8 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 		for (int i = 2; i < 8; i++)
 			p[i] = make_uint2(0, 0);
 
-		t0 = vectorizelow(0x50ull); // SPH_T64(bcount << 6) + (sph_u64)(extra);
-		t1 = vectorizehigh(0xB0000000ul); // (bcount >> 58) + ((sph_u64)(etype) << 55);
+		uint2 t0 = vectorizelow(0x50ull); // SPH_T64(bcount << 6) + (sph_u64)(extra);
+		uint2 t1 = vectorizehigh(0xB0000000ul); // (bcount >> 58) + ((sph_u64)(etype) << 55);
 		TFBIG_KINIT_UI2(h0, h1, h2, h3, h4, h5, h6, h7, h8, t0, t1, t2);
 		TFBIG_4e_UI2(0);
 		TFBIG_4o_UI2(1);
@@ -2435,15 +2471,12 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 		uint32_t W1[16];
 		uint32_t W2[16];
 
-		uint32_t regs[8];
-		uint32_t hash[8];
-
-		// Init with Hash-Table
-#pragma unroll 8
-		for (int k = 0; k < 8; k++)
-		{
-			hash[k] = regs[k] = sha256_hashTable[k];
-		}
+		uint32_t regs[8] = {
+			0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+		};;
+		uint32_t hash[8] = {
+			0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+		};
 
 #pragma unroll 16
 		for (int k = 0; k<16; k++)
@@ -2457,10 +2490,14 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j] + W1[j];
 			T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-#pragma unroll 7
-			for (int k = 6; k >= 0; k--) regs[k + 1] = regs[k];
+			regs[7] = regs[6];
+			regs[6] = regs[5];
+			regs[5] = regs[4];
+			regs[4] = regs[3] + T1;
+			regs[3] = regs[2];
+			regs[2] = regs[1];
+			regs[1] = regs[0];
 			regs[0] = T1 + T2;
-			regs[4] += T1;
 		}
 
 		// Progress W2...W3
@@ -2487,10 +2524,14 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j + 16] + W2[j];
 			T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-#pragma unroll 7
-			for (int l = 6; l >= 0; l--) regs[l + 1] = regs[l];
+			regs[7] = regs[6];
+			regs[6] = regs[5];
+			regs[5] = regs[4];
+			regs[4] = regs[3] + T1;
+			regs[3] = regs[2];
+			regs[2] = regs[1];
+			regs[1] = regs[0];
 			regs[0] = T1 + T2;
-			regs[4] += T1;
 		}
 
 		////// PART 2
@@ -2516,10 +2557,14 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j + 32] + W1[j];
 			T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-#pragma unroll 7
-			for (int l = 6; l >= 0; l--) regs[l + 1] = regs[l];
+			regs[7] = regs[6];
+			regs[6] = regs[5];
+			regs[5] = regs[4];
+			regs[4] = regs[3] + T1;
+			regs[3] = regs[2];
+			regs[2] = regs[1];
+			regs[1] = regs[0];
 			regs[0] = T1 + T2;
-			regs[4] += T1;
 		}
 
 		////// PART 3
@@ -2545,10 +2590,14 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j + 48] + W2[j];
 			T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-#pragma unroll 7
-			for (int l = 6; l >= 0; l--) regs[l + 1] = regs[l];
+			regs[7] = regs[6];
+			regs[6] = regs[5];
+			regs[5] = regs[4];
+			regs[4] = regs[3] + T1;
+			regs[3] = regs[2];
+			regs[2] = regs[1];
+			regs[1] = regs[0];
 			regs[0] = T1 + T2;
-			regs[4] += T1;
 		}
 
 #pragma unroll 8
@@ -2564,26 +2613,55 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 
 		// Progress W1
 		uint32_t T1, T2;
+		T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[0] + sha256_endingTable[0];
+		T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
+
+		regs[7] = regs[6];
+		regs[6] = regs[5];
+		regs[5] = regs[4];
+		regs[4] = regs[3] + T1;
+		regs[3] = regs[2];
+		regs[2] = regs[1];
+		regs[1] = regs[0];
+		regs[0] = T1 + T2;
 #pragma unroll 
-		for (int j = 0; j<56; j++)//62
+		for(int j = 1; j<15; j++)
+		{
+			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j];
+			T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
+
+			regs[7] = regs[6];
+			regs[6] = regs[5];
+			regs[5] = regs[4];
+			regs[4] = regs[3] + T1;
+			regs[3] = regs[2];
+			regs[2] = regs[1];
+			regs[1] = regs[0];
+			regs[0] = T1 + T2;
+		}
+#pragma unroll 
+		for(int j = 15; j<56; j++)
 		{
 			T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[j] + sha256_endingTable[j];
 			T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
 
-#pragma unroll 7
-			for (int k = 6; k >= 0; k--)
-				regs[k + 1] = regs[k];
+			regs[7] = regs[6];
+			regs[6] = regs[5];
+			regs[5] = regs[4];
+			regs[4] = regs[3] + T1;
+			regs[3] = regs[2];
+			regs[2] = regs[1];
+			regs[1] = regs[0];
 			regs[0] = T1 + T2;
-			regs[4] += T1;
 		}
+
 		T1 = regs[7] + S1(regs[4]) + Ch(regs[4], regs[5], regs[6]) + sha256_constantTable[56] + sha256_endingTable[56];
-		T2 = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]);
-		regs[7] = T1 + T2;
+		regs[7] = S0(regs[0]) + Maj(regs[0], regs[1], regs[2]) + T1;
 		regs[3] += T1;
 
 		T1 = regs[6] + S1(regs[3]) + Ch(regs[3], regs[4], regs[5]) + sha256_constantTable[57] + sha256_endingTable[57];
 		T2 = S0(regs[7]) + Maj(regs[7], regs[0], regs[1]);
-		regs[6] = T1 + T2;
+		regs[6] = S0(regs[7]) + Maj(regs[7], regs[0], regs[1]) + T1;
 		regs[2] += T1;
 		//************
 		regs[1] += regs[5] + S1(regs[2]) + Ch(regs[2], regs[3], regs[4]) + sha256_constantTable[58] + sha256_endingTable[58];
@@ -2706,8 +2784,8 @@ void skein512_cpu_setBlock_80(int thr_id, void *pdata)
 __host__
 void skein512_cpu_hash_80_52(int thr_id, uint32_t threads, uint32_t startNounce, int swapu,uint64_t target, uint32_t *h_found)
 {
-	dim3 grid((threads + 1024 - 1) / 1024);
-	dim3 block(1024);
+	dim3 grid((threads + TPB52 - 1) / TPB52);
+	dim3 block(TPB52);
 	CUDA_SAFE_CALL(cudaMemsetAsync(d_nonce[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]));
 	skein512_gpu_hash_80_52 << < grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_nonce[thr_id], target, thr_id);
 	CUDA_SAFE_CALL(cudaMemcpyAsync(h_found, d_nonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]));
@@ -2717,8 +2795,8 @@ void skein512_cpu_hash_80_52(int thr_id, uint32_t threads, uint32_t startNounce,
 __host__
 void skein512_cpu_hash_80_50(int thr_id, uint32_t threads, uint32_t startNounce, int swapu, uint64_t target, uint32_t *h_found)
 {
-	dim3 grid((threads + 256 - 1) / 256);
-	dim3 block(256);
+	dim3 grid((threads + TPB50 - 1) / TPB50);
+	dim3 block(TPB50);
 	CUDA_SAFE_CALL(cudaMemsetAsync(d_nonce[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]));
 	skein512_gpu_hash_80_50 << < grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_nonce[thr_id], target, thr_id);
 	CUDA_SAFE_CALL(cudaMemcpyAsync(h_found, d_nonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]));
