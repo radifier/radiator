@@ -2710,11 +2710,7 @@ void quark_skein512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t sta
 	CUDA_SAFE_CALL(cudaDeviceSynchronize());
 	CUDA_SAFE_CALL(cudaMemcpy(h_nonce, d_nonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 }
-
-
-static uint64_t PaddedMessage[16];
-
-static void precalc(int thr_id)
+static void precalc(int thr_id, uint64_t *PaddedMessage)
 {
 	uint64_t h0, h1, h2, h3, h4, h5, h6, h7, h8;
 	uint64_t t0, t1, t2;
@@ -2774,11 +2770,11 @@ static void precalc(int thr_id)
 __host__
 void skein512_cpu_setBlock_80(int thr_id, void *pdata)
 {
-	memcpy(&PaddedMessage[0], pdata, 80);
+	uint64_t *PaddedMessage = (uint64_t*)pdata;
 	CUDA_SAFE_CALL(cudaMalloc(&(d_nonce[thr_id]), 2 * sizeof(uint32_t)));
 	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedMessage80, &PaddedMessage[8], 8 * 2, 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 
-	precalc(thr_id);
+	precalc(thr_id, PaddedMessage);
 }
 
 __host__
