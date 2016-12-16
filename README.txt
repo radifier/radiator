@@ -1,5 +1,5 @@
 
-ccMiner release 8.04(KlausT-mod) (December 13th, 2016)
+ccMiner release 8.05(KlausT-mod) (December 17th, 2016)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -229,7 +229,7 @@ features.
 2016-12-08 v8.03: fix memory leak in Neoscrypt
 2016-12-13 v8.04: fix illegal memory access in X11-X17
                   fix duplicate shares in skein
-
+2016-12-17 v8.05: fix Skein bug
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
