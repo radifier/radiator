@@ -1457,7 +1457,7 @@ static void *miner_thread(void *userdata)
 		if(opt_algo!=ALGO_SIA)
 			nonceptr = (uint32_t*)(((char*)work.data) + wcmplen);
 		else
-			nonceptr = &work.data[8];
+			nonceptr = (uint32_t*)(((char*)work.data) + 8*4);
 
 		struct timeval tv_start, tv_end, diff;
 		uint32_t hashes_done = 0;
@@ -1518,7 +1518,7 @@ static void *miner_thread(void *userdata)
 		if(opt_algo != ALGO_SIA)
 			different = memcmp(work.data, g_work.data, wcmplen);
 		else
-			different = memcmp(work.data + 9, g_work.data + 9, 44);
+			different = memcmp(work.data, g_work.data, 7*4) || memcmp(work.data + 9, g_work.data + 9, 44);
 		if(different)
 		{
 			if(opt_debug)
@@ -1537,6 +1537,8 @@ static void *miner_thread(void *userdata)
 				}
 			}
 #endif
+			if(opt_debug && opt_algo == ALGO_SIA)
+				applog(LOG_DEBUG, "thread %d: high nonce = %08X", thr_id, work.data[9]);
 			memcpy(&work, &g_work, sizeof(struct work));
 			nonceptr[0] = (UINT32_MAX / opt_n_threads) * thr_id; // 0 if single thr
 		}
