@@ -7,7 +7,7 @@ extern "C"
 #include "miner.h"
 #include <string.h>
 
-extern void neoscrypt_setBlockTarget(uint32_t* pdata, const void *target);
+extern void neoscrypt_setBlockTarget(int thr_id, uint32_t* pdata, const void *target);
 extern void neoscrypt_cpu_init_2stream(int thr_id, uint32_t threads);
 extern void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *result);
 //extern void neoscrypt_cpu_hash_k4_52(int stratum, int thr_id, int threads, uint32_t startNounce, int order, uint32_t* foundnonce);
@@ -108,7 +108,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			be32enc(&endiandata[k], ((uint32_t*)pdata)[k]);
 		else endiandata[k] = pdata[k];
 	}
-	neoscrypt_setBlockTarget(endiandata, ptarget);
+	neoscrypt_setBlockTarget(thr_id, endiandata, ptarget);
 
 	do
 	{

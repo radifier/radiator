@@ -1438,8 +1438,6 @@ void neoscrypt_cpu_init_2stream(int thr_id, uint32_t threads)
 
 __host__ void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *result)
 {
-	CUDA_SAFE_CALL(cudaMemsetAsync(d_NNonce[thr_id], 0xff, 2 * sizeof(uint32_t), stream[1]));
-	
 	const uint32_t threadsperblock = TPB;
 	
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
@@ -1466,7 +1464,7 @@ __host__ void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, uint32_t t
 	CUDA_SAFE_CALL(cudaMemcpy(result, d_NNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 }
 
-__host__ void neoscrypt_setBlockTarget(uint32_t* pdata, const void *target)
+__host__ void neoscrypt_setBlockTarget(int thr_id, uint32_t* pdata, const void *target)
 {
 	uint32_t PaddedMessage[64];
 	uint32_t input[16], key[16] = {0};
@@ -1484,15 +1482,17 @@ __host__ void neoscrypt_setBlockTarget(uint32_t* pdata, const void *target)
 	PaddedMessage[39] = 0;
 	PaddedMessage[59] = 0;
 
-	((uint16*)input)[0] = ((uint16*)pdata)[0];
-	((uint8*)key)[0] = ((uint8*)pdata)[0];
+	for(int i = 0; i < 16; i++)
+		input[i] = pdata[i];
+	for(int i = 0; i < 8; i++)
+		key[i] = pdata[i];
 
 	Blake2Shost(input, key);
 
 	cudaMemcpyToSymbolAsync(pTarget, target, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, stream[1]);
 	cudaMemcpyToSymbolAsync(input_init, input, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, stream[0]);
 	cudaMemcpyToSymbolAsync(key_init, key, 16 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, stream[1]);
-
 	cudaMemcpyToSymbolAsync(c_data, PaddedMessage, 64 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, stream[0]);
-	CUDA_SAFE_CALL(cudaGetLastError());
+
+	CUDA_SAFE_CALL(cudaMemsetAsync(d_NNonce[thr_id], 0xff, 2 * sizeof(uint32_t), stream[1]));
 }
