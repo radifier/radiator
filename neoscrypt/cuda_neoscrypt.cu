@@ -308,7 +308,7 @@ c += d; b = rotate(b^c, 7); \
 	c += d; b = ROTR32(b ^ c, 7); \
 } 
 #if __CUDA_ARCH__ < 500
-static __forceinline__ __device__ void Blake2S(uint32_t *out, const uint32_t* __restrict__  inout, const  uint32_t * __restrict__ TheKey)
+static __forceinline__ __device__ void Blake2S(uint32_t * __restrict__ out, const uint32_t* __restrict__  inout, const  uint32_t * __restrict__ TheKey)
 {
 	uint16 V;
 	uint32_t idx;
@@ -498,7 +498,7 @@ static __forceinline__ __device__ void Blake2S(uint32_t *out, const uint32_t* __
 	((uint8*)out)[0] = V.lo;
 }
 #else
-static __forceinline__ __device__ void Blake2S_v2(uint32_t *out, const uint32_t* __restrict__  inout, const  uint32_t * __restrict__ TheKey)
+static __forceinline__ __device__ void Blake2S_v2(uint32_t * __restrict__ out, const uint32_t* __restrict__  inout, const  uint32_t * __restrict__ TheKey)
 {
 	uint16 V;
 	uint8 tmpblock;
