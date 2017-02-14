@@ -270,7 +270,6 @@ __global__ void __launch_bounds__(blocksize, 3) siakernel(uint32_t * __restrict_
 
 void sia_gpu_hash(cudaStream_t cudastream, int thr_id, uint32_t threads, uint32_t *nonceOut, uint64_t target, uint64_t startnonce)
 {
-	CUDA_SAFE_CALL(cudaMemsetAsync(nonceOut_d, 0, 4 * MAXRESULTS, cudastream));
 	siakernel << <threads / blocksize / npt, blocksize, 0, cudastream >> >(nonceOut_d, target, startnonce);
 	CUDA_SAFE_CALL(cudaGetLastError());
 	CUDA_SAFE_CALL(cudaMemcpyAsync(nonceOut, nonceOut_d, 4 * MAXRESULTS, cudaMemcpyDeviceToHost, cudastream));
@@ -293,4 +292,5 @@ void sia_precalc(cudaStream_t cudastream, const uint64_t *blockHeader)
 
 	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(vpre, vpre_h, 16 * 8, 0, cudaMemcpyHostToDevice, cudastream));
 	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(header, blockHeader, 10 * 8, 0, cudaMemcpyHostToDevice, cudastream));
+	CUDA_SAFE_CALL(cudaMemsetAsync(nonceOut_d, 0, 4 * MAXRESULTS, cudastream));
 }
