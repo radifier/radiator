@@ -1,4 +1,4 @@
-AC_INIT([ccminer], [8.05-KlausT])
+AC_INIT([ccminer], [8.06-KlausT])
 
 AC_PREREQ([2.59c])
 AC_CANONICAL_SYSTEM
