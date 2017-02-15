@@ -2086,18 +2086,25 @@ void skein512_gpu_hash_80_52(uint32_t threads, uint32_t startNounce, uint32_t *c
 
 		const uint2 nounce2 = make_uint2(_LOWORD(c_PaddedMessage80[1]), cuda_swab32(startNounce + thread));
 
-		// skein_big_close -> etype = 0x160, ptr = 16, bcount = 1, extra = 16
-		p[0] = vectorize(c_PaddedMessage80[0]);
-		p[1] = nounce2;
-
-		#pragma unroll
-		for (int i = 2; i < 8; i++)
-			p[i] = make_uint2(0,0);
-
 		uint2 t0 = vectorizelow(0x50ull); // SPH_T64(bcount << 6) + (sph_u64)(extra);
 		uint2 t1 = vectorizehigh(0xB0000000ul); // (bcount >> 58) + ((sph_u64)(etype) << 55);
-		TFBIG_KINIT_UI2(h0, h1, h2, h3, h4, h5, h6, h7, h8, t0, t1, t2);
-		TFBIG_4e_UI2(0);
+		h8 = h0 ^ h1 ^ h2 ^ h3 ^ h4 ^ h5 ^ h6 ^ h7 ^ make_uint2(0xA9FC1A22UL, 0x1BD11BDA);
+		t2 = t0 ^ t1;
+
+		p[0] = h0 + vectorize(c_PaddedMessage80[0]);
+		p[1] = h1 + nounce2;
+		p[2] = h2;
+		p[3] = h3;
+		p[4] = h4;
+		p[5] = h5 + t0;
+		p[6] = h6 + t1;
+		p[7] = h7;
+
+		TFBIG_MIX8_UI2(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], 46, 36, 19, 37);
+		TFBIG_MIX8_UI2(p[2], p[1], p[4], p[7], p[6], p[5], p[0], p[3], 33, 27, 14, 42);
+		TFBIG_MIX8_UI2(p[4], p[1], p[6], p[3], p[0], p[5], p[2], p[7], 17, 49, 36, 39);
+		TFBIG_MIX8_UI2(p[6], p[1], p[0], p[7], p[2], p[5], p[4], p[3], 44, 9, 54, 56);
+
 		TFBIG_4o_UI2(1);
 		TFBIG_4e_UI2(2);
 		TFBIG_4o_UI2(3);
@@ -2377,7 +2384,7 @@ __launch_bounds__(TPB50)
 void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ d_nonce, uint64_t target, int thr_id)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-//	if (thread < threads)
+	//	if (thread < threads)
 	{
 		uint2 h8;
 		uint2 p[8];
@@ -2394,18 +2401,25 @@ void skein512_gpu_hash_80_50(uint32_t threads, uint32_t startNounce, uint32_t *c
 
 		const uint2 nounce2 = make_uint2(_LOWORD(c_PaddedMessage80[1]), cuda_swab32(startNounce + thread));
 
-		// skein_big_close -> etype = 0x160, ptr = 16, bcount = 1, extra = 16
-		p[0] = vectorize(c_PaddedMessage80[0]);
-		p[1] = nounce2;
-
-#pragma unroll
-		for (int i = 2; i < 8; i++)
-			p[i] = make_uint2(0, 0);
-
 		uint2 t0 = vectorizelow(0x50ull); // SPH_T64(bcount << 6) + (sph_u64)(extra);
 		uint2 t1 = vectorizehigh(0xB0000000ul); // (bcount >> 58) + ((sph_u64)(etype) << 55);
-		TFBIG_KINIT_UI2(h0, h1, h2, h3, h4, h5, h6, h7, h8, t0, t1, t2);
-		TFBIG_4e_UI2(0);
+		h8 = h0 ^ h1 ^ h2 ^ h3 ^ h4 ^ h5 ^ h6 ^ h7 ^ make_uint2(0xA9FC1A22UL, 0x1BD11BDA);
+		t2 = t0 ^ t1;
+
+		p[0] = h0 + vectorize(c_PaddedMessage80[0]);
+		p[1] = h1 + nounce2;
+		p[2] = h2;
+		p[3] = h3;
+		p[4] = h4;
+		p[5] = h5 + t0;
+		p[6] = h6 + t1;
+		p[7] = h7;
+
+		TFBIG_MIX8_UI2(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], 46, 36, 19, 37);
+		TFBIG_MIX8_UI2(p[2], p[1], p[4], p[7], p[6], p[5], p[0], p[3], 33, 27, 14, 42);
+		TFBIG_MIX8_UI2(p[4], p[1], p[6], p[3], p[0], p[5], p[2], p[7], 17, 49, 36, 39);
+		TFBIG_MIX8_UI2(p[6], p[1], p[0], p[7], p[2], p[5], p[4], p[3], 44, 9, 54, 56);
+
 		TFBIG_4o_UI2(1);
 		TFBIG_4e_UI2(2);
 		TFBIG_4o_UI2(3);
