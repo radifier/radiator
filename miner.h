@@ -304,10 +304,6 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
 	uint32_t *hashes_done);
 
-extern int scanhash_heavy(int thr_id, uint32_t *pdata,
-	uint32_t *ptarget, uint32_t max_nonce,
-	uint32_t *hashes_done, uint32_t maxvote, int blocklen);
-
 extern int scanhash_c11(int thr_id, uint32_t *pdata,
 						uint32_t *ptarget, uint32_t max_nonce,
 						uint32_t *hashes_done);
@@ -514,7 +510,6 @@ extern int longpoll_thr_id;
 extern int stratum_thr_id;
 extern int api_thr_id;
 extern bool opt_trust_pool;
-extern uint16_t opt_vote;
 
 extern uint64_t global_hashrate;
 extern double   global_diff;
@@ -618,7 +613,6 @@ struct work {
 	uint32_t data[64];
 	uint32_t midstate[8];
 	uint32_t target[8];
-	uint32_t maxvote;
 
 	char job_id[128];
 	size_t xnonce2_len;
@@ -649,12 +643,10 @@ enum sha_algos
 	ALGO_FRESH,
 	ALGO_FUGUE256,		/* Fugue256 */
 	ALGO_GROESTL,
-	ALGO_HEAVY,		/* Heavycoin hash */
 	ALGO_KECCAK,
 	ALGO_JACKPOT,
 	ALGO_LUFFA_DOOM,
 	ALGO_LYRA2v2,
-	ALGO_MJOLLNIR,		/* Hefty hash */
 	ALGO_MYR_GR,
 	ALGO_NIST5,
 	ALGO_PENTABLAKE,
@@ -731,7 +723,6 @@ void deephash(void *state, const void *input);
 void doomhash(void *state, const void *input);
 void fresh_hash(void *state, const void *input);
 void fugue256_hash(unsigned char* output, const unsigned char* input, int len);
-void heavycoin_hash(unsigned char* output, const unsigned char* input, int len);
 void keccak256_hash(void *state, const void *input);
 unsigned int jackpothash(void *state, const void *input);
 void groestlhash(void *state, const void *input);

@@ -2020,7 +2020,6 @@ void do_gpu_tests(void)
 	scanhash_blake256(0, (uint32_t*)buf, tgt, 1, &done, 14);
 
 	memset(buf, 0, sizeof buf);
-	scanhash_heavy(0, (uint32_t*)buf, tgt, 1, &done, 1, 84); // HEAVYCOIN_BLKHDR_SZ=84
 
 	free(work_restart);
 	work_restart = NULL;
@@ -2060,10 +2059,6 @@ void print_hash_tests(void)
 	memset(hash, 0, sizeof hash);
 	groestlhash(&hash[0], &buf[0]);
 	printpfx("groestl", hash);
-
-	memset(hash, 0, sizeof hash);
-	heavycoin_hash(&hash[0], &buf[0], 32);
-	printpfx("heavy", hash);
 
 	memset(hash, 0, sizeof hash);
 	jackpothash(&hash[0], &buf[0]);

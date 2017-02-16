@@ -355,7 +355,6 @@
     <ClInclude Include="cuda_helper.h" />
     <ClInclude Include="cuda_vector.h" />
     <ClInclude Include="elist.h" />
-    <ClInclude Include="heavy\heavy.h" />
     <ClInclude Include="hefty1.h" />
     <ClInclude Include="lyra2\cuda_lyra2v2_sm3.cuh" />
     <ClInclude Include="lyra2\cuda_lyra2_vectors.h" />
@@ -408,21 +407,6 @@
     </CudaCompile>
     <CudaCompile Include="groestl_functions_quad.cu">
       <ExcludedFromBuild>true</ExcludedFromBuild>
-    </CudaCompile>
-    <CudaCompile Include="heavy\cuda_blake512.cu">
-    </CudaCompile>
-    <CudaCompile Include="heavy\cuda_combine.cu">
-    </CudaCompile>
-    <CudaCompile Include="heavy\cuda_groestl512.cu">
-    </CudaCompile>
-    <CudaCompile Include="heavy\cuda_hefty1.cu">
-      <MaxRegCount>80</MaxRegCount>
-    </CudaCompile>
-    <CudaCompile Include="heavy\cuda_keccak512.cu">
-    </CudaCompile>
-    <CudaCompile Include="heavy\cuda_sha256.cu">
-    </CudaCompile>
-    <CudaCompile Include="heavy\heavy.cu">
     </CudaCompile>
     <CudaCompile Include="JHA\cuda_jha_compactionTest.cu">
       <AdditionalOptions Condition="'$(Configuration)'=='Release'">-Xptxas "-abi=yes" %(AdditionalOptions)</AdditionalOptions>

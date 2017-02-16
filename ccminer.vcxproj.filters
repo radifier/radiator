@@ -40,9 +40,6 @@
     <Filter Include="Header Files\sph">
       <UniqueIdentifier>{7c2a98c6-064c-4a69-b803-d6f6ff5edd0b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\CUDA\heavy">
-      <UniqueIdentifier>{c3222908-22ba-4586-a637-6363f455b06d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\CUDA\qubit">
       <UniqueIdentifier>{f3ed23a2-8ce7-41a5-b051-6da56047dc35}</UniqueIdentifier>
     </Filter>
@@ -317,9 +314,6 @@
     <ClInclude Include="sph\sph_types.h">
       <Filter>Header Files\sph</Filter>
     </ClInclude>
-    <ClInclude Include="heavy\heavy.h">
-      <Filter>Header Files\CUDA</Filter>
-    </ClInclude>
     <ClInclude Include="cuda_helper.h">
       <Filter>Header Files\CUDA</Filter>
     </ClInclude>
@@ -441,27 +435,6 @@
     </CudaCompile>
     <CudaCompile Include="quark\cuda_skein512.cu">
       <Filter>Source Files\CUDA\quark</Filter>
-    </CudaCompile>
-    <CudaCompile Include="heavy\cuda_blake512.cu">
-      <Filter>Source Files\CUDA\heavy</Filter>
-    </CudaCompile>
-    <CudaCompile Include="heavy\cuda_combine.cu">
-      <Filter>Source Files\CUDA\heavy</Filter>
-    </CudaCompile>
-    <CudaCompile Include="heavy\cuda_groestl512.cu">
-      <Filter>Source Files\CUDA\heavy</Filter>
-    </CudaCompile>
-    <CudaCompile Include="heavy\cuda_hefty1.cu">
-      <Filter>Source Files\CUDA\heavy</Filter>
-    </CudaCompile>
-    <CudaCompile Include="heavy\cuda_keccak512.cu">
-      <Filter>Source Files\CUDA\heavy</Filter>
-    </CudaCompile>
-    <CudaCompile Include="heavy\cuda_sha256.cu">
-      <Filter>Source Files\CUDA\heavy</Filter>
-    </CudaCompile>
-    <CudaCompile Include="heavy\heavy.cu">
-      <Filter>Source Files\CUDA\heavy</Filter>
     </CudaCompile>
     <CudaCompile Include="quark\cuda_bmw512.cu">
       <Filter>Source Files\CUDA\quark</Filter>

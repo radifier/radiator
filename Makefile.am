@@ -21,13 +21,6 @@ ccminer_SOURCES	= elist.h miner.h compat.h \
 			  ccminer.cpp util.cpp \
 			  api.cpp hashlog.cpp nvml.cpp stats.cpp sysinfos.cpp cuda.cpp \
 			  cuda_helper.h cuda_vector.h \
-			  heavy/heavy.cu \
-			  heavy/cuda_blake512.cu heavy/cuda_blake512.h \
-			  heavy/cuda_combine.cu heavy/cuda_combine.h \
-			  heavy/cuda_groestl512.cu heavy/cuda_groestl512.h \
-			  heavy/cuda_hefty1.cu heavy/cuda_hefty1.h \
-			  heavy/cuda_keccak512.cu heavy/cuda_keccak512.h \
-			  heavy/cuda_sha256.cu heavy/cuda_sha256.h \
 			  sph/neoscrypt.h sph/neoscrypt.c \
 			  sph/sha256_Y.h sph/sha256_Y.c sph/sph_sha2.c \
 			  fuguecoin.cpp Algo256/cuda_fugue256.cu sph/fugue.c uint256.h \
