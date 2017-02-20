@@ -79,6 +79,58 @@ void to_bitslice_quad(uint32_t *const __restrict__ input, uint32_t *const __rest
 }
 
 __device__ __forceinline__
+void myr_to_bitslice_quad(uint32_t *const __restrict__ input, uint32_t *const __restrict__ output)
+{
+	uint32_t other[8];
+	uint32_t t;
+
+	const uint32_t perm = (threadIdx.x & 1) ? 0x7362 : 0x5140;
+	const unsigned int n = threadIdx.x & 3;
+#pragma unroll
+	for(int i = 0; i < 5; i++)
+	{
+		input[i] = __shfl((int)input[i], n ^ (3 * (n >= 1 && n <= 2)), 4);
+		other[i] = __shfl((int)input[i], (threadIdx.x + 1) & 3, 4);
+		input[i] = __shfl((int)input[i], threadIdx.x & 2, 4);
+		other[i] = __shfl((int)other[i], threadIdx.x & 2, 4);
+	}
+	if(n < 2)
+	{
+		input[5] = 0x80;
+		other[7] = 0;
+	}
+	else
+	{
+		input[5] = 0;
+		other[7] = 0x01000000;
+	}
+
+	merge8(output[0], input[0], input[4], perm);
+	merge8(output[1], other[0], other[4], perm);
+	merge8(output[2], input[1], input[5], perm);
+	output[3] = __byte_perm(other[1], 0, perm);
+	output[4] = __byte_perm(input[2], 0, perm);
+	output[5] = __byte_perm(other[2], 0, perm);
+	output[6] = __byte_perm(input[3], 0, perm);
+	merge8(output[7], other[3], other[7], perm);
+
+	SWAP1(output[0], output[1]);
+	SWAP1(output[2], output[3]);
+	SWAP1(output[4], output[5]);
+	SWAP1(output[6], output[7]);
+
+	SWAP2(output[0], output[2]);
+	SWAP2(output[1], output[3]);
+	SWAP2(output[4], output[6]);
+	SWAP2(output[5], output[7]);
+
+	SWAP4(output[0], output[4]);
+	SWAP4(output[1], output[5]);
+	SWAP4(output[2], output[6]);
+	SWAP4(output[3], output[7]);
+}
+
+__device__ __forceinline__
 void from_bitslice_quad(const uint32_t *const __restrict__ input, uint32_t *const __restrict__ output)
 {
 	uint32_t t;

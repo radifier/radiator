@@ -205,7 +205,7 @@ __device__ void myriadgroestl_gpu_sha256(uint32_t *message)
 	message[7] = cuda_swab32(hash[7] + regs[0]);
 }
 
-__global__ void __launch_bounds__(256, 4)
+__global__ void __launch_bounds__(512, 2)
  myriadgroestl_gpu_hash_quad(uint32_t threads, uint32_t startNounce, uint32_t *hashBuffer)
 {
     // durch 4 dividieren, weil jeweils 4 Threads zusammen ein Hash berechnen
@@ -233,7 +233,7 @@ __global__ void __launch_bounds__(256, 4)
 		}
 
         uint32_t msgBitsliced[8];
-        to_bitslice_quad(paddedInput, msgBitsliced);
+        myr_to_bitslice_quad(paddedInput, msgBitsliced);
 
         uint32_t state[8];
 
@@ -255,7 +255,7 @@ __global__ void __launch_bounds__(256, 4)
     }
 }
 
-__global__ void __launch_bounds__(2048, 1)
+__global__ void __launch_bounds__(1536, 1)
  myriadgroestl_gpu_hash_quad2(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ resNounce, const uint32_t *const __restrict__ hashBuffer)
 {
     const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
@@ -280,13 +280,16 @@ __global__ void __launch_bounds__(2048, 1)
     }
 }
 
+static THREAD cudaStream_t stream[3];
 // Setup-Funktionen
 __host__ void myriadgroestl_cpu_init(int thr_id, uint32_t threads)
 {
 	CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 	cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 	cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
-	CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaStreamCreate(&stream[0]));
+	CUDA_SAFE_CALL(cudaStreamCreate(&stream[1]));
+	CUDA_SAFE_CALL(cudaStreamCreate(&stream[2]));
 	cudaMalloc(&d_resultNonce[thr_id], 4 * sizeof(uint32_t));
 
     // Speicher für temporäreHashes
@@ -295,16 +298,16 @@ __host__ void myriadgroestl_cpu_init(int thr_id, uint32_t threads)
 
 __host__ void myriadgroestl_cpu_setBlock(int thr_id, void *data, void *pTargetIn)
 {
-	cudaMemcpyToSymbolAsync(myriadgroestl_gpu_msg, data, 80, 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMemcpyToSymbolAsync(myriadgroestl_gpu_msg, data, 80, 0, cudaMemcpyHostToDevice, stream[0]);
 
-	cudaMemsetAsync(d_resultNonce[thr_id], 0xFF, 4 * sizeof(uint32_t), gpustream[thr_id]);
-	cudaMemcpyToSymbolAsync(pTarget, pTargetIn, sizeof(uint32_t) * 8, 0, cudaMemcpyHostToDevice, gpustream[thr_id]);
+	cudaMemsetAsync(d_resultNonce[thr_id], 0xFF, 4 * sizeof(uint32_t), stream[1]);
+	cudaMemcpyToSymbolAsync(pTarget, pTargetIn, sizeof(uint32_t) * 8, 0, cudaMemcpyHostToDevice, stream[2]);
 }
 
 __host__ void myriadgroestl_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *nounce)
 {
-    const uint32_t threadsperblock = 256;
-	const uint32_t threadsperblock2 = 2048;
+    const uint32_t threadsperblock = 512;
+	const uint32_t threadsperblock2 = 1536;
     // Compute 3.0 benutzt die registeroptimierte Quad Variante mit Warp Shuffle
     // mit den Quad Funktionen brauchen wir jetzt 4 threads pro Hash, daher Faktor 4 bei der Blockzahl
     const int factor=4;
@@ -313,10 +316,11 @@ __host__ void myriadgroestl_cpu_hash(int thr_id, uint32_t threads, uint32_t star
     dim3 grid(factor*((threads + threadsperblock-1)/threadsperblock));
     dim3 block(threadsperblock);
 
-    myriadgroestl_gpu_hash_quad<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_outputHashes[thr_id]);
+	CUDA_SAFE_CALL(cudaDeviceSynchronize());
+    myriadgroestl_gpu_hash_quad<<<grid, block>>>(threads, startNounce, d_outputHashes[thr_id]);
     dim3 grid2((threads + threadsperblock2-1)/threadsperblock2);
-    myriadgroestl_gpu_hash_quad2<<<grid2, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_resultNonce[thr_id], d_outputHashes[thr_id]);
+    myriadgroestl_gpu_hash_quad2<<<grid2, block>>>(threads, startNounce, d_resultNonce[thr_id], d_outputHashes[thr_id]);
 
 
-    CUDA_SAFE_CALL(cudaMemcpyAsync(nounce, d_resultNonce[thr_id], 4*sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
+    CUDA_SAFE_CALL(cudaMemcpy(nounce, d_resultNonce[thr_id], 4*sizeof(uint32_t), cudaMemcpyDeviceToHost));
 }
