@@ -45,7 +45,7 @@ void to_bitslice_quad(uint32_t *const __restrict__ input, uint32_t *const __rest
 	const uint32_t perm = (threadIdx.x & 1) ? 0x7362 : 0x5140;
 	const unsigned int n = threadIdx.x & 3;
 #pragma unroll
-	for(int i = 0; i < 8; i++)
+	for(int i = 0; i < 4; i++)
 	{
 		input[i] = __shfl((int)input[i], n ^ (3 * (n >= 1 && n <= 2)), 4);
 		other[i] = __shfl((int)input[i], (threadIdx.x + 1) & 3, 4);
@@ -53,13 +53,28 @@ void to_bitslice_quad(uint32_t *const __restrict__ input, uint32_t *const __rest
 		other[i] = __shfl((int)other[i], threadIdx.x & 2, 4);
 	}
 
+	if((threadIdx.x & 3) < 2)
+	{
+		input[4] = 0x80;
+	}
+	else
+	{
+		input[4] = 0;
+	}
+
+	if((threadIdx.x & 3) > 1)
+		other[7] = 0x01000000;
+	else
+		other[7] = 0;
+	input[7] = 0;
+
 	merge8(output[0], input[0], input[4], perm);
-	merge8(output[1], other[0], other[4], perm);
-	merge8(output[2], input[1], input[5], perm);
-	merge8(output[3], other[1], other[5], perm);
-	merge8(output[4], input[2], input[6], perm);
-	merge8(output[5], other[2], other[6], perm);
-	merge8(output[6], input[3], input[7], perm);
+	merge8(output[1], other[0],        0, perm);
+	merge8(output[2], input[1],        0, perm);
+	merge8(output[3], other[1],        0, perm);
+	merge8(output[4], input[2],        0, perm);
+	merge8(output[5], other[2],        0, perm);
+	merge8(output[6], input[3],        0, perm);
 	merge8(output[7], other[3], other[7], perm);
 
 	SWAP1(output[0], output[1]);

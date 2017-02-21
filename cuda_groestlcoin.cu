@@ -38,7 +38,7 @@ void groestlcoin_gpu_hash_quad(uint32_t threads, uint32_t startNounce, uint32_t 
 		if ((threadIdx.x & 3)==3) paddedInput[7] = 0x01000000;
 
         uint32_t msgBitsliced[8];
-        to_bitslice_quad(paddedInput, msgBitsliced);
+        myr_to_bitslice_quad(paddedInput, msgBitsliced);
 
         uint32_t state[8];
 
