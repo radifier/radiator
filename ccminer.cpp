@@ -1277,25 +1277,20 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 
 	switch(opt_algo)
 	{
-	case ALGO_JACKPOT:
-	case ALGO_NEO:
-		diff_to_target(work->target, sctx->job.diff / (65536.0 * opt_difficulty));
-		break;
-	case ALGO_DMD_GR:
-	case ALGO_FRESH:
-	case ALGO_FUGUE256:
-	case ALGO_GROESTL:
-		diff_to_target(work->target, sctx->job.diff / (256.0 * opt_difficulty));
-		break;
-	case ALGO_KECCAK:
-		case ALGO_LYRA2v2:
-		diff_to_target(work->target, sctx->job.diff / (256.0 * opt_difficulty));
-		break;
-			diff_to_target(work->target, sctx->job.diff / (128.0 * opt_difficulty));
+		case ALGO_JACKPOT:
+		case ALGO_NEO:
+			diff_to_target(work->target, sctx->job.diff / (65536.0 * opt_difficulty));
 			break;
-
-	default:
-		diff_to_target(work->target, sctx->job.diff / opt_difficulty);
+		case ALGO_DMD_GR:
+		case ALGO_FRESH:
+		case ALGO_FUGUE256:
+		case ALGO_GROESTL:
+		case ALGO_KECCAK:
+		case ALGO_LYRA2v2:
+			diff_to_target(work->target, sctx->job.diff / (256.0 * opt_difficulty));
+			break;
+		default:
+			diff_to_target(work->target, sctx->job.diff / opt_difficulty);
 	}
 	return true;
 }
