@@ -1,5 +1,5 @@
 
-ccMiner release 8.05(KlausT-mod) (December 17th, 2016)
+ccMiner release 8.06(KlausT-mod) (March 12th, 2017)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -78,12 +78,10 @@ its command line interface and options.
 			fresh       Freshcoin (shavite 80)\n\
 			fugue256    Fuguecoin\n\
 			groestl     Groestlcoin\n\
-			heavy       Heavycoin\n\
 			jackpot     Jackpot\n\
 			keccak      Keccak-256 (Maxcoin)\n\
 			luffa       Doomcoin\n\
 			lyra2v2     VertCoin\n\
-			mjollnir    Mjollnircoin\n\
 			myr-gr      Myriad-Groestl\n\
             neoscrypt   neoscrypt (FeatherCoin)\n\
 			nist5       NIST5 (TalkCoin)\n\
@@ -230,6 +228,7 @@ features.
 2016-12-13 v8.04: fix illegal memory access in X11-X17
                   fix duplicate shares in skein
 2016-12-17 v8.05: fix Skein bug
+2017-03-12 v8.06: Heavy and Mjollnir algos removed
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
