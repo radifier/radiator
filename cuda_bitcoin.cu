@@ -32,7 +32,7 @@ void bitcoin_gpu_hash(const uint32_t threads, const uint32_t startNounce, uint32
 		const uint32_t maxnonce = startNounce + threadindex + numberofthreads*NONCES_PER_THREAD - 1;
 
 		#pragma unroll 
-		for (uint32_t nonce = startNounce + threadindex; nonce <= maxnonce; nonce += numberofthreads)
+		for (uint32_t nonce = startNounce + threadindex; nonce-1 < maxnonce; nonce += numberofthreads)
 		{
 			w[18] = (ROTR32(nonce, 7) ^ ROTR32(nonce, 18) ^ (nonce >> 3)) + w16rot;
 			w[19] = nonce + w17rot;
