@@ -70,9 +70,6 @@
     <Filter Include="Source Files\CUDA\neoscrypt">
       <UniqueIdentifier>{0e14317b-d054-4f9e-8f6f-3bd91b3aa160}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\CUDA\bitcredit">
-      <UniqueIdentifier>{cfe20f7e-f3ee-4eea-8a07-1600a08dbe02}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\CUDA\lyra2">
       <UniqueIdentifier>{2ff6e4ce-7c92-4cb2-a3ad-c331e94fd81d}</UniqueIdentifier>
     </Filter>
@@ -582,12 +579,6 @@
     </CudaCompile>
     <CudaCompile Include="x11\c11.cu">
       <Filter>Source Files\CUDA\x11</Filter>
-    </CudaCompile>
-    <CudaCompile Include="bitcredit\bitcredit.cu">
-      <Filter>Source Files\CUDA\bitcredit</Filter>
-    </CudaCompile>
-    <CudaCompile Include="bitcredit\cuda_bitcredit.cu">
-      <Filter>Source Files\CUDA\bitcredit</Filter>
     </CudaCompile>
     <CudaCompile Include="neoscrypt\cuda_neoscrypt.cu">
       <Filter>Source Files\CUDA\neoscrypt</Filter>

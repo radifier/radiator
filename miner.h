@@ -394,13 +394,6 @@ extern int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
 	uint32_t *hashes_done);
 
-extern int scanhash_yescrypt(int thr_id, uint32_t *pdata,
-	const uint32_t *ptarget, uint32_t max_nonce,
-	uint32_t *hashes_done);
-
-extern int scanhash_bitcredit(int thr_id, uint32_t *pdata,
-							  uint32_t *ptarget, const uint32_t *midstate, uint32_t max_nonce,
-							  uint32_t *hashes_done);
 extern int scanhash_sia(int thr_id, uint32_t *pdata,
 												uint32_t *ptarget, uint32_t max_nonce,
 												uint32_t *hashes_done);
@@ -632,7 +625,6 @@ struct work {
 
 enum sha_algos
 {
-	ALGO_BITC,
 	ALGO_BITCOIN,
 	ALGO_BLAKE,
 	ALGO_BLAKECOIN,

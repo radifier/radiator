@@ -283,8 +283,6 @@
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <Optimization Condition="'$(Configuration)'=='Release'">Full</Optimization>
     </ClCompile>
-    <CudaCompile Include="bitcredit\bitcredit.cu" />
-    <CudaCompile Include="bitcredit\cuda_bitcredit.cu" />
     <CudaCompile Include="cuda_bitcoin.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>

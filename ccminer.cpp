@@ -81,7 +81,6 @@ struct workio_cmd {
 };
 
 static const char *algo_names[] = {
-	"credit",
 	"bitcoin",
 	"blake",
 	"blakecoin",
@@ -210,7 +209,6 @@ Options:\n\
 			blake       Blake 256 (SFR/NEOS)\n\
 			blakecoin   Fast Blake 256 (8 rounds)\n\
 			c11         X11 variant\n\
-			credit      Credit\n\
 			deep        Deepcoin\n\
 			dmd-gr      Diamond-Groestl\n\
 			fresh       Freshcoin (shavite 80)\n\
@@ -506,9 +504,6 @@ static bool work_decode(const json_t *val, struct work *work)
 		case ALGO_NEO:
 			data_size = 84;
 			break;
-		case ALGO_BITC:
-			data_size = 168;
-			break;
 		default:
 			data_size = 128;
 			break;
@@ -524,18 +519,6 @@ static bool work_decode(const json_t *val, struct work *work)
 	{
 		applog(LOG_ERR, "JSON inval target");
 		return false;
-	}
-
-	if(opt_algo == ALGO_BITC)
-	{
-		if(unlikely(!jobj_binary(val, "midstate", work->midstate, midstate_size)))
-		{
-			applog(LOG_ERR, "JSON inval midstate");
-			return false;
-		}
-
-		for(i = 0; i < midstate_size >> 2; i++)
-			work->midstate[i] = le32dec(work->midstate + i);
 	}
 
 	for(i = 0; i < adata_sz; i++)
@@ -737,9 +720,6 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 		{
 			case ALGO_NEO:
 				data_size = 84;
-				break;
-			case ALGO_BITC:
-				data_size = 168;
 				break;
 			default:
 				data_size = 128;
@@ -1378,9 +1358,6 @@ static void *miner_thread(void *userdata)
 		int wcmplen;
 		switch(opt_algo)
 		{
-			case ALGO_BITC:
-				wcmplen = 140;
-				break;
 			case ALGO_SIA:
 				wcmplen = 80;
 				break;
@@ -1502,9 +1479,6 @@ static void *miner_thread(void *userdata)
 			case ALGO_BLAKE:
 			case ALGO_SIA:
 				minmax = 260000000 * max64time;
-				break;
-			case ALGO_BITC:
-				minmax = 95000000 * max64time;
 				break;
 			case ALGO_BLAKECOIN:
 			case ALGO_VANILLA:
@@ -1726,10 +1700,6 @@ static void *miner_thread(void *userdata)
 			rc = scanhash_neoscrypt(have_stratum, thr_id, work.data, work.target, max_nonce, &hashes_done);
 			break;
 
-		case ALGO_BITC:
-			rc = scanhash_bitcredit(thr_id, work.data, work.target, work.midstate, max_nonce, &hashes_done);
-			break;
-
 		case ALGO_SIA:
 			rc = scanhash_sia(thr_id, work.data, work.target, max_nonce, &hashes_done);
 			break;
@@ -1792,7 +1762,7 @@ static void *miner_thread(void *userdata)
 		if(check_dups)
 			hashlog_remember_scan_range(&work);
 
-		if(!opt_quiet && (opt_algo == ALGO_BITC) ? (loopcnt % 10 == 1) : (loopcnt>0))
+		if(!opt_quiet && loopcnt > 0)
 		{
 			double hashrate;
 
