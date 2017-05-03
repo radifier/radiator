@@ -458,6 +458,8 @@ void proper_exit(int reason)
 	hashlog_purge_all();
 	stats_purge_all();
 
+	curl_global_cleanup();
+
 #ifdef WIN32
 	timeEndPeriod(1); // else never executed
 #endif
