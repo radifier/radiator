@@ -115,6 +115,7 @@ static const char *algo_names[] = {
 	"neoscrypt"
 };
 
+char curl_err_str[CURL_ERROR_SIZE];
 bool opt_verify = true;
 bool opt_debug = false;
 bool opt_protocol = false;
@@ -2645,7 +2646,6 @@ static int msver(void)
 int main(int argc, char *argv[])
 {
 	struct thr_info *thr;
-	long flags;
 	int i;
 	
 	// strdup on char* to allow a common free() if used
@@ -2713,6 +2713,20 @@ int main(int argc, char *argv[])
 	/* parse command line */
 	parse_cmdline(argc, argv);
 
+	if(opt_protocol)
+	{
+		curl_version_info_data *info;
+
+		info = curl_version_info(CURLVERSION_NOW);
+		applog(LOG_DEBUG, "using libcurl %s", info->version);
+		int features = info->features;
+		if(features&CURL_VERSION_IPV6)
+			applog(LOG_DEBUG, "libcurl supports IPv6");
+		if(features&CURL_VERSION_SSL)
+			applog(LOG_DEBUG, "libcurl supports SSL");
+		if(features&CURL_VERSION_IDN)
+			applog(LOG_DEBUG, "libcurl supports international domain names");
+	}
 	if(!opt_benchmark && !rpc_url)
 	{
 		fprintf(stderr, "%s: no URL supplied\n", argv[0]);
@@ -2734,10 +2748,7 @@ int main(int argc, char *argv[])
 	pthread_mutex_init(&stratum.sock_lock, NULL);
 	pthread_mutex_init(&stratum.work_lock, NULL);
 
-	flags = !opt_benchmark && strncmp(rpc_url, "https:", 6)
-		? (CURL_GLOBAL_ALL & ~CURL_GLOBAL_SSL)
-		: CURL_GLOBAL_ALL;
-	if(curl_global_init(flags))
+	if(curl_global_init(CURL_GLOBAL_ALL))
 	{
 		applog(LOG_ERR, "CURL initialization failed");
 		return 1;

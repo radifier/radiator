@@ -37,6 +37,7 @@
 using namespace std;
 
 extern enum sha_algos opt_algo;
+extern char curl_err_str[];
 
 bool opt_tracegpu = false;
 
@@ -404,14 +405,13 @@ json_t *json_rpc_call(CURL *curl, const char *url,
 					  bool longpoll_scan, bool longpoll, int *curl_err)
 {
 	json_t *val, *err_val, *res_val;
-	int rc;
+	CURLcode rc;
 	struct data_buffer all_data = { 0 };
 	struct upload_buffer upload_data;
 	json_error_t err;
 	struct curl_slist *headers = NULL;
 	char* httpdata;
 	char len_hdr[64], hashrate_hdr[64];
-	char curl_err_str[CURL_ERROR_SIZE] = { 0 };
 	long timeout = longpoll ? opt_timeout : 30;
 	struct header_info hi = { 0 };
 	bool lp_scanning = longpoll_scan && !have_longpoll;
@@ -474,15 +474,18 @@ json_t *json_rpc_call(CURL *curl, const char *url,
 	headers = curl_slist_append(headers, "Expect:"); /* disable Expect hdr*/
 
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
+	curl_err_str[0] = 0;
 	rc = curl_easy_perform(curl);
 	if(curl_err != NULL)
 		*curl_err = rc;
-	if(rc)
+	if(rc != CURLE_OK)
 	{
 		if(!(longpoll && rc == CURLE_OPERATION_TIMEDOUT))
 		{
-			applog(LOG_ERR, "HTTP request failed: %s", curl_err_str);
+			if(strlen(curl_err_str)>0)
+				applog(LOG_ERR, "HTTP request failed: %s", curl_err_str);
+			else
+				applog(LOG_ERR, "HTTP request failed: %s", curl_easy_strerror(rc));
 			goto err_out;
 		}
 	}
@@ -958,7 +961,7 @@ struct curl_sockaddr *addr)
 bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 {
 	CURL *curl;
-	int rc;
+	CURLcode rc;
 
 	pthread_mutex_lock(&sctx->sock_lock);
 	if(sctx->curl)
@@ -993,7 +996,7 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 	curl_easy_setopt(curl, CURLOPT_URL, sctx->curl_url);
 	curl_easy_setopt(curl, CURLOPT_FRESH_CONNECT, 1);
 	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 30);
-	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, sctx->curl_err_str);
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_err_str);
 	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
 	curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1);
 	if(opt_proxy && opt_proxy_type != CURLPROXY_HTTP)
@@ -1018,11 +1021,14 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 	curl_easy_setopt(curl, CURLOPT_OPENSOCKETDATA, &sctx->sock);
 #endif
 	curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1);
-
+	curl_err_str[0] = 0;
 	rc = curl_easy_perform(curl);
-	if(rc)
+	if(rc != CURLE_OK)
 	{
-		applog(LOG_ERR, "Stratum connection failed: %s", sctx->curl_err_str);
+		if(strlen(curl_err_str)>0)
+			applog(LOG_ERR, "HTTP request failed: %s", curl_err_str);
+		else
+			applog(LOG_ERR, "HTTP request failed: %s", curl_easy_strerror(rc));
 		curl_easy_cleanup(curl);
 		sctx->curl = NULL;
 		return false;

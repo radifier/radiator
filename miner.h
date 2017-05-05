@@ -579,7 +579,6 @@ struct stratum_ctx {
 
 	CURL *curl;
 	char *curl_url;
-	char curl_err_str[CURL_ERROR_SIZE];
 	curl_socket_t sock;
 	size_t sockbuf_size;
 	char *sockbuf;
