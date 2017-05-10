@@ -80,8 +80,8 @@ extern int scanhash_jackpot(int thr_id, uint32_t *pdata,
 {
 	const uint32_t first_nonce = pdata[19];
 
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1U << 20);
-	throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, 1U << 20);
+	uint32_t throughput = min(throughputmax, (max_nonce - first_nonce)) & 0xfffffc00;
 
 	if (opt_benchmark)
 		ptarget[7] = 0x000f;
@@ -101,19 +101,19 @@ extern int scanhash_jackpot(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		get_cuda_arch(&cuda_arch[thr_id]);
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughput));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax));
 
-		jackpot_keccak512_cpu_init(thr_id, throughput);
-		jackpot_compactTest_cpu_init(thr_id, throughput);
-		quark_groestl512_cpu_init(thr_id, throughput);
+		jackpot_keccak512_cpu_init(thr_id, throughputmax);
+		jackpot_compactTest_cpu_init(thr_id, throughputmax);
+		quark_groestl512_cpu_init(thr_id, throughputmax);
 		quark_skein512_cpu_init(thr_id);
-		cuda_check_cpu_init(thr_id, throughput);
+		cuda_check_cpu_init(thr_id, throughputmax);
 
-		cudaMalloc(&d_branch1Nonces, sizeof(uint32_t)*throughput*2);
-		cudaMalloc(&d_branch2Nonces, sizeof(uint32_t)*throughput*2);
-		cudaMalloc(&d_branch3Nonces, sizeof(uint32_t)*throughput*2);
+		cudaMalloc(&d_branch1Nonces, sizeof(uint32_t)*throughputmax * 2);
+		cudaMalloc(&d_branch2Nonces, sizeof(uint32_t)*throughputmax * 2);
+		cudaMalloc(&d_branch3Nonces, sizeof(uint32_t)*throughputmax * 2);
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_jackpotNonces, sizeof(uint32_t)*throughput*2));
+		CUDA_SAFE_CALL(cudaMalloc(&d_jackpotNonces, sizeof(uint32_t)*throughputmax * 2));
 
 		init = true;
 	}
