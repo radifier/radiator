@@ -109,9 +109,9 @@ extern int scanhash_jackpot(int thr_id, uint32_t *pdata,
 		quark_skein512_cpu_init(thr_id);
 		cuda_check_cpu_init(thr_id, throughputmax);
 
-		cudaMalloc(&d_branch1Nonces, sizeof(uint32_t)*throughputmax * 2);
-		cudaMalloc(&d_branch2Nonces, sizeof(uint32_t)*throughputmax * 2);
-		cudaMalloc(&d_branch3Nonces, sizeof(uint32_t)*throughputmax * 2);
+		cudaMalloc(&d_branch1Nonces, sizeof(uint32_t)*throughputmax * 1.25/2);
+		cudaMalloc(&d_branch2Nonces, sizeof(uint32_t)*throughputmax * 1.25/2);
+		cudaMalloc(&d_branch3Nonces, sizeof(uint32_t)*throughputmax * 1.25); // 25% more than we need, just in case
 
 		CUDA_SAFE_CALL(cudaMalloc(&d_jackpotNonces, sizeof(uint32_t)*throughputmax * 2));
 
