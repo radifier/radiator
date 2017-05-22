@@ -55,10 +55,11 @@ __global__ void __launch_bounds__(blocksize, 3) siakernel(uint32_t * __restrict_
 {
 	uint64_t v[16];
 	const uint64_t start = startnonce + (blockDim.x * blockIdx.x + threadIdx.x)*npt;
+	const uint64_t end = start + npt;
 
 	numberofresults = 0;
 
-	for(uint64_t n = start; n < start + npt; n++)
+	for(uint64_t n = start; n < end; n++)
 	{
 		v[2] = 0x5BF2CD1EF9D6B596u + n; v[14] = __swap_hilo(~0x1f83d9abfb41bd6bu ^ v[2]); v[10] = 0x3c6ef372fe94f82bu + v[14]; v[6] = __byte_perm_64(0x1f83d9abfb41bd6bu ^ v[10], 0x6543, 0x2107);
 		v[2] = v[2] + v[6] + header[5]; v[14] = __byte_perm_64(v[14] ^ v[2], 0x5432, 0x1076); v[10] = v[10] + v[14]; v[6] = ROTR64(v[6] ^ v[10], 63);
@@ -251,8 +252,8 @@ __global__ void __launch_bounds__(blocksize, 3) siakernel(uint32_t * __restrict_
 		v[2] = v[2] + v[6];             v[14] = __byte_perm_64(v[14] ^ v[2], 0x5432, 0x1076); v[10] = v[10] + v[14]; v[6] = ROTR64(v[6] ^ v[10], 63);
 		v[3] = v[3] + v[7];             v[15] = __swap_hilo(v[15] ^ v[3]); v[11] = v[11] + v[15]; v[7] = __byte_perm_64(v[7] ^ v[11], 0x6543, 0x2107);
 		v[3] = v[3] + v[7] + header[6];	v[15] = __byte_perm_64(v[15] ^ v[3], 0x5432, 0x1076); v[11] = v[11] + v[15]; v[7] = ROTR64(v[7] ^ v[11], 63);
-		v[0] = v[0] + v[5] + header[1];	v[15] = __swap_hilo(v[15] ^ v[0]); v[10] = v[10] + v[15];
-		v[0] = v[0] + __byte_perm_64(v[5] ^ v[10], 0x6543, 0x2107);
+		v[0] = v[0] + v[5] + header[1];
+		v[0] = v[0] + __byte_perm_64(v[5] ^ (v[10] + __swap_hilo(v[15] ^ v[0])), 0x6543, 0x2107);
 		v[2] = v[2] + v[7];
 		v[13] = __swap_hilo(v[13] ^ v[2]);
 		v[8] = v[8] + v[13];
