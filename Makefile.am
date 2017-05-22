@@ -55,7 +55,6 @@ ccminer_SOURCES	= elist.h miner.h compat.h \
 			  bitcoin.cu cuda_bitcoin.cu \
 			  x15/cuda_whirlpoolx.cu x15/whirlpoolx.cu \
 			  neoscrypt/neoscrypt.cu neoscrypt/cuda_neoscrypt.cu \
-			  bitcredit/cuda_bitcredit.cu bitcredit/bitcredit.cu
 
 # scrypt
 # ccminer_SOURCES += scrypt.cpp scrypt-jane.cpp \
@@ -79,10 +78,10 @@ ccminer_LDADD    = @LIBCURL@ @JANSSON_LIBS@ @PTHREAD_LIBS@ @WS2_LIBS@ @CUDA_LIBS
 ccminer_CPPFLAGS = @LIBCURL_CPPFLAGS@ @OPENMP_CFLAGS@ $(CPPFLAGS) $(PTHREAD_FLAGS) -fno-strict-aliasing $(JANSSON_INCLUDES) $(DEF_INCLUDES) $(nvml_defs) -DSCRYPT_KECCAK512 -DSCRYPT_CHACHA -DSCRYPT_CHOOSE_COMPILETIME
 
 nvcc_ARCH  = -gencode=arch=compute_61,code=sm_61
-nvcc_ARCH  = -gencode=arch=compute_52,code=sm_52
+nvcc_ARCH += -gencode=arch=compute_52,code=sm_52
 nvcc_ARCH += -gencode=arch=compute_50,code=sm_50
+nvcc_ARCH += -gencode=arch=compute_37,code=sm_37
 nvcc_ARCH += -gencode=arch=compute_35,code=sm_35
-nvcc_ARCH += -gencode=arch=compute_32,code=sm_32
 nvcc_ARCH += -gencode=arch=compute_30,code=sm_30
 
 nvcc_FLAGS = $(nvcc_ARCH) @CUDA_INCLUDES@ -I. @CUDA_CFLAGS@
