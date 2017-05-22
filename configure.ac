@@ -125,7 +125,6 @@ AC_SUBST(WS2_LIBS)
 
 AC_CONFIG_FILES([
 	Makefile
-	compat/Makefile
 	compat/jansson/Makefile
 	])
 
