@@ -1,12 +1,13 @@
 # allow to use Host cuda functions in C/C++
 DEF_INCLUDES = @CUDA_INCLUDES@
 
-JANSSON_INCLUDES=
 if WANT_JANSSON
-JANSSON_INCLUDES= -I$(top_srcdir)/compat/jansson
+JANSSON_INCLUDES = -I$(top_srcdir)/compat/jansson
+else
+JANSSON_INCLUDES =
 endif
 
-EXTRA_DIST		= autogen.sh README.txt LICENSE.txt \
+EXTRA_DIST = autogen.sh README.txt LICENSE.txt \
 			  cudaminer.sln cudaminer.vcxproj cudaminer.vcxproj.filters \
 			  compat/gettimeofday.c compat/getopt/getopt_long.c cpuminer-config.h.in
 
@@ -14,7 +15,7 @@ SUBDIRS = compat
 
 bin_PROGRAMS = ccminer
 
-ccminer_SOURCES	= elist.h miner.h compat.h \
+ccminer_SOURCES = elist.h miner.h compat.h \
 			  compat/inttypes.h compat/stdbool.h compat/unistd.h \
 			  compat/sys/time.h compat/getopt/getopt.h \
 			  crc32.c hefty1.c \
@@ -54,7 +55,7 @@ ccminer_SOURCES	= elist.h miner.h compat.h \
 			  x11/s3.cu x11/c11.cu \
 			  bitcoin.cu cuda_bitcoin.cu \
 			  x15/cuda_whirlpoolx.cu x15/whirlpoolx.cu \
-			  neoscrypt/neoscrypt.cu neoscrypt/cuda_neoscrypt.cu \
+			  neoscrypt/neoscrypt.cu neoscrypt/cuda_neoscrypt.cu
 
 # scrypt
 # ccminer_SOURCES += scrypt.cpp scrypt-jane.cpp \
@@ -67,10 +68,6 @@ ccminer_SOURCES	= elist.h miner.h compat.h \
 if HAVE_NVML
 nvml_defs = -DUSE_WRAPNVML
 nvml_libs = -ldl
-endif
-
-if HAVE_WINDOWS
-ccminer_SOURCES += compat/winansi.c
 endif
 
 ccminer_LDFLAGS  = $(PTHREAD_FLAGS) @CUDA_LDFLAGS@
@@ -132,6 +129,6 @@ JHA/cuda_jha_compactionTest.o: JHA/cuda_jha_compactionTest.cu
 skein.o: skein.cu
 	$(NVCC) $(nvcc_FLAGS) --maxrregcount=64 -o $@ -c $<
 
-# This kernel requires at least sm_32
+# This kernel requires at least sm_35
 neoscrypt/cuda_neoscrypt.o: neoscrypt/cuda_neoscrypt.cu
-	$(NVCC)  -gencode=arch=compute_61,code=sm_61 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_50,code=sm_50 -gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_32,code=sm_32 @CUDA_INCLUDES@ -I. @CUDA_CFLAGS@ $(JANSSON_INCLUDES) --ptxas-options="-v" -o $@ -c $<
+	$(NVCC)  -gencode=arch=compute_61,code=sm_61 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_50,code=sm_50 -gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_37,code=sm_37 @CUDA_INCLUDES@ -I. @CUDA_CFLAGS@ $(JANSSON_INCLUDES) --ptxas-options="-v" -o $@ -c $<
