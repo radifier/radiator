@@ -1,4 +1,4 @@
-ccMiner release 8.08(KlausT-mod) (May 28th, 2017)
+ccMiner release 8.09(KlausT-mod) (June 7th, 2017)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -230,6 +230,7 @@ features.
 2017-05-18 v8.07: Bitcredit algo removed
                   fixed bugs in bitcoin and jackpot algo
 2017-05-19 v8.08: fix Makefile and configure.ac for Linux
+2017-06-07 v8.09: more Linux fixes
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
