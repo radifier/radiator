@@ -1098,8 +1098,7 @@ static __device__ __inline__ uint16 __ldg16b(const uint16 *ptr)
 
 static __device__ __inline__ uintx64 __ldg32(const uint4 *ptr)
 {
-	uintx64 ret;
-	return ret;
+	return *((uintx64*)ptr);
 }
 
 static __device__ __inline__ uintx64 __ldg32c(const uintx64 *ptr)

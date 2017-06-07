@@ -222,14 +222,16 @@ extern int scanhash_jackpot(int thr_id, uint32_t *pdata,
 					}
 					else
 					{
-						applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU (%d rounds)!", device_map[thr_id], secNonce, rounds);
+						if(opt_verify)
+							applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU (%d rounds)!", device_map[thr_id], secNonce, rounds);
 					}
 				}
 				pdata[19] = foundNonce;
 				return res;
 			}
 			else {
-				applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU (%d rounds)!", device_map[thr_id], foundNonce, rounds);
+				if(opt_verify)
+					applog(LOG_INFO, "GPU #%d: result for nonce $%08X does not validate on CPU (%d rounds)!", device_map[thr_id], foundNonce, rounds);
 			}
 		}
 
