@@ -2,7 +2,6 @@
 noinst_LIBRARIES = libjansson.a
 
 libjansson_a_SOURCES = \
-  config.h \
   jansson_private_config.h \
   dump.c \
   error.c \
