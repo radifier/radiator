@@ -91,6 +91,11 @@ void cuda_devicenames()
 		if(gpu_vendor((uint8_t)props.pciBusID, vendorname) > 0 && strlen(vendorname))
 		{
 			device_name[dev_id] = (char*)calloc(1, strlen(vendorname) + strlen(props.name) + 2);
+			if(device_name[dev_id] == NULL)
+			{
+				applog(LOG_ERR, "Out of memory!");
+				proper_exit(1);
+			}
 			if(!strncmp(props.name, "GeForce ", 8))
 				sprintf(device_name[dev_id], "%s %s", vendorname, &props.name[8]);
 			else

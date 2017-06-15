@@ -426,8 +426,10 @@ static size_t base64_encode(const uchar *indata, size_t insize, char *outptr, si
 	memset(outptr, 0, outlen);
 
 	outbuf = output = (char*)calloc(1, inlen * 4 / 3 + 4);
-	if (outbuf == NULL) {
-		return -1;
+	if(outbuf == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(1);
 	}
 
 	while (inlen > 0) {
@@ -539,8 +541,11 @@ static int websocket_handshake(SOCKETTYPE c, char *result, char *clientkey)
 
 	size_t handlen = strlen(answer);
 	uchar *data = (uchar*) calloc(1, handlen + frames + (size_t) datalen + 1);
-	if (data == NULL)
-		return -1;
+	if(data == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(1);
+	}
 	else {
 		uchar *p = data;
 		// HTTP header 101
@@ -565,8 +570,11 @@ static void setup_ipaccess()
 	char group;
 
 	buf = (char*) calloc(1, strlen(opt_api_allow) + 1);
-	if (unlikely(!buf))
-		proper_exit(1);//, "Failed to malloc ipaccess buf");
+	if(buf == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(1);
+	}
 
 	strcpy(buf, opt_api_allow);
 	ipcount = 1;
@@ -576,8 +584,11 @@ static void setup_ipaccess()
 
 	// possibly more than needed, but never less
 	ipaccess = (struct IP4ACCESS *) calloc(ipcount, sizeof(struct IP4ACCESS));
-	if (unlikely(!ipaccess))
-		proper_exit(1);//, "Failed to calloc ipaccess");
+	if(ipaccess == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(1);
+	}
 
 	ips = 0;
 	ptr = buf;
@@ -706,6 +717,11 @@ static void api()
 	}
 
 	apisock = (SOCKETTYPE*) calloc(1, sizeof(*apisock));
+	if(apisock == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(1);
+	}
 	*apisock = INVSOCK;
 
 	sleep(1);
@@ -787,6 +803,11 @@ static void api()
 	}
 
 	buffer = (char *) calloc(1, MYBUFSIZ + 1);
+	if(buffer == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(1);
+	}
 
 	counter = 0;
 	while (bye == 0) {

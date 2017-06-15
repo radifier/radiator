@@ -1093,8 +1093,11 @@ static bool get_work(struct thr_info *thr, struct work *work)
 
 	/* fill out work request message */
 	wc = (struct workio_cmd *)calloc(1, sizeof(*wc));
-	if(!wc)
-		return false;
+	if(wc == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 
 	wc->cmd = WC_GET_WORK;
 	wc->thr = thr;
@@ -1123,12 +1126,18 @@ static bool submit_work(struct thr_info *thr, const struct work *work_in)
 	struct workio_cmd *wc;
 	/* fill out work request message */
 	wc = (struct workio_cmd *)calloc(1, sizeof(*wc));
-	if(!wc)
-		return false;
+	if(wc == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 
 	wc->u.work = (struct work *)aligned_calloc(sizeof(*work_in));
-	if(!wc->u.work)
-		goto err_out;
+	if(wc->u.work == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 
 	wc->cmd = WC_SUBMIT_WORK;
 	wc->thr = thr;
@@ -1884,8 +1893,11 @@ start:
 			need_slash = true;
 
 		lp_url = (char*)malloc(strlen(rpc_url) + strlen(copy_start) + 2);
-		if(!lp_url)
-			goto out;
+		if(lp_url == NULL)
+		{
+			applog(LOG_ERR, "Out of memory!");
+			proper_exit(2);
+		}
 
 		sprintf(lp_url, "%s%s%s", rpc_url, need_slash ? "/" : "", copy_start);
 	}
@@ -2284,6 +2296,11 @@ static void parse_arg(int key, char *arg)
 				show_usage_and_exit(1);
 			free(rpc_url);
 			rpc_url = (char*)malloc(strlen(arg) + 8);
+			if(rpc_url == NULL)
+			{
+				applog(LOG_ERR, "Out of memory!");
+				proper_exit(1);
+			}
 			sprintf(rpc_url, "http://%s", arg);
 			short_url = &rpc_url[7];
 		}
@@ -2300,6 +2317,11 @@ static void parse_arg(int key, char *arg)
 				rpc_userpass = strdup(ap);
 				free(rpc_user);
 				rpc_user = (char*)calloc(sp - ap + 1, 1);
+				if(rpc_user == NULL)
+				{
+					applog(LOG_ERR, "Out of memory!");
+					proper_exit(1);
+				}
 				strncpy(rpc_user, ap, sp - ap);
 				free(rpc_pass);
 				rpc_pass = strdup(sp + 1);
@@ -2322,6 +2344,11 @@ static void parse_arg(int key, char *arg)
 		rpc_userpass = strdup(arg);
 		free(rpc_user);
 		rpc_user = (char*)calloc(p - arg + 1, 1);
+		if(rpc_user == NULL)
+		{
+			applog(LOG_ERR, "Out of memory!");
+			proper_exit(1);
+		}
 		strncpy(rpc_user, arg, p - arg);
 		free(rpc_pass);
 		rpc_pass = strdup(p + 1);
@@ -2737,8 +2764,11 @@ int main(int argc, char *argv[])
 	if(!rpc_userpass)
 	{
 		rpc_userpass = (char*)malloc(strlen(rpc_user) + strlen(rpc_pass) + 2);
-		if(!rpc_userpass)
-			return 1;
+		if(rpc_userpass == NULL)
+		{
+			applog(LOG_ERR, "Out of memory!");
+			proper_exit(2);
+		}
 		sprintf(rpc_userpass, "%s:%s", rpc_user, rpc_pass);
 	}
 
@@ -2841,8 +2871,11 @@ int main(int argc, char *argv[])
 #endif
 
 	work_restart = (struct work_restart *)calloc(opt_n_threads, sizeof(*work_restart));
-	if(!work_restart)
-		return 1;
+	if(work_restart == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 
 	thr_info = (struct thr_info *)calloc(opt_n_threads + 4, sizeof(*thr));
 	if(!thr_info)

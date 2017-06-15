@@ -1,3 +1,15 @@
+extern void proper_exit(int reason);
+enum
+{
+	LOG_ERR,
+	LOG_WARNING,
+	LOG_NOTICE,
+	LOG_INFO,
+	LOG_DEBUG,
+	/* custom notices */
+	LOG_BLUE = 0x10,
+};
+extern void applog(int prio, const char *fmt, ...);
 /**
  * Old Git implementation of windows terminal colors (2009)
  * before use of a threaded wrapper.
@@ -345,9 +357,12 @@ int winansi_vfprintf(FILE *stream, const char *format, va_list list)
 	va_end(cp);
 
 	if (len > sizeof(small_buf) - 1) {
-		buf = malloc(len + 1);
-		if (!buf)
-			goto abort;
+		buf = (char*)malloc(len + 1);
+		if(buf == NULL)
+		{
+			applog(LOG_ERR, "Out of memory!");
+			proper_exit(2);
+		}
 
 		len = vsnprintf(buf, len + 1, format, list);
 #ifdef WIN32

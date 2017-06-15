@@ -234,8 +234,11 @@ static size_t all_data_cb(const void *ptr, size_t size, size_t nmemb,
 	newlen = oldlen + len;
 
 	newmem = realloc(db->buf, newlen + 1);
-	if(!newmem)
-		return 0;
+	if(newmem == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 
 	db->buf = newmem;
 	db->len = newlen;
@@ -295,9 +298,17 @@ static size_t resp_hdr_cb(void *ptr, size_t size, size_t nmemb, void *user_data)
 	void *tmp;
 
 	val = (char*)calloc(1, ptrlen);
+	if(val == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 	key = (char*)calloc(1, ptrlen);
-	if(!key || !val)
-		goto out;
+	if(key == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 
 	tmp = memchr(ptr, ':', ptrlen);
 	if(!tmp || (tmp == ptr))	/* skip empty keys / blanks */
@@ -611,10 +622,20 @@ void *aligned_calloc(int size)
 	const int ALIGN = 64; // cache line
 #ifdef _MSC_VER
 	void* res = _aligned_malloc(size, ALIGN);
+	if(res == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 	memset(res, 0, size);
 	return res;
 #else
 	void *mem = calloc(1, size + ALIGN + sizeof(uintptr_t));
+	if(mem == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 	void **ptr = (void**)((size_t)(((uintptr_t)(mem)) + ALIGN + sizeof(uintptr_t)) & ~(ALIGN - 1));
 	ptr[-1] = mem;
 	return ptr;
@@ -643,8 +664,11 @@ void cbin2hex(char *out, const char *in, size_t len)
 char *bin2hex(const uchar *in, size_t len)
 {
 	char *s = (char*)malloc((len * 2) + 1);
-	if(!s)
-		return NULL;
+	if(s == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 
 	cbin2hex(s, (const char *)in, len);
 
@@ -878,6 +902,11 @@ static void stratum_buffer_append(struct stratum_ctx *sctx, const char *s)
 	{
 		sctx->sockbuf_size = snew + (RBUFSIZE - (snew % RBUFSIZE));
 		sctx->sockbuf = (char*)realloc(sctx->sockbuf, sctx->sockbuf_size);
+		if(sctx->sockbuf == NULL)
+		{
+			applog(LOG_ERR, "Out of memory!");
+			proper_exit(2);
+		}
 	}
 	strcpy(sctx->sockbuf + old, s);
 }
@@ -977,6 +1006,11 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 	if(!sctx->sockbuf)
 	{
 		sctx->sockbuf = (char*)calloc(RBUFSIZE, 1);
+		if(sctx->sockbuf == NULL)
+		{
+			applog(LOG_ERR, "Out of memory!");
+			proper_exit(2);
+		}
 		sctx->sockbuf_size = RBUFSIZE;
 	}
 	sctx->sockbuf[0] = '\0';
@@ -989,6 +1023,11 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 	}
 	free(sctx->curl_url);
 	sctx->curl_url = (char*)malloc(strlen(url));
+	if(sctx->curl_url == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 	sprintf(sctx->curl_url, "http%s", strstr(url, "://"));
 
 	if(opt_protocol)
@@ -1107,11 +1146,10 @@ static bool stratum_parse_extranonce(struct stratum_ctx *sctx, json_t *params, i
 		free(sctx->xnonce1);
 	sctx->xnonce1_size = strlen(xnonce1) / 2;
 	sctx->xnonce1 = (uchar*)calloc(1, sctx->xnonce1_size);
-	if(unlikely(!sctx->xnonce1))
+	if(sctx->xnonce1 == NULL)
 	{
-		applog(LOG_ERR, "Failed to alloc xnonce1");
-		pthread_mutex_unlock(&sctx->work_lock);
-		goto out;
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
 	}
 	hex2bin(sctx->xnonce1, xnonce1, sctx->xnonce1_size);
 	sctx->xnonce2_size = xn2_size;
@@ -1136,6 +1174,11 @@ bool stratum_subscribe(struct stratum_ctx *sctx)
 
 start:
 	s = (char*)malloc(128 + (sctx->session_id ? strlen(sctx->session_id) : 0));
+	if(s == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 	if(retry)
 		sprintf(s, "{\"id\": 1, \"method\": \"mining.subscribe\", \"params\": []}");
 	else if(sctx->session_id)
@@ -1232,6 +1275,11 @@ bool stratum_authorize(struct stratum_ctx *sctx, const char *user, const char *p
 	bool ret = false;
 
 	s = (char*)malloc(80 + strlen(user) + strlen(pass));
+	if(s == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 	sprintf(s, "{\"id\": 2, \"method\": \"mining.authorize\", \"params\": [\"%s\", \"%s\"]}",
 			user, pass);
 
@@ -1418,8 +1466,15 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 			applog(LOG_DEBUG, "stratum time is at least %ds in the future", ntime);
 	}
 
-	if (merkle_count)
-		merkle = (uchar**) malloc(merkle_count * sizeof(char *));
+	if(merkle_count)
+	{
+		merkle = (uchar**)malloc(merkle_count * sizeof(char *));
+		if(merkle == NULL)
+		{
+			applog(LOG_ERR, "Out of memory!");
+			proper_exit(2);
+		}
+	}
 	for(i = 0; i < merkle_count; i++)
 	{
 		const char *s = json_string_value(json_array_get(merkle_arr, i));
@@ -1433,6 +1488,11 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 			goto out;
 		}
 		merkle[i] = (uchar*)malloc(32);
+		if(merkle[i] == NULL)
+		{
+			applog(LOG_ERR, "Out of memory!");
+			proper_exit(2);
+		}
 		hex2bin(merkle[i], s, 32);
 	}
 
@@ -1442,6 +1502,11 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 		sctx->xnonce2_size + coinb2_size;
 
 	sctx->job.coinbase = (uchar*)realloc(sctx->job.coinbase, sctx->job.coinbase_size);
+	if(sctx->job.coinbase == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 	sctx->job.xnonce2 = sctx->job.coinbase + coinb1_size + sctx->xnonce1_size;
 	hex2bin(sctx->job.coinbase, coinb1, coinb1_size);
 	memcpy(sctx->job.coinbase + coinb1_size, sctx->xnonce1, sctx->xnonce1_size);
@@ -1526,6 +1591,11 @@ static bool stratum_reconnect(struct stratum_ctx *sctx, json_t *params)
 
 	free(sctx->url);
 	sctx->url = (char*)malloc(32 + strlen(host));
+	if(sctx->url == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 	sprintf(sctx->url, "stratum+tcp://%s:%d", host, port);
 
 	applog(LOG_NOTICE, "Server requested reconnection to %s", sctx->url);
@@ -1834,8 +1904,11 @@ struct thread_q *tq_new(void)
 	struct thread_q *tq;
 
 	tq = (struct thread_q *)calloc(1, sizeof(*tq));
-	if(!tq)
-		return NULL;
+	if(tq == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 
 	INIT_LIST_HEAD(&tq->q);
 	pthread_mutex_init(&tq->mutex, NULL);
@@ -1890,8 +1963,11 @@ bool tq_push(struct thread_q *tq, void *data)
 	bool rc = true;
 
 	ent = (struct tq_ent *)calloc(1, sizeof(*ent));
-	if(!ent)
-		return false;
+	if(ent == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 
 	ent->data = data;
 	INIT_LIST_HEAD(&ent->q_node);
@@ -1964,6 +2040,11 @@ size_t time2str(char* buf, time_t timer)
 char* atime2str(time_t timer)
 {
 	char* buf = (char*)malloc(16);
+	if(buf == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 	memset(buf, 0, 16);
 	time2str(buf, timer);
 	return buf;
@@ -2143,8 +2224,11 @@ void bin2hex(char *s, const unsigned char *p, size_t len)
 char *abin2hex(const unsigned char *p, size_t len)
 {
 	char *s = (char*)malloc((len * 2) + 1);
-	if(!s)
-		return NULL;
+	if(s == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
 	bin2hex(s, p, len);
 	return s;
 }
