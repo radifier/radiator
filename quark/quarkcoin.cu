@@ -181,6 +181,7 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 		quark_keccak512_cpu_init(thr_id);
 		quark_jh512_cpu_init(thr_id);
 		CUDA_SAFE_CALL(cudaGetLastError());
+		mining_has_stopped[thr_id] = false;
 		init = true;
 	}
 

@@ -144,6 +144,7 @@ int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		bitcoin_cpu_init(thr_id);
 		CUDA_SAFE_CALL(cudaMallocHost(&h_nounce, 2 * sizeof(uint32_t)));
+		mining_has_stopped[thr_id] = false;
 		init = true;
 	}
 

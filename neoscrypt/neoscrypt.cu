@@ -97,6 +97,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 #endif
 
 		neoscrypt_cpu_init_2stream(thr_id, throughputmax);
+		mining_has_stopped[thr_id] = false;
 		init = true;
 	}
 	throughput = min(throughputmax, (max_nonce - first_nonce) / 2) & 0xffffff00;

@@ -65,6 +65,7 @@ extern int scanhash_myriad(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		myriadgroestl_cpu_init(thr_id, throughputmax);
 #endif
 		cudaMallocHost(&h_found, 4 * sizeof(uint32_t));
+		mining_has_stopped[thr_id] = false;
 		init = true;
 	}
 

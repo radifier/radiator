@@ -74,6 +74,7 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 
 		groestlcoin_cpu_init(thr_id, throughputmax);
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNounce, 2 * 4));
+		mining_has_stopped[thr_id] = false;
 		init = true;
     }
 

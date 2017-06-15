@@ -56,6 +56,7 @@ int scanhash_whirlpoolx(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		whirlpoolx_cpu_init(thr_id, throughputmax);
+		mining_has_stopped[thr_id] = false;
 		init = true;
 	}
 

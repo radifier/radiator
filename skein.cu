@@ -66,6 +66,7 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		CUDA_SAFE_CALL(cudaMallocHost(&foundnonces, 2 * 4));
+		mining_has_stopped[thr_id] = false;
 		init = true;
 	}
 

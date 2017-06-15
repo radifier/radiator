@@ -141,6 +141,7 @@ extern int scanhash_qubit(int thr_id, uint32_t *pdata,
 
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax));
 		CUDA_SAFE_CALL(cudaMallocHost(&(h_found), 4 * sizeof(uint32_t)));
+		mining_has_stopped[thr_id] = false;
 
 		init = true;
 	}

@@ -152,6 +152,7 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 
 		bmw256_cpu_init(thr_id);
 		lyra2v2_cpu_init(thr_id, d_hash2);
+		mining_has_stopped[thr_id] = false;
 
 		init = true; 
 	}

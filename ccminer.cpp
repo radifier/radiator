@@ -173,7 +173,7 @@ bool stratum_need_reset = false;
 struct work_restart *work_restart = NULL;
 struct stratum_ctx stratum = { 0 };
 bool stop_mining = false;
-volatile bool mining_has_stopped[MAX_GPUS] = { false };
+volatile bool mining_has_stopped[MAX_GPUS] = { true };
 
 pthread_mutex_t applog_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t stats_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -434,7 +434,7 @@ void proper_exit(int reason)
 	if(hnvml)
 		nvml_destroy(hnvml);
 #endif
-	if(reason == 2)
+//	if(reason == 2)
 	{
 		pthread_mutex_lock(&g_work_lock);	//freeze stratum
 		stop_mining = true;
@@ -452,12 +452,6 @@ void proper_exit(int reason)
 		applog(LOG_INFO, "resetting GPUs");
 		cuda_devicereset();
 	}
-	free(opt_syslog_pfx);
-		opt_syslog_pfx = nullptr;
-	free(opt_api_allow);
-		opt_api_allow = nullptr;
-	hashlog_purge_all();
-	stats_purge_all();
 
 	curl_global_cleanup();
 

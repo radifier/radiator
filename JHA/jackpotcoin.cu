@@ -114,6 +114,7 @@ extern int scanhash_jackpot(int thr_id, uint32_t *pdata,
 		cudaMalloc(&d_branch3Nonces, sizeof(uint32_t)*throughputmax * 1.25); // 25% more than we need, just in case
 
 		CUDA_SAFE_CALL(cudaMalloc(&d_jackpotNonces, sizeof(uint32_t)*throughputmax * 2));
+		mining_has_stopped[thr_id] = false;
 
 		init = true;
 	}

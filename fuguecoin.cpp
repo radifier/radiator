@@ -49,6 +49,7 @@ extern int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		}
 #endif
 		fugue256_cpu_init(thr_id, throughputmax);
+		mining_has_stopped[thr_id] = false;
 		init = true;
 	}
 

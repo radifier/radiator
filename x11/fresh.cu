@@ -107,6 +107,7 @@ extern int scanhash_fresh(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaMallocHost(&(h_found), 4 * sizeof(uint32_t)));
 
 		cuda_check_cpu_init(thr_id, throughputmax);
+		mining_has_stopped[thr_id] = false;
 
 		init = true;
 	}

@@ -724,6 +724,7 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		CUDA_SAFE_CALL(cudaMallocHost(&h_data, 15 * sizeof(uint32_t)));
 		CUDA_SAFE_CALL(cudaMallocHost(&h_resNonce, NBN * sizeof(uint32_t)));
 		CUDA_SAFE_CALL(cudaMalloc(&d_resNonce[thr_id], NBN * sizeof(uint32_t)));
+		mining_has_stopped[thr_id] = false;
 		init = true;
 	}
 

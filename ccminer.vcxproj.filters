@@ -183,9 +183,6 @@
     <ClCompile Include="sph\sha2big.c">
       <Filter>Source Files\sph</Filter>
     </ClCompile>
-    <ClCompile Include="compat\winansi.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="hashlog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -236,6 +233,9 @@
     </ClCompile>
     <ClCompile Include="sph\sph_sha2.c">
       <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="compat\winansi.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -168,6 +168,7 @@ int scanhash_c11(int thr_id, uint32_t *pdata,
 		}
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 64 * throughputmax));
 		quark_blake512_cpu_init(thr_id);
+		mining_has_stopped[thr_id] = false;
 		init[thr_id] = true;
 	}
 	for(int k = 0; k < 20; k++)

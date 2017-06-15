@@ -470,6 +470,7 @@ extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 64 * throughputmax));
 		CUDA_SAFE_CALL(cudaMallocHost(&h_resNounce[thr_id], 2*sizeof(uint32_t)));
 		CUDA_SAFE_CALL(cudaMalloc(&d_resNounce[thr_id], 2*sizeof(uint32_t)));
+		mining_has_stopped[thr_id] = false;
 
 		init[thr_id] = true;
 	}
