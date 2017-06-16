@@ -34,8 +34,20 @@
 
 #include "neoscrypt.h"
 
+extern void proper_exit(int reason);
+enum
+{
+	LOG_ERR,
+	LOG_WARNING,
+	LOG_NOTICE,
+	LOG_INFO,
+	LOG_DEBUG,
+	/* custom notices */
+	LOG_BLUE = 0x10,
+};
+extern void applog(int prio, const char *fmt, ...);
 
-#if (WINDOWS)
+#ifdef _WIN32
 /* sizeof(unsigned long) = 4 for MinGW64 */
 typedef unsigned long long ulong;
 #else
@@ -43,8 +55,6 @@ typedef unsigned long ulong;
 #endif
 typedef unsigned int  uint;
 typedef unsigned char uchar;
-typedef unsigned int  bool;
-
 
 #define MIN(a, b) ((a) < (b) ? a : b)
 #define MAX(a, b) ((a) > (b) ? a : b)
@@ -678,7 +688,12 @@ static void neoscrypt_fastkdf(const uchar *password, uint password_len, const uc
     uchar *A, *B, *prf_input, *prf_key, *prf_output;
     uchar *stack;
 	stack = (uchar*)malloc(sizeof(uchar) * 2 * kdf_buf_size + prf_input_size + prf_key_size + prf_output_size + stack_align);
-    /* Align and set up the buffers in stack */
+	if(stack == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
+	/* Align and set up the buffers in stack */
     //uchar stack[2 * kdf_buf_size + prf_input_size + prf_key_size + prf_output_size + stack_align];
 	
     A          = &stack[stack_align & ~(stack_align - 1)];
@@ -879,7 +894,12 @@ void neoscrypt(const uchar *password, uchar *output, uint profile) {
     }
     uchar *stack;
     stack = (uchar*)malloc(((N + 3) * r * 2 * SCRYPT_BLOCK_SIZE + stack_align)*sizeof(uchar));
-    /* X = r * 2 * SCRYPT_BLOCK_SIZE */
+	if(stack == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(2);
+	}
+	/* X = r * 2 * SCRYPT_BLOCK_SIZE */
     X = (uint *) &stack[stack_align & ~(stack_align - 1)];
     /* Z is a copy of X for ChaCha */
     Z = &X[32 * r];

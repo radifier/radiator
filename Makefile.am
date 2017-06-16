@@ -22,7 +22,7 @@ ccminer_SOURCES = elist.h miner.h compat.h \
 			  ccminer.cpp util.cpp \
 			  api.cpp hashlog.cpp nvml.cpp stats.cpp sysinfos.cpp cuda.cpp \
 			  cuda_helper.h cuda_vector.h \
-			  sph/neoscrypt.h sph/neoscrypt.c \
+			  sph/neoscrypt.h sph/neoscrypt.cpp \
 			  sph/sha256_Y.h sph/sha256_Y.c sph/sph_sha2.c \
 			  fuguecoin.cpp Algo256/cuda_fugue256.cu sph/fugue.c uint256.h \
 			  groestlcoin.cpp cuda_groestlcoin.cu cuda_groestlcoin.h \

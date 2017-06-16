@@ -213,9 +213,6 @@
     <ClCompile Include="lyra2\Sponge.c">
       <Filter>Source Files\sph</Filter>
     </ClCompile>
-    <ClCompile Include="sph\neoscrypt.c">
-      <Filter>Source Files\CUDA\neoscrypt</Filter>
-    </ClCompile>
     <ClCompile Include="sph\sha256_Y.c">
       <Filter>Source Files\CUDA\neoscrypt</Filter>
     </ClCompile>
@@ -236,6 +233,9 @@
     </ClCompile>
     <ClCompile Include="compat\winansi.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sph\neoscrypt.cpp">
+      <Filter>Source Files\CUDA\neoscrypt</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

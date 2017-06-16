@@ -1,11 +1,7 @@
-extern "C"
-{
-#include "sph/neoscrypt.h"
-}
-
+#include <string.h>
 #include "cuda_helper.h"
 #include "miner.h"
-#include <string.h>
+#include "sph/neoscrypt.h"
 
 extern void neoscrypt_setBlockTarget(int thr_id, uint32_t* pdata, const void *target);
 extern void neoscrypt_cpu_init_2stream(int thr_id, uint32_t threads);
