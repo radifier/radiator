@@ -46,12 +46,11 @@ static uint32_t linux_cpufreq(int core)
 	FILE *fd = fopen(CPUFREQ_PATH, "r");
 	uint32_t freq = 0;
 
-	if (!fd)
-		return freq;
-
-	if (!fscanf(fd, "%d", &freq))
-		return freq;
-
+	if(!fd)
+	{
+		fscanf(fd, "%d", &freq);
+		fclose(fd);
+	}
 	return freq;
 }
 
