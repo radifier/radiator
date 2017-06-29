@@ -196,6 +196,7 @@
       <RuntimeChecks>Default</RuntimeChecks>
       <TypeInfo>false</TypeInfo>
       <KeepDir>$(CudaIntDir)\temp\$(PlatformTarget)</KeepDir>
+      <CudaRuntime>Shared</CudaRuntime>
     </CudaCompile>
     <CudaLink>
       <GPUDebugInfo>false</GPUDebugInfo>
@@ -253,6 +254,7 @@
       <RuntimeChecks>Default</RuntimeChecks>
       <TypeInfo>false</TypeInfo>
       <KeepDir>$(CudaIntDir)\temp\$(PlatformTarget)</KeepDir>
+      <CudaRuntime>Shared</CudaRuntime>
     </CudaCompile>
     <CudaLink>
       <PerformDeviceLink>false</PerformDeviceLink>
