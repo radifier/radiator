@@ -5,7 +5,6 @@
 #include <stdint.h>
 #endif
 
-#include "uint256.h"
 #include "sph/sph_fugue.h"
 
 #include "miner.h"

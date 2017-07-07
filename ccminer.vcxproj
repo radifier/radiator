@@ -382,7 +382,6 @@
     <ClInclude Include="sph\sph_types.h" />
     <ClInclude Include="sph\sph_whirlpool.h" />
     <ClInclude Include="sph\sysendian.h" />
-    <ClInclude Include="uint256.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lyra2\Lyra2.h" />

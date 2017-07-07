@@ -266,9 +266,6 @@
     <ClInclude Include="hefty1.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="uint256.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cuda_groestlcoin.h">
       <Filter>Header Files\CUDA</Filter>
     </ClInclude>

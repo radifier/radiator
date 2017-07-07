@@ -24,7 +24,7 @@ ccminer_SOURCES = elist.h miner.h compat.h \
 			  cuda_helper.h cuda_vector.h \
 			  sph/neoscrypt.h sph/neoscrypt.cpp \
 			  sph/sha256_Y.h sph/sha256_Y.c sph/sph_sha2.c \
-			  fuguecoin.cpp Algo256/cuda_fugue256.cu sph/fugue.c uint256.h \
+			  fuguecoin.cpp Algo256/cuda_fugue256.cu sph/fugue.c \
 			  groestlcoin.cpp cuda_groestlcoin.cu cuda_groestlcoin.h \
 			  myriadgroestl.cpp cuda_myriadgroestl.cu \
 			  lyra2/Lyra2.c lyra2/Sponge.c \
