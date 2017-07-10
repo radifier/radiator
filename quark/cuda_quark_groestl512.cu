@@ -76,5 +76,6 @@ __host__ void quark_groestl512_cpu_hash_64(int thr_id, uint32_t threads, uint32_
 	dim3 block(TPB);
 
     quark_groestl512_gpu_hash_64_quad<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash, d_nonceVector);
+	CUDA_SAFE_CALL(cudaGetLastError());
 }
 

@@ -138,7 +138,7 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 	const uint32_t first_nonce = pdata[19];
 
 	cudaDeviceProp props;
-	cudaGetDeviceProperties(&props, device_map[thr_id]);
+	CUDA_SAFE_CALL(cudaGetDeviceProperties(&props, device_map[thr_id]));
 	static THREAD uint32_t throughputmax;
 
 	if (opt_benchmark)
@@ -148,8 +148,8 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 	if(!init)
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
+		CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 		get_cuda_arch(&cuda_arch[thr_id]);
 
@@ -164,7 +164,7 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 		else if(strstr(props.name, "750 Ti")) intensity = (256 * 256 * 20);
 		else if(strstr(props.name, "750"))    intensity = (256 * 256 * 19);
 		else if(strstr(props.name, "960"))    intensity = (256 * 256 * 19);
-		else intensity = (256 * 256 * 16);
+		else intensity = (256 * 256 * 19);
 #endif
 		throughputmax = device_intensity(device_map[thr_id], __func__, intensity);
 #if defined WIN32 && !defined _WIN64

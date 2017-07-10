@@ -2707,7 +2707,7 @@ void quark_skein512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNoun
 	dim3 grid((threads + t - 1) / t);
 	dim3 block(t);
 	quark_skein512_gpu_hash_64 << <grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash, d_nonceVector);
-
+	CUDA_SAFE_CALL(cudaGetLastError());
 }
 
 __host__
