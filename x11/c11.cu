@@ -124,32 +124,46 @@ extern "C" void c11hash(void *output, const void *input)
 		
 		memcpy(output, hash, 32);
 }
-static bool init[MAX_GPUS] = { false };
-static uint32_t endiandata[MAX_GPUS][20];
-static uint32_t *d_hash[MAX_GPUS];
-static uint32_t foundnonces[2];
+
+static THREAD uint32_t *d_hash = nullptr;
 
 int scanhash_c11(int thr_id, uint32_t *pdata,
 				 uint32_t *ptarget, uint32_t max_nonce,
 				 uint32_t *hashes_done)
 {
+	uint32_t foundnonces[2];
 	const uint32_t first_nonce = pdata[19];
 
-	int intensity = (device_sm[device_map[thr_id]] > 500) ? 256 * 256 * 21 : 256 * 256 * 10;
-	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
-
-	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, intensity);
-	uint32_t throughput = min(throughputmax, (max_nonce - first_nonce)) & 0xfffffc00;
+	cudaDeviceProp props;
+	CUDA_SAFE_CALL(cudaGetDeviceProperties(&props, device_map[thr_id]));
+	static THREAD uint32_t throughputmax;
 
 	if(opt_benchmark)
 		ptarget[7] = 0x4f;
 
-	if(!init[thr_id])
+	static THREAD bool init = false;
+	if(!init)
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
+		CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
+		get_cuda_arch(&cuda_arch[thr_id]);
+
+		unsigned int intensity;
+#if defined WIN32 && !defined _WIN64
+		intensity = 256 * 256 * 16;
+#else
+		if(strstr(props.name, "970"))		  intensity = (256 * 256 * 22);
+		else if(strstr(props.name, "980"))    intensity = (256 * 256 * 22);
+		else if(strstr(props.name, "1070"))   intensity = (256 * 256 * 22);
+		else if(strstr(props.name, "1080"))   intensity = (256 * 256 * 22);
+		else if(strstr(props.name, "750 Ti")) intensity = (256 * 256 * 20);
+		else if(strstr(props.name, "750"))    intensity = (256 * 256 * 19);
+		else if(strstr(props.name, "960"))    intensity = (256 * 256 * 19);
+		else intensity = (256 * 256 * 19);
+#endif
+		throughputmax = device_intensity(device_map[thr_id], __func__, intensity);
 #if defined WIN32 && !defined _WIN64
 		// 2GB limit for cudaMalloc
 		if(throughputmax > 0x7fffffffULL / (64 * sizeof(uint4)))
@@ -161,33 +175,36 @@ int scanhash_c11(int thr_id, uint32_t *pdata,
 		}
 #endif
 
+		quark_groestl512_cpu_init(thr_id, throughputmax);
+		quark_bmw512_cpu_init(thr_id, throughputmax);
 		x11_echo512_cpu_init(thr_id, throughputmax);
-		if(x11_simd512_cpu_init(thr_id, throughputmax) != 0)
-		{
-			return 0;
-		}
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 64 * throughputmax));
-		quark_blake512_cpu_init(thr_id);
-		mining_has_stopped[thr_id] = false;
-		init[thr_id] = true;
-	}
-	for(int k = 0; k < 20; k++)
-		be32enc(&endiandata[thr_id][k], ((uint32_t*)pdata)[k]);
+		x11_simd512_cpu_init(thr_id, throughputmax);
 
-	quark_blake512_cpu_setBlock_80(thr_id, (uint64_t *)endiandata[thr_id]);
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * 4 * throughputmax));
+		mining_has_stopped[thr_id] = false;
+		init = true;
+	}
+	uint32_t throughput = min(throughputmax, max_nonce - first_nonce) & 0xfffffc00;
+	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
+
+	uint32_t endiandata[20];
+	for(int k = 0; k < 20; k++)
+		be32enc(&endiandata[k], ((uint32_t*)pdata)[k]);
+
+	quark_blake512_cpu_setBlock_80(thr_id, (uint64_t *)endiandata);
 
 	do
 	{
 
-		quark_blake512_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		quark_bmw512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash[thr_id]);
-		quark_groestl512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash[thr_id]);
-		cuda_jh512Keccak512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		quark_skein512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash[thr_id]);
-		x11_luffaCubehash512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		x11_shavite512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id]);
-		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash[thr_id], simdthreads);
-		x11_echo512_cpu_hash_64_final(thr_id, throughput, pdata[19], d_hash[thr_id], ptarget[7], foundnonces);
+		quark_blake512_cpu_hash_80(thr_id, throughput, pdata[19], d_hash);
+		quark_bmw512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash);
+		quark_groestl512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash);
+		cuda_jh512Keccak512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
+		quark_skein512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash);
+		x11_luffaCubehash512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
+		x11_shavite512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
+		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash, simdthreads);
+		x11_echo512_cpu_hash_64_final(thr_id, throughput, pdata[19], d_hash, ptarget[7], foundnonces);
 		cudaStreamSynchronize(gpustream[thr_id]);
 		if(stop_mining)
 		{
@@ -199,8 +216,8 @@ int scanhash_c11(int thr_id, uint32_t *pdata,
 			uint32_t vhash64[8]={0};
 			if(opt_verify)
 			{
-				be32enc(&endiandata[thr_id][19], foundnonces[0]);
-				c11hash(vhash64, endiandata[thr_id]);
+				be32enc(&endiandata[19], foundnonces[0]);
+				c11hash(vhash64, endiandata);
 			}
 			if(vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 			{
@@ -210,8 +227,8 @@ int scanhash_c11(int thr_id, uint32_t *pdata,
 				{
 					if(opt_verify)
 					{
-						be32enc(&endiandata[thr_id][19], foundnonces[1]);
-						c11hash(vhash64, endiandata[thr_id]);
+						be32enc(&endiandata[19], foundnonces[1]);
+						c11hash(vhash64, endiandata);
 					}
 					if(vhash64[7] <= Htarg && fulltest(vhash64, ptarget))
 					{
