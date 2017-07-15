@@ -423,7 +423,7 @@ json_t *json_rpc_call(CURL *curl, const char *url,
 	struct curl_slist *headers = NULL;
 	char* httpdata;
 	char len_hdr[64], hashrate_hdr[64];
-	long timeout = longpoll ? opt_timeout : 30;
+	long timeout = opt_timeout;
 	struct header_info hi = { 0 };
 	bool lp_scanning = longpoll_scan && !have_longpoll;
 
@@ -915,12 +915,16 @@ char *stratum_recv_line(struct stratum_ctx *sctx)
 {
 	ssize_t len, buflen;
 	char *tok, *sret = NULL;
+	int timeout = opt_timeout;
+
+	if(!sctx->sockbuf)
+		return NULL;
 
 	if(!strstr(sctx->sockbuf, "\n"))
 	{
 		bool ret = true;
 		time_t rstart = time(NULL);
-		if(!socket_full(sctx->sock, 60))
+		if(!socket_full(sctx->sock, timeout))
 		{
 			applog(LOG_ERR, "stratum_recv_line timed out");
 			goto out;
@@ -947,11 +951,11 @@ char *stratum_recv_line(struct stratum_ctx *sctx)
 			}
 			else
 				stratum_buffer_append(sctx, s);
-		} while(time(NULL) - rstart < 60 && !strstr(sctx->sockbuf, "\n"));
+		} while(time(NULL) - rstart < timeout && !strstr(sctx->sockbuf, "\n"));
 
 		if(!ret)
 		{
-			applog(LOG_ERR, "stratum_recv_line failed");
+			if(opt_debug) applog(LOG_ERR, "stratum_recv_line failed");
 			goto out;
 		}
 	}
@@ -1034,7 +1038,7 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(curl, CURLOPT_URL, sctx->curl_url);
 	curl_easy_setopt(curl, CURLOPT_FRESH_CONNECT, 1);
-	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 30);
+	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, opt_timeout);
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_err_str);
 	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
 	curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1);
