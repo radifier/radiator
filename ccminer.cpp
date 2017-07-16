@@ -499,7 +499,7 @@ static bool work_decode(const json_t *val, struct work *work)
 	switch(opt_algo)
 	{
 		case ALGO_NEO:
-			data_size = 84;
+			data_size = 80;
 			break;
 		default:
 			data_size = 128;
@@ -716,7 +716,7 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 		switch(opt_algo)
 		{
 			case ALGO_NEO:
-				data_size = 84;
+				data_size = 80;
 				break;
 			default:
 				data_size = 128;
