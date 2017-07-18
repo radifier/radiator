@@ -943,7 +943,7 @@ char *stratum_recv_line(struct stratum_ctx *sctx)
 			}
 			if(n < 0)
 			{
-				if(!socket_blocks() || !socket_full(sctx->sock, 1))
+				if(!socket_blocks() || !socket_full(sctx->sock, 10))
 				{
 					ret = false;
 					break;
@@ -1328,7 +1328,7 @@ bool stratum_authorize(struct stratum_ctx *sctx, const char *user, const char *p
 		if(!stratum_send_line(sctx, s))
 			goto out;
 		// reduced timeout to handle pools ignoring this method without answer (like xpool.ca)
-		if(!socket_full(sctx->sock, 1))
+		if(!socket_full(sctx->sock, 10))
 		{
 			if(opt_debug)
 				applog(LOG_DEBUG, "stratum extranonce subscribe timed out");
