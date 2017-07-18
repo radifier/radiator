@@ -462,7 +462,7 @@ void proper_exit(int reason)
 	exit(reason & 1);
 }
 
-static bool jobj_binary(const json_t *obj, const char *key,
+static size_t jobj_binary(const json_t *obj, const char *key,
 						void *buf, size_t buflen)
 {
 	const char *hexstr;
@@ -480,41 +480,34 @@ static bool jobj_binary(const json_t *obj, const char *key,
 		applog(LOG_ERR, "JSON key '%s' is not a string", key);
 		return false;
 	}
-	if(strlen(hexstr)/2 > buflen)
-		return false;
-	if(!hex2bin((uchar*)buf, hexstr, buflen))
-		return false;
-
-	return true;
+	if(strlen(hexstr) / 2 <= buflen)
+		hex2bin((uchar*)buf, hexstr, buflen);
+	else
+		return 0;
+	return strlen(hexstr)/2;
 }
 
 static bool work_decode(const json_t *val, struct work *work)
 {
-	int data_size;
-	int target_size = sizeof(work->target);
+	int target_size;
 	int midstate_size = sizeof(work->midstate);
 	int atarget_sz = ARRAY_SIZE(work->target);
 	int i;
 
-	switch(opt_algo)
-	{
-		case ALGO_NEO:
-			data_size = 80;
-			break;
-		default:
-			data_size = 128;
-			break;
-	}
-	int adata_sz = data_size / 4;
+	size_t data_size = jobj_binary(val, "data", work->data, sizeof(work->data));
 
-	if(unlikely(!jobj_binary(val, "data", work->data, data_size)))
+	if(opt_algo != ALGO_NEO && data_size != 128)
 	{
-		applog(LOG_ERR, "JSON inval data");
+		applog(LOG_ERR, "JSON invalid data");
 		return false;
 	}
-	if(unlikely(!jobj_binary(val, "target", work->target, target_size)))
+	work->datasize = data_size;
+	int adata_sz = data_size / 4;
+
+	target_size = jobj_binary(val, "target", work->target, sizeof(work->target));
+	if(target_size != sizeof(work->target))
 	{
-		applog(LOG_ERR, "JSON inval target");
+		applog(LOG_ERR, "JSON invalid target", target_size);
 		return false;
 	}
 
@@ -712,19 +705,9 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 
 		/* build hex string */
 		char *str = NULL;
-		int data_size;
-		switch(opt_algo)
-		{
-			case ALGO_NEO:
-				data_size = 80;
-				break;
-			default:
-				data_size = 128;
-				break;
-		}
-		for(int i = 0; i < (data_size >> 2); i++)
+		for(int i = 0; i < (work->datasize >> 2); i++)
 			le32enc(work->data + i, work->data[i]);
-		str = bin2hex((uchar*)work->data, data_size);
+		str = bin2hex((uchar*)work->data, work->datasize);
 		if(unlikely(!str))
 		{
 			applog(LOG_ERR, "submit_upstream_work OOM");
@@ -1070,6 +1053,7 @@ static bool get_work(struct thr_info *thr, struct work *work)
 			work->data[20] = 0x80000000;
 			work->data[31] = 0x00000280;
 			memset(work->target, 0x00, sizeof(work->target));
+			work->datasize = 128;
 		}
 		else
 		{
@@ -1081,6 +1065,7 @@ static bool get_work(struct thr_info *thr, struct work *work)
 			memset(work->data + 11, 0x55, 4);
 			memset(work->data + 12, 0x55, 32);
 			memset(work->target, 0x00, sizeof(work->target));
+			work->datasize = 128;
 		}
 		return true;
 	}
@@ -1392,8 +1377,7 @@ static void *miner_thread(void *userdata)
 				extrajob = false;
 				while(!stratum_gen_work(&stratum, &g_work))
 				{
-					if(opt_debug)
-						applog(LOG_WARNING, "thread %d: waiting for work", thr_id);
+					applog(LOG_WARNING, "GPU #%d: waiting for data", device_map[thr_id]);
 					sleep(3);
 				}
 			}
