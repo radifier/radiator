@@ -853,7 +853,12 @@ static bool get_mininginfo(CURL *curl, struct work *work)
 		// "networkhashps": 56475980
 		if(res)
 		{
-			json_t *key = json_object_get(res, "difficulty");
+			json_t *key = json_object_get(res, "powdifficulty");
+			if(key && json_is_real(key))
+			{
+				global_diff = json_real_value(key);
+			}
+			key = json_object_get(res, "difficulty");
 			if(key && json_is_real(key))
 			{
 				global_diff = json_real_value(key);
