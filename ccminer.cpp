@@ -1687,7 +1687,10 @@ static void *miner_thread(void *userdata)
 			break;
 
 		case ALGO_NEO:
-			rc = scanhash_neoscrypt(have_stratum, thr_id, work.data, work.target, max_nonce, &hashes_done);
+			if(!have_stratum && work.datasize == 128)
+				rc = scanhash_neoscrypt(true, thr_id, work.data, work.target, max_nonce, &hashes_done);
+			else
+				rc = scanhash_neoscrypt(have_stratum, thr_id, work.data, work.target, max_nonce, &hashes_done);
 			break;
 
 		case ALGO_SIA:
