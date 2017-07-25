@@ -1,9 +1,12 @@
-ccMiner release 8.09(KlausT-mod) (June 29th, 2017)
+ccMiner release 8.11(KlausT-mod) (July 25th, 2017)
 ---------------------------------------------------------------
 
 ***************************************************************
 If you find this tool useful and like to support its continued 
           development, then consider a donation.
+
+KlausT @github:
+  BTC 1H2BHSyuwLP9vqt2p3bK9G3mDJsAi7qChw
 
 tpruvot@github:
   BTC donation address: 1AJdfCpLWPNoAMDfHF1wD5y8VgKSSTHxPo
@@ -18,10 +21,6 @@ sp-hash@github:
 DJM34:
   BTC donation address: 1NENYmxwZGHsKFmyjTc5WferTn5VTFb7Ze
 
-KlausT @github:
-  BTC 1H2BHSyuwLP9vqt2p3bK9G3mDJsAi7qChw
-  DRK XcM9FXrvZS275pGyGmfJmS98tHPZ1rjErM
-  
 cbuchner v1.2:
   LTC donation address: LKS1WDKGED647msBQfLBHV3Ls8sveGncnm
   BTC donation address: 16hJF5mceSojnTD3ZTUDqdRhDyPJzoRakM
@@ -141,6 +140,8 @@ its command line interface and options.
       --cputest         debug hashes from cpu algorithms
       --no-cpu-verify   don't verify the found results
   -c, --config=FILE     load a JSON-format configuration file
+      --plimit=N        Set the gpu power limit to N Watt (driver version >=352.21)
+                        (needs adminitrator rights under Windows)
   -V, --version         display version information and exit
   -h, --help            display this help text and exit\n"
 
@@ -231,6 +232,11 @@ features.
                   fixed bugs in bitcoin and jackpot algo
 2017-05-19 v8.08: fix Makefile and configure.ac for Linux
 2017-06-07 v8.09: some minor bug fixes
+2017-07-17 v8.10: fix Orbitcoin solo mining (Neoscrypt)
+2017-07-25 v8.11: change some timeout values
+                  fix Feathercoin solo mining (Neoscrypt)
+				  show chance to find a block while solo mining
+
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
