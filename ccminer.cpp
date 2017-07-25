@@ -55,6 +55,8 @@ BOOL WINAPI ConsoleHandler(DWORD);
 #define LP_SCANTIME		25
 #define MNR_BLKHDR_SZ 80
 
+double expectedblocktime(const uint32_t *target);
+
 // from cuda.cpp
 int cuda_num_devices();
 void cuda_devicenames();
@@ -783,6 +785,13 @@ static bool gbt_work_decode(const json_t *val, struct work *work)
 						   algo_names[opt_algo], work->height);
 				}
 				g_work.height = work->height;
+				if(!have_stratum)
+				{
+					double x = expectedblocktime(work->target);
+					if(x != 0.0)
+						applog(LOG_BLUE, "50%% chance to find a block in about %.2f days", x);
+				}
+
 			}
 		}
 	}
@@ -877,6 +886,27 @@ static bool get_mininginfo(CURL *curl, struct work *work)
 	}
 	json_decref(val);
 	return true;
+}
+
+// time (in days) for a 50% chance to find a block
+double expectedblocktime(const uint32_t *target)
+{
+	double x = 0.0;
+	double time;
+	if(global_hashrate == 0)
+		return 0;
+	else
+	{
+		for(int i = 0; i < 8; i++)
+		{
+			x *= 4294967296.0;
+			x += target[7 - i];
+		}
+		if(x != 0.0)
+			return 115792089237316195423570985008687907853269984665640564039457584007913129639935.0 / x / (double)global_hashrate / 86400.0;
+		else
+			return 0.0;
+	}
 }
 
 static const char *rpc_req =
