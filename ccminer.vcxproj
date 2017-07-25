@@ -324,7 +324,7 @@
     <ClCompile Include="sph\whirlpool.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ccminer-config.h" />
+    <ClInclude Include="ccminer-config-win.h" />
     <ClInclude Include="compat.h" />
     <ClInclude Include="compat\getopt\getopt.h" />
     <ClInclude Include="compat\inttypes.h" />

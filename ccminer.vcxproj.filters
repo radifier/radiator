@@ -356,7 +356,7 @@
     <ClInclude Include="Sia\sia.h">
       <Filter>Header Files\CUDA\sia</Filter>
     </ClInclude>
-    <ClInclude Include="ccminer-config.h">
+    <ClInclude Include="ccminer-config-win.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

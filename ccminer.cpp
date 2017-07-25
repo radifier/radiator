@@ -9,7 +9,11 @@
  * any later version.  See COPYING for more details.
  */
 
+#ifndef WIN32
 #include "ccminer-config.h"
+#else
+#include "ccminer-config-win.h"
+#endif
 #include "cuda_runtime_api.h"
 
 #include <cstdio>

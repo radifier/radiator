@@ -9,9 +9,6 @@
 * any later version.  See COPYING for more details.
 */
 
-//#define _GNU_SOURCE
-#include "ccminer-config.h"
-
 #include <cstdio>
 #include <cstdlib>
 #include <ctype.h>
