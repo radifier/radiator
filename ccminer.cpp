@@ -2030,7 +2030,7 @@ static void *stratum_thread(void *userdata)
 	if(!stratum.url)
 		goto out;
 	applog(LOG_BLUE, "Starting Stratum on %s", stratum.url);
-
+	stratum.curl = NULL;
 	while(1)
 	{
 		int failures = 0;
