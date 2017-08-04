@@ -1285,7 +1285,10 @@ bool stratum_authorize(struct stratum_ctx *sctx, const char *user, const char *p
 			user, pass);
 
 	if(!stratum_send_line(sctx, s))
+	{
+		applog(LOG_ERR, "Error: couldn't send stratum authorization request");
 		goto out;
+	}
 
 	while(1)
 	{
