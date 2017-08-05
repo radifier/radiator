@@ -508,9 +508,9 @@ static bool work_decode(const json_t *val, struct work *work)
 		return false;
 	}
 	work->datasize = data_size;
-	int adata_sz = data_size / 4;
+	int adata_sz = (int)data_size / 4;
 
-	target_size = jobj_binary(val, "target", work->target, sizeof(work->target));
+	target_size = (int)jobj_binary(val, "target", work->target, sizeof(work->target));
 	if(target_size != sizeof(work->target))
 	{
 		applog(LOG_ERR, "JSON invalid target", target_size);
@@ -896,7 +896,6 @@ static bool get_mininginfo(CURL *curl, struct work *work)
 double expectedblocktime(const uint32_t *target)
 {
 	double x = 0.0;
-	double time;
 	if(global_hashrate == 0)
 		return 0;
 	else
