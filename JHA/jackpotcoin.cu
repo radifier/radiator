@@ -32,7 +32,7 @@ extern void jackpot_compactTest_cpu_hash_64(int thr_id, uint32_t threads, uint32
 extern uint32_t cuda_check_hash_branch(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_inputHash);
 
 // Original jackpothash Funktion aus einem miner Quelltext
-extern "C" unsigned int jackpothash(void *state, const void *input)
+unsigned int jackpothash(void *state, const void *input)
 {
     sph_blake512_context     ctx_blake;
     sph_groestl512_context   ctx_groestl;

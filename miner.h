@@ -261,37 +261,18 @@ extern "C" {
 	void sha256_transform(uint32_t *state, const uint32_t *block, int swap);
 	void sha256d(unsigned char *hash, const unsigned char *data, int len);
 
-#if defined(__ARM_NEON__) || defined(__i386__) || defined(__x86_64__)
-#define HAVE_SHA256_4WAY 0
-	int sha256_use_4way();
-	void sha256_init_4way(uint32_t *state);
-	void sha256_transform_4way(uint32_t *state, const uint32_t *block, int swap);
-#endif
-
-#if defined(__x86_64__) && defined(USE_AVX2)
-#define HAVE_SHA256_8WAY 0
-	int sha256_use_8way();
-	void sha256_init_8way(uint32_t *state);
-	void sha256_transform_8way(uint32_t *state, const uint32_t *block, int swap);
-#endif
-
-	extern int scanhash_sha256d(int thr_id, uint32_t *pdata,
-								uint32_t *ptarget, uint32_t max_nonce, uint32_t *hashes_done);
-
-	struct work_restart
-	{
-		volatile unsigned long	restart;
-		char			padding[128 - sizeof(unsigned long)];
-	};
-	extern struct work_restart *work_restart;
-
-	extern bool fulltest(const uint32_t *hash, const uint32_t *target);
-
 #ifdef __cplusplus
 }
 #endif
 
-extern unsigned char *scrypt_buffer_alloc();
+struct work_restart
+{
+	volatile unsigned long	restart;
+	char			padding[128 - sizeof(unsigned long)];
+};
+extern struct work_restart *work_restart;
+
+bool fulltest(const uint32_t *hash, const uint32_t *target);
 
 extern int scanhash_deep(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
@@ -549,18 +530,16 @@ extern uint32_t gpus_intensity[MAX_GPUS];
 
 #define CL_WHT  "\x1B[01;37m" /* white */
 
-extern void format_hashrate(double hashrate, char *output);
-extern void applog(int prio, const char *fmt, ...);
-extern json_t *json_rpc_call(CURL *curl, const char *url, const char *userpass,
-	const char *rpc_req, bool, bool, int *);
-extern void cbin2hex(char *out, const char *in, size_t len);
-extern char *bin2hex(const unsigned char *in, size_t len);
-extern bool hex2bin(unsigned char *p, const char *hexstr, size_t len);
-extern int timeval_subtract(struct timeval *result, struct timeval *x,
-	struct timeval *y);
-extern void diff_to_target(uint32_t *target, double diff);
-extern void get_currentalgo(char* buf, int sz);
-extern uint32_t device_intensity(int thr_id, const char *func, uint32_t defcount);
+void format_hashrate(double hashrate, char *output);
+void applog(int prio, const char *fmt, ...);
+json_t *json_rpc_call(CURL *curl, const char *url, const char *userpass, const char *rpc_req, bool, bool, int *);
+void cbin2hex(char *out, const char *in, size_t len);
+char *bin2hex(const unsigned char *in, size_t len);
+bool hex2bin(unsigned char *p, const char *hexstr, size_t len);
+int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y);
+void diff_to_target(uint32_t *target, double diff);
+void get_currentalgo(char* buf, int sz);
+uint32_t device_intensity(int thr_id, const char *func, uint32_t defcount);
 
 struct stratum_job {
 	char *job_id;
@@ -711,9 +690,6 @@ void applog_hash(unsigned char *hash);
 void applog_compare_hash(unsigned char *hash, unsigned char *hash2);
 
 void print_hash_tests(void);
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void blake256hash(void *output, const void *input, int8_t rounds);
 void deephash(void *state, const void *input);
@@ -736,9 +712,5 @@ void x13hash(void *output, const void *input);
 void x14hash(void *output, const void *input);
 void x15hash(void *output, const void *input);
 void x17hash(void *output, const void *input);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* __MINER_H__ */

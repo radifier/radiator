@@ -728,7 +728,7 @@ struct timeval *y)
 	return (start > end);
 }
 
-extern "C" bool fulltest(const uint32_t *hash, const uint32_t *target)
+bool fulltest(const uint32_t *hash, const uint32_t *target)
 {
 	int i;
 	bool rc = true;

@@ -66,7 +66,7 @@ extern void quark_compactTest_cpu_hash_64(int thr_id, uint32_t threads, uint32_t
 											const uint32_t *d_noncesTrue, uint32_t *nrmTrue, uint32_t *d_noncesFalse, uint32_t *nrmFalse);
 
 // X14 CPU Hash function
-extern "C" void x14hash(void *output, const void *input)
+void x14hash(void *output, const void *input)
 {
 	unsigned char hash[128]; // uint32_t hashA[16], hashB[16];
 	#define hashB hash+64

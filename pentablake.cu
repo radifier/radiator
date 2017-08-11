@@ -22,7 +22,7 @@ extern "C" {
 #define TPB 192
 
 /* hash by cpu with blake 256 */
-extern "C" void pentablakehash(void *output, const void *input)
+void pentablakehash(void *output, const void *input)
 {
 	unsigned char hash[128];
 	#define hashB hash + 64

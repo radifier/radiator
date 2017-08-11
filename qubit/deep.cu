@@ -26,7 +26,7 @@ extern void x11_echo512_cpu_init(int thr_id, uint32_t threads);
 extern void x11_echo512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 extern void x11_echo512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, const uint32_t *d_hash, uint32_t target, uint32_t *h_found);
 
-extern "C" void deephash(void *state, const void *input)
+void deephash(void *state, const void *input)
 {
 	// luffa1-cubehash2-shavite3-simd4-echo5
 	sph_luffa512_context ctx_luffa;

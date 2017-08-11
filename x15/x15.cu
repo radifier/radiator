@@ -73,7 +73,7 @@ extern void quark_compactTest_cpu_hash_64(int thr_id, uint32_t threads, uint32_t
 											const uint32_t *d_noncesTrue, uint32_t *nrmTrue, uint32_t *d_noncesFalse, uint32_t *nrmFalse);
 
 // X15 CPU Hash function
-extern "C" void x15hash(void *output, const void *input)
+void x15hash(void *output, const void *input)
 {
 	sph_blake512_context     ctx_blake;
 	sph_bmw512_context       ctx_bmw;

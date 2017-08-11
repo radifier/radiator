@@ -23,7 +23,7 @@ extern "C" {
 extern "C" int blake256_rounds = 14;
 
 /* hash by cpu with blake 256 */
-extern "C" void blake256hash(void *output, const void *input, int8_t rounds = 14)
+void blake256hash(void *output, const void *input, int8_t rounds = 14)
 {
 	uchar hash[64];
 	sph_blake256_context ctx;

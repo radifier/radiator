@@ -29,7 +29,7 @@ do {                                                                  \
 #define SWAP32(x) swab32(x)
 
 // CPU-groestl
-extern "C" void groestlhash(void *state, const void *input)
+void groestlhash(void *state, const void *input)
 {
     sph_groestl512_context ctx_groestl;
 

@@ -83,7 +83,7 @@ extern void quark_compactTest_cpu_hash_64(int thr_id, uint32_t threads, uint32_t
 											const uint32_t *d_noncesTrue, uint32_t *nrmTrue, uint32_t *d_noncesFalse, uint32_t *nrmFalse);
 
 // X17 Hashfunktion
-extern "C" void x17hash(void *output, const void *input)
+void x17hash(void *output, const void *input)
 {
 	// blake1-bmw2-grs3-skein4-jh5-keccak6-luffa7-cubehash8-shavite9-simd10-echo11-hamsi12-fugue13-shabal14-whirlpool15-sha512-haval17
 

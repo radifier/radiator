@@ -17,7 +17,7 @@ void myriadgroestl_cpu_init(int thr_id, uint32_t threads);
 void myriadgroestl_cpu_setBlock(int thr_id, void *data, void *pTargetIn);
 void myriadgroestl_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *nounce);
 
-extern "C" void myriadhash(void *state, const void *input)
+void myriadhash(void *state, const void *input)
 {
 	uint32_t hashA[16], hashB[16];
 	sph_groestl512_context ctx_groestl;

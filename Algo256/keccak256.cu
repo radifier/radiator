@@ -19,7 +19,7 @@ extern void keccak256_setBlock_80(int thr_id, void *pdata,const void *ptarget);
 extern void keccak256_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *h_nounce);
 
 // CPU Hash
-extern "C" void keccak256_hash(void *state, const void *input)
+void keccak256_hash(void *state, const void *input)
 {
 	sph_keccak_context ctx_keccak;
 

@@ -17,7 +17,7 @@ extern uint32_t* whirlpool512_cpu_finalhash_64(int thr_id, uint32_t threads, uin
 
 
 // CPU Hash function
-extern "C" void wcoinhash(void *state, const void *input)
+void wcoinhash(void *state, const void *input)
 {
 	sph_whirlpool_context ctx_whirlpool;
 

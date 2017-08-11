@@ -16,7 +16,7 @@ extern void skein512_cpu_setBlock_80(int thr_id,void *pdata);
 extern void skein512_cpu_hash_80_50(int thr_id, uint32_t threads, uint32_t startNounce, int swapu, uint64_t target, uint32_t *h_found);
 extern void skein512_cpu_hash_80_52(int thr_id, uint32_t threads, uint32_t startNounce, int swapu, uint64_t target, uint32_t *h_found);
 
-extern "C" void skeincoinhash(void *output, const void *input)
+void skeincoinhash(void *output, const void *input)
 {
 	sph_skein512_context ctx_skein;
 	SHA256_CTX sha256;

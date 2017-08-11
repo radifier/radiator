@@ -28,7 +28,7 @@ extern void quark_skein512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t st
 extern void quark_skein512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash, uint32_t *h_found, uint32_t target);
 
 /* CPU HASH */
-extern "C" void s3hash(void *output, const void *input)
+void s3hash(void *output, const void *input)
 {
 	sph_shavite512_context ctx_shavite;
 	sph_simd512_context ctx_simd;

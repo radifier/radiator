@@ -31,7 +31,7 @@ extern void quark_skein512_cpu_hash_64_final(int thr_id, uint32_t threads, uint3
 
 
 // Original nist5hash Funktion aus einem miner Quelltext
-extern "C" void nist5hash(void *state, const void *input)
+void nist5hash(void *state, const void *input)
 {
     sph_blake512_context ctx_blake;
     sph_groestl512_context ctx_groestl;
