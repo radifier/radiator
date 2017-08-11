@@ -1082,6 +1082,28 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 	return true;
 }
 
+static void stratum_free_job(struct stratum_ctx *sctx)
+{
+	pthread_mutex_lock(&sctx->sock_lock);
+	if(sctx->job.job_id)
+	{
+		free(sctx->job.job_id);
+	}
+	if(sctx->job.merkle_count)
+	{
+		for(int i = 0; i < sctx->job.merkle_count; i++)
+		{
+			free(sctx->job.merkle[i]);
+			sctx->job.merkle[i] = NULL;
+		}
+		free(sctx->job.merkle);
+	}
+	free(sctx->job.coinbase);
+	// note: xnonce2 is not allocated
+	memset(&(sctx->job.job_id), 0, sizeof(struct stratum_job));
+	pthread_mutex_unlock(&sctx->sock_lock);
+}
+
 void stratum_disconnect(struct stratum_ctx *sctx)
 {
 	pthread_mutex_lock(&sctx->sock_lock);
@@ -1092,10 +1114,14 @@ void stratum_disconnect(struct stratum_ctx *sctx)
 		sctx->curl = NULL;
 		sctx->sockbuf[0] = '\0';
 	}
+	if(sctx->job.job_id)
+	{
+		stratum_free_job(sctx);
+	}
 	pthread_mutex_unlock(&sctx->sock_lock);
 }
 
-static const char *get_stratum_session_id(json_t *val)
+static const char *get_stratum_session_id(const json_t *val)
 {
 	json_t *arr_val;
 	int i, n;
@@ -1119,7 +1145,7 @@ static const char *get_stratum_session_id(json_t *val)
 	return NULL;
 }
 
-static bool stratum_parse_extranonce(struct stratum_ctx *sctx, json_t *params, int pndx)
+static bool stratum_parse_extranonce(struct stratum_ctx *sctx, const json_t *params, int pndx)
 {
 	const char* xnonce1;
 	int xn2_size;
@@ -1167,14 +1193,11 @@ out:
 
 bool stratum_subscribe(struct stratum_ctx *sctx)
 {
-	char *s, *sret = NULL;
-	const char *sid;
-	json_t *val = NULL, *res_val, *err_val;
 	json_error_t err;
 	bool ret = false, retry = false;
 
 start:
-	s = (char*)malloc(128 + (sctx->session_id ? strlen(sctx->session_id) : 0));
+	char *s = (char*)malloc(128 + (sctx->session_id ? strlen(sctx->session_id) : 0));
 	if(s == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
@@ -1196,11 +1219,11 @@ start:
 		goto out;
 	}
 
-	sret = stratum_recv_line(sctx);
+	char *sret = stratum_recv_line(sctx);
 	if(!sret)
 		goto out;
 
-	val = JSON_LOADS(sret, &err);
+	json_t *val = JSON_LOADS(sret, &err);
 	free(sret);
 	if(!val)
 	{
@@ -1213,11 +1236,10 @@ start:
 		applog(LOG_WARNING, "Stratum subscribe answer id is not correct!");
 	}
 
-	res_val = json_object_get(val, "result");
-	err_val = json_object_get(val, "error");
+	const json_t *res_val = json_object_get(val, "result");
+	const json_t *err_val = json_object_get(val, "error");
 
-	if(!res_val || json_is_null(res_val) ||
-	   (err_val && !json_is_null(err_val)))
+	if(!res_val || json_is_null(res_val) || (err_val && !json_is_null(err_val)))
 	{
 		if(opt_debug || retry)
 		{
@@ -1240,7 +1262,7 @@ start:
 	ret = true;
 
 	// session id (optional)
-	sid = get_stratum_session_id(res_val);
+	const char *sid = get_stratum_session_id(res_val);
 	if(opt_debug && sid)
 		applog(LOG_DEBUG, "Stratum session id: %s", sid);
 
@@ -1256,13 +1278,10 @@ out:
 	if(val)
 		json_decref(val);
 
-	if(!ret)
+	if(!ret && sret && !retry)
 	{
-		if(sret && !retry)
-		{
-			retry = true;
-			goto start;
-		}
+		retry = true;
+		goto start;
 	}
 
 	return ret;
