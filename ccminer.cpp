@@ -179,7 +179,7 @@ bool stratum_need_reset = false;
 struct work_restart *work_restart = NULL;
 struct stratum_ctx stratum = { 0 };
 bool stop_mining = false;
-volatile bool mining_has_stopped[MAX_GPUS] = { true };
+volatile bool mining_has_stopped[MAX_GPUS];
 
 pthread_mutex_t applog_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t stats_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -442,7 +442,6 @@ void proper_exit(int reason)
 #endif
 //	if(reason == 2)
 	{
-		pthread_mutex_lock(&g_work_lock);	//freeze stratum
 		stop_mining = true;
 		applog(LOG_INFO, "stopping %d threads", opt_n_threads);
 		bool everything_stopped;
@@ -462,7 +461,7 @@ void proper_exit(int reason)
 	curl_global_cleanup();
 
 #ifdef WIN32
-	timeEndPeriod(1); // else never executed
+	timeEndPeriod(1);
 #endif
 
 	exit(reason & 1);
@@ -2907,6 +2906,9 @@ int main(int argc, char *argv[])
 	thr->q = tq_new();
 	if(!thr->q)
 		return 1;
+
+	for(int i = 0; i < MAX_GPUS; i++)
+		mining_has_stopped[i] = true;
 
 	/* start work I/O thread */
 	if(pthread_create(&thr->pth, NULL, workio_thread, thr))
