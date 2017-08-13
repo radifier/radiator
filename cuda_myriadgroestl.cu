@@ -213,7 +213,6 @@ __global__ void __launch_bounds__(512, 2)
     if (thread < threads)
     {
         // GROESTL
-		const uint32_t nounce = startNounce + thread;
 		uint32_t paddedInput[8];
 		paddedInput[0] = myriadgroestl_gpu_msg[4 * 0 + (threadIdx.x & 3)];
 		paddedInput[1] = myriadgroestl_gpu_msg[4 * 1 + (threadIdx.x & 3)];
@@ -228,7 +227,7 @@ __global__ void __launch_bounds__(512, 2)
 			paddedInput[5] = 0x80;
 		if((threadIdx.x & 3) == 3)
 		{
-			paddedInput[4] = cuda_swab32(nounce);
+			paddedInput[4] = cuda_swab32(startNounce + thread);
 			paddedInput[7] = 0x01000000;
 		}
 
@@ -255,14 +254,12 @@ __global__ void __launch_bounds__(512, 2)
     }
 }
 
-__global__ void __launch_bounds__(1536, 1)
+__global__ void __launch_bounds__(512, 1)
  myriadgroestl_gpu_hash_quad2(uint32_t threads, uint32_t startNounce, uint32_t *const __restrict__ resNounce, const uint32_t *const __restrict__ hashBuffer)
 {
     const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
     if (thread < threads)
     {
-        const uint32_t nounce = startNounce + thread;
-
         uint32_t out_state[16];
         const uint32_t *inpHash = &hashBuffer[16 * thread];
 #pragma unroll 16
@@ -273,7 +270,7 @@ __global__ void __launch_bounds__(1536, 1)
         
         if (out_state[7] <= pTarget[7])
 		{
-			uint32_t tmp = atomicExch(resNounce, nounce);
+			uint32_t tmp = atomicExch(resNounce, startNounce + thread);
 			if (tmp != 0xffffffff)
 				resNounce[1] = tmp;
 		 }
@@ -307,7 +304,7 @@ __host__ void myriadgroestl_cpu_setBlock(int thr_id, void *data, void *pTargetIn
 __host__ void myriadgroestl_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *nounce)
 {
     const uint32_t threadsperblock = 512;
-	const uint32_t threadsperblock2 = 1536;
+	const uint32_t threadsperblock2 = 512;
     // Compute 3.0 benutzt die registeroptimierte Quad Variante mit Warp Shuffle
     // mit den Quad Funktionen brauchen wir jetzt 4 threads pro Hash, daher Faktor 4 bei der Blockzahl
     const int factor=4;
