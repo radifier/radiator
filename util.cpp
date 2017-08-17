@@ -1194,8 +1194,10 @@ out:
 bool stratum_subscribe(struct stratum_ctx *sctx)
 {
 	json_error_t err;
+	json_t *val;
+	json_t *res_val;
 	bool ret = false, retry = false;
-
+	char *sret;
 start:
 	char *s = (char*)malloc(128 + (sctx->session_id ? strlen(sctx->session_id) : 0));
 	if(s == NULL)
@@ -1219,11 +1221,11 @@ start:
 		goto out;
 	}
 
-	char *sret = stratum_recv_line(sctx);
+	sret = stratum_recv_line(sctx);
 	if(!sret)
 		goto out;
 
-	json_t *val = JSON_LOADS(sret, &err);
+	val = JSON_LOADS(sret, &err);
 	free(sret);
 	if(!val)
 	{
@@ -1236,7 +1238,7 @@ start:
 		applog(LOG_WARNING, "Stratum subscribe answer id is not correct!");
 	}
 
-	const json_t *res_val = json_object_get(val, "result");
+	res_val = json_object_get(val, "result");
 	const json_t *err_val = json_object_get(val, "error");
 
 	if(!res_val || json_is_null(res_val) || (err_val && !json_is_null(err_val)))
