@@ -1424,7 +1424,7 @@ void x15_whirlpool_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t 
 		sharedMemory[threadIdx.x + 256] = SWAPDWORDS2(sharedMemory[threadIdx.x]);
 #endif
 	}
-
+	__syncthreads();
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 //	if (thread < threads)
 	{

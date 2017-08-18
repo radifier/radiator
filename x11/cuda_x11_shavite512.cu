@@ -61,7 +61,7 @@ void x11_shavite512_gpu_hash_64(uint32_t threads, uint32_t *const __restrict__ g
 	__shared__  __align__(128) uint32_t sharedMemory[1024];
 
 	shavite_gpu_init(sharedMemory);
-
+	__syncthreads();
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if(thread < threads)
 	{
@@ -2484,7 +2484,7 @@ void x11_shavite512_gpu_hash_80(uint32_t threads, uint32_t startNounce, void *ou
 		sharedMemory[threadIdx.x + 512] = ROTL32(sharedMemory[threadIdx.x], 16);
 		sharedMemory[threadIdx.x + 768] = ROTL32(sharedMemory[threadIdx.x], 24);
 	}
-
+	__syncthreads();
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if(thread < threads)
 	{

@@ -204,6 +204,7 @@ void precomputeX(uint32_t threads, uint2*const __restrict__ d_xtra, uint64_t*con
 
 
 	getShared(sharedMemory);
+	__syncthreads();
 	const unsigned int thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
@@ -447,7 +448,7 @@ void whirlpoolx(uint32_t threads, uint32_t startNounce, uint32_t *resNounce)
 	{
 		__shared__ uint64_t sharedMemory[2048];
 		getShared(sharedMemory);
-
+		__syncthreads();
 		const uint32_t numberofthreads = blockDim.x*gridDim.x;
 		const uint32_t maxnonce = startNounce + threadindex + numberofthreads*NONCES_PER_THREAD - 1;
 		const uint32_t threadindex = blockIdx.x*blockDim.x + threadIdx.x;

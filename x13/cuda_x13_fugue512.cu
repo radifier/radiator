@@ -618,6 +618,7 @@ void x13_fugue512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *
 			mixtabs[768 + threadIdx.x] = ROTR32(mixtabs[threadIdx.x], 24);
 			mixtabs[768 + threadIdx.x + 128] = ROTR32(mixtabs[threadIdx.x + 128], 24);
 		}
+		__syncthreads();
 		const uint32_t nounce =  (startNounce + thread);
 
 		const uint32_t hashPosition = nounce - startNounce;
@@ -861,6 +862,7 @@ void x13_fugue512_gpu_hash_64_final(const uint32_t threads, const uint32_t start
 			mixtabs[(512 + threadIdx.x)] = ROTR32(mixtabs[threadIdx.x], 16);
 			mixtabs[(768 + threadIdx.x)] = ROTR32(mixtabs[threadIdx.x], 24);
 		}
+		__syncthreads();
 		const uint32_t nounce =  (startNounce + thread);
 		const uint32_t hashPosition = nounce - startNounce;
 		const uint32_t *h = &g_hash[hashPosition * 16];
