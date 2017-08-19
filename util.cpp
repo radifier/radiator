@@ -1196,8 +1196,11 @@ bool stratum_subscribe(struct stratum_ctx *sctx)
 	json_error_t err;
 	json_t *val;
 	json_t *res_val;
+	json_t *err_val;
 	bool ret = false, retry = false;
 	char *sret;
+	char *sid;
+
 start:
 	char *s = (char*)malloc(128 + (sctx->session_id ? strlen(sctx->session_id) : 0));
 	if(s == NULL)
@@ -1239,7 +1242,7 @@ start:
 	}
 
 	res_val = json_object_get(val, "result");
-	const json_t *err_val = json_object_get(val, "error");
+	err_val = json_object_get(val, "error");
 
 	if(!res_val || json_is_null(res_val) || (err_val && !json_is_null(err_val)))
 	{
@@ -1264,7 +1267,7 @@ start:
 	ret = true;
 
 	// session id (optional)
-	const char *sid = get_stratum_session_id(res_val);
+	sid = (char*)get_stratum_session_id(res_val);
 	if(opt_debug && sid)
 		applog(LOG_DEBUG, "Stratum session id: %s", sid);
 
