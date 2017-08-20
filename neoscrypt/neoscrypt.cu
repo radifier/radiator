@@ -7,6 +7,9 @@ extern void neoscrypt_setBlockTarget(int thr_id, uint32_t* pdata, const void *ta
 extern void neoscrypt_cpu_init_2stream(int thr_id, uint32_t threads);
 extern void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *result);
 //extern void neoscrypt_cpu_hash_k4_52(int stratum, int thr_id, int threads, uint32_t startNounce, int order, uint32_t* foundnonce);
+void neoscrypt_init(int thr_id, uint32_t threads);
+void neoscrypt_setBlockTarget_tpruvot(uint32_t* const pdata, uint32_t* const target);
+void neoscrypt_hash_tpruvot(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *resNonces, bool stratum);
 
 int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 					   uint32_t *ptarget, uint32_t max_nonce,
@@ -19,7 +22,8 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 	static THREAD volatile bool init = false;
 	static THREAD uint32_t hw_errors = 0;
 	static THREAD uint32_t *foundNonce = nullptr;
-	
+	static THREAD bool use_tpruvot = false;
+
 	if(opt_benchmark)
 	{
 		ptarget[7] = 0x01ff;
@@ -33,16 +37,25 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		cudaDeviceProp props;
 		cudaGetDeviceProperties(&props, device_map[thr_id]);
 		unsigned int cc = props.major * 10 + props.minor;
-		if(cc < 32)
+		if(cc < 30)
 		{
 			applog(LOG_ERR, "GPU #%d: this gpu is not supported", device_map[thr_id]);
 			mining_has_stopped[thr_id] = true;
 			proper_exit(2);
 		}
+		if(cc == 30)
+			use_tpruvot = true;
+
 		unsigned int intensity = (256 * 64 * 1); // -i 14
-		if(strstr(props.name, "1080"))
+		if(strstr(props.name, "1080 Ti"))
 		{
 			intensity = 256 * 64 * 5;
+			use_tpruvot = true;
+		}
+		else if(strstr(props.name, "1080"))
+		{
+			intensity = 256 * 64 * 5;
+			use_tpruvot = true;
 		}
 		else if(strstr(props.name, "1070"))
 		{
@@ -91,8 +104,10 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			proper_exit(2);
 		}
 #endif
-
-		neoscrypt_cpu_init_2stream(thr_id, throughputmax);
+		if(use_tpruvot)
+			neoscrypt_init(thr_id, throughputmax);
+		else
+			neoscrypt_cpu_init_2stream(thr_id, throughputmax);
 		mining_has_stopped[thr_id] = false;
 		init = true;
 	}
@@ -105,11 +120,18 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			be32enc(&endiandata[k], ((uint32_t*)pdata)[k]);
 		else endiandata[k] = pdata[k];
 	}
-	neoscrypt_setBlockTarget(thr_id, endiandata, ptarget);
+	if(use_tpruvot)
+		neoscrypt_setBlockTarget_tpruvot(endiandata, ptarget);
+	else
+		neoscrypt_setBlockTarget(thr_id, endiandata, ptarget);
+	
 
 	do
 	{
-		neoscrypt_cpu_hash_k4_2stream(stratum, thr_id, throughput, pdata[19], foundNonce);
+		if(use_tpruvot)
+			neoscrypt_hash_tpruvot(thr_id, throughput, pdata[19], foundNonce, stratum);
+		else
+			neoscrypt_cpu_hash_k4_2stream(stratum, thr_id, throughput, pdata[19], foundNonce);
 		if(stop_mining)
 		{
 			mining_has_stopped[thr_id] = true; pthread_exit(nullptr);

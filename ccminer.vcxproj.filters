@@ -359,6 +359,12 @@
     <ClInclude Include="ccminer-config-win.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="neoscrypt\cuda_vector_uint2x4.cuh">
+      <Filter>Header Files\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="neoscrypt\cuda_vector_tpruvot.cuh">
+      <Filter>Header Files\CUDA</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="cuda.cpp">
@@ -561,6 +567,9 @@
     </CudaCompile>
     <CudaCompile Include="Sia\sia.cu">
       <Filter>Source Files\CUDA\Sia</Filter>
+    </CudaCompile>
+    <CudaCompile Include="neoscrypt\cuda_neoscrypt_tpruvot.cu">
+      <Filter>Source Files\CUDA\neoscrypt</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>
