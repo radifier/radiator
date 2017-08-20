@@ -280,8 +280,8 @@
       <FileType>CppCode</FileType>
     </CudaCompile>
     <CudaCompile Include="neoscrypt\cuda_neoscrypt_tpruvot.cu">
-      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37;</CodeGeneration>
-      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|x64'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37;</CodeGeneration>
+      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37;compute_30,sm_30</CodeGeneration>
+      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|x64'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37;compute_30,sm_30</CodeGeneration>
     </CudaCompile>
     <CudaCompile Include="Sia\sia.cu" />
     <ClCompile Include="sph\neoscrypt.cpp" />
