@@ -124,13 +124,8 @@ quark/cuda_quark_compactionTest.o: quark/cuda_quark_compactionTest.cu
 JHA/cuda_jha_compactionTest.o: JHA/cuda_jha_compactionTest.cu
 	$(NVCC) $(nvcc_FLAGS) -I cudpp-2.1/include --maxrregcount=80 -o $@ -c $<
 
-# This kernel need also an older SM to be able to autotune kernels
-# scrypt/salsa_kernel.o: scrypt/salsa_kernel.cu
-# 	$(NVCC) $(nvcc_FLAGS) -gencode=arch=compute_20,code=\"sm_21,compute_20\" --maxrregcount=80 -o $@ -c $<
-
 skein.o: skein.cu
 	$(NVCC) $(nvcc_FLAGS) --maxrregcount=64 -o $@ -c $<
 
-# This kernel requires at least sm_35
 neoscrypt/cuda_neoscrypt.o: neoscrypt/cuda_neoscrypt.cu
-	$(NVCC)  -gencode=arch=compute_61,code=sm_61 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_50,code=sm_50 -gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_37,code=sm_37 @CUDA_INCLUDES@ -I. @CUDA_CFLAGS@ $(JANSSON_INCLUDES) --ptxas-options="-v" -o $@ -c $<
+	$(NVCC)  -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_50,code=sm_50 -gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_37,code=sm_37 -gencode=arch=compute_30,code=sm_30 @CUDA_INCLUDES@ -I. @CUDA_CFLAGS@ $(JANSSON_INCLUDES) --ptxas-options="-v" -o $@ -c $<
