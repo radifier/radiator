@@ -1,4 +1,4 @@
-ccMiner release 8.12(KlausT-mod) (August 17th, 2017)
+ccMiner release 8.13(KlausT-mod) (August 26th, 2017)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -237,6 +237,8 @@ features.
                   fix Feathercoin solo mining (Neoscrypt)
 				  show chance to find a block while solo mining
 2017-08-17 v8.12: fix Myriad-Groestl speed bug
+2017-08-26 v8.13: fix retry bug
+                  faster neoscrypt for 1080/1080Ti
 
 >>> AUTHORS <<<
 
