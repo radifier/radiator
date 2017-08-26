@@ -1406,16 +1406,18 @@ static void *miner_thread(void *userdata)
 
 		if(have_stratum)
 		{
+			pthread_mutex_lock(&g_work_lock);
 			if(loopcnt == 0 || time(NULL) >= (g_work_time + opt_scantime))
 				extrajob = true;
-			pthread_mutex_lock(&g_work_lock);
 			if(nonceptr[0] >= end_nonce - 0x00010000 || extrajob)
 			{
 				extrajob = false;
 				while(!stratum_gen_work(&stratum, &g_work))
 				{
+					pthread_mutex_unlock(&g_work_lock);
 					applog(LOG_WARNING, "GPU #%d: waiting for data", device_map[thr_id]);
 					sleep(3);
+					pthread_mutex_lock(&g_work_lock);
 				}
 			}
 		}
