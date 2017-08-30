@@ -83,7 +83,6 @@ __constant__ uint32_t BLAKE2S_SIGMA[10][16] = {
 #define shf_r_clamp32(out,a,b,shift) \
 	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(out) : "r"(a), "r"(b), "r"(shift));
 
-#if __CUDA_ARCH__ >= 300
 __device__ __forceinline__ uint32_t WarpShuffle(uint32_t a, uint32_t b, uint32_t c)
 {
 	return __shfl(a, b, c);
@@ -95,49 +94,6 @@ __device__ __forceinline__ void WarpShuffle3(uint32_t &a1, uint32_t &a2, uint32_
 	a2 = WarpShuffle(a2, b2, c);
 	a3 = WarpShuffle(a3, b3, c);
 }
-
-#else
-__device__ __forceinline__ uint32_t WarpShuffle(uint32_t a, uint32_t b, uint32_t c)
-{
-	__shared__ uint32_t shared_mem[32];
-
-	const uint32_t thread = blockDim.x * threadIdx.y + threadIdx.x;
-
-	shared_mem[thread] = a;
-	__threadfence_block();
-
-	uint32_t result = shared_mem[(thread&~(c - 1)) + (b&(c - 1))];
-	__threadfence_block();
-
-	return result;
-}
-
-__device__ __forceinline__ void WarpShuffle3(uint32_t &a1, uint32_t &a2, uint32_t &a3, uint32_t b1, uint32_t b2, uint32_t b3, uint32_t c)
-{
-	__shared__ uint32_t shared_mem[32];
-
-	const uint32_t thread = blockDim.x * threadIdx.y + threadIdx.x;
-
-	shared_mem[thread] = a1;
-	__threadfence_block();
-
-	a1 = shared_mem[(thread&~(c - 1)) + (b1&(c - 1))];
-	__threadfence_block();
-
-	shared_mem[thread] = a2;
-	__threadfence_block();
-
-	a2 = shared_mem[(thread&~(c - 1)) + (b2&(c - 1))];
-	__threadfence_block();
-
-	shared_mem[thread] = a3;
-	__threadfence_block();
-
-	a3 = shared_mem[(thread&~(c - 1)) + (b3&(c - 1))];
-	__threadfence_block();
-}
-
-#endif
 
 #define CHACHA_STEP(a,b,c,d) { \
 	a += b; d = __byte_perm(d ^ a, 0, 0x1032); \
@@ -151,7 +107,6 @@ __device__ __forceinline__ void WarpShuffle3(uint32_t &a1, uint32_t &a2, uint32_
 __device__ __forceinline__
 static void shift256R4(uint32_t* ret, const uint8 &vec4, const uint32_t shift2)
 {
-#if __CUDA_ARCH__ >= 320
 	uint32_t shift = 32U - shift2;
 	asm("shf.r.clamp.b32 %0, 0, %1, %2;" : "=r"(ret[0]) : "r"(vec4.s0), "r"(shift));
 	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(ret[1]) : "r"(vec4.s0), "r"(vec4.s1), "r"(shift));
@@ -162,10 +117,6 @@ static void shift256R4(uint32_t* ret, const uint8 &vec4, const uint32_t shift2)
 	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(ret[6]) : "r"(vec4.s5), "r"(vec4.s6), "r"(shift));
 	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(ret[7]) : "r"(vec4.s6), "r"(vec4.s7), "r"(shift));
 	asm("shr.b32         %0, %1, %2;"     : "=r"(ret[8]) : "r"(vec4.s7), "r"(shift));
-#else
-	// to check
-	shift256R(ret, vec4, shift2);
-#endif
 }
 
 #define BLAKE(a, b, c, d, key1, key2) { \
@@ -769,7 +720,6 @@ void fastkdf256_v1(const uint32_t thread, const uint32_t nonce, uint32_t* const 
 			temp[k] = B[indice] ^ shifted[k];
 			B[indice] = temp[k];
 		}
-#if __CUDA_ARCH__ >= 320  || !defined(__CUDA_ARCH__)
 		uint32_t a = c_data[qbuf & 0x3f], b;
 		//#pragma unroll
 		for(int k = 0; k<16; k += 2)
@@ -791,10 +741,7 @@ void fastkdf256_v1(const uint32_t thread, const uint32_t nonce, uint32_t* const 
 
 		for(int k = 0; k<8; k++)
 			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[k]) : "r"(temp[k]), "r"(temp[k + 1]), "r"(bitbuf));
-#else
-		//#error SM 3.0 code missing here
-		printf("", data18, data20);
-#endif
+
 		Blake2S(input, input, key);
 	}
 
@@ -811,10 +758,8 @@ void fastkdf256_v1(const uint32_t thread, const uint32_t nonce, uint32_t* const 
 	rbuf = bufidx & 3;
 	bitbuf = rbuf << 3;
 
-#if __CUDA_ARCH__ >= 320
 	for(int i = 0; i<64; i++)
 		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(((uint32_t*)output)[i]) : "r"(B[(qbuf + i) & 0x3f]), "r"(B[(qbuf + i + 1) & 0x3f4]), "r"(bitbuf));
-#endif
 
 	((ulonglong4*)output)[0] ^= ((ulonglong4*)input)[0];
 	((uintx64*)output)[0] ^= ((uintx64*)c_data)[0];
@@ -837,7 +782,7 @@ void fastkdf256_v2(const uint32_t thread, const uint32_t nonce, uint32_t* const 
 	uint32_t key[16] = {0};
 	uint32_t qbuf, rbuf, bitbuf;
 
-	uint32_t* B = (uint32_t*)&s_data[threadIdx.x * 64U];
+	uint32_t* B = &s_data[threadIdx.x * 64U];
 	((uintx64*)(B))[0] = ((uintx64*)c_data)[0];
 
 	B[19] = nonce;
@@ -1076,7 +1021,6 @@ uint32_t fastkdf32_v1(uint32_t thread, const uint32_t nonce, uint32_t* const sal
 		((uint2x4*)temp)[0] ^= ((uint2x4*)shifted)[0];
 		temp[8] ^= shifted[8];
 
-#if __CUDA_ARCH__ >= 320 || !defined(__CUDA_ARCH__)
 		uint32_t a = c_data[qbuf & 0x3f], b;
 		//#pragma unroll
 		for(int k = 0; k<16; k += 2)
@@ -1102,10 +1046,7 @@ uint32_t fastkdf32_v1(uint32_t thread, const uint32_t nonce, uint32_t* const sal
 		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[5]) : "r"(temp[5]), "r"(temp[6]), "r"(bitbuf));
 		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[6]) : "r"(temp[6]), "r"(temp[7]), "r"(bitbuf));
 		asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(key[7]) : "r"(temp[7]), "r"(temp[8]), "r"(bitbuf));
-#else
-		//#error SM 3.0 code missing here
-		printf("", data18, data20);
-#endif
+
 		for(int k = 0; k < 9; k++)
 		{
 			B0[(k + qbuf) & 0x3f] = temp[k];
@@ -1133,11 +1074,8 @@ uint32_t fastkdf32_v1(uint32_t thread, const uint32_t nonce, uint32_t* const sal
 	}
 
 	uint32_t output;
-#if __CUDA_ARCH__ >= 320
 	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(output) : "r"(temp[7]), "r"(temp[8]), "r"(bitbuf));
-#else
-	output = (MAKE_ULONGLONG(temp[7], temp[8]) >> bitbuf); // to check maybe 7/8 reversed
-#endif
+
 	output ^= input[7] ^ cdata7;
 	return output;
 }
@@ -1339,10 +1277,8 @@ void neoscrypt_gpu_hash_start(const int stratum, const uint32_t startNonce)
 	__shared__ uint32_t s_data[64 * TPB2];
 
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	const uint32_t nonce = startNonce + thread;
-	const uint32_t ZNonce = (stratum) ? cuda_swab32(nonce) : nonce; //freaking morons !!!
+	const uint32_t ZNonce = (stratum) ? cuda_swab32(startNonce + thread) : (startNonce + thread); //freaking morons !!!
 
-	__syncthreads();
 #if __CUDA_ARCH__ < 500
 	fastkdf256_v1(thread, ZNonce, s_data);
 #else

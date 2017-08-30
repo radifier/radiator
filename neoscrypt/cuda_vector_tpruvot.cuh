@@ -625,25 +625,6 @@ static __forceinline__ __device__ uint32_t rotateR(uint32_t vec4, uint32_t shift
 
 #endif
 
-#if __CUDA_ARCH__ < 320
-
-// right shift a 64-bytes integer (256-bits) by 0 8 16 24 bits
-// require a uint32_t[9] ret array
-// note: djm neoscrypt implementation is near the limits of gpu capabilities
-//       and weird behaviors can happen when tuning device functions code...
-__device__ static void shift256R(uint32_t* ret, const uint8 &vec4, uint32_t shift)
-{
-	uint8_t *v = (uint8_t*)&vec4.s0;
-	uint8_t *r = (uint8_t*)ret;
-	uint8_t bytes = (uint8_t)(shift >> 3);
-	ret[0] = 0;
-	for(uint8_t i = bytes; i<32; i++)
-		r[i] = v[i - bytes];
-	ret[8] = vec4.s7 >> (32 - shift); // shuffled part required
-}
-
-#else
-
 // same for SM 3.5+, really faster ?
 __device__ static void shift256R(uint32_t* ret, const uint8 &vec4, uint32_t shift)
 {
@@ -674,24 +655,6 @@ __device__ static void shift256R(uint32_t* ret, const uint8 &vec4, uint32_t shif
 	asm("shr.b32        %0, %1, %2;" : "=r"(truc) : "r"(truc3), "r"(shift));
 	ret[0] = cuda_swab32(truc);
 }
-#endif
-
-#if __CUDA_ARCH__ < 320
-
-// copy 256 bytes
-static __device__ __inline__ uintx64 ldg256(const uint4 *ptr)
-{
-	uintx64 ret;
-	uint32_t *dst = (uint32_t*)&ret.s0;
-	uint32_t *src = (uint32_t*)&ptr[0].x;
-	for(int i = 0; i < (256 / sizeof(uint32_t)); i++)
-	{
-		dst[i] = src[i];
-	}
-	return ret;
-}
-
-#else
 
 // complicated way to copy 256 bytes ;)
 static __device__ __inline__ uintx64 ldg256(const uint4 *ptr)
@@ -715,6 +678,5 @@ static __device__ __inline__ uintx64 ldg256(const uint4 *ptr)
 	asm("ld.global.nc.v4.u32 {%0,%1,%2,%3}, [%4+240];"  : "=r"(ret.s1.s1.s1.s1.x), "=r"(ret.s1.s1.s1.s1.y), "=r"(ret.s1.s1.s1.s1.z), "=r"(ret.s1.s1.s1.s1.w) : __LDG_PTR(ptr));
 	return ret;
 }
-#endif
 
 #endif // #ifndef CUDA_VECTOR_H
