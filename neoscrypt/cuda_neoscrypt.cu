@@ -29,7 +29,7 @@ __device__  __align__(16) vectypeS* Tr2;
 __device__  __align__(16) vectypeS* Input;
 __device__  __align__(16) vectypeS* B2;
 
-static uint32_t *d_NNonce[MAX_GPUS]; 
+static uint32_t *d_NNonce[MAX_GPUS];
 
 __constant__  uint32_t pTarget[8];
 __constant__  uint32_t key_init[16];
@@ -122,20 +122,20 @@ static __forceinline__ __device__ void shift256R4(uint32_t * ret, const uint8 &v
 
 /*static __device__ __inline__ void chacha_step(uint32_t &a, uint32_t &b, uint32_t &c, uint32_t &d)
 {
-	asm("{\n\t"
-			"add.u32 %0,%0,%1; \n\t"
-			"xor.b32 %3,%3,%0; \n\t"
-			"prmt.b32 %3, %3, 0, 0x1032; \n\t"
-			"add.u32 %2,%2,%3; \n\t"
-			"xor.b32 %1,%1,%2; \n\t"
-			"shf.l.wrap.b32 %1, %1, %1, 12; \n\t"
-			"add.u32 %0,%0,%1; \n\t"
-			"xor.b32 %3,%3,%0; \n\t"
-			"prmt.b32 %3, %3, 0, 0x2103; \n\t"
-			"add.u32 %2,%2,%3; \n\t"
-			"xor.b32 %1,%1,%2; \n\t"
-			"shf.l.wrap.b32 %1, %1, %1, 7; \n\t}"
-			: "+r"(a), "+r"(b), "+r"(c), "+r"(d));
+asm("{\n\t"
+"add.u32 %0,%0,%1; \n\t"
+"xor.b32 %3,%3,%0; \n\t"
+"prmt.b32 %3, %3, 0, 0x1032; \n\t"
+"add.u32 %2,%2,%3; \n\t"
+"xor.b32 %1,%1,%2; \n\t"
+"shf.l.wrap.b32 %1, %1, %1, 12; \n\t"
+"add.u32 %0,%0,%1; \n\t"
+"xor.b32 %3,%3,%0; \n\t"
+"prmt.b32 %3, %3, 0, 0x2103; \n\t"
+"add.u32 %2,%2,%3; \n\t"
+"xor.b32 %1,%1,%2; \n\t"
+"shf.l.wrap.b32 %1, %1, %1, 7; \n\t}"
+: "+r"(a), "+r"(b), "+r"(c), "+r"(d));
 }
 */
 #if __CUDA_ARCH__ >=500  
@@ -764,7 +764,7 @@ static __device__ __forceinline__ void neoscrypt_chacha(uint16 *XV)
 	uint16 temp;
 
 	XV[0] = chacha_small_parallel_rnd(XV[0] ^ XV[3]);
-	temp  = chacha_small_parallel_rnd(XV[1] ^ XV[0]);
+	temp = chacha_small_parallel_rnd(XV[1] ^ XV[0]);
 	XV[1] = chacha_small_parallel_rnd(XV[2] ^ temp);
 	XV[3] = chacha_small_parallel_rnd(XV[3] ^ XV[1]);
 	XV[2] = temp;
@@ -775,7 +775,7 @@ static __device__ __forceinline__ void neoscrypt_salsa(uint16 *XV)
 	uint16 temp;
 
 	XV[0] = salsa_small_scalar_rnd(XV[0] ^ XV[3]);
-	temp  = salsa_small_scalar_rnd(XV[1] ^ XV[0]);
+	temp = salsa_small_scalar_rnd(XV[1] ^ XV[0]);
 	XV[1] = salsa_small_scalar_rnd(XV[2] ^ temp);
 	XV[3] = salsa_small_scalar_rnd(XV[3] ^ XV[1]);
 	XV[2] = temp;
@@ -852,6 +852,7 @@ static __forceinline__ __device__ void fastkdf256_v1(uint32_t thread, const uint
 	((uint32_t*)B)[19] = nonce;
 	((uint32_t*)B)[39] = nonce;
 	((uint32_t*)B)[59] = nonce;
+	__syncthreads();
 
 	((uint816*)input)[0] = ((uint816*)input_init)[0];
 	((uint48*)key)[0] = ((uint48*)key_init)[0];
@@ -883,10 +884,11 @@ static __forceinline__ __device__ void fastkdf256_v1(uint32_t thread, const uint
 			temp[k] = B[indice] ^ shifted[k];
 			B[indice] = temp[k];
 		}
+		__syncthreads();
 
 		uint32_t a = s_data[qbuf & 0x0000003f], b;
 		//#pragma unroll
-		for(int k = 0; k<16; k+=2)
+		for(int k = 0; k<16; k += 2)
 		{
 			b = s_data[(qbuf + k + 1) & 0x0000003f];
 			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[k]) : "r"(a), "r"(b), "r"(bitbuf));
@@ -951,6 +953,7 @@ static __forceinline__ __device__ void fastkdf32_v1(uint32_t thread, const  uint
 	((uint816*)input)[0] = ((uint816*)s_data)[0];
 	((uint48*)key)[0] = ((uint48*)salt)[0];
 	uint32_t qbuf, rbuf, bitbuf;
+	__syncthreads();
 
 #pragma nounroll  
 	for(int i = 0; i < 31; i++)
@@ -1008,6 +1011,7 @@ static __forceinline__ __device__ void fastkdf32_v1(uint32_t thread, const  uint
 		{
 			B0[(k + qbuf) & 0x0000003f] = temp[k];
 		}
+		__syncthreads();
 	}
 
 	Blake2S(input, input, key);
@@ -1051,6 +1055,7 @@ static __forceinline__ __device__ void fastkdf256_v2(uint32_t thread, const uint
 	B[19] = nonce;
 	B[39] = nonce;
 	B[59] = nonce;
+	__syncthreads();
 
 	((ulonglong4*)input)[0] = ((ulonglong4*)input_init)[0];
 	((uint28*)key)[0] = ((uint28*)key_init)[0];
@@ -1081,7 +1086,7 @@ static __forceinline__ __device__ void fastkdf256_v2(uint32_t thread, const uint
 		uint32_t a = s_data[qbuf & 0x0000003f], b;
 		//#pragma unroll
 
-		for(int k = 0; k<16; k+=2)
+		for(int k = 0; k<16; k += 2)
 		{
 			b = s_data[(qbuf + k + 1) & 0x0000003f];
 			asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(input[k]) : "r"(a), "r"(b), "r"(bitbuf));
@@ -1111,6 +1116,7 @@ static __forceinline__ __device__ void fastkdf256_v2(uint32_t thread, const uint
 
 		for(int k = 0; k < 9; k++)
 			B[(k + qbuf) & 0x0000003f] = temp[k];
+		__syncthreads();
 	}
 
 	bufhelper = ((uchar4*)input)[0];
@@ -1158,6 +1164,7 @@ static __forceinline__ __device__ void fastkdf32_v3(uint32_t thread, const  uint
 	((uint816*)input)[0] = ((uint816*)s_data)[0];
 	((uint48*)key)[0] = ((uint48*)salt)[0];
 	uint32_t qbuf, rbuf, bitbuf;
+	__syncthreads();
 
 #pragma nounroll  
 	for(int i = 0; i < 31; i++)
@@ -1218,6 +1225,7 @@ static __forceinline__ __device__ void fastkdf32_v3(uint32_t thread, const  uint
 		{
 			B0[(k + qbuf) & 0x0000003f] = temp[k];
 		}
+		__syncthreads();
 	}
 
 	Blake2S_v2(input, input, key);
@@ -1428,18 +1436,18 @@ void neoscrypt_cpu_init_2stream(int thr_id, uint32_t threads)
 	CUDA_SAFE_CALL(cudaMalloc(&Trans3, 32 * sizeof(uint64_t) * threads));
 	CUDA_SAFE_CALL(cudaMalloc(&Bhash, 128 * sizeof(uint32_t) * threads));
 
-	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(B2,    &Bhash,  sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
-	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(W,     &hash1,  sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
-	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(W2,    &hash2,  sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
-	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(Tr,    &Trans1, sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
-	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(Tr2,   &Trans2, sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(B2, &Bhash, sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(W, &hash1, sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(W2, &hash2, sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(Tr, &Trans1, sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(Tr2, &Trans2, sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
 	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(Input, &Trans3, sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
 }
 
 __host__ void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *result)
 {
 	const uint32_t threadsperblock = TPB;
-	
+
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
 
@@ -1471,7 +1479,7 @@ __host__ void neoscrypt_setBlockTarget(int thr_id, uint32_t* pdata, const void *
 
 	for(int i = 0; i < 19; i++)
 	{
-		PaddedMessage[i     ] = pdata[i];
+		PaddedMessage[i] = pdata[i];
 		PaddedMessage[i + 20] = pdata[i];
 		PaddedMessage[i + 40] = pdata[i];
 	}
