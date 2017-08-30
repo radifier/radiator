@@ -689,6 +689,7 @@ void fastkdf256_v1(const uint32_t thread, const uint32_t nonce, uint32_t* const 
 	((uint32_t*)B)[19] = nonce;
 	((uint32_t*)B)[39] = nonce;
 	((uint32_t*)B)[59] = nonce;
+	__syncthreads();
 
 	((uint816*)input)[0] = ((uint816*)input_init)[0];
 	((uint4x2*)key)[0] = ((uint4x2*)key_init)[0];
@@ -720,6 +721,8 @@ void fastkdf256_v1(const uint32_t thread, const uint32_t nonce, uint32_t* const 
 			temp[k] = B[indice] ^ shifted[k];
 			B[indice] = temp[k];
 		}
+		__syncthreads();
+
 		uint32_t a = c_data[qbuf & 0x3f], b;
 		//#pragma unroll
 		for(int k = 0; k<16; k += 2)
@@ -788,7 +791,7 @@ void fastkdf256_v2(const uint32_t thread, const uint32_t nonce, uint32_t* const 
 	B[19] = nonce;
 	B[39] = nonce;
 	B[59] = nonce;
-
+	__syncthreads();
 	{
 		uint32_t bufidx = 0;
 #pragma unroll
@@ -799,8 +802,8 @@ void fastkdf256_v2(const uint32_t thread, const uint32_t nonce, uint32_t* const 
 			bufidx += bufhelper;
 		}
 		bufidx &= 0x000000ff;
-		qbuf = bufidx >> 2;
 		rbuf = bufidx & 3;
+		qbuf = bufidx >> 2;
 		bitbuf = rbuf << 3;
 
 		uint32_t temp[9];
@@ -860,6 +863,7 @@ void fastkdf256_v2(const uint32_t thread, const uint32_t nonce, uint32_t* const 
 #pragma unroll
 		for(int k = 0; k < 9; k++)
 			B[(k + qbuf) & 0x3f] = temp[k];
+		__syncthreads();
 	}
 
 	for(int i = 1; i < 31; i++)
@@ -934,6 +938,7 @@ void fastkdf256_v2(const uint32_t thread, const uint32_t nonce, uint32_t* const 
 #pragma unroll
 		for(int k = 0; k < 9; k++)
 			B[(k + qbuf) & 0x3f] = temp[k];
+		__syncthreads();
 	}
 
 	{
@@ -965,7 +970,7 @@ void fastkdf256_v2(const uint32_t thread, const uint32_t nonce, uint32_t* const 
 
 	((uint32_t*)output)[19] ^= nonce;
 	((uint32_t*)output)[39] ^= nonce;
-	((uint32_t*)output)[59] ^= nonce;;
+	((uint32_t*)output)[59] ^= nonce;
 	((ulonglong16 *)(Input + 8U * thread))[0] = ((ulonglong16*)output)[0];
 }
 #endif
@@ -980,6 +985,7 @@ uint32_t fastkdf32_v1(uint32_t thread, const uint32_t nonce, uint32_t* const sal
 
 	uint32_t* B0 = (uint32_t*)&s_data[threadIdx.x * 64U];
 	((uintx64*)B0)[0] = ((uintx64*)salt)[0];
+	__syncthreads();
 
 	uint32_t input[BLAKE2S_BLOCK_SIZE / 4];
 	((uint816*)input)[0] = ((uint816*)c_data)[0];
@@ -1051,6 +1057,7 @@ uint32_t fastkdf32_v1(uint32_t thread, const uint32_t nonce, uint32_t* const sal
 		{
 			B0[(k + qbuf) & 0x3f] = temp[k];
 		}
+		__syncthreads();
 	}
 
 	Blake2S(input, input, key);
@@ -1091,6 +1098,7 @@ uint32_t fastkdf32_v3(uint32_t thread, const uint32_t nonce, uint32_t* const sal
 
 	uint32_t* B0 = (uint32_t*)&s_data[threadIdx.x * 64U];
 	((uintx64*)B0)[0] = ((uintx64*)salt)[0];
+	__syncthreads();
 
 	uint32_t input[BLAKE2S_BLOCK_SIZE / 4];
 	((uint816*)input)[0] = ((uint816*)c_data)[0];
@@ -1175,6 +1183,7 @@ uint32_t fastkdf32_v3(uint32_t thread, const uint32_t nonce, uint32_t* const sal
 		{
 			B0[(k + qbuf) & 0x3f] = temp[k];
 		}
+		__syncthreads();
 	}
 
 	Blake2S_v2(input, input, key);
