@@ -236,11 +236,16 @@ __global__ void get_cuda_arch_gpu(int *d_version)
 #endif
 }
 
+extern sha_algos opt_algo;
+
 __host__ void get_cuda_arch(int *version)
 {
-	int *d_version;
-	cudaMalloc(&d_version, sizeof(int));
-	get_cuda_arch_gpu << < 1, 1 >> > (d_version);
-	cudaMemcpy(version, d_version, sizeof(int), cudaMemcpyDeviceToHost);
-	cudaFree(d_version);
+	if(opt_algo != ALGO_NEO)
+	{
+		int *d_version;
+		cudaMalloc(&d_version, sizeof(int));
+		get_cuda_arch_gpu << < 1, 1 >> > (d_version);
+		cudaMemcpy(version, d_version, sizeof(int), cudaMemcpyDeviceToHost);
+		cudaFree(d_version);
+	}
 }

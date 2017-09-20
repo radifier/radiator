@@ -1504,3 +1504,19 @@ __host__ void neoscrypt_setBlockTarget(int thr_id, uint32_t* pdata, const void *
 
 	CUDA_SAFE_CALL(cudaMemsetAsync(d_NNonce[thr_id], 0xff, 2 * sizeof(uint32_t), stream[1]));
 }
+
+__global__ void get_cuda_arch_neo_gpu(int *d_version)
+{
+#ifdef __CUDA_ARCH__
+	*d_version = __CUDA_ARCH__;
+#endif
+}
+
+__host__ void get_cuda_arch_neo(int *version)
+{
+	int *d_version;
+	cudaMalloc(&d_version, sizeof(int));
+	get_cuda_arch_neo_gpu << < 1, 1 >> > (d_version);
+	cudaMemcpy(version, d_version, sizeof(int), cudaMemcpyDeviceToHost);
+	cudaFree(d_version);
+}

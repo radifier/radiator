@@ -99,7 +99,6 @@ extern int scanhash_jackpot(int thr_id, uint32_t *pdata,
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
-		get_cuda_arch(&cuda_arch[thr_id]);
 
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax));
 

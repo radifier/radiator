@@ -148,7 +148,6 @@ int scanhash_c11(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
 		CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
-		get_cuda_arch(&cuda_arch[thr_id]);
 
 		unsigned int intensity;
 #if defined WIN32 && !defined _WIN64

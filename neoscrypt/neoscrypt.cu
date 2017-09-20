@@ -7,6 +7,9 @@ extern void neoscrypt_setBlockTarget(int thr_id, uint32_t* pdata, const void *ta
 extern void neoscrypt_cpu_init_2stream(int thr_id, uint32_t threads);
 extern void neoscrypt_cpu_hash_k4_2stream(bool stratum, int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *result);
 //extern void neoscrypt_cpu_hash_k4_52(int stratum, int thr_id, int threads, uint32_t startNounce, int order, uint32_t* foundnonce);
+extern void get_cuda_arch_neo_tpruvot(int *version);
+extern void get_cuda_arch_neo(int *version); 
+extern int cuda_arch[MAX_GPUS];
 void neoscrypt_init(int thr_id, uint32_t threads);
 void neoscrypt_setBlockTarget_tpruvot(uint32_t* const pdata, uint32_t* const target);
 void neoscrypt_hash_tpruvot(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *resNonces, bool stratum);
@@ -105,9 +108,15 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		}
 #endif
 		if(use_tpruvot)
+		{
+			get_cuda_arch_neo_tpruvot(&cuda_arch[thr_id]);
 			neoscrypt_init(thr_id, throughputmax);
+		}
 		else
+		{
+			get_cuda_arch_neo(&cuda_arch[thr_id]);
 			neoscrypt_cpu_init_2stream(thr_id, throughputmax);
+		}
 		mining_has_stopped[thr_id] = false;
 		init = true;
 	}

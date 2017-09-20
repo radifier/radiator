@@ -61,6 +61,9 @@ BOOL WINAPI ConsoleHandler(DWORD);
 
 double expectedblocktime(const uint32_t *target);
 
+extern void get_cuda_arch(int *version);
+extern int cuda_arch[MAX_GPUS];
+
 // from cuda.cpp
 int cuda_num_devices();
 void cuda_devicenames();
@@ -1379,6 +1382,8 @@ static void *miner_thread(void *userdata)
 			affine_to_cpu_mask(thr_id, opt_affinity);
 		}
 	}
+
+	get_cuda_arch(&cuda_arch[thr_id]);
 
 	while(1)
 	{

@@ -88,7 +88,6 @@ extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
-		get_cuda_arch(&cuda_arch[thr_id]);
 #if defined WIN32 && !defined _WIN64
 		// 2GB limit for cudaMalloc
 		if(throughput > 0x7fffffffULL / (16 * sizeof(uint32_t)))

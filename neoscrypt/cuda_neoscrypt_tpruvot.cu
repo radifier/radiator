@@ -1502,3 +1502,19 @@ void neoscrypt_setBlockTarget_tpruvot(uint32_t* const pdata, uint32_t* const tar
 	cudaMemcpyToSymbol(c_data, PaddedMessage, 64 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
 	CUDA_SAFE_CALL(cudaGetLastError());
 }
+
+__global__ void get_cuda_arch_neo_tpruvot_gpu(int *d_version)
+{
+#ifdef __CUDA_ARCH__
+	*d_version = __CUDA_ARCH__;
+#endif
+}
+
+__host__ void get_cuda_arch_neo_tpruvot(int *version)
+{
+	int *d_version;
+	cudaMalloc(&d_version, sizeof(int));
+	get_cuda_arch_neo_tpruvot_gpu << < 1, 1 >> > (d_version);
+	cudaMemcpy(version, d_version, sizeof(int), cudaMemcpyDeviceToHost);
+	cudaFree(d_version);
+}
