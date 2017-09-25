@@ -46,52 +46,25 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			mining_has_stopped[thr_id] = true;
 			proper_exit(2);
 		}
-		if(cc == 30)
+
+		if(strstr(props.name, "1080"))
 			use_tpruvot = true;
 
-		unsigned int intensity = (256 * 64 * 1); // -i 14
-		if(strstr(props.name, "1080 Ti"))
+		size_t freeMemory, totalMemory;
+		uint64_t memfactor;
+
+		if(use_tpruvot)
+			memfactor = 33536;
+		else
+			memfactor = 66816;
+
+		CUDA_SAFE_CALL(cudaMemGetInfo(&freeMemory, &totalMemory));
+		unsigned int intensity = 12;
+		do
 		{
-			intensity = 256 * 64 * 5;
-			use_tpruvot = true;
-		}
-		else if(strstr(props.name, "1080"))
-		{
-			intensity = 256 * 64 * 5;
-			use_tpruvot = true;
-		}
-		else if(strstr(props.name, "1070"))
-		{
-			intensity = 256 * 64 * 5;
-		}
-		else if(strstr(props.name, "970"))
-		{
-			intensity = (256 * 64 * 5);
-		}
-		else if(strstr(props.name, "980"))
-		{
-			intensity = (256 * 64 * 5);
-		}
-		else if(strstr(props.name, "980 Ti"))
-		{
-			intensity = (256 * 64 * 5);
-		}
-		else if(strstr(props.name, "750 Ti"))
-		{
-			intensity = (256 * 64 * 3);
-		}
-		else if(strstr(props.name, "750"))
-		{
-			intensity = (256 * 64 * 1);
-		}
-		else if(strstr(props.name, "960"))
-		{
-			intensity = (256 * 64 * 2);
-		}
-		else if(strstr(props.name, "950"))
-		{
-			intensity = (256 * 64 * 2);
-		}
+			intensity++;
+		} while((1ULL << intensity) * memfactor + 8 < freeMemory);
+		intensity--;
 
 		throughputmax = device_intensity(device_map[thr_id], __func__, intensity) / 2;
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
