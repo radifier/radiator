@@ -36,6 +36,9 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 	if(!init)
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
+		CUDA_SAFE_CALL(cudaDeviceReset());
+		CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
+		CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 
 		cudaDeviceProp props;
 		cudaGetDeviceProperties(&props, device_map[thr_id]);
@@ -99,7 +102,6 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		}
 
 		throughputmax = device_intensity(device_map[thr_id], __func__, intensity) / 2;
-		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		//		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);	
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * 4));
 

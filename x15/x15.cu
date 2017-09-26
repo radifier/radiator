@@ -180,8 +180,9 @@ extern int scanhash_x15(int thr_id, uint32_t *pdata,
 	if(!init)
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
-		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+		CUDA_SAFE_CALL(cudaDeviceReset());
+		CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
+		CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 #if defined WIN32 && !defined _WIN64
 		// 2GB limit for cudaMalloc
