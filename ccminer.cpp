@@ -2784,7 +2784,6 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "%s: no URL supplied\n", argv[0]);
 		show_usage_and_exit(1);
 	}
-	cuda_devicereset();
 
 	if(!rpc_userpass)
 	{
