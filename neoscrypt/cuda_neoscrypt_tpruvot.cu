@@ -85,7 +85,7 @@ __constant__ uint32_t BLAKE2S_SIGMA[10][16] = {
 
 __device__ __forceinline__ uint32_t WarpShuffle(uint32_t a, uint32_t b, uint32_t c)
 {
-	return __shfl(a, b, c);
+	return __shfl_sync(0xffffffff, a, b, c);
 }
 
 __device__ __forceinline__ void WarpShuffle3(uint32_t &a1, uint32_t &a2, uint32_t &a3, uint32_t b1, uint32_t b2, uint32_t b3, uint32_t c)

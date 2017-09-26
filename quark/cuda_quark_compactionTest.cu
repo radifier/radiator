@@ -98,7 +98,7 @@ __global__ void quark_compactTest_gpu_SCAN(uint32_t *data, int width, uint32_t *
 
 	for (int i=1; i<=width; i*=2)
 	{
-		uint32_t n = __shfl_up((int)value, i, width);
+		uint32_t n = __shfl_up_sync(0xffffffff, (int)value, i, width);
 
 		if (lane_id >= i) value += n;
 	}
@@ -125,7 +125,7 @@ __global__ void quark_compactTest_gpu_SCAN(uint32_t *data, int width, uint32_t *
 
 		for (int i=1; i<=width; i*=2)
 		{
-			uint32_t n = __shfl_up((int)warp_sum, i, width);
+			uint32_t n = __shfl_up_sync(0xffffffff, (int)warp_sum, i, width);
 
 		if (lane_id >= i) warp_sum += n;
 		}

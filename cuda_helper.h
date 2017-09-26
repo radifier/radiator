@@ -20,7 +20,7 @@ using namespace std;
 #define __CUDA_ARCH__ 610
 
 uint32_t __byte_perm(uint32_t x, uint32_t y, uint32_t z);
-uint32_t __shfl(uint32_t x, uint32_t y, uint32_t z);
+uint32_t __shfl_sync(uint32_t w, uint32_t x, uint32_t y, uint32_t z);
 uint32_t atomicExch(uint32_t *x, uint32_t y);
 uint32_t atomicAdd(uint32_t *x, uint32_t y);
 void __syncthreads(void);
