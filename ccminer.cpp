@@ -112,7 +112,6 @@ static const char *algo_names[] = {
 	"sia",
 	"skein",
 	"s3",
-	"spread",
 	"whirl",
 	"whirlpoolx",
 	"x11",
@@ -224,7 +223,7 @@ Options:\n\
 			fresh       Freshcoin (shavite 80)\n\
 			fugue256    Fuguecoin\n\
 			groestl     Groestlcoin\n\
-			jackpot     Jackpot\n\
+			jackpot     Jackpot (JHA)\n\
 			keccak      Keccak-256 (Maxcoin)\n\
 			luffa       Doomcoin\n\
 			lyra2v2     VertCoin\n\
@@ -237,14 +236,12 @@ Options:\n\
 			sia         Siacoin (at pools compatible to siamining.com) \n\
 			skein       Skein SHA2 (Skeincoin)\n\
 			s3          S3 (1Coin)\n\
-			spread      Spread\n\
 			x11         X11 (DarkCoin)\n\
 			x13         X13 (MaruCoin)\n\
 			x14         X14\n\
 			x15         X15\n\
 			x17         X17 (peoplecurrency)\n\
 			vanilla     Blake 256 8 rounds\n\
-			yescrypt    yescrypt\n\
 			whirl       Whirlcoin (old whirlpool)\n\
 			whirlpoolx  Vanillacoin \n\
   -d, --devices         Comma separated list of CUDA devices to use. \n\
@@ -285,7 +282,6 @@ Options:\n\
       --syslog-prefix=... allow to change syslog tool name\n\
   -B, --background      run the miner in the background\n\
       --benchmark       run in offline benchmark mode\n\
-      --cputest         debug hashes from cpu algorithms\n\
       --no-cpu-verify   don't verify the found results\n\
   -c, --config=FILE     load a JSON-format configuration file\n\
   -V, --version         display version information and exit\n\
