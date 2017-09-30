@@ -219,7 +219,6 @@
       <AdditionalIncludeDirectories>.;compat;compat\includes;compat\includes-x64;compat\getopt;compat\includes\pthreads;compat\curl-for-windows\zlib;%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir)</AdditionalIncludeDirectories>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <FloatingPointModel>Precise</FloatingPointModel>
-      <OmitFramePointers>false</OmitFramePointers>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <BufferSecurityCheck>true</BufferSecurityCheck>
@@ -228,6 +227,7 @@
       <MinimalRebuild>true</MinimalRebuild>
       <SDLCheck>false</SDLCheck>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -239,6 +239,7 @@
       <AdditionalOptions>/NODEFAULTLIB:LIBCMT %(AdditionalOptions)</AdditionalOptions>
       <LinkStatus>false</LinkStatus>
       <LargeAddressAware>true</LargeAddressAware>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <CudaCompile>
       <CInterleavedPTX>false</CInterleavedPTX>
