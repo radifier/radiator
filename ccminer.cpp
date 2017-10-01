@@ -2445,6 +2445,8 @@ static void parse_arg(int key, char *arg)
 		break;
 	case 'd': // CB
 	{
+		int i;
+		bool gpu[32] = {false};
 		int ngpus = cuda_num_devices();
 		char * pch = strtok(arg, ",");
 		opt_n_threads = 0;
@@ -2452,12 +2454,21 @@ static void parse_arg(int key, char *arg)
 		{
 			if(pch[0] >= '0' && pch[0] <= '9' && pch[1] == '\0')
 			{
-				if(atoi(pch) < ngpus)
-					device_map[opt_n_threads++] = atoi(pch);
+				i = atoi(pch);
+				if(i < ngpus && gpu[i] == false)
+				{
+					gpu[i] = true;
+					device_map[opt_n_threads++] = i;
+				}
 				else
 				{
-					applog(LOG_ERR, "Non-existant CUDA device #%d specified in -d option", atoi(pch));
-					proper_exit(1);
+					if(gpu[i] == true)
+						applog(LOG_WARNING, "Selected gpu #%d more than once in -d option. This is not supported.", i);
+					else
+					{
+						applog(LOG_ERR, "Non-existant CUDA device #%d specified in -d option", i);
+						proper_exit(1);
+					}
 				}
 			}
 			else
