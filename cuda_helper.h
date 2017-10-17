@@ -403,88 +403,15 @@ uint64_t shl_t64(uint64_t x, uint32_t n)
 	return result;
 }
 
-#ifndef USE_ROT_ASM_OPT
-#define USE_ROT_ASM_OPT 1
-#endif
-
 #ifdef NOASM
-#undef USE_ROT_ASM_OPT
+#define USE_ROT_ASM_OPT 0
 #endif
 
-// 64-bit ROTATE RIGHT
-#if __CUDA_ARCH__ >= 320 && USE_ROT_ASM_OPT == 1
-/* complicated sm >= 3.5 one (with Funnel Shifter beschleunigt), to bench */
-__device__ __forceinline__
-uint64_t ROTR64(const uint64_t value, const int offset) {
-	uint2 result;
-	if(offset < 32) {
-		asm("shf.r.wrap.b32 %0, %1, %2, %3;" : "=r"(result.x) : "r"(__double2loint(__longlong_as_double(value))), "r"(__double2hiint(__longlong_as_double(value))), "r"(offset));
-		asm("shf.r.wrap.b32 %0, %1, %2, %3;" : "=r"(result.y) : "r"(__double2hiint(__longlong_as_double(value))), "r"(__double2loint(__longlong_as_double(value))), "r"(offset));
-	} else {
-		asm("shf.r.wrap.b32 %0, %1, %2, %3;" : "=r"(result.x) : "r"(__double2hiint(__longlong_as_double(value))), "r"(__double2loint(__longlong_as_double(value))), "r"(offset));
-		asm("shf.r.wrap.b32 %0, %1, %2, %3;" : "=r"(result.y) : "r"(__double2loint(__longlong_as_double(value))), "r"(__double2hiint(__longlong_as_double(value))), "r"(offset));
-	}
-	return __double_as_longlong(__hiloint2double(result.y, result.x));
-}
-#elif __CUDA_ARCH__ >= 120 && USE_ROT_ASM_OPT == 2
-__device__ __forceinline__
-uint64_t ROTR64(const uint64_t x, const int offset)
-{
-	uint64_t result;
-	asm("{\n\t"
-		".reg .b64 lhs;\n\t"
-		".reg .u32 roff;\n\t"
-		"shr.b64 lhs, %1, %2;\n\t"
-		"sub.u32 roff, 64, %2;\n\t"
-		"shl.b64 %0, %1, roff;\n\t"
-		"add.u64 %0, %0, lhs;\n\t"
-	"}\n"
-	: "=l"(result) : "l"(x), "r"(offset));
-	return result;
-}
+#ifndef USE_ROT_ASM_OPT
+#if __CUDA_ARCH__ < 600
+#define USE_ROT_ASM_OPT 1
 #else
-/* host */
-#if defined _MSC_VER && !defined __CUDA_ARCH__
-	#define ROTR64(x, n) _rotr64(x, n)
-#else
-#ifndef __CUDA_ARCH__
-	#define ROTR64(x, n)  (((x) >> (n)) | ((x) << (64 - (n))))
-#else
-#if __CUDA_ARCH__ >= 520
-__device__ __forceinline__
-uint64_t ROTR64(const uint64_t value, const int offset)
-{
-	uint2 result;
-	if(offset < 32)
-	{
-		asm("shf.r.wrap.b32 %0, %1, %2, %3;" : "=r"(result.x) : "r"(__double2loint(__longlong_as_double(value))), "r"(__double2hiint(__longlong_as_double(value))), "r"(offset));
-		asm("shf.r.wrap.b32 %0, %1, %2, %3;" : "=r"(result.y) : "r"(__double2hiint(__longlong_as_double(value))), "r"(__double2loint(__longlong_as_double(value))), "r"(offset));
-	}
-	else
-	{
-		asm("shf.r.wrap.b32 %0, %1, %2, %3;" : "=r"(result.x) : "r"(__double2hiint(__longlong_as_double(value))), "r"(__double2loint(__longlong_as_double(value))), "r"(offset));
-		asm("shf.r.wrap.b32 %0, %1, %2, %3;" : "=r"(result.y) : "r"(__double2loint(__longlong_as_double(value))), "r"(__double2hiint(__longlong_as_double(value))), "r"(offset));
-	}
-	return __double_as_longlong(__hiloint2double(result.y, result.x));
-}
-#else
-__device__ __forceinline__
-uint64_t ROTR64(const uint64_t x, const int offset)
-{
-	uint64_t result;
-	asm("{\n\t"
-			".reg .b64 lhs;\n\t"
-			".reg .u32 roff;\n\t"
-			"shr.b64 lhs, %1, %2;\n\t"
-			"sub.u32 roff, 64, %2;\n\t"
-			"shl.b64 %0, %1, roff;\n\t"
-			"add.u64 %0, %0, lhs;\n\t"
-			"}\n"
-			: "=l"(result) : "l"(x), "r"(offset));
-	return result;
-}
-#endif
-#endif
+#define USE_ROT_ASM_OPT 0
 #endif
 #endif
 
@@ -542,9 +469,17 @@ uint64_t ROTL64(const uint64_t x, const int offset)
 #if defined _MSC_VER && !defined __CUDA_ARCH__
 #define ROTL64(x, n) _rotl64(x, n)
 #else
-#define ROTL64(x, n)  (((x) << (n)) | ((x) >> (64 - (n))))
+#ifdef __CUDA_ARCH__
+__device__ __forceinline__
+#endif
+uint64_t ROTL64(const uint64_t x, const uint8_t n)
+{
+	return (x << n) | (x >> (64 - n));
+}
 #endif
 #endif
+
+#define ROTR64(x, n) ROTL64(x, 64-(n))
 
 __device__ __forceinline__
 uint64_t SWAPDWORDS(uint64_t value)
