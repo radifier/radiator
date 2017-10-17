@@ -13,6 +13,7 @@ extern "C" {
 #include <openssl/sha.h>
 
 extern void skein512_cpu_setBlock_80(int thr_id,void *pdata);
+extern void skein512_cpu_hash_80_6x(int thr_id, uint32_t threads, uint32_t startNounce, int swapu, uint64_t target, uint32_t *h_found);
 extern void skein512_cpu_hash_80_50(int thr_id, uint32_t threads, uint32_t startNounce, int swapu, uint64_t target, uint32_t *h_found);
 extern void skein512_cpu_hash_80_52(int thr_id, uint32_t threads, uint32_t startNounce, int swapu, uint64_t target, uint32_t *h_found);
 
@@ -80,10 +81,13 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 	{
 		*hashes_done = pdata[19] - first_nonce + throughput;
 
-		if (device_sm[device_map[thr_id]] > 500)
-			skein512_cpu_hash_80_52(thr_id, throughput, pdata[19], swap, target, foundnonces);
+		if(device_sm[device_map[thr_id]] >= 600)
+			skein512_cpu_hash_80_6x(thr_id, throughput, pdata[19], swap, target, foundnonces);
 		else
-			skein512_cpu_hash_80_50(thr_id, throughput, pdata[19], swap, target, foundnonces);
+			if(device_sm[device_map[thr_id]] > 500)
+				skein512_cpu_hash_80_52(thr_id, throughput, pdata[19], swap, target, foundnonces);
+			else
+				skein512_cpu_hash_80_50(thr_id, throughput, pdata[19], swap, target, foundnonces);
 
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
 		if(foundnonces[0] != 0xffffffff)
