@@ -306,6 +306,8 @@ void bmw256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uint
 
 	bmw256_gpu_hash_32 << <grid, block >> >(threads, startNounce, (uint2 *)g_hash, d_nonce[thr_id], Target);
 	CUDA_SAFE_CALL(cudaGetLastError());
+	if(opt_debug)
+		CUDA_SAFE_CALL(cudaDeviceSynchronize());
 	CUDA_SAFE_CALL(cudaMemcpy(h_nonce[thr_id], d_nonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 	resultnonces[0] = *(h_nonce[thr_id]);
 	resultnonces[1] = *(h_nonce[thr_id] + 1);

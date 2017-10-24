@@ -6,7 +6,7 @@
 
 #include <cstdio>
 #include <memory.h>
-
+#include "cuda_helper.h"
 #include "cuda_lyra2v2_sm3.cuh"
 
 #ifdef __INTELLISENSE__
@@ -451,7 +451,9 @@ __host__
 void lyra2v2_cpu_init(int thr_id, uint64_t *d_matrix)
 {
 	// just assign the device pointer allocated in main loop
-	cudaMemcpyToSymbol(DMatrix, &d_matrix, sizeof(uint64_t*), 0, cudaMemcpyHostToDevice);
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(DMatrix, &d_matrix, sizeof(uint64_t*), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+	if(opt_debug)
+		CUDA_SAFE_CALL(cudaDeviceSynchronize());
 }
 
 __host__
@@ -468,8 +470,14 @@ void lyra2v2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uin
 		dim3 block4(4, 32 / 4);
 
 		lyra2v2_gpu_hash_32_1 << < grid2, block2, 0, gpustream[thr_id] >> > (threads, (uint2*)g_hash);
+		if(opt_debug)
+			CUDA_SAFE_CALL(cudaDeviceSynchronize());
 		lyra2v2_gpu_hash_32_2 << < grid4, block4, 0, gpustream[thr_id] >> > (threads);
+		if(opt_debug)
+			CUDA_SAFE_CALL(cudaDeviceSynchronize());
 		lyra2v2_gpu_hash_32_3 << < grid2, block2, 0, gpustream[thr_id] >> > (threads, (uint2*)g_hash);
+		if(opt_debug)
+			CUDA_SAFE_CALL(cudaDeviceSynchronize());
 
 	}
 	else
@@ -483,6 +491,8 @@ void lyra2v2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uin
 		dim3 grid((threads + tpb - 1) / tpb);
 		dim3 block(tpb);
 		lyra2v2_gpu_hash_32_v3 << < grid, block, 0, gpustream[thr_id] >> > (threads, startNounce, (uint2*)g_hash);
+		if(opt_debug)
+			CUDA_SAFE_CALL(cudaDeviceSynchronize());
 
 	}
 	CUDA_SAFE_CALL(cudaGetLastError());

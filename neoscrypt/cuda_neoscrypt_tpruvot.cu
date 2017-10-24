@@ -1462,11 +1462,19 @@ void neoscrypt_hash_tpruvot(int thr_id, uint32_t threads, uint32_t startNounce, 
 	dim3 block3(4, threadsperblock >> 2);
 
 	neoscrypt_gpu_hash_start << <grid2, block2 >> > (stratum, startNounce); //fastkdf
+	if(opt_debug)
+		CUDA_SAFE_CALL(cudaDeviceSynchronize());
 
 	neoscrypt_gpu_hash_salsa1 << <grid3, block3 >> > ();
+	if(opt_debug)
+		CUDA_SAFE_CALL(cudaDeviceSynchronize());
 	neoscrypt_gpu_hash_chacha1 << <grid3, block3 >> > ();
+	if(opt_debug)
+		CUDA_SAFE_CALL(cudaDeviceSynchronize());
 
 	neoscrypt_gpu_hash_ending << <grid2, block2 >> > (stratum, startNounce, d_NNonce[thr_id]); //fastkdf+end
+	if(opt_debug)
+		CUDA_SAFE_CALL(cudaDeviceSynchronize());
 
 	CUDA_SAFE_CALL(cudaMemcpy(resNonces, d_NNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 }
@@ -1501,6 +1509,8 @@ void neoscrypt_setBlockTarget_tpruvot(uint32_t* const pdata, uint32_t* const tar
 	cudaMemcpyToSymbol(c_target, &target[6], 2 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
 	cudaMemcpyToSymbol(c_data, PaddedMessage, 64 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice);
 	CUDA_SAFE_CALL(cudaGetLastError());
+	if(opt_debug)
+		CUDA_SAFE_CALL(cudaDeviceSynchronize());
 }
 
 __global__ void get_cuda_arch_neo_tpruvot_gpu(int *d_version)
