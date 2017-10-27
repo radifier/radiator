@@ -125,6 +125,199 @@ __device__ __forceinline__ void rrounds(uint32_t x[2][2][2][2][2])
 	}
 }
 
+__device__ __forceinline__ void rrounds_final(uint32_t x[2][2][2][2][2])
+{
+	int r;
+	int j;
+	int k;
+	int l;
+	int m;
+
+#pragma unroll 2
+	for(r = 0; r < CUBEHASH_ROUNDS-1; ++r)
+	{
+
+		/* "add x_0jklm into x_1jklmn modulo 2^32" */
+#pragma unroll 2
+		for(j = 0; j < 2; ++j)
+#pragma unroll 2
+			for(k = 0; k < 2; ++k)
+#pragma unroll 2
+				for(l = 0; l < 2; ++l)
+#pragma unroll 2
+					for(m = 0; m < 2; ++m)
+						x[1][j][k][l][m] += x[0][j][k][l][m];
+
+		/* "rotate x_0jklm upwards by 7 bits" */
+#pragma unroll 2
+		for(j = 0; j < 2; ++j)
+#pragma unroll 2
+			for(k = 0; k < 2; ++k)
+#pragma unroll 2
+				for(l = 0; l < 2; ++l)
+#pragma unroll 2
+					for(m = 0; m < 2; ++m)
+						x[0][j][k][l][m] = ROTATEUPWARDS7(x[0][j][k][l][m]);
+
+		/* "swap x_00klm with x_01klm" */
+#pragma unroll 2
+		for(k = 0; k < 2; ++k)
+#pragma unroll 2
+			for(l = 0; l < 2; ++l)
+#pragma unroll 2
+				for(m = 0; m < 2; ++m)
+					SWAP(x[0][0][k][l][m], x[0][1][k][l][m])
+
+					/* "xor x_1jklm into x_0jklm" */
+#pragma unroll 2
+					for(j = 0; j < 2; ++j)
+#pragma unroll 2
+						for(k = 0; k < 2; ++k)
+#pragma unroll 2
+							for(l = 0; l < 2; ++l)
+#pragma unroll 2
+								for(m = 0; m < 2; ++m)
+									x[0][j][k][l][m] ^= x[1][j][k][l][m];
+
+		/* "swap x_1jk0m with x_1jk1m" */
+#pragma unroll 2
+		for(j = 0; j < 2; ++j)
+#pragma unroll 2
+			for(k = 0; k < 2; ++k)
+#pragma unroll 2
+				for(m = 0; m < 2; ++m)
+					SWAP(x[1][j][k][0][m], x[1][j][k][1][m])
+
+					/* "add x_0jklm into x_1jklm modulo 2^32" */
+#pragma unroll 2
+					for(j = 0; j < 2; ++j)
+#pragma unroll 2
+						for(k = 0; k < 2; ++k)
+#pragma unroll 2
+							for(l = 0; l < 2; ++l)
+#pragma unroll 2
+								for(m = 0; m < 2; ++m)
+									x[1][j][k][l][m] += x[0][j][k][l][m];
+
+		/* "rotate x_0jklm upwards by 11 bits" */
+#pragma unroll 2
+		for(j = 0; j < 2; ++j)
+#pragma unroll 2
+			for(k = 0; k < 2; ++k)
+#pragma unroll 2
+				for(l = 0; l < 2; ++l)
+#pragma unroll 2
+					for(m = 0; m < 2; ++m)
+						x[0][j][k][l][m] = ROTATEUPWARDS11(x[0][j][k][l][m]);
+
+		/* "swap x_0j0lm with x_0j1lm" */
+#pragma unroll 2
+		for(j = 0; j < 2; ++j)
+#pragma unroll 2
+			for(l = 0; l < 2; ++l)
+#pragma unroll 2
+				for(m = 0; m < 2; ++m)
+					SWAP(x[0][j][0][l][m], x[0][j][1][l][m])
+
+					/* "xor x_1jklm into x_0jklm" */
+#pragma unroll 2
+					for(j = 0; j < 2; ++j)
+#pragma unroll 2
+						for(k = 0; k < 2; ++k)
+#pragma unroll 2
+							for(l = 0; l < 2; ++l)
+#pragma unroll 2
+								for(m = 0; m < 2; ++m)
+									x[0][j][k][l][m] ^= x[1][j][k][l][m];
+
+		/* "swap x_1jkl0 with x_1jkl1" */
+#pragma unroll 2
+		for(j = 0; j < 2; ++j)
+#pragma unroll 2
+			for(k = 0; k < 2; ++k)
+#pragma unroll 2
+				for(l = 0; l < 2; ++l)
+					SWAP(x[1][j][k][l][0], x[1][j][k][l][1])
+
+	}
+	/* "add x_0jklm into x_1jklmn modulo 2^32" */
+#pragma unroll 2
+		for(k = 0; k < 2; ++k)
+#pragma unroll 2
+			for(l = 0; l < 2; ++l)
+#pragma unroll 2
+				for(m = 0; m < 2; ++m)
+					x[1][0][k][l][m] += x[0][0][k][l][m];
+
+	/* "rotate x_0jklm upwards by 7 bits" */
+#pragma unroll 2
+		for(k = 0; k < 2; ++k)
+#pragma unroll 2
+			for(l = 0; l < 2; ++l)
+#pragma unroll 2
+				for(m = 0; m < 2; ++m)
+					x[0][1][k][l][m] = ROTATEUPWARDS7(x[0][1][k][l][m]);
+
+	/* "swap x_00klm with x_01klm" */
+#pragma unroll 2
+	for(k = 0; k < 2; ++k)
+#pragma unroll 2
+		for(l = 0; l < 2; ++l)
+#pragma unroll 2
+			for(m = 0; m < 2; ++m)
+				x[0][0][k][l][m] = x[0][1][k][l][m];
+
+				/* "xor x_1jklm into x_0jklm" */
+#pragma unroll 2
+					for(k = 0; k < 2; ++k)
+#pragma unroll 2
+						for(l = 0; l < 2; ++l)
+#pragma unroll 2
+							for(m = 0; m < 2; ++m)
+								x[0][0][k][l][m] ^= x[1][0][k][l][m];
+
+	/* "swap x_1jk0m with x_1jk1m" */
+#pragma unroll 2
+		for(k = 0; k < 2; ++k)
+#pragma unroll 2
+			for(m = 0; m < 2; ++m)
+				SWAP(x[1][0][k][0][m], x[1][0][k][1][m])
+
+				/* "add x_0jklm into x_1jklm modulo 2^32" */
+#pragma unroll 2
+					for(k = 0; k < 2; ++k)
+#pragma unroll 2
+						for(l = 0; l < 2; ++l)
+#pragma unroll 2
+							for(m = 0; m < 2; ++m)
+								x[1][0][k][l][m] += x[0][0][k][l][m];
+
+	/* "rotate x_0jklm upwards by 11 bits" */
+#pragma unroll 2
+		for(k = 0; k < 2; ++k)
+#pragma unroll 2
+			for(l = 0; l < 2; ++l)
+#pragma unroll 2
+				for(m = 0; m < 2; ++m)
+					x[0][0][k][l][m] = ROTATEUPWARDS11(x[0][0][k][l][m]);
+
+	/* "swap x_0j0lm with x_0j1lm" */
+#pragma unroll 2
+		for(l = 0; l < 2; ++l)
+#pragma unroll 2
+			for(m = 0; m < 2; ++m)
+				SWAP(x[0][0][0][l][m], x[0][0][1][l][m])
+
+				/* "xor x_1jklm into x_0jklm" */
+#pragma unroll 2
+					for(k = 0; k < 2; ++k)
+#pragma unroll 2
+						for(l = 0; l < 2; ++l)
+#pragma unroll 2
+							for(m = 0; m < 2; ++m)
+								x[0][0][k][l][m] ^= x[1][0][k][l][m];
+}
+
 __device__ __forceinline__ void block_tox(const uint32_t *in, uint32_t x[2][2][2][2][2])
 {
 	x[0][0][0][0][0] ^= in[0];
@@ -175,8 +368,9 @@ void __device__ __forceinline__ Final(uint32_t x[2][2][2][2][2], uint32_t *hashv
 
 	/* "the state is then transformed invertibly through 10r identical rounds" */
 	#pragma unroll 2
-	for (i = 0; i < 10; ++i) rrounds(x);
-
+	for (i = 0; i < 9; ++i)
+		rrounds(x);
+	rrounds_final(x);
 	/* "output the first h/8 bytes of the state" */
 	hash_fromx(hashval, x);
 }
@@ -201,98 +395,56 @@ void cubehash256_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint2 *g_ha
 		Hash[2] = __ldg(&g_hash[thread + 2 * threads]);	//	LOHI(Hash[4], Hash[5], __ldg(&g_hash[thread + 2 * threads]));
 		Hash[3] = __ldg(&g_hash[thread + 3 * threads]);	//	LOHI(Hash[6], Hash[7], __ldg(&g_hash[thread + 3 * threads]));
 
-		uint32_t x[2][2][2][2][2] =
-		{
-			0xEA2BD4B4, 0xCCD6F29F, 0x63117E71,
-			0x35481EAE, 0x22512D5B, 0xE5D94E63,
-			0x7E624131, 0xF4CC12BE, 0xC2D0B696,
-			0x42AF2070, 0xD0720C35, 0x3361DA8C,
-			0x28CCECA4, 0x8EF8AD83, 0x4680AC00,
-			0x40E5FBAB, 0xD89041C3, 0x6107FBD5,
-			0x6C859D41, 0xF0B26679, 0x09392549,
-			0x5FA25603, 0x65C892FD, 0x93CB6285,
-			0x2AF2B5AE, 0x9E4B4E60, 0x774ABFDD,
-			0x85254725, 0x15815AEB, 0x4AB6AAD6,
-			0x9CDAF8AF, 0xD6032C0A
+		uint32_t x[2][2][2][2][2];
 
-		};
-		x[0][0][0][0][0] ^= Hash[0].x;
-		x[0][0][0][0][1] ^= Hash[0].y;
-		x[0][0][0][1][0] ^= Hash[1].x;
-		x[0][0][0][1][1] ^= Hash[1].y;
-		x[0][0][1][0][0] ^= Hash[2].x;
-		x[0][0][1][0][1] ^= Hash[2].y;
-		x[0][0][1][1][0] ^= Hash[3].x;
-		x[0][0][1][1][1] ^= Hash[3].y;
+		x[1][0][0][1][0] = 0xD89041C3 + (0xEA2BD4B4 ^ Hash[0].x);
+		x[1][0][0][1][1] = 0x6107FBD5 + (0xCCD6F29F ^ Hash[0].y);
+		x[1][0][0][0][0] = 0x6C859D41 + (0x63117E71 ^ Hash[1].x);
+		x[1][0][0][0][1] = 0xF0B26679 + (0x35481EAE ^ Hash[1].y);
+		x[1][0][1][1][0] = 0x09392549 + (0x22512D5B ^ Hash[2].x);
+		x[1][0][1][1][1] = 0x5FA25603 + (0xE5D94E63 ^ Hash[2].y);
+		x[1][0][1][0][0] = 0x65C892FD + (0x7E624131 ^ Hash[3].x);
+		x[1][0][1][0][1] = 0x93CB6285 + (0xF4CC12BE ^ Hash[3].y);
 
-//		rrounds(x);
+		x[1][1][0][1][0] = 0xEDC36C44;
+		x[1][1][0][1][1] = 0xE0FA6ED0;
+		x[1][1][0][0][0] = 0x47BCCC12;
+		x[1][1][0][0][1] = 0xB88721B1;
+		x[1][1][1][1][0] = 0x3E4E478F;
+		x[1][1][1][1][1] = 0xD9AF5859;
+		x[1][1][1][0][0] = 0xE35BA4AF;
+		x[1][1][1][0][1] = 0x16E927B5;
+
+		x[0][0][0][0][0] = ROTATEUPWARDS7(0xC2D0B696) ^ x[1][0][0][1][0];
+		x[0][0][0][0][1] = ROTATEUPWARDS7(0x42AF2070) ^ x[1][0][0][1][1];
+		x[0][0][0][1][0] = ROTATEUPWARDS7(0xD0720C35) ^ x[1][0][0][0][0];
+		x[0][0][0][1][1] = ROTATEUPWARDS7(0x3361DA8C) ^ x[1][0][0][0][1];
+		x[0][0][1][0][0] = ROTATEUPWARDS7(0x28CCECA4) ^ x[1][0][1][1][0];
+		x[0][0][1][0][1] = ROTATEUPWARDS7(0x8EF8AD83) ^ x[1][0][1][1][1];
+		x[0][0][1][1][0] = ROTATEUPWARDS7(0x4680AC00) ^ x[1][0][1][0][0];
+		x[0][0][1][1][1] = ROTATEUPWARDS7(0x40E5FBAB) ^ x[1][0][1][0][1];
+
+		x[0][1][0][0][0] = ROTATEUPWARDS7(0xEA2BD4B4 ^ Hash[0].x) ^ 0xEDC36C44;
+		x[0][1][0][0][1] = ROTATEUPWARDS7(0xCCD6F29F ^ Hash[0].y) ^ 0xE0FA6ED0;
+		x[0][1][0][1][0] = ROTATEUPWARDS7(0x63117E71 ^ Hash[1].x) ^ 0x47BCCC12;
+		x[0][1][0][1][1] = ROTATEUPWARDS7(0x35481EAE ^ Hash[1].y) ^ 0xB88721B1;
+		x[0][1][1][0][0] = ROTATEUPWARDS7(0x22512D5B ^ Hash[2].x) ^ 0x3E4E478F;
+		x[0][1][1][0][1] = ROTATEUPWARDS7(0xE5D94E63 ^ Hash[2].y) ^ 0xD9AF5859;
+		x[0][1][1][1][0] = ROTATEUPWARDS7(0x7E624131 ^ Hash[3].x) ^ 0xE35BA4AF;
+		x[0][1][1][1][1] = ROTATEUPWARDS7(0xF4CC12BE ^ Hash[3].y) ^ 0x16E927B5;
 		int r;
-		int j;
-		int k;
-		int l;
-		int m;
-		
-		/* "add x_0jklm into x_1jklmn modulo 2^32" */
+		int j,k,l,m;
+
+		/* "add x_0jklm into x_1jklm modulo 2^32" */
 #pragma unroll 2
-		for (j = 0; j < 2; ++j)
+		for(j = 0; j < 2; ++j)
 #pragma unroll 2
-			for (k = 0; k < 2; ++k)
+			for(k = 0; k < 2; ++k)
 #pragma unroll 2
-				for (l = 0; l < 2; ++l)
+				for(l = 0; l < 2; ++l)
 #pragma unroll 2
-					for (m = 0; m < 2; ++m)
+					for(m = 0; m < 2; ++m)
 						x[1][j][k][l][m] += x[0][j][k][l][m];
-
-		/* "rotate x_0jklm upwards by 7 bits" */
-#pragma unroll 2
-		for (j = 0; j < 2; ++j)
-#pragma unroll 2
-			for (k = 0; k < 2; ++k)
-#pragma unroll 2
-				for (l = 0; l < 2; ++l)
-#pragma unroll 2
-					for (m = 0; m < 2; ++m)
-						x[0][j][k][l][m] = ROTATEUPWARDS7(x[0][j][k][l][m]);
-
-		/* "swap x_00klm with x_01klm" */
-#pragma unroll 2
-		for (k = 0; k < 2; ++k)
-#pragma unroll 2
-			for (l = 0; l < 2; ++l)
-#pragma unroll 2
-				for (m = 0; m < 2; ++m)
-					SWAP(x[0][0][k][l][m], x[0][1][k][l][m])
-
-					/* "xor x_1jklm into x_0jklm" */
-#pragma unroll 2
-					for (j = 0; j < 2; ++j)
-#pragma unroll 2
-						for (k = 0; k < 2; ++k)
-#pragma unroll 2
-							for (l = 0; l < 2; ++l)
-#pragma unroll 2
-								for (m = 0; m < 2; ++m)
-									x[0][j][k][l][m] ^= x[1][j][k][l][m];
-
-		/* "swap x_1jk0m with x_1jk1m" */
-#pragma unroll 2
-		for (j = 0; j < 2; ++j)
-#pragma unroll 2
-			for (k = 0; k < 2; ++k)
-#pragma unroll 2
-				for (m = 0; m < 2; ++m)
-					SWAP(x[1][j][k][0][m], x[1][j][k][1][m])
-
-					/* "add x_0jklm into x_1jklm modulo 2^32" */
-#pragma unroll 2
-					for (j = 0; j < 2; ++j)
-#pragma unroll 2
-						for (k = 0; k < 2; ++k)
-#pragma unroll 2
-							for (l = 0; l < 2; ++l)
-#pragma unroll 2
-								for (m = 0; m < 2; ++m)
-									x[1][j][k][l][m] += x[0][j][k][l][m];
 
 		/* "rotate x_0jklm upwards by 11 bits" */
 #pragma unroll 2
@@ -335,7 +487,7 @@ void cubehash256_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint2 *g_ha
 					SWAP(x[1][j][k][l][0], x[1][j][k][l][1])
 
 
-#pragma unroll 1
+#pragma unroll
 		for (r = 1; r < CUBEHASH_ROUNDS; ++r) 
 		{
 
