@@ -1033,7 +1033,17 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 
 	if(opt_protocol)
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-	curl_easy_setopt(curl, CURLOPT_URL, sctx->curl_url);
+	rc = curl_easy_setopt(curl, CURLOPT_URL, sctx->curl_url);
+	if(rc != CURLE_OK)
+	{
+		if(strlen(curl_err_str)>0)
+			applog(LOG_ERR, "CURLOPT_URL error: %s", curl_err_str);
+		else
+			applog(LOG_ERR, "CURLOPT_URL error: %s", curl_easy_strerror(rc));
+		curl_easy_cleanup(curl);
+		sctx->curl = NULL;
+		return false;
+	}
 	curl_easy_setopt(curl, CURLOPT_FRESH_CONNECT, 1);
 	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, opt_timeout);
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_err_str);
@@ -1066,9 +1076,9 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 	if(rc != CURLE_OK)
 	{
 		if(strlen(curl_err_str)>0)
-			applog(LOG_ERR, "HTTP request failed: %s", curl_err_str);
+			applog(LOG_ERR, "Stratum connect failed: %s", curl_err_str);
 		else
-			applog(LOG_ERR, "HTTP request failed: %s", curl_easy_strerror(rc));
+			applog(LOG_ERR, "Stratum connect failed: %s", curl_easy_strerror(rc));
 		curl_easy_cleanup(curl);
 		sctx->curl = NULL;
 		return false;
