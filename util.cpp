@@ -831,10 +831,12 @@ static bool send_line(curl_socket_t sock, char *s)
 
 	while(len > 0)
 	{
-		struct timeval timeout = { 0, 0 };
-		ssize_t n;
+		struct timeval timeout;
+		int n;
 		fd_set wd;
 
+		timeout.tv_sec = 3;
+		timeout.tv_usec = 0;
 		FD_ZERO(&wd);
 		FD_SET(sock, &wd);
 		if(select((int)sock + 1, NULL, &wd, NULL, &timeout) < 1)
@@ -883,7 +885,10 @@ static bool socket_full(curl_socket_t sock, int timeout)
 
 bool stratum_socket_full(struct stratum_ctx *sctx, int timeout)
 {
-	return strlen(sctx->sockbuf) || socket_full(sctx->sock, timeout);
+	if(!sctx->sockbuf)
+		return false;
+	else
+		return strlen(sctx->sockbuf) || socket_full(sctx->sock, timeout);
 }
 
 #define RBUFSIZE 2048
