@@ -831,10 +831,12 @@ static bool send_line(curl_socket_t sock, char *s)
 
 	while(len > 0)
 	{
-		struct timeval timeout = { 0, 0 };
-		ssize_t n;
+		struct timeval timeout;
+		int n;
 		fd_set wd;
 
+		timeout.tv_sec = 3;
+		timeout.tv_usec = 0;
 		FD_ZERO(&wd);
 		FD_SET(sock, &wd);
 		if(select((int)sock + 1, NULL, &wd, NULL, &timeout) < 1)
@@ -883,7 +885,10 @@ static bool socket_full(curl_socket_t sock, int timeout)
 
 bool stratum_socket_full(struct stratum_ctx *sctx, int timeout)
 {
-	return strlen(sctx->sockbuf) || socket_full(sctx->sock, timeout);
+	if(!sctx->sockbuf)
+		return false;
+	else
+		return strlen(sctx->sockbuf) || socket_full(sctx->sock, timeout);
 }
 
 #define RBUFSIZE 2048
@@ -910,7 +915,7 @@ static void stratum_buffer_append(struct stratum_ctx *sctx, const char *s)
 
 char *stratum_recv_line(struct stratum_ctx *sctx)
 {
-	ssize_t len, buflen;
+	size_t len, buflen;
 	char *tok, *sret = NULL;
 	int timeout = opt_timeout;
 
@@ -957,7 +962,7 @@ char *stratum_recv_line(struct stratum_ctx *sctx)
 		}
 	}
 
-	buflen = (ssize_t)strlen(sctx->sockbuf);
+	buflen = strlen(sctx->sockbuf);
 	tok = strtok(sctx->sockbuf, "\n");
 	if(!tok)
 	{
@@ -965,7 +970,7 @@ char *stratum_recv_line(struct stratum_ctx *sctx)
 		goto out;
 	}
 	sret = strdup(tok);
-	len = (ssize_t)strlen(sret);
+	len = strlen(sret);
 
 	if(buflen > len + 1)
 		memmove(sctx->sockbuf, sctx->sockbuf + len + 1, buflen - len + 1);
@@ -1033,7 +1038,17 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 
 	if(opt_protocol)
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-	curl_easy_setopt(curl, CURLOPT_URL, sctx->curl_url);
+	rc = curl_easy_setopt(curl, CURLOPT_URL, sctx->curl_url);
+	if(rc != CURLE_OK)
+	{
+		if(strlen(curl_err_str)>0)
+			applog(LOG_ERR, "CURLOPT_URL error: %s", curl_err_str);
+		else
+			applog(LOG_ERR, "CURLOPT_URL error: %s", curl_easy_strerror(rc));
+		curl_easy_cleanup(curl);
+		sctx->curl = NULL;
+		return false;
+	}
 	curl_easy_setopt(curl, CURLOPT_FRESH_CONNECT, 1);
 	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, opt_timeout);
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_err_str);
@@ -1066,9 +1081,9 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 	if(rc != CURLE_OK)
 	{
 		if(strlen(curl_err_str)>0)
-			applog(LOG_ERR, "HTTP request failed: %s", curl_err_str);
+			applog(LOG_ERR, "Stratum connect failed: %s", curl_err_str);
 		else
-			applog(LOG_ERR, "HTTP request failed: %s", curl_easy_strerror(rc));
+			applog(LOG_ERR, "Stratum connect failed: %s", curl_easy_strerror(rc));
 		curl_easy_cleanup(curl);
 		sctx->curl = NULL;
 		return false;
@@ -1084,7 +1099,7 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 
 static void stratum_free_job(struct stratum_ctx *sctx)
 {
-	pthread_mutex_lock(&sctx->sock_lock);
+	pthread_mutex_lock(&sctx->work_lock);
 	if(sctx->job.job_id)
 	{
 		free(sctx->job.job_id);
@@ -1101,7 +1116,7 @@ static void stratum_free_job(struct stratum_ctx *sctx)
 	free(sctx->job.coinbase);
 	// note: xnonce2 is not allocated
 	memset(&(sctx->job.job_id), 0, sizeof(struct stratum_job));
-	pthread_mutex_unlock(&sctx->sock_lock);
+	pthread_mutex_unlock(&sctx->work_lock);
 }
 
 void stratum_disconnect(struct stratum_ctx *sctx)
