@@ -1099,7 +1099,7 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 
 static void stratum_free_job(struct stratum_ctx *sctx)
 {
-	pthread_mutex_lock(&sctx->sock_lock);
+	pthread_mutex_lock(&sctx->work_lock);
 	if(sctx->job.job_id)
 	{
 		free(sctx->job.job_id);
@@ -1116,7 +1116,7 @@ static void stratum_free_job(struct stratum_ctx *sctx)
 	free(sctx->job.coinbase);
 	// note: xnonce2 is not allocated
 	memset(&(sctx->job.job_id), 0, sizeof(struct stratum_job));
-	pthread_mutex_unlock(&sctx->sock_lock);
+	pthread_mutex_unlock(&sctx->work_lock);
 }
 
 void stratum_disconnect(struct stratum_ctx *sctx)
