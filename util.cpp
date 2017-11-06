@@ -915,7 +915,7 @@ static void stratum_buffer_append(struct stratum_ctx *sctx, const char *s)
 
 char *stratum_recv_line(struct stratum_ctx *sctx)
 {
-	ssize_t len, buflen;
+	size_t len, buflen;
 	char *tok, *sret = NULL;
 	int timeout = opt_timeout;
 
@@ -962,7 +962,7 @@ char *stratum_recv_line(struct stratum_ctx *sctx)
 		}
 	}
 
-	buflen = (ssize_t)strlen(sctx->sockbuf);
+	buflen = strlen(sctx->sockbuf);
 	tok = strtok(sctx->sockbuf, "\n");
 	if(!tok)
 	{
@@ -970,7 +970,7 @@ char *stratum_recv_line(struct stratum_ctx *sctx)
 		goto out;
 	}
 	sret = strdup(tok);
-	len = (ssize_t)strlen(sret);
+	len = strlen(sret);
 
 	if(buflen > len + 1)
 		memmove(sctx->sockbuf, sctx->sockbuf + len + 1, buflen - len + 1);
