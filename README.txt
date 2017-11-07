@@ -1,4 +1,4 @@
-ccMiner release 8.13(KlausT-mod) (August 26th, 2017)
+ccMiner release 8.14(KlausT-mod) (November 7th, 2017)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -239,6 +239,8 @@ features.
 2017-08-17 v8.12: fix Myriad-Groestl speed bug
 2017-08-26 v8.13: fix retry bug
                   faster neoscrypt for 1080/1080Ti
+2017-11-07 v8.14: faster Neoscrypt for Titan Xp
+                  fix bug that prevented a reconnect after a connection loss
 
 >>> AUTHORS <<<
 
