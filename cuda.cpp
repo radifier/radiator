@@ -71,14 +71,18 @@ void cuda_devicenames()
 		exit(1);
 	}
 
-	if(opt_n_threads)
-		GPU_N = min(MAX_GPUS, opt_n_threads);
+	GPU_N = min(MAX_GPUS, GPU_N);
 	for(int i = 0; i < GPU_N; i++)
 	{
 		char vendorname[32] = {0};
 		int dev_id = device_map[i];
 		cudaDeviceProp props;
-		cudaGetDeviceProperties(&props, dev_id);
+		err = cudaGetDeviceProperties(&props, dev_id);
+		if(err != cudaSuccess)
+		{
+			applog(LOG_ERR, "%s", cudaGetErrorString(err));
+			exit(1);
+		}
 
 		device_sm[dev_id] = (props.major * 100 + props.minor * 10);
 
@@ -110,13 +114,19 @@ void cuda_devicenames()
 
 void cuda_print_devices()
 {
+	cudaError_t err;
 	int ngpus = cuda_num_devices();
-	for (int n=0; n < ngpus; n++) {
+	for(int n = 0; n < min(ngpus, MAX_GPUS); n++)
+	{
 		int m = device_map[n];
 		cudaDeviceProp props;
-		cudaGetDeviceProperties(&props, m);
-		if (!opt_n_threads || n < opt_n_threads)
-			fprintf(stderr, "GPU #%d: SM %d.%d %s\n", m, props.major, props.minor, props.name);
+		err = cudaGetDeviceProperties(&props, m);
+		if(err != cudaSuccess)
+		{
+			applog(LOG_ERR, "%s", cudaGetErrorString(err));
+			exit(1);
+		}
+		fprintf(stderr, "GPU #%d: SM %d.%d %s\n", m, props.major, props.minor, device_name[n]);
 	}
 }
 

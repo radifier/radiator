@@ -2756,18 +2756,33 @@ int main(int argc, char *argv[])
 #endif
 	// number of gpus
 	active_gpus = cuda_num_devices();
-//	cuda_devicereset();
 
-	if(active_gpus > 1)
+	// default thread to device map
+	for(i = 0; i < MAX_GPUS; i++)
 	{
-		// default thread to device map
-		for(i = 0; i < MAX_GPUS; i++)
-		{
-			device_map[i] = i;
-		}
+		device_map[i] = i;
 	}
-
-	cuda_devicenames();
+#ifdef USE_WRAPNVML
+#if defined(__linux__) || defined(_WIN64)
+	/* nvml is currently not the best choice on Windows (only in x64) */
+	hnvml = nvml_create();
+	if(hnvml)
+	{
+		bool gpu_reinit = false;// (opt_cudaschedule >= 0);
+		cuda_devicenames(); // refresh gpu vendor name
+		applog(LOG_INFO, "NVML GPU monitoring enabled.");
+	}
+#endif
+#ifdef WIN32
+	if(!hnvml && nvapi_init() == 0)
+	{
+		applog(LOG_INFO, "NVAPI GPU monitoring enabled.");
+		cuda_devicenames(); // refresh gpu vendor name
+	}
+#endif
+	else if(!hnvml)
+		applog(LOG_INFO, "GPU monitoring is not available.");
+#endif
 
 	/* parse command line */
 	parse_cmdline(argc, argv);
@@ -2972,11 +2987,8 @@ int main(int argc, char *argv[])
 #ifdef USE_WRAPNVML
 #if defined(__linux__) || defined(_WIN64)
 	/* nvml is currently not the best choice on Windows (only in x64) */
-	hnvml = nvml_create();
 	if (hnvml) {
 		bool gpu_reinit = false;// (opt_cudaschedule >= 0);
-		cuda_devicenames(); // refresh gpu vendor name
-		applog(LOG_INFO, "NVML GPU monitoring enabled.");
 		for(int n = 0; n < active_gpus; n++)
 		{
 			if(nvml_set_pstate(hnvml, device_map[n]) == 1)
@@ -2992,15 +3004,6 @@ int main(int argc, char *argv[])
 		}
 	}
 #endif
-#ifdef WIN32
-	if(!hnvml && nvapi_init() == 0)
-	{
-		applog(LOG_INFO, "NVAPI GPU monitoring enabled.");
-		cuda_devicenames(); // refresh gpu vendor name
-	}
-#endif
-	else if(!hnvml)
-		applog(LOG_INFO, "GPU monitoring is not available.");
 #endif
 
 	if(opt_api_listen)
