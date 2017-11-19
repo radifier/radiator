@@ -2112,7 +2112,7 @@ static void *stratum_thread(void *userdata)
 out:
 	// call proper_exit() because the main thread only waits for the workio thread
 	proper_exit(EXIT_FAILURE);
-	return NULL; 
+	return NULL;
 }
 
 static void show_version_and_exit(void)
@@ -2940,6 +2940,10 @@ int main(int argc, char *argv[])
 	for(int i = 0; i < MAX_GPUS; i++)
 		mining_has_stopped[i] = true;
 
+#ifdef WIN32
+	timeBeginPeriod(1); // enable high timer precision
+#endif
+
 	/* start work I/O thread */
 	if(pthread_create(&thr->pth, NULL, workio_thread, thr))
 	{
@@ -3050,10 +3054,6 @@ int main(int argc, char *argv[])
 		   "using '%s' algorithm.",
 		   opt_n_threads, opt_n_threads > 1 ? "s" : "",
 		   algo_names[opt_algo]);
-
-#ifdef WIN32
-	timeBeginPeriod(1); // enable high timer precision (similar to Google Chrome Trick)
-#endif
 
 	/* main loop - simply wait for workio thread to exit */
 	pthread_join(thr_info[work_thr_id].pth, NULL);
