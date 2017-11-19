@@ -1584,6 +1584,7 @@ static void *miner_thread(void *userdata)
 			databackup = nonceptr[2];
 		else
 			databackup = nonceptr[12];
+		mining_has_stopped[thr_id] = false;
 		/* scan nonces for a proof-of-work hash */
 		switch(opt_algo)
 		{
@@ -1741,7 +1742,7 @@ static void *miner_thread(void *userdata)
 			/* should never happen */
 			goto out;
 		}
-
+		mining_has_stopped[thr_id] = true;
 		/* record scanhash elapsed time */
 		gettimeofday(&tv_end, NULL);
 		if(rc && opt_debug)
