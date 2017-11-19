@@ -463,7 +463,7 @@ void proper_exit(int reason)
 	timeEndPeriod(1);
 #endif
 
-	exit(reason & 1);
+	exit(reason);
 }
 
 static size_t jobj_binary(const json_t *obj, const char *key,
@@ -2110,7 +2110,9 @@ static void *stratum_thread(void *userdata)
 	}
 
 out:
-	return NULL;
+	// call proper_exit() because the main thread only waits for the workio thread
+	proper_exit(EXIT_FAILURE);
+	return NULL; 
 }
 
 static void show_version_and_exit(void)
