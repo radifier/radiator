@@ -1413,11 +1413,14 @@ static void *miner_thread(void *userdata)
 			if(nonceptr[0] >= end_nonce - 0x00010000 || extrajob)
 			{
 				extrajob = false;
+				int loop = 0;
 				while(!stratum_gen_work(&stratum, &g_work) && !stop_mining)
 				{
 					pthread_mutex_unlock(&g_work_lock);
-					applog(LOG_WARNING, "GPU #%d: waiting for data", device_map[thr_id]);
+					if(loop > 0)
+						applog(LOG_WARNING, "GPU #%d: waiting for data", device_map[thr_id]);
 					sleep(3);
+					loop++;
 					pthread_mutex_lock(&g_work_lock);
 				}
 			}
