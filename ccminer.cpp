@@ -456,7 +456,7 @@ void proper_exit(int reason)
 		applog(LOG_INFO, "resetting GPUs");
 		cuda_devicereset();
 	}
-
+	if(opt_syslog_pfx) free(opt_syslog_pfx);
 	curl_global_cleanup();
 
 #ifdef WIN32
@@ -1038,7 +1038,7 @@ static void *workio_thread(void *userdata)
 		return NULL;
 	}
 
-	while(ok)
+	while(ok && !stop_mining)
 	{
 		struct workio_cmd *wc;
 
@@ -1381,7 +1381,7 @@ static void *miner_thread(void *userdata)
 
 	get_cuda_arch(&cuda_arch[thr_id]);
 
-	while(1)
+	while(!stop_mining)
 	{
 		// &work.data[19]
 		int wcmplen;
@@ -1413,7 +1413,7 @@ static void *miner_thread(void *userdata)
 			if(nonceptr[0] >= end_nonce - 0x00010000 || extrajob)
 			{
 				extrajob = false;
-				while(!stratum_gen_work(&stratum, &g_work))
+				while(!stratum_gen_work(&stratum, &g_work) && !stop_mining)
 				{
 					pthread_mutex_unlock(&g_work_lock);
 					applog(LOG_WARNING, "GPU #%d: waiting for data", device_map[thr_id]);
@@ -1926,7 +1926,7 @@ start:
 
 	applog(LOG_INFO, "Long-polling enabled on %s", lp_url);
 
-	while(1)
+	while(!stop_mining)
 	{
 		json_t *val, *soval;
 		int err;
@@ -2033,7 +2033,7 @@ static void *stratum_thread(void *userdata)
 		goto out;
 	applog(LOG_BLUE, "Starting Stratum on %s", stratum.url);
 	stratum.curl = NULL;
-	while(1)
+	while(!stop_mining)
 	{
 		int failures = 0;
 
@@ -2044,7 +2044,7 @@ static void *stratum_thread(void *userdata)
 			applog(LOG_DEBUG, "stratum connection reset");
 		}
 
-		while(!stratum.curl)
+		while(!stratum.curl && !stop_mining)
 		{
 			pthread_mutex_lock(&g_work_lock);
 			g_work_time = 0;
