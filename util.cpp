@@ -35,6 +35,7 @@ using namespace std;
 
 extern enum sha_algos opt_algo;
 extern char curl_err_str[];
+extern bool stop_mining;
 
 bool opt_tracegpu = false;
 
@@ -928,7 +929,8 @@ char *stratum_recv_line(struct stratum_ctx *sctx)
 		time_t rstart = time(NULL);
 		if(!socket_full(sctx->sock, timeout))
 		{
-			applog(LOG_ERR, "stratum_recv_line timed out");
+			if(!stop_mining)
+				applog(LOG_ERR, "stratum_recv_line timed out");
 			goto out;
 		}
 		do
