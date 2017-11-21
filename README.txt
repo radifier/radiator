@@ -1,4 +1,4 @@
-ccMiner release 8.14(KlausT-mod) (November 7th, 2017)
+ccMiner release 8.15(KlausT-mod) (November 21th, 2017)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -6,7 +6,8 @@ If you find this tool useful and like to support its continued
           development, then consider a donation.
 
 KlausT @github:
-  BTC 1H2BHSyuwLP9vqt2p3bK9G3mDJsAi7qChw
+  BTC 1QDwdLPrPYSoPqS7pB2kGG84YX6hEcQ4JN
+  BCH 1AH1u7B4KtDTUBgmT6NrXyahNEgTac3fL7
 
 tpruvot@github:
   BTC donation address: 1AJdfCpLWPNoAMDfHF1wD5y8VgKSSTHxPo
@@ -241,7 +242,8 @@ features.
                   faster neoscrypt for 1080/1080Ti
 2017-11-07 v8.14: faster Neoscrypt for Titan Xp
                   fix bug that prevented a reconnect after a connection loss
-
+2017-11-21 v8.15: support up to 16 GPUs
+                  fix problem with not exiting when there's an error
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
