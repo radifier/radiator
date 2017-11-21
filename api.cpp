@@ -95,7 +95,7 @@ extern uint32_t rejected_count;
 extern int num_cpus;
 extern struct stratum_ctx stratum;
 extern char* rpc_user;
-
+extern bool stop_mining;
 // sysinfos.cpp
 extern float cpu_temp(int);
 extern uint32_t cpu_clock(int);
@@ -810,8 +810,10 @@ static void api()
 
 		clisiz = sizeof(cli);
 		c = accept(*apisock, (struct sockaddr*) (&cli), &clisiz);
-		if (SOCKETFAIL(c)) {
-			applog(LOG_ERR, "API failed (%s)%s", strerror(errno), UNAVAILABLE);
+		if(SOCKETFAIL(c))
+		{
+			if(!stop_mining)
+				applog(LOG_ERR, "API failed (%s)%s", strerror(errno), UNAVAILABLE);
 			CLOSESOCKET(*apisock);
 			free(apisock);
 			free(buffer);
