@@ -1,4 +1,4 @@
-ccMiner release 8.15(KlausT-mod) (November 21th, 2017)
+ccMiner release 8.16(KlausT-mod) (December 15th, 2017)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -244,6 +244,7 @@ features.
                   fix bug that prevented a reconnect after a connection loss
 2017-11-21 v8.15: support up to 16 GPUs
                   fix problem with not exiting when there's an error
+2017-12-15 v8.16: add sm_71 (Titan cards) (CUDA 9 and newer versions)
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
