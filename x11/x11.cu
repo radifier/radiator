@@ -157,7 +157,8 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 #if defined WIN32 && !defined _WIN64
 		intensity = 256 * 256 * 16;
 #else
-		if(strstr(props.name, "970"))		  intensity = (256 * 256 * 22);
+		if(strstr(props.name, "Titan"))		  intensity = (256 * 256 * 22);
+		else if(strstr(props.name, "970"))	  intensity = (256 * 256 * 22);
 		else if(strstr(props.name, "980"))    intensity = (256 * 256 * 22);
 		else if(strstr(props.name, "1070"))   intensity = (256 * 256 * 22);
 		else if(strstr(props.name, "1080"))   intensity = (256 * 256 * 22);
