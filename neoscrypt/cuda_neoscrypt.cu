@@ -1429,12 +1429,12 @@ void neoscrypt_cpu_init_2stream(int thr_id, uint32_t threads)
 	CUDA_SAFE_CALL(cudaStreamCreate(&stream[1]));
 
 	CUDA_SAFE_CALL(cudaMalloc(&d_NNonce[thr_id], 2 * sizeof(uint32_t)));
-	CUDA_SAFE_CALL(cudaMalloc(&hash1, 32 * 128 * sizeof(uint64_t) * threads));
-	CUDA_SAFE_CALL(cudaMalloc(&hash2, 32 * 128 * sizeof(uint64_t) * threads));
-	CUDA_SAFE_CALL(cudaMalloc(&Trans1, 32 * sizeof(uint64_t) * threads));
-	CUDA_SAFE_CALL(cudaMalloc(&Trans2, 32 * sizeof(uint64_t) * threads));
-	CUDA_SAFE_CALL(cudaMalloc(&Trans3, 32 * sizeof(uint64_t) * threads));
-	CUDA_SAFE_CALL(cudaMalloc(&Bhash, 128 * sizeof(uint32_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&hash1, 32ULL * 128 * sizeof(uint64_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&hash2, 32ULL * 128 * sizeof(uint64_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&Trans1, 32ULL * sizeof(uint64_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&Trans2, 32ULL * sizeof(uint64_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&Trans3, 32ULL * sizeof(uint64_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&Bhash, 128ULL * sizeof(uint32_t) * threads));
 
 	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(B2, &Bhash, sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
 	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(W, &hash1, sizeof(uint28*), 0, cudaMemcpyHostToDevice, stream[0]));
