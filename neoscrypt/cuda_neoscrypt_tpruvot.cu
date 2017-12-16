@@ -1426,10 +1426,10 @@ __host__
 void neoscrypt_init(int thr_id, uint32_t threads)
 {
 	CUDA_SAFE_CALL(cudaMalloc(&d_NNonce[thr_id], 2 * sizeof(uint32_t)));
-	CUDA_SAFE_CALL(cudaMalloc(&hash1, 32 * 128 * sizeof(uint64_t) * min(8192, threads)));
-	CUDA_SAFE_CALL(cudaMalloc(&Trans1, 32 * sizeof(uint64_t) * threads));
-	CUDA_SAFE_CALL(cudaMalloc(&Trans2, 32 * sizeof(uint64_t) * threads));
-	CUDA_SAFE_CALL(cudaMalloc(&Trans3, 32 * sizeof(uint64_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&hash1, 32ULL * 128 * sizeof(uint64_t) * min(8192, threads)));
+	CUDA_SAFE_CALL(cudaMalloc(&Trans1, 32ULL * sizeof(uint64_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&Trans2, 32ULL * sizeof(uint64_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&Trans3, 32ULL * sizeof(uint64_t) * threads));
 
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(W, &hash1, sizeof(uint2x4*), 0, cudaMemcpyHostToDevice));
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(Tr, &Trans1, sizeof(uint2x4*), 0, cudaMemcpyHostToDevice));
