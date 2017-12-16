@@ -476,8 +476,17 @@ static void neoscrypt_erase(void *dstp, uint len) {
 }
 
 /* 32-bit / 64-bit optimised XOR engine */
-static void neoscrypt_xor(void *dstp, const void *srcp, uint len) {
-    ulong *dst = (ulong *) dstp;
+static void neoscrypt_xor(void *dstp, const void *srcp, uint len)
+{
+	uchar *dstb = (uchar *)dstp;
+	uchar *srcb = (uchar *)srcp;
+
+	for(uint i = 0; i < len; i++)
+	{
+		dstb[i] ^= srcb[i];
+	}
+ /*
+	ulong *dst = (ulong *) dstp;
     ulong *src = (ulong *) srcp;
     uint i, tail;
 
@@ -492,6 +501,7 @@ static void neoscrypt_xor(void *dstp, const void *srcp, uint len) {
         for(i = len - tail; i < len; i++)
           dstb[i] ^= srcb[i];
     }
+*/
 }
 
 
