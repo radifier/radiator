@@ -183,7 +183,7 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 		x11_echo512_cpu_init(thr_id, throughputmax);
 		x11_simd512_cpu_init(thr_id, throughputmax);
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * 4 * throughputmax));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16ULL * 4 * throughputmax));
 		CUDA_SAFE_CALL(cudaMallocHost(&h_found, 2 * sizeof(uint32_t)));
 		mining_has_stopped[thr_id] = false;
 		init = true;

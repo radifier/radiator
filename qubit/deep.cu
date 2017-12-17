@@ -84,7 +84,7 @@ extern int scanhash_deep(int thr_id, uint32_t *pdata,
 		}
 #endif
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16ULL * sizeof(uint32_t) * throughputmax));
 
 		qubit_luffa512_cpu_init(thr_id, throughputmax);
 		x11_echo512_cpu_init(thr_id, throughputmax);

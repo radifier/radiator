@@ -154,8 +154,8 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 			proper_exit(2);
 		}
 #endif
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash2, 16  * 4 * 4 * sizeof(uint64_t) * throughputmax));
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 8 * sizeof(uint32_t) * throughputmax));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash2, 16ULL  * 4 * 4 * sizeof(uint64_t) * throughputmax));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 8ULL * sizeof(uint32_t) * throughputmax));
 
 		bmw256_cpu_init(thr_id);
 		lyra2v2_cpu_init(thr_id, d_hash2);
