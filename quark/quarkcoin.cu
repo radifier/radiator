@@ -166,7 +166,7 @@ extern int scanhash_quark(int thr_id, uint32_t *pdata,
 #endif
 
 		// Konstanten kopieren, Speicher belegen
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16ULL * sizeof(uint32_t) * throughputmax));
 		CUDA_SAFE_CALL(cudaMallocHost(&foundnonces, 4 * 4));
 //		CUDA_SAFE_CALL(cudaMalloc(&d_branch1Nonces, sizeof(uint32_t)*throughput));
 //		CUDA_SAFE_CALL(cudaMalloc(&d_branch2Nonces, sizeof(uint32_t)*throughput));

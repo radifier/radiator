@@ -803,7 +803,7 @@ x11_simd512_gpu_final_64(uint32_t threads, uint32_t startNounce, uint64_t *g_has
 __host__ 
 int x11_simd512_cpu_init(int thr_id, uint32_t threads)
 {
-	CUDA_SAFE_CALL(cudaMalloc(&d_temp4[thr_id], 64*sizeof(uint4)*threads));
+	CUDA_SAFE_CALL(cudaMalloc(&d_temp4[thr_id], 64ULL*sizeof(uint4)*threads));
 
 	// Texture for 128-Bit Zugriffe
 //	cudaChannelFormatDesc channelDesc128 = cudaCreateChannelDesc<uint4>();

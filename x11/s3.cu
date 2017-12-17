@@ -93,7 +93,7 @@ extern int scanhash_s3(int thr_id, uint32_t *pdata,
 		x11_simd512_cpu_init(thr_id, throughputmax);
 		quark_skein512_cpu_init(thr_id);
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16ULL * sizeof(uint32_t) * throughputmax));
 		CUDA_SAFE_CALL(cudaMallocHost(&(h_found), 2 * sizeof(uint32_t)));
 
 		cuda_check_cpu_init(thr_id, throughputmax);

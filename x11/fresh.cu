@@ -104,7 +104,7 @@ extern int scanhash_fresh(int thr_id, uint32_t *pdata,
 		x11_simd512_cpu_init(thr_id, throughputmax);
 		x11_echo512_cpu_init(thr_id, throughputmax);
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax + 4));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16ULL * sizeof(uint32_t) * throughputmax + 4));
 		CUDA_SAFE_CALL(cudaMallocHost(&(h_found), 4 * sizeof(uint32_t)));
 
 		cuda_check_cpu_init(thr_id, throughputmax);

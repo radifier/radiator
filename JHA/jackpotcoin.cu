@@ -101,7 +101,7 @@ extern int scanhash_jackpot(int thr_id, uint32_t *pdata,
 		CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 		CUDA_SAFE_CALL(cudaStreamCreate(&gpustream[thr_id]));
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16ULL * sizeof(uint32_t) * throughputmax));
 
 		jackpot_keccak512_cpu_init(thr_id, throughputmax);
 		jackpot_compactTest_cpu_init(thr_id, throughputmax);

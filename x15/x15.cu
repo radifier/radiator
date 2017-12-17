@@ -204,7 +204,7 @@ extern int scanhash_x15(int thr_id, uint32_t *pdata,
 		x13_fugue512_cpu_init(thr_id, throughputmax);
 		x15_whirlpool_cpu_init(thr_id, throughputmax, 0);
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16 * sizeof(uint32_t) * throughputmax));
+		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 16ULL * sizeof(uint32_t) * throughputmax));
 
 		cuda_check_cpu_init(thr_id, throughputmax);
 		mining_has_stopped[thr_id] = false;
