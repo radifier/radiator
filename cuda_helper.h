@@ -519,7 +519,7 @@ uint64_t ROTL64(const uint64_t x, const int offset)
 	return result;
 }
 #elif __CUDA_ARCH__ >= 320 && USE_ROT_ASM_OPT == 3
-__device__
+__device__ __forceinline__
 uint64_t ROTL64(const uint64_t x, const int offset)
 {
 	uint64_t res;
@@ -1169,5 +1169,3 @@ uint32_t andor32(uint32_t a, uint32_t b, uint32_t c) {
 #endif
 
 #endif // #ifndef CUDA_HELPER_H
-
-
