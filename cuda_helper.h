@@ -472,6 +472,8 @@ uint64_t ROTL64(const uint64_t x, const int offset)
 #else
 #ifdef __CUDA_ARCH__
 __device__ __forceinline__
+#else
+static inline
 #endif
 uint64_t ROTL64(const uint64_t x, const uint8_t n)
 {
