@@ -451,6 +451,7 @@ __host__
 void lyra2v2_cpu_init(int thr_id, uint64_t *d_matrix)
 {
 	// just assign the device pointer allocated in main loop
+	CUDA_SAFE_CALL(cudaFuncSetAttribute(lyra2v2_gpu_hash_32_2, cudaFuncAttributePreferredSharedMemoryCarveout, 100)); // make Titan V faster
 	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(DMatrix, &d_matrix, sizeof(uint64_t*), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 	if(opt_debug)
 		CUDA_SAFE_CALL(cudaDeviceSynchronize());
