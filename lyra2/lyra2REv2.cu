@@ -214,7 +214,7 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 					else
 					{
 						if(vhash64[7] != Htarg) // don't show message if it is equal but fails fulltest
-							applog(LOG_WARNING, "GPU #%d: result does not validate on CPU!", thr_id);
+							applog(LOG_WARNING, "GPU #%d: result does not validate on CPU!", device_map[thr_id]);
 					}
 				}
 				pdata[19] = foundNonce[0];
@@ -224,7 +224,7 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 			else
 			{
 				if (vhash64[7] != Htarg) // don't show message if it is equal but fails fulltest
-					applog(LOG_WARNING, "GPU #%d: result does not validate on CPU!", thr_id);
+					applog(LOG_WARNING, "GPU #%d: result does not validate on CPU!", device_map[thr_id]);
 			}
 		}
 

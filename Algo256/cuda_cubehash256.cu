@@ -13,7 +13,6 @@ __device__ __forceinline__ void rrounds(uint32_t x[2][2][2][2][2])
 {
 	int r;
 
-	uint32_t x0[2][2][2][2];
 	uint32_t x1[2][2][2][2];
 
 	for(r = 0; r < CUBEHASH_ROUNDS; r += 2)
