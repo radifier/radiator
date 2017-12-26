@@ -21,6 +21,7 @@ uint2 SWAPUINT2(uint2 value)
 }
 
 #define TPB5x 128
+#define TPB5x2 32
 
 #if __CUDA_ARCH__ >= 500
 
@@ -376,11 +377,11 @@ void lyra2v2_gpu_hash_32_1(uint32_t threads, uint2 *inputHash)
 }
 
 __global__
-__launch_bounds__(32, 1)
+__launch_bounds__(TPB5x2, 1)
 void lyra2v2_gpu_hash_32_2(uint32_t threads)
 {
 	const uint32_t thread = blockDim.y * blockIdx.x + threadIdx.y;
-	__shared__ uint2 shared_mem[1536];
+	extern __shared__ uint2 shared_mem[];
 	if(thread < threads)
 	{
 		uint2 state[4];
@@ -467,11 +468,12 @@ void lyra2v2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uin
 
 		dim3 grid2((threads + tpb - 1) / tpb);
 		dim3 block2(tpb);
-		dim3 grid4((threads * 4 + 32 - 1) / 32);
-		dim3 block4(4, 32 / 4);
+
+		dim3 grid4((threads * 4 + TPB5x2 - 1) / TPB5x2);
+		dim3 block4(4, TPB5x2 / 4);
 
 		lyra2v2_gpu_hash_32_1 << < grid2, block2, 0, gpustream[thr_id] >> > (threads, (uint2*)g_hash);
-		lyra2v2_gpu_hash_32_2 << < grid4, block4, 0, gpustream[thr_id] >> > (threads);
+		lyra2v2_gpu_hash_32_2 << < grid4, block4, 384 * TPB5x2, gpustream[thr_id] >> > (threads);
 		lyra2v2_gpu_hash_32_3 << < grid2, block2, 0, gpustream[thr_id] >> > (threads, (uint2*)g_hash);
 
 	}
