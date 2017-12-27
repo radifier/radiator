@@ -291,7 +291,7 @@ __host__ void myriadgroestl_cpu_init(int thr_id, uint32_t threads)
 	cudaMalloc(&d_resultNonce[thr_id], 4 * sizeof(uint32_t));
 
     // Speicher für temporäreHashes
-	CUDA_SAFE_CALL(cudaMalloc(&d_outputHashes[thr_id], 16 * sizeof(uint32_t)*threads));
+	CUDA_SAFE_CALL(cudaMalloc(&d_outputHashes[thr_id], 16ULL * sizeof(uint32_t)*threads));
 }
 
 __host__ void myriadgroestl_cpu_setBlock(int thr_id, void *data, void *pTargetIn)
