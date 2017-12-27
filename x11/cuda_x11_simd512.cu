@@ -90,7 +90,7 @@ __constant__ short c_FFT256_2_128_Twiddle[128] = {
 #define REDUCE_FULL_S(x) \
 	EXTRA_REDUCE_S(REDUCE(x))
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void FFT_8(int *y, int stripe) {
 
 /*
@@ -258,7 +258,7 @@ __device__ __forceinline__ void FFT_16(int *y) {
 #undef DO_REDUCE_FULL_S
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void FFT_128_full(int *y)
 {
 	int i;
@@ -275,7 +275,7 @@ void FFT_128_full(int *y)
 		FFT_16(y+i);  // eight sequential FFT16's, each one executed in parallel by 8 threads
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void FFT_256_halfzero(int *y)
 {
 	/*
@@ -307,7 +307,7 @@ void FFT_256_halfzero(int *y)
 
 /***************************************************/
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void Expansion(const uint32_t *const __restrict__ data, uint4 *const __restrict__ g_temp4)
 {
 	/* Message Expansion using Number Theoretical Transform similar to FFT */

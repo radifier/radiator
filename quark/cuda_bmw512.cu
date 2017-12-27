@@ -21,7 +21,7 @@
                     ROTL64(q[i+9], 37)  + ROTL64(q[i+11], 43) + \
                     ROTL64(q[i+13], 53) + (SHR(q[i+14],1) ^ q[i+14]) + (SHR(q[i+15],2) ^ q[i+15])
 
-__device__ __forceinline__ void Compression512(const uint2 *msg, uint2 *hash)
+static __device__ __forceinline__ void Compression512(const uint2 *msg, uint2 *hash)
 {
 
 	const uint2 precalc[16] =

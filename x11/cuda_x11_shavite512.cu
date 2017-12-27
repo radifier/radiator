@@ -13,7 +13,7 @@ __constant__ uint32_t c_PaddedMessage80[32]; // padded message (80 bytes + paddi
 // #include "cuda_x11_aes.cu"
 // #endif
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void AES_ROUND_NOKEY(
 	const uint32_t*const __restrict__ sharedMemory,
 	uint32_t &x0, uint32_t &x1, uint32_t &x2, uint32_t &x3)
@@ -23,7 +23,7 @@ void AES_ROUND_NOKEY(
 			  x0, x1, x2, x3);
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void KEY_EXPAND_ELT(
 	const uint32_t*const __restrict__ sharedMemory,
 	uint32_t &k0, uint32_t &k1, uint32_t &k2, uint32_t &k3)
@@ -39,7 +39,7 @@ void KEY_EXPAND_ELT(
 	k3 = y0;
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void shavite_gpu_init(uint32_t *sharedMemory)
 {
 	/* each thread startup will fill a uint32 */

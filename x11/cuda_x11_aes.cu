@@ -66,7 +66,7 @@ __constant__ __align__(64) uint32_t d_AES0[256] = {
 	0xCBB0B07B, 0xFC5454A8, 0xD6BBBB6D, 0x3A16162C
 };
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void aes_gpu_init(uint32_t *const sharedMemory)
 {
 	/* each thread startup will fill a uint32 */
@@ -78,7 +78,7 @@ void aes_gpu_init(uint32_t *const sharedMemory)
 	}
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 uint32_t bfe(uint32_t x, uint8_t bit, uint8_t numBits)
 {
 	uint32_t ret;
@@ -86,7 +86,7 @@ uint32_t bfe(uint32_t x, uint8_t bit, uint8_t numBits)
 	return ret;
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 uint32_t bfi(uint32_t x, uint32_t a, uint32_t bit, uint32_t numBits)
 {
 	uint32_t ret;

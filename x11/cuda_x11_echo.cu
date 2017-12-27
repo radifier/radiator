@@ -79,7 +79,7 @@ __constant__ uint32_t P[48] = {
 	//58-61
 };
 
-__device__ __forceinline__ void AES_2ROUND(
+static __device__ __forceinline__ void AES_2ROUND(
 	const uint32_t*const __restrict__ sharedMemory,
 	uint32_t &x0, uint32_t &x1, uint32_t &x2, uint32_t &x3,
 	const uint32_t k0)
@@ -133,7 +133,7 @@ __device__ __forceinline__ void AES_2ROUND(
 		sharedMemory[__byte_perm(y2, 0, 0x4443) + 768];
 }
 
-__device__ __forceinline__ void cuda_echo_round(
+static __device__ __forceinline__ void cuda_echo_round(
 	const uint32_t *const __restrict__ sharedMemory, uint32_t *const __restrict__  hash)
 {
 	uint32_t k0;
@@ -371,7 +371,7 @@ void echo_gpu_init_128(uint32_t *const __restrict__ sharedMemory)
 */
 
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void echo_gpu_init(uint32_t *const __restrict__ sharedMemory)
 {
 	/* each thread startup will fill a uint32 */

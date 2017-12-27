@@ -12,7 +12,7 @@ void Round512v35(uint2 &p0, uint2 &p1, uint2 &p2, uint2 &p3, uint2 &p4, uint2 &p
 	p6 += p7; p7 = ROL2(p7, ROT3) ^ p6;
 }
 
-__forceinline__ __device__
+static __forceinline__ __device__
 void Round_8_512v35(const uint2 *const __restrict__ ks, const uint2 *const __restrict__ ts,
 	uint2 &p0, uint2 &p1, uint2 &p2, uint2 &p3, uint2 &p4, uint2 &p5, uint2 &p6, uint2 &p7, const int R)
 {
@@ -45,7 +45,7 @@ void Round_8_512v35(const uint2 *const __restrict__ ks, const uint2 *const __res
 	p7 += ks[(R+8) % 9] + make_uint2(R+1, 0);
 }
 
-__forceinline__ __device__
+static __forceinline__ __device__
 void Round_8_512v35_final(const uint2 *const __restrict__ ks, const uint2 *const __restrict__ ts,
 	uint2 &p0, uint2 &p1, uint2 &p2, uint2 &p3, uint2 &p4, uint2 &p5, uint2 &p6, uint2 &p7)
 {
