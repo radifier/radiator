@@ -83,12 +83,12 @@ __constant__ uint32_t BLAKE2S_SIGMA[10][16] = {
 #define shf_r_clamp32(out,a,b,shift) \
 	asm("shf.r.clamp.b32 %0, %1, %2, %3;" : "=r"(out) : "r"(a), "r"(b), "r"(shift));
 
-__device__ __forceinline__ uint32_t WarpShuffle(uint32_t a, uint32_t b, uint32_t c)
+static __device__ __forceinline__ uint32_t WarpShuffle(uint32_t a, uint32_t b, uint32_t c)
 {
 	return __shfl(a, b, c);
 }
 
-__device__ __forceinline__ void WarpShuffle3(uint32_t &a1, uint32_t &a2, uint32_t &a3, uint32_t b1, uint32_t b2, uint32_t b3, uint32_t c)
+static __device__ __forceinline__ void WarpShuffle3(uint32_t &a1, uint32_t &a2, uint32_t &a3, uint32_t b1, uint32_t b2, uint32_t b3, uint32_t c)
 {
 	a1 = WarpShuffle(a1, b1, c);
 	a2 = WarpShuffle(a2, b2, c);
@@ -620,7 +620,7 @@ void Blake2S_v2(uint32_t *out, const uint32_t* __restrict__  inout, const  uint3
 	WarpShuffle3(state.y, state.z, state.w, threadIdx.x + 3, threadIdx.x + 2, threadIdx.x + 1,4); \
 }
 
-__forceinline__ __device__
+static __forceinline__ __device__
 uint4 salsa_small_scalar_rnd(const uint4 X)
 {
 	uint4 state = X;
@@ -634,7 +634,7 @@ uint4 salsa_small_scalar_rnd(const uint4 X)
 	return (X + state);
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 uint4 chacha_small_parallel_rnd(const uint4 X)
 {
 	uint4 state = X;
@@ -647,7 +647,7 @@ uint4 chacha_small_parallel_rnd(const uint4 X)
 	return (X + state);
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void neoscrypt_chacha(uint4 XV[4])
 {
 	uint4 temp;
@@ -659,7 +659,7 @@ void neoscrypt_chacha(uint4 XV[4])
 	XV[2] = temp;
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void neoscrypt_salsa(uint4 XV[4])
 {
 	uint4 temp;

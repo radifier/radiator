@@ -36,7 +36,7 @@
 		t = t>>1;\
 		y = y ^ t;
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void to_bitslice_quad(uint32_t *const __restrict__ input, uint32_t *const __restrict__ output)
 {
 	uint32_t other[8];
@@ -93,7 +93,7 @@ void to_bitslice_quad(uint32_t *const __restrict__ input, uint32_t *const __rest
 	SWAP4(output[3], output[7]);
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void myr_to_bitslice_quad(uint32_t *const __restrict__ input, uint32_t *const __restrict__ output)
 {
 	uint32_t other[8];
@@ -145,7 +145,7 @@ void myr_to_bitslice_quad(uint32_t *const __restrict__ input, uint32_t *const __
 	SWAP4(output[3], output[7]);
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void from_bitslice_quad(const uint32_t *const __restrict__ input, uint32_t *const __restrict__ output)
 {
 	uint32_t t;
@@ -213,7 +213,7 @@ void from_bitslice_quad(const uint32_t *const __restrict__ input, uint32_t *cons
 
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void from_bitslice_quad_final(const uint32_t *const __restrict__ input, uint32_t *const __restrict__ output)
 {
 	uint32_t t;

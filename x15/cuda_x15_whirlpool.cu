@@ -1126,7 +1126,7 @@ const int i0, const int i1, const int i2, const int i3, const int i4, const int 
 
 }
 #else
-__device__ uint2 ROUND_ELT(const uint2*const __restrict__  sharedMemory, uint2*  const __restrict__ in,
+static __device__ uint2 ROUND_ELT(const uint2*const __restrict__  sharedMemory, uint2*  const __restrict__ in,
 const int i0, const int i1, const int i2, const int i3, const int i4, const int i5, const int i6, const int i7)
 {
 	return (sharedMemory[__byte_perm(in[i0].x, 0, 0x4440)] ^ 

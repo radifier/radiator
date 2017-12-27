@@ -158,7 +158,7 @@ static uint32_t h_CNS[80] = {
 	0x3b6ba548, 0x3f014f0c, 0xedae9520, 0xfc053c31 };
 
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void rnd512(uint32_t *statebuffer, uint32_t *statechainv)
 {
 	int i, j;
@@ -314,7 +314,7 @@ void rnd512(uint32_t *statebuffer, uint32_t *statechainv)
 }
 
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void rnd512_first(uint32_t *statebuffer, uint32_t *statechainv)
 {
 	uint32_t chainv[8];
@@ -578,7 +578,7 @@ void rnd512cpu(uint32_t *statebuffer, uint32_t *statechainv)
 	}
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void Update512(uint32_t *const __restrict__ statebuffer, uint32_t *const __restrict__ statechainv, const uint32_t *const __restrict__ data)
 {
 #pragma unroll 8
@@ -596,7 +596,7 @@ void Update512(uint32_t *const __restrict__ statebuffer, uint32_t *const __restr
 }
 
 /***************************************************/
-__device__ __forceinline__
+static __device__ __forceinline__
 void rnd512_nullhash(uint32_t *state)
 {
 	int i, j;
@@ -734,7 +734,7 @@ void rnd512_nullhash(uint32_t *state)
 }
 
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void finalization512(uint32_t *const __restrict__ statebuffer, uint32_t *const __restrict__ statechainv, uint32_t *const __restrict__ b)
 {
 	int i,j;

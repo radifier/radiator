@@ -622,7 +622,7 @@ uint32_t T3dn_cpu[] = {
 	C32e(0x3d46cb46), C32e(0xb71ffc1f), C32e(0x0c61d661), C32e(0x624e3a4e)
 };
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void groestl256_perm_P(uint32_t *const __restrict__ a, const uint32_t *const __restrict__ mixtabs)
 {
 	#pragma unroll 10
@@ -652,8 +652,7 @@ void groestl256_perm_P(uint32_t *const __restrict__ a, const uint32_t *const __r
 			a[k] = t[k];
 	}
 }
-__device__ __forceinline__
-
+static __device__ __forceinline__
 void groestl256_perm_P_final(uint32_t *const __restrict__ a, const uint32_t *const __restrict__ mixtabs)
 {
 	uint32_t t[16];
@@ -691,7 +690,7 @@ void groestl256_perm_P_final(uint32_t *const __restrict__ a, const uint32_t *con
 		^   T3up(B32_3(a[13]));
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void groestl256_perm_Q(uint32_t *const __restrict__ a, const uint32_t *const __restrict__ mixtabs)
 {
 	#pragma unroll

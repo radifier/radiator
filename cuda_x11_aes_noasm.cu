@@ -272,7 +272,7 @@ __constant__ __align__(64) uint32_t d_AES3[256] = {
 };
 
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void aes_gpu_init(uint32_t *const sharedMemory)
 {
 	/* each thread startup will fill a uint32 */

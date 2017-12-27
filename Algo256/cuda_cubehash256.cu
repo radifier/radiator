@@ -9,7 +9,7 @@
 #define ROTATEUPWARDS7(a)  ROTL32(a,7)
 #define ROTATEUPWARDS11(a) ROTL32(a,11)
 
-__device__ __forceinline__ void rrounds(uint32_t x[2][2][2][2][2])
+static __device__ __forceinline__ void rrounds(uint32_t x[2][2][2][2][2])
 {
 	int r;
 
@@ -167,7 +167,7 @@ __device__ __forceinline__ void rrounds(uint32_t x[2][2][2][2][2])
 	}
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void Final(uint32_t x[2][2][2][2][2], uint32_t *hashval)
 {
 	/* "the integer 1 is xored into the last state word x_11111" */

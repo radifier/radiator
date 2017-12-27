@@ -14,7 +14,7 @@
 #define __CUDA_ARCH__ 500
 #endif
 
-__device__ __forceinline__
+static __device__ __forceinline__
 uint2 SWAPUINT2(uint2 value)
 {
 	return make_uint2(value.y, value.x);
@@ -33,22 +33,22 @@ uint2 SWAPUINT2(uint2 value)
 
 __device__ uint2x4 *DMatrix;
 
-__device__ __forceinline__ uint2 LD4S(uint2 *shared_mem, const int index)
+static __device__ __forceinline__ uint2 LD4S(uint2 *shared_mem, const int index)
 {
 	return shared_mem[(index * blockDim.y + threadIdx.y) * blockDim.x + threadIdx.x];
 }
 
-__device__ __forceinline__ void ST4S(uint2 *shared_mem, const int index, const uint2 data)
+static __device__ __forceinline__ void ST4S(uint2 *shared_mem, const int index, const uint2 data)
 {
 	shared_mem[(index * blockDim.y + threadIdx.y) * blockDim.x + threadIdx.x] = data;
 }
 
-__device__ __forceinline__ uint2 shuffle2(uint2 a, uint32_t b, uint32_t c)
+static __device__ __forceinline__ uint2 shuffle2(uint2 a, uint32_t b, uint32_t c)
 {
 	return make_uint2(__shfl(a.x, b, c), __shfl(a.y, b, c));
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void Gfunc_v5(uint2 &a, uint2 &b, uint2 &c, uint2 &d)
 {
 	a += b; d = eorswap32(a, d);
@@ -57,7 +57,7 @@ void Gfunc_v5(uint2 &a, uint2 &b, uint2 &c, uint2 &d)
 	c += d; b ^= c; b = ROR2(b, 63);
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void round_lyra_v5(uint2x4 s[4])
 {
 	Gfunc_v5(s[0].x, s[1].x, s[2].x, s[3].x);
@@ -71,7 +71,7 @@ void round_lyra_v5(uint2x4 s[4])
 	Gfunc_v5(s[0].w, s[1].x, s[2].y, s[3].z);
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void round_lyra_v5(uint2 s[4])
 {
 	Gfunc_v5(s[0], s[1], s[2], s[3]);
@@ -84,7 +84,7 @@ void round_lyra_v5(uint2 s[4])
 	s[3] = shuffle2(s[3], threadIdx.x + 1, 4);
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void reduceDuplexRowSetup2(uint2 *shared_mem, uint2 state[4])
 {
 	uint2 state1[Ncol][3], state0[Ncol][3], state2[3];
@@ -210,7 +210,7 @@ void reduceDuplexRowSetup2(uint2 *shared_mem, uint2 state[4])
 	__syncthreads();
 }
 
-__device__
+static __device__
 void reduceDuplexRowt2(uint2 *shared_mem, const int rowIn, const int rowInOut, const int rowOut, uint2 state[4])
 {
 	uint2 state1[3], state2[3];
@@ -267,7 +267,7 @@ void reduceDuplexRowt2(uint2 *shared_mem, const int rowIn, const int rowInOut, c
 	}
 }
 
-__device__
+static __device__
 void reduceDuplexRowt2x4(uint2 *shared_mem, const int rowInOut, uint2 state[4])
 {
 	const int rowIn = 2;

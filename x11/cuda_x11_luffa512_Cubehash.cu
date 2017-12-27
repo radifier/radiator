@@ -148,7 +148,7 @@ __device__ __constant__ uint32_t c_CNS[80] = {
 
 
 /***************************************************/
-__device__ __forceinline__
+static __device__ __forceinline__
 void rnd512(uint32_t *const __restrict__ statebuffer, uint32_t *const __restrict__ statechainv)
 {
 	int i, j;
@@ -322,7 +322,7 @@ void rnd512(uint32_t *const __restrict__ statebuffer, uint32_t *const __restrict
 }
 
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void rnd512_finalfirst(uint32_t *const statechainv)
 {
 	int i, j;
@@ -469,7 +469,7 @@ void rnd512_finalfirst(uint32_t *const statechainv)
 }
 
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void rnd512_first(uint32_t state[40], uint32_t buffer[8])
 {
 	int i, j;
@@ -569,7 +569,7 @@ void rnd512_first(uint32_t state[40], uint32_t buffer[8])
 }
 
 /***************************************************/
-__device__ __forceinline__
+static __device__ __forceinline__
 void rnd512_nullhash(uint32_t *const state)
 {
 	int i, j;
@@ -730,7 +730,7 @@ void rnd512_nullhash(uint32_t *const state)
 		state[i + 32] = chainv[i];
 	}
 }
-__device__ __forceinline__
+static __device__ __forceinline__
 void Update512(uint32_t *const __restrict__ statebuffer, uint32_t *const __restrict__ statechainv, const uint32_t *const __restrict__ data)
 {
 #pragma unroll 8
@@ -746,7 +746,7 @@ void Update512(uint32_t *const __restrict__ statebuffer, uint32_t *const __restr
 
 
 /***************************************************/
-__device__ __forceinline__
+static __device__ __forceinline__
 void finalization512(uint32_t *const __restrict__ statechainv, uint32_t *const __restrict__ b)
 {
 	int i, j;

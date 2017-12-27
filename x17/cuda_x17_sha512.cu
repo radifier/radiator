@@ -123,7 +123,7 @@ static __constant__ uint64_t K_512[80] = {
 		r[(7+a)&7] = T1 + T2; \
 	}
 
-__device__ __forceinline__
+static __device__ __forceinline__
 uint64_t Tone(const uint64_t* sharedMemory, uint64_t r[8], uint64_t W[80], uint32_t a, uint32_t i)
 {
 	uint64_t e = r[(4 + a) & 7];
