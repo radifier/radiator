@@ -733,7 +733,7 @@ void fugue256_cpu_init(int thr_id, uint32_t threads)
 	texDef(mixTab3Tex, mixTab3m, mixtab3_cpu, sizeof(uint32_t)*256);
 
 	// Speicher für alle Ergebnisse belegen
-	CUDA_SAFE_CALL(cudaMalloc(&d_fugue256_hashoutput[thr_id], 8 * sizeof(uint32_t) * threads));
+	CUDA_SAFE_CALL(cudaMalloc(&d_fugue256_hashoutput[thr_id], 8ULL * sizeof(uint32_t) * threads));
 	CUDA_SAFE_CALL(cudaMalloc(&d_resultNonce[thr_id], sizeof(uint32_t)));
 }
 
