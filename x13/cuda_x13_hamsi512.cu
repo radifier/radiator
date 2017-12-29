@@ -869,4 +869,5 @@ __host__ void x13_hamsi512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t st
     dim3 block(threadsperblock);
 
     x13_hamsi512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash);
+	CUDA_SAFE_CALL(cudaGetLastError());
 }
