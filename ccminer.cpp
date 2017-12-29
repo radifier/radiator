@@ -439,7 +439,7 @@ void proper_exit(int reason)
 	if(hnvml)
 		nvml_destroy(hnvml);
 #endif
-//	if(reason == 2)
+	if(opt_n_threads > 0)
 	{
 		stop_mining = true;
 		applog(LOG_INFO, "stopping %d threads", opt_n_threads);
