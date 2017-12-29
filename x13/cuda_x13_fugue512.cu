@@ -1143,7 +1143,7 @@ __host__ void x13_fugue512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t st
 	// fprintf(stderr, "threads=%d, %d blocks, %d threads per block, %d bytes shared\n", threads, grid.x, block.x, shared_size);
 
 	x13_fugue512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash);
-//	MyStreamSynchronize(NULL, order, thr_id);
+	CUDA_SAFE_CALL(cudaGetLastError());
 }
 __host__ void x13_fugue512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash, uint32_t *res)
 {

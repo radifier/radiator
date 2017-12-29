@@ -220,4 +220,5 @@ void x17_sha512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, 
 	dim3 grid((threads + threadsperblock-1)/threadsperblock);
 	dim3 block(threadsperblock);
 	x17_sha512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash );
+	CUDA_SAFE_CALL(cudaGetLastError());
 }

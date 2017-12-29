@@ -336,10 +336,10 @@ void x17_haval256_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce
 
 	dim3 grid((threads + threadsperblock-1)/threadsperblock);
 	dim3 block(threadsperblock);
-	cudaMemsetAsync(d_nonce[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]);
+	CUDA_SAFE_CALL(cudaMemsetAsync(d_nonce[thr_id], 0xff, 2 * sizeof(uint32_t), gpustream[thr_id]));
 
 	x17_haval256_gpu_hash_64 <<<grid, block, 0, gpustream[thr_id] >>>(threads, startNounce, (uint64_t*)d_hash, target, d_nonce[thr_id]);
-	cudaMemcpyAsync(result, d_nonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]);
+	CUDA_SAFE_CALL(cudaMemcpyAsync(result, d_nonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id]));
 	CUDA_SAFE_CALL(cudaStreamSynchronize(gpustream[thr_id]));
 
 }

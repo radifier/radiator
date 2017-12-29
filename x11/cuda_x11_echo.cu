@@ -415,7 +415,7 @@ __host__ void x11_echo512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t sta
     dim3 block(threadsperblock);
 
     x11_echo512_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, d_hash);
-	//MyStreamSynchronize(NULL, order, thr_id);
+	CUDA_SAFE_CALL(cudaGetLastError());
 }
 
 __host__ void x11_echo512_cpu_free(int32_t thr_id)

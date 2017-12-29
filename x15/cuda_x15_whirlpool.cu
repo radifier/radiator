@@ -1778,7 +1778,7 @@ extern void x15_whirlpool_cpu_hash_64(int thr_id, uint32_t threads, uint32_t sta
 	dim3 block(threadsperblock);
 
 	x15_whirlpool_gpu_hash_64<<<grid, block, 0, gpustream[thr_id]>>>(threads, startNounce, (uint64_t*)d_hash);
-	//MyStreamSynchronize(NULL, order, thr_id);
+	CUDA_SAFE_CALL(cudaGetLastError());
 }
 
 __host__
