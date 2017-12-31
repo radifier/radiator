@@ -684,7 +684,8 @@ static void api()
 	const char *addr = opt_api_allow;
 	uint16_t port = opt_api_listen; // 4068
 	char buf[MYBUFSIZ];
-	int c, n, bound;
+	SOCKET c;
+	int n, bound;
 	char *connectaddr = nullptr;
 	char *binderror = nullptr;
 	char group;
