@@ -197,9 +197,7 @@ static const sph_u32 K[64] = {
 		sph_u32 A, B, C, D, E, F, G, H, T1, T2; \
 		sph_u32 W00, W01, W02, W03, W04, W05, W06, W07; \
 		sph_u32 W08, W09, W10, W11, W12, W13, W14, W15; \
-		int i; \
  \
-/* for (i=0;i<8;i++) {printf("in[%d]=%08x in[%d]=%08x \n",2*i,in(2*i),2*i+1,in(2*i+1));} */ \
  		A = (r)[0]; \
 		B = (r)[1]; \
 		C = (r)[2]; \

@@ -258,52 +258,6 @@ __device__ __forceinline__ void FFT_16(int *y) {
 #undef DO_REDUCE_FULL_S
 }
 
-static __device__ __forceinline__
-void FFT_128_full(int *y)
-{
-	int i;
-
-	FFT_8(y+0,2); // eight parallel FFT8's
-	FFT_8(y+1,2); // eight parallel FFT8's
-
-#pragma unroll 16
-	for (i=0; i<16; i++)
-	/*if (i & 7)*/ y[i] = REDUCE(y[i]*c_FFT128_8_16_Twiddle[i*8+(threadIdx.x&7)]);
-
-//#pragma unroll 8
-	for (i=0; i<16; i+=2)
-		FFT_16(y+i);  // eight sequential FFT16's, each one executed in parallel by 8 threads
-}
-
-static __device__ __forceinline__
-void FFT_256_halfzero(int *y)
-{
-	/*
-	 * FFT_256 using w=41 as 256th root of unity.
-	 * Decimation in frequency (DIF) NTT.
-	 * Output data is in revbin_permuted order.
-	 * In place.
-	 */
-	const int tmp = y[15];
-
-#pragma unroll 8
-	for (int i=0; i<8; i++)
-		y[16+i] = REDUCE(y[i] * c_FFT256_2_128_Twiddle[8*i+(threadIdx.x&7)]);
-#pragma unroll 8
-	for (int i=24; i<32; i++)
-		y[i] = 0;
-
-	/* handle X^255 with an additional butterfly */
-	if ((threadIdx.x&7) == 7)
-	{
-		y[15] = REDUCE(tmp + 1);
-		y[31] = REDUCE((tmp - 1) * c_FFT256_2_128_Twiddle[127]);
-	}
-
-	FFT_128_full(y);
-	FFT_128_full(y+16);
-}
-
 
 /***************************************************/
 

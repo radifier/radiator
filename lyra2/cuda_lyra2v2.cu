@@ -14,12 +14,6 @@
 #define __CUDA_ARCH__ 500
 #endif
 
-static __device__ __forceinline__
-uint2 SWAPUINT2(uint2 value)
-{
-	return make_uint2(value.y, value.x);
-}
-
 #define TPB5x 128
 #define TPB5x2 32
 

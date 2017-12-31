@@ -249,7 +249,7 @@ static void gpuhwinfos(int gpu_id)
 
 	card = device_name[gpu_id];
 
-	snprintf(buf, sizeof(buf), "GPU=%d;BUS=%hd;CARD=%s;SM=%u;MEM=%lu;"
+	snprintf(buf, sizeof(buf), "GPU=%d;BUS=%hd;CARD=%s;SM=%u;MEM=%llu;"
 		"TEMP=%.1f;FAN=%hu;RPM=%hu;FREQ=%d;MEMFREQ=%d;PST=%s;"
 		"VID=%hx;PID=%hx;NVML=%d;NVAPI=%d;SN=%s;BIOS=%s|",
 		gpu_id, cgpu->gpu_bus, card, cgpu->gpu_arch, cgpu->gpu_mem,
@@ -357,7 +357,7 @@ static char *getmeminfo(char *params)
 	totmem = smem + hmem;
 
 	*buffer = '\0';
-	sprintf(buffer, "STATS=%u;HASHLOG=%u;MEM=%lu|",
+	sprintf(buffer, "STATS=%u;HASHLOG=%u;MEM=%llu|",
 		srec, hrec, totmem);
 
 	return buffer;
@@ -401,7 +401,7 @@ static int send_result(SOCKETTYPE c, char *result)
 		n = send(c, "", 1, 0);
 	} else {
 		// ignore failure - it's closed immediately anyway
-		n = send(c, result, strlen(result) + 1, 0);
+		n = send(c, result, (int)strlen(result) + 1, 0);
 	}
 	return n;
 }
@@ -549,7 +549,8 @@ static int websocket_handshake(SOCKETTYPE c, char *result, char *clientkey)
 		// WebSocket Frame - Header + Data
 		memcpy(p, hd, frames);
 		memcpy(p + frames, result, (size_t)datalen);
-		send(c, (const char*)data, strlen(answer) + frames + (size_t)datalen + 1, 0);
+		if(SOCKETFAIL(send(c, (const char*)data, (int)strlen(answer) + frames + (int)datalen + 1, 0)) && (opt_debug || opt_protocol))
+			applog(LOG_WARNING, "API: failed to send %d bytes", (int)strlen(answer) + frames + (int)datalen + 1);
 		free(data);
 	}
 	return 0;
@@ -684,7 +685,8 @@ static void api()
 	const char *addr = opt_api_allow;
 	uint16_t port = opt_api_listen; // 4068
 	char buf[MYBUFSIZ];
-	int c, n, bound;
+	SOCKETTYPE c;
+	int n, bound;
 	char *connectaddr = nullptr;
 	char *binderror = nullptr;
 	char group;
@@ -699,7 +701,7 @@ static void api()
 	int i;
 
 	SOCKETTYPE *apisock = nullptr;
-	if (!opt_api_listen && opt_debug) {
+	if (!opt_api_listen) {
 		applog(LOG_DEBUG, "API disabled");
 		return;
 	}
@@ -761,14 +763,14 @@ static void api()
 				break;
 			else if (opt_api_listen == 4068) {
 				/* when port is default one, use first available */
-				if (opt_debug)
-					applog(LOG_DEBUG, "API bind to port %d failed, trying port %u",
+//				if (opt_debug)
+					applog(LOG_WARNING, "API bind to port %d failed, trying port %u",
 						port, (uint32_t) port+1);
 				port++;
 				serv.sin_port = htons(port);
 				sleep(1);
 			} else {
-				if (!opt_quiet || opt_debug)
+				if (!opt_quiet || opt_debug || opt_protocol)
 					applog(LOG_WARNING, "API bind to port %u failed - trying again in 20sec",
 						(uint32_t) port);
 				sleep(20);
@@ -821,7 +823,7 @@ static void api()
 		}
 
 		addrok = check_connect(&cli, &connectaddr, &group);
-		if (opt_debug && opt_protocol)
+		if (opt_debug || opt_protocol)
 			applog(LOG_DEBUG, "API: connection from %s - %s",
 				connectaddr, addrok ? "Accepted" : "Ignored");
 
@@ -871,7 +873,7 @@ static void api()
 				if (params != NULL)
 					*(params++) = '\0';
 
-				if (opt_debug && opt_protocol && n > 0)
+				if (opt_debug || opt_protocol && n > 0)
 					applog(LOG_DEBUG, "API: exec command %s(%s)", buf, params ? params : "");
 
 				for (i = 0; i < CMDMAX; i++) {
