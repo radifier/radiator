@@ -258,22 +258,6 @@ __device__ __forceinline__ void FFT_16(int *y) {
 #undef DO_REDUCE_FULL_S
 }
 
-static __device__ __forceinline__
-void FFT_128_full(int *y)
-{
-	int i;
-
-	FFT_8(y+0,2); // eight parallel FFT8's
-	FFT_8(y+1,2); // eight parallel FFT8's
-
-#pragma unroll 16
-	for (i=0; i<16; i++)
-	/*if (i & 7)*/ y[i] = REDUCE(y[i]*c_FFT128_8_16_Twiddle[i*8+(threadIdx.x&7)]);
-
-//#pragma unroll 8
-	for (i=0; i<16; i+=2)
-		FFT_16(y+i);  // eight sequential FFT16's, each one executed in parallel by 8 threads
-}
 
 /***************************************************/
 
