@@ -1425,6 +1425,8 @@ static THREAD uint32_t *Trans3 = NULL; // 2 streams
 __host__
 void neoscrypt_init(int thr_id, uint32_t threads)
 {
+	CUDA_SAFE_CALL(cudaFuncSetAttribute(neoscrypt_gpu_hash_start, cudaFuncAttributePreferredSharedMemoryCarveout, 100)); // make Titan V faster
+	CUDA_SAFE_CALL(cudaFuncSetAttribute(neoscrypt_gpu_hash_ending, cudaFuncAttributePreferredSharedMemoryCarveout, 100)); // make Titan V faster
 	CUDA_SAFE_CALL(cudaMalloc(&d_NNonce[thr_id], 2 * sizeof(uint32_t)));
 	CUDA_SAFE_CALL(cudaMalloc(&hash1, 32ULL * 128 * sizeof(uint64_t) * min(8192, threads)));
 	CUDA_SAFE_CALL(cudaMalloc(&Trans1, 32ULL * sizeof(uint64_t) * threads));
