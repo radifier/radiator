@@ -462,7 +462,7 @@ void proper_exit(int reason)
 #ifdef WIN32
 	timeEndPeriod(1);
 #endif
-
+	sleep(1);
 	exit(reason);
 }
 
@@ -1587,7 +1587,15 @@ static void *miner_thread(void *userdata)
 			databackup = nonceptr[2];
 		else
 			databackup = nonceptr[12];
-		mining_has_stopped[thr_id] = false;
+
+		if(!stop_mining)
+			mining_has_stopped[thr_id] = false;
+		else
+		{
+			mining_has_stopped[thr_id] = true;
+			pthread_exit(nullptr);
+		}
+
 		/* scan nonces for a proof-of-work hash */
 		switch(opt_algo)
 		{
