@@ -7,21 +7,20 @@ Reforked and optimized by sp-hash@github and KlausT@github
 * KlausT:
     BTC 1QDwdLPrPYSoPqS7pB2kGG84YX6hEcQ4JN
     BCH 1AH1u7B4KtDTUBgmT6NrXyahNEgTac3fL7
-* sp-hash:
-    BTC donation address: 1CTiNJyoUmbdMRACtteRWXhGqtSETYd6Vd
 * tpruvot:
     BTC donation address: 1AJdfCpLWPNoAMDfHF1wD5y8VgKSSTHxPo
+* sp-hash:
+    BTC donation address: 1CTiNJyoUmbdMRACtteRWXhGqtSETYd6Vd
 
 A part of the recent algos were originally written by [djm34](https://github.com/djm34).
 
 This variant was tested and built with Visual Studio 2015 on Windows 10
 
-## About source code dependencies
+## Source code dependencies
 
-This project requires some libraries to be built :
+* Jansson
 * OpenSSL (prebuilt for win)
 * Curl (prebuilt for win)
 * pthreads (prebuilt for win)
 
-This fork now contains these libraries for both x86 and x64 platforms (windows).
-
+This fork contains these libraries for x64 Windows.

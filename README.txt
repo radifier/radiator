@@ -1,4 +1,4 @@
-ccMiner release 8.16(KlausT-mod) (December 15th, 2017)
+ccMiner release 8.18(KlausT-mod) (January 1st, 2018)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -149,15 +149,6 @@ its command line interface and options.
 
 >>> Examples <<<
 
-
-Example for Heavycoin Mining on heavycoinpool.com with a single gpu in your system
-    ccminer -t 1 -a heavy -o stratum+tcp://stratum01.heavycoinpool.com:5333 -u <<username.worker>> -p <<workerpassword>> -v 8
-
-
-Example for Heavycoin Mining on hvc.1gh.com with a dual gpu in your system
-    ccminer -t 2 -a heavy -o stratum+tcp://hvcpool.1gh.com:5333/ -u <<WALLET>> -p x -v 8
-
-
 Example for Fuguecoin solo-mining with 4 gpu's in your system and a Fuguecoin-wallet running on localhost
     ccminer -q -s 1 -t 4 -a fugue256 -o http://localhost:9089/ -u <<myusername>> -p <<mypassword>>
 
@@ -193,7 +184,7 @@ I plan to add a json format later, if requests are formatted in json too..
 >>> Additional Notes <<<
 
 This code should be running on nVidia GPUs ranging from compute capability
-3.0 up to compute capability 5.2. Support for Compute 2.0 has been dropped
+3.0 up to compute capability 7.0. Support for Compute 2.0 has been dropped
 so we can more efficiently implement new algorithms using the latest hardware
 features.
 
@@ -245,6 +236,11 @@ features.
 2017-11-21 v8.15: support up to 16 GPUs
                   fix problem with not exiting when there's an error
 2017-12-15 v8.16: add sm_71 (Titan cards) (CUDA 9 and newer versions)
+2017-12-21 v8.17: various bug fixes
+2018-01-01 v8.18: more speed for Titan V with Lyra2v2 and possibly neoscrypt (untested)
+                  Linux: better default intensity
+				  some small bug fixes
+				  
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
