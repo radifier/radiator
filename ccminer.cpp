@@ -457,7 +457,6 @@ void proper_exit(int reason)
 		applog(LOG_INFO, "resetting GPUs");
 		cuda_devicereset();
 	}
-	if(opt_syslog_pfx) free(opt_syslog_pfx);
 	curl_global_cleanup();
 
 #ifdef WIN32
@@ -2711,6 +2710,8 @@ static int msver(void)
 		case 1900: version = 2015; break;
 		default: version = _MSC_VER / 100;
 	}
+	if(_MSC_VER >= 1910)
+		version = 2017;
 #else
 	version = 0;
 #endif
