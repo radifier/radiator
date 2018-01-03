@@ -254,14 +254,14 @@ static __device__ __forceinline__ uint64_t cuda_swab64(uint64_t x)
 
 /*********************************************************************/
 // Macros to catch CUDA errors in CUDA runtime calls
-
+extern void proper_exit(int reason);
 #define CUDA_SAFE_CALL(call)                                          \
 do {                                                                  \
 	cudaError_t err = call;                                           \
 	if (cudaSuccess != err) {                                         \
 		fprintf(stderr, "Cuda error in func '%s' at line %i : %s.\n", \
 		         __FUNCTION__, __LINE__, cudaGetErrorString(err) );   \
-		exit(EXIT_FAILURE);                                           \
+		proper_exit(EXIT_FAILURE);                                           \
 	}                                                                 \
 } while (0)
 
