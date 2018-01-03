@@ -441,6 +441,7 @@ void proper_exit(int reason)
 #endif
 	if(opt_n_threads > 0)
 	{
+		time_t start = time(NULL);
 		stop_mining = true;
 		applog(LOG_INFO, "stopping %d threads", opt_n_threads);
 		bool everything_stopped;
@@ -452,7 +453,7 @@ void proper_exit(int reason)
 				if(!mining_has_stopped[i])
 					everything_stopped = false;
 			}
-		} while(!everything_stopped);
+		} while(!everything_stopped && (time(NULL) - start) < 5);
 		applog(LOG_INFO, "resetting GPUs");
 		cuda_devicereset();
 	}
