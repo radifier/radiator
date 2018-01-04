@@ -167,6 +167,8 @@ float gpu_temp(struct cgpu_info *gpu);
 unsigned int gpu_power(struct cgpu_info *gpu);
 int gpu_pstate(struct cgpu_info *gpu);
 int gpu_busid(struct cgpu_info *gpu);
+unsigned int gpu_power(struct cgpu_info *gpu);
+unsigned int gpu_plimit(struct cgpu_info *gpu);
 
 /* pid/vid, sn and bios rev */
 int gpu_info(struct cgpu_info *gpu);
@@ -176,6 +178,7 @@ int gpu_vendor(uint8_t pci_bus_id, char *vendorname);
 /* nvapi functions */
 #ifdef WIN32
 int nvapi_init();
+int nvapiMemGetInfo(int dev_id, uint64_t *free, uint64_t *total);
 #endif
 
 #endif /* USE_WRAPNVML */
