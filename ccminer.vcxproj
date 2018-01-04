@@ -283,6 +283,7 @@
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|x64'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37</CodeGeneration>
     </CudaCompile>
     <CudaCompile Include="Sia\sia.cu" />
+    <ClCompile Include="nvapi.cpp" />
     <ClCompile Include="sph\neoscrypt.cpp" />
     <ClCompile Include="sph\sha256_Y.c" />
     <ClCompile Include="sph\sph_sha2.c" />

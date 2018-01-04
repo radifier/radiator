@@ -204,6 +204,9 @@
     <ClCompile Include="sph\neoscrypt.cpp">
       <Filter>Source Files\CUDA\neoscrypt</Filter>
     </ClCompile>
+    <ClCompile Include="nvapi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="compat.h">
