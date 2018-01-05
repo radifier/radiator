@@ -23,7 +23,6 @@
 
 #include "miner.h"
 #include "nvml.h"
-#include "nvapi/nvapi_ccminer.h"
 #include "cuda_runtime.h"
 
 #ifdef USE_WRAPNVML
@@ -44,6 +43,7 @@ uint32_t limit_prev[MAX_GPUS] = { 0 };
 static bool nvml_plimit_set = false;
 
 #ifdef WIN32
+#include "nvapi/nvapi_ccminer.h"
 static int nvapi_dev_map[MAX_GPUS] = {0};
 static NvPhysicalGpuHandle phys[NVAPI_MAX_PHYSICAL_GPUS] = {0};
 #endif
