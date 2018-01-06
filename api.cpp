@@ -96,12 +96,14 @@ extern int num_cpus;
 extern struct stratum_ctx stratum;
 extern char* rpc_user;
 extern bool stop_mining;
+extern uint32_t device_plimit[MAX_GPUS];
 // sysinfos.cpp
 extern float cpu_temp(int);
 extern uint32_t cpu_clock(int);
 // cuda.cpp
 int cuda_num_devices();
 int cuda_gpu_clocks(struct cgpu_info *gpu);
+int cuda_gpu_info(struct cgpu_info *gpu);
 
 char driver_version[32] = { 0 };
 
@@ -109,40 +111,55 @@ char driver_version[32] = { 0 };
 
 static void gpustatus(int thr_id)
 {
-	if (thr_id >= 0 && thr_id < opt_n_threads) {
+	if(thr_id >= 0 && thr_id < opt_n_threads)
+	{
 		struct cgpu_info *cgpu = &thr_info[thr_id].gpu;
+		double khashes_per_watt = 0;
 		int gpuid = cgpu->gpu_id;
 		char buf[512]; *buf = '\0';
 		char* card;
+
+		cuda_gpu_info(cgpu);
+		cgpu->gpu_plimit = device_plimit[cgpu->gpu_id];
 
 #ifdef USE_WRAPNVML
 		cgpu->has_monitoring = true;
 		cgpu->gpu_bus = gpu_busid(cgpu);
 		cgpu->gpu_temp = gpu_temp(cgpu);
-		cgpu->gpu_fan = (uint16_t) gpu_fanpercent(cgpu);
-		cgpu->gpu_fan_rpm = (uint16_t) gpu_fanrpm(cgpu);
-		cgpu->gpu_power = gpu_power(cgpu); 
+		cgpu->gpu_fan = (uint16_t)gpu_fanpercent(cgpu);
+		cgpu->gpu_fan_rpm = (uint16_t)gpu_fanrpm(cgpu);
+		cgpu->gpu_power = gpu_power(cgpu); // mWatts
+		cgpu->gpu_plimit = gpu_plimit(cgpu); // mW or %
 #endif
-		cuda_gpu_clocks(cgpu);
-
-		// todo: per gpu
-		cgpu->accepted = accepted_count;
-		cgpu->rejected = rejected_count;
-
-		cgpu->khashes = stats_get_speed(cgpu->gpu_id, 0.0) / 1000.0;
+		cgpu->khashes = stats_get_speed(thr_id, 0.0) / 1000.0;
+		if(cgpu->monitor.gpu_power)
+		{
+			cgpu->gpu_power = cgpu->monitor.gpu_power;
+			khashes_per_watt = (double)cgpu->khashes / cgpu->monitor.gpu_power;
+			khashes_per_watt *= 1000; // power in mW
+									  //gpulog(LOG_BLUE, thr_id, "KHW: %g", khashes_per_watt);
+		}
 
 		card = device_name[gpuid];
 
-		snprintf(buf, sizeof(buf), "GPU=%d;BUS=%hd;CARD=%s;"
-			"TEMP=%.1f;FAN=%hu;RPM=%hu;FREQ=%d;KHS=%.2f;HWF=%d;I=%.1f;THR=%u|",
-			gpuid, cgpu->gpu_bus, card, cgpu->gpu_temp, cgpu->gpu_fan,
-			cgpu->gpu_fan_rpm, cgpu->gpu_clock, cgpu->khashes,
-			cgpu->hw_errors, cgpu->intensity, cgpu->throughput);
+		snprintf(buf, sizeof(buf), "GPU=%d;BUS=%hd;CARD=%s;TEMP=%.1f;"
+				 "POWER=%u;FAN=%hu;RPM=%hu;"
+				 "FREQ=%u;MEMFREQ=%u;GPUF=%u;MEMF=%u;"
+				 "KHS=%.2f;KHW=%.5f;PLIM=%u;"
+				 "ACC=%u;REJ=%u;HWF=%u;I=%.1f;THR=%u|",
+				 gpuid, cgpu->gpu_bus, card, cgpu->gpu_temp,
+				 cgpu->gpu_power, cgpu->gpu_fan, cgpu->gpu_fan_rpm,
+				 cgpu->gpu_clock / 1000, cgpu->gpu_memclock / 1000, // base freqs in MHz
+				 cgpu->monitor.gpu_clock, cgpu->monitor.gpu_memclock, // current
+				 cgpu->khashes, khashes_per_watt, cgpu->gpu_plimit,
+				 cgpu->accepted, (unsigned)cgpu->rejected, (unsigned)cgpu->hw_errors,
+				 cgpu->intensity, cgpu->throughput);
 
 		// append to buffer for multi gpus
 		strcat(buffer, buf);
 	}
 }
+
 
 /**
 * Returns gpu/thread specific stats
@@ -238,6 +255,8 @@ static void gpuhwinfos(int gpu_id)
 	cgpu->gpu_fan = (uint16_t) gpu_fanpercent(cgpu);
 	cgpu->gpu_fan_rpm = (uint16_t) gpu_fanrpm(cgpu);
 	cgpu->gpu_pstate = gpu_pstate(cgpu);
+	cgpu->gpu_power = gpu_power(cgpu);
+	cgpu->gpu_plimit = gpu_plimit(cgpu);
 	gpu_info(cgpu);
 #endif
 
@@ -249,14 +268,17 @@ static void gpuhwinfos(int gpu_id)
 
 	card = device_name[gpu_id];
 
-	snprintf(buf, sizeof(buf), "GPU=%d;BUS=%hd;CARD=%s;SM=%u;MEM=%llu;"
-		"TEMP=%.1f;FAN=%hu;RPM=%hu;FREQ=%d;MEMFREQ=%d;PST=%s;"
-		"VID=%hx;PID=%hx;NVML=%d;NVAPI=%d;SN=%s;BIOS=%s|",
-		gpu_id, cgpu->gpu_bus, card, cgpu->gpu_arch, cgpu->gpu_mem,
-		cgpu->gpu_temp, cgpu->gpu_fan, cgpu->gpu_fan_rpm,
-		cgpu->gpu_clock, cgpu->gpu_memclock,
-		pstate, cgpu->gpu_vid, cgpu->gpu_pid, cgpu->nvml_id, cgpu->nvapi_id,
-		cgpu->gpu_sn, cgpu->gpu_desc);
+	snprintf(buf, sizeof(buf), "GPU=%d;BUS=%hd;CARD=%s;SM=%hu;MEM=%u;"
+			 "TEMP=%.1f;FAN=%hu;RPM=%hu;FREQ=%u;MEMFREQ=%u;GPUF=%u;MEMF=%u;"
+			 "PST=%s;POWER=%u;PLIM=%u;"
+			 "VID=%hx;PID=%hx;NVML=%d;NVAPI=%d;SN=%s;BIOS=%s|",
+			 gpu_id, cgpu->gpu_bus, card, cgpu->gpu_arch, (uint32_t)cgpu->gpu_mem,
+			 cgpu->gpu_temp, cgpu->gpu_fan, cgpu->gpu_fan_rpm,
+			 cgpu->gpu_clock / 1000U, cgpu->gpu_memclock / 1000U, // base clocks
+			 cgpu->monitor.gpu_clock, cgpu->monitor.gpu_memclock, // current
+			 pstate, cgpu->gpu_power, cgpu->gpu_plimit,
+			 cgpu->gpu_vid, cgpu->gpu_pid, cgpu->nvml_id, cgpu->nvapi_id,
+			 cgpu->gpu_sn, cgpu->gpu_desc);
 
 	strcat(buffer, buf);
 }
@@ -910,20 +932,22 @@ void *api_thread(void *userdata)
 	return NULL;
 }
 
+extern enum sha_algos opt_algo;
+static uint32_t algo_throughput[MAX_GPUS][64] = {0};
+void bench_set_throughput(int thr_id, uint32_t throughput)
+{
+	algo_throughput[thr_id][opt_algo] = throughput;
+}
 /* to be able to report the default value set in each algo */
 void api_set_throughput(int thr_id, uint32_t throughput)
 {
-	struct cgpu_info *cgpu = &thr_info[thr_id].gpu;
-	if (cgpu) {
-		uint32_t ws = throughput;
-		uint8_t i = 0;
-		cgpu->throughput = throughput;
-		while (ws > 1 && i++ < 32)
-			ws = ws >> 1;
-		cgpu->intensity_int = i;
-		cgpu->intensity = (float) i;
-		if (i && (1U << i) < throughput) {
-			cgpu->intensity += ((float) (throughput-(1U << i)) / (1U << i));
-		}
+	if(thr_id < MAX_GPUS && thr_info)
+	{
+		struct cgpu_info *cgpu = &thr_info[thr_id].gpu;
+		cgpu->intensity = throughput2intensity(throughput);
+		if(cgpu->throughput != throughput) cgpu->throughput = throughput;
 	}
+	// to display in bench results
+	if(opt_benchmark)
+		bench_set_throughput(thr_id, throughput);
 }

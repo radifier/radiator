@@ -150,7 +150,7 @@ __global__ __launch_bounds__(TPB,6)
 void x17_sha512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-	//	if (thread < threads)
+	if (thread < threads)
 	{
 		uint64_t *inpHash = &g_hash[8 * thread];
 		uint64_t hash[8];

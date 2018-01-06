@@ -234,3 +234,36 @@ void cudaReportHardwareFailure(int thr_id, cudaError_t err, const char* func)
 	applog(LOG_ERR, "GPU #%d: %s %s", device_map[thr_id], func, cudaGetErrorString(err));
 	sleep(1);
 }
+
+int cuda_gpu_info(struct cgpu_info *gpu)
+{
+	cudaDeviceProp props;
+	if(cudaGetDeviceProperties(&props, gpu->gpu_id) == cudaSuccess)
+	{
+		gpu->gpu_clock = (uint32_t)props.clockRate;
+		gpu->gpu_memclock = (uint32_t)props.memoryClockRate;
+		gpu->gpu_mem = (uint64_t)(props.totalGlobalMem / 1024); // kB
+#if defined(_WIN32) && defined(USE_WRAPNVML)
+																// required to get mem size > 4GB (size_t too small for bytes on 32bit)
+		nvapiMemGetInfo(gpu->gpu_id, &gpu->gpu_memfree, &gpu->gpu_mem); // kB
+#endif
+		gpu->gpu_mem = gpu->gpu_mem / 1024; // MB
+		return 0;
+	}
+	return -1;
+}
+
+double throughput2intensity(uint32_t throughput)
+{
+	double intensity = 0.;
+	uint32_t ws = throughput;
+	uint8_t i = 0;
+	while(ws > 1 && i++ < 32)
+		ws = ws >> 1;
+	intensity = (double)i;
+	if(i && ((1U << i) < throughput))
+	{
+		intensity += ((double)(throughput - (1U << i)) / (1U << i));
+	}
+	return intensity;
+}

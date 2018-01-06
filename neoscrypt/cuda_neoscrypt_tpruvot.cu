@@ -1281,11 +1281,13 @@ static void Blake2Shost(uint32_t * inout, const uint32_t * inkey)
 
 __global__
 __launch_bounds__(TPB2, 1)
-void neoscrypt_gpu_hash_start(const int stratum, const uint32_t startNonce)
+void neoscrypt_gpu_hash_start(uint32_t threads, const int stratum, const uint32_t startNonce)
 {
 	__shared__ uint32_t s_data[64 * TPB2];
 
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
+	if(thread >= threads)
+		return;
 	const uint32_t ZNonce = (stratum) ? cuda_swab32(startNonce + thread) : (startNonce + thread); //freaking morons !!!
 
 #if __CUDA_ARCH__ < 500
@@ -1297,11 +1299,13 @@ void neoscrypt_gpu_hash_start(const int stratum, const uint32_t startNonce)
 
 __global__
 __launch_bounds__(TPB, 1)
-void neoscrypt_gpu_hash_chacha1()
+void neoscrypt_gpu_hash_chacha1(uint32_t threads)
 {
 	const uint32_t thread = (blockDim.y * blockIdx.x + threadIdx.y);
 	const uint32_t shift = SHIFT * 8U * (thread & 8191);
 	const uint32_t shiftTr = 8U * thread;
+	if(thread >= threads)
+		return;
 
 	uint4 X[4];
 	for(int i = 0; i < 4; i++)
@@ -1342,11 +1346,13 @@ void neoscrypt_gpu_hash_chacha1()
 
 __global__
 __launch_bounds__(TPB, 1)
-void neoscrypt_gpu_hash_salsa1()
+void neoscrypt_gpu_hash_salsa1(uint32_t threads)
 {
 	const uint32_t thread = (blockDim.y * blockIdx.x + threadIdx.y);
 	const uint32_t shift = SHIFT * 8U * (thread & 8191);
 	const uint32_t shiftTr = 8U * thread;
+	if(thread >= threads)
+		return;
 
 	uint4 Z[4];
 	for(int i = 0; i < 4; i++)
@@ -1386,7 +1392,7 @@ void neoscrypt_gpu_hash_salsa1()
 
 __global__
 __launch_bounds__(TPB2, 8)
-void neoscrypt_gpu_hash_ending(const int stratum, const uint32_t startNonce, uint32_t *resNonces)
+void neoscrypt_gpu_hash_ending(uint32_t threads, const int stratum, const uint32_t startNonce, uint32_t *resNonces)
 {
 	__shared__ uint32_t s_data[64 * TPB2];
 
@@ -1394,6 +1400,8 @@ void neoscrypt_gpu_hash_ending(const int stratum, const uint32_t startNonce, uin
 	const uint32_t shiftTr = thread * 8U;
 	const uint32_t nonce = startNonce + thread;
 	const uint32_t ZNonce = (stratum) ? cuda_swab32(nonce) : nonce;
+	if(thread >= threads)
+		return;
 
 	__syncthreads();
 
@@ -1453,8 +1461,6 @@ void neoscrypt_free(int thr_id)
 __host__
 void neoscrypt_hash_tpruvot(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *resNonces, bool stratum)
 {
-	CUDA_SAFE_CALL(cudaMemset(d_NNonce[thr_id], 0xff, 2 * sizeof(uint32_t)));
-
 	const int threadsperblock2 = TPB2;
 	dim3 grid2((threads + threadsperblock2 - 1) / threadsperblock2);
 	dim3 block2(threadsperblock2);
@@ -1463,26 +1469,23 @@ void neoscrypt_hash_tpruvot(int thr_id, uint32_t threads, uint32_t startNounce, 
 	dim3 grid3((threads * 4 + threadsperblock - 1) / threadsperblock);
 	dim3 block3(4, threadsperblock >> 2);
 
-	neoscrypt_gpu_hash_start << <grid2, block2 >> > (stratum, startNounce); //fastkdf
+	neoscrypt_gpu_hash_start << <grid2, block2 >> > (threads, stratum, startNounce); //fastkdf
+	CUDA_SAFE_CALL(cudaGetLastError());
+	neoscrypt_gpu_hash_salsa1 << <grid3, block3 >> > (threads);
+	CUDA_SAFE_CALL(cudaGetLastError());
+	neoscrypt_gpu_hash_chacha1 << <grid3, block3 >> > (threads);
 	if(opt_debug)
 		CUDA_SAFE_CALL(cudaDeviceSynchronize());
-
-	neoscrypt_gpu_hash_salsa1 << <grid3, block3 >> > ();
-	if(opt_debug)
-		CUDA_SAFE_CALL(cudaDeviceSynchronize());
-	neoscrypt_gpu_hash_chacha1 << <grid3, block3 >> > ();
-	if(opt_debug)
-		CUDA_SAFE_CALL(cudaDeviceSynchronize());
+	CUDA_SAFE_CALL(cudaGetLastError());
 
 	neoscrypt_gpu_hash_ending << <grid2, block2 >> > (stratum, startNounce, d_NNonce[thr_id]); //fastkdf+end
 	if(opt_debug)
 		CUDA_SAFE_CALL(cudaDeviceSynchronize());
-
 	CUDA_SAFE_CALL(cudaMemcpy(resNonces, d_NNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
 }
 
 __host__
-void neoscrypt_setBlockTarget_tpruvot(uint32_t* const pdata, uint32_t* const target)
+void neoscrypt_setBlockTarget_tpruvot(int thr_id, uint32_t* const pdata, uint32_t* const target)
 {
 	uint32_t PaddedMessage[64];
 	uint32_t input[16], key[16] = {0};
@@ -1504,6 +1507,8 @@ void neoscrypt_setBlockTarget_tpruvot(uint32_t* const pdata, uint32_t* const tar
 	((uint8*)key)[0] = ((uint8*)pdata)[0];
 
 	Blake2Shost(input, key);
+
+	CUDA_SAFE_CALL(cudaMemset(d_NNonce[thr_id], 0xff, 2 * sizeof(uint32_t)));
 
 	cudaMemcpyToSymbol(input_init, input, 64, 0, cudaMemcpyHostToDevice);
 	cudaMemcpyToSymbol(key_init, key, 64, 0, cudaMemcpyHostToDevice);

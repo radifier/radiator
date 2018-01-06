@@ -668,7 +668,7 @@ __global__ void __launch_bounds__(TPB, 4)
 x11_simd512_gpu_expand_64(uint32_t threads, uint32_t startNounce, const uint64_t *const __restrict__ g_hash, uint4 *const __restrict__ g_temp4)
 {
 	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x)/8;
-//	if (thread < threads)
+	if (thread < threads)
 	{
 		const uint32_t nounce = (startNounce + thread);
 
@@ -694,7 +694,7 @@ __global__ __launch_bounds__(TPB, 2)
 void x11_simd512_gpu_compress_64_maxwell(uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint4 *g_fft4)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-//	if (thread < threads)
+	if (thread < threads)
 	{
 		const uint32_t nounce = (startNounce + thread);
 		uint4 g_state[64];

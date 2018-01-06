@@ -102,7 +102,7 @@ void skein256_gpu_hash_32(uint32_t threads, uint32_t startNounce, uint64_t *outp
 		{ 0x08, 0xff000000 }
 	};
 
-//	if (thread < threads)
+	if (thread < threads)
 	{
 
 		uint2 dt0,dt1,dt2,dt3;

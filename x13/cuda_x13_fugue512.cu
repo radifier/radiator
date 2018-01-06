@@ -605,7 +605,7 @@ void x13_fugue512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *
 	__shared__ uint32_t mixtabs[1024];
 
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-//	if (thread < threads)
+	if (thread < threads)
 	{
 		if (threadIdx.x < 128)
 		{

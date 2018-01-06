@@ -40,6 +40,13 @@ extern int8_t device_pstate[MAX_GPUS];
 uint32_t clock_prev[MAX_GPUS] = { 0 };
 uint32_t clock_prev_mem[MAX_GPUS] = { 0 };
 uint32_t limit_prev[MAX_GPUS] = { 0 };
+static bool nvml_plimit_set = false;
+
+#ifdef WIN32
+#include "nvapi/nvapi_ccminer.h"
+static int nvapi_dev_map[MAX_GPUS] = {0};
+static NvPhysicalGpuHandle phys[NVAPI_MAX_PHYSICAL_GPUS] = {0};
+#endif
 
 /*
  * Wrappers to emulate dlopen() on other systems like Windows
@@ -309,6 +316,21 @@ nvml_handle * nvml_create()
 	return nvmlh;
 }
 
+// Replacement for WIN32 CUDA 6.5 on pascal
+int nvapiMemGetInfo(int dev_id, uint64_t *free, uint64_t *total)
+{
+	NvAPI_Status ret = NVAPI_OK;
+	NV_DISPLAY_DRIVER_MEMORY_INFO mem = {0};
+	mem.version = NV_DISPLAY_DRIVER_MEMORY_INFO_VER;
+	unsigned int devNum = nvapi_dev_map[dev_id % MAX_GPUS];
+	if((ret = NvAPI_GPU_GetMemoryInfo(phys[devNum], &mem)) == NVAPI_OK)
+	{
+		*total = (uint64_t)mem.dedicatedVideoMemory;// mem.availableDedicatedVideoMemory;
+		*free = (uint64_t)mem.curAvailableDedicatedVideoMemory;
+	}
+	return (int)ret;
+}
+
 #define MAXCLOCKS 255
 /* apply config clocks to an used device */
 int nvml_set_clocks(nvml_handle *nvmlh, int dev_id)
@@ -539,48 +561,6 @@ int nvml_set_pstate(nvml_handle *nvmlh, int dev_id)
 	return 1;
 }
 
-int nvml_set_plimit(nvml_handle *nvmlh, int dev_id)
-{
-	nvmlReturn_t rc = NVML_ERROR_UNKNOWN;
-	uint32_t gpu_clk = 0, mem_clk = 0;
-	int n = nvmlh->cuda_nvml_device_id[dev_id];
-	if (n < 0 || n >= nvmlh->nvml_gpucount)
-		return -ENODEV;
-
-	if (!device_plimit[dev_id])
-		return 0; // nothing to do
-
-	if (!nvmlh->nvmlDeviceSetPowerManagementLimit)
-		return -ENOSYS;
-
-	uint32_t plimit = device_plimit[dev_id] * 1000;
-	uint32_t pmin = 1000, pmax = 0, prev_limit = 0;
-	if (nvmlh->nvmlDeviceGetPowerManagementLimitConstraints)
-		rc = nvmlh->nvmlDeviceGetPowerManagementLimitConstraints(nvmlh->devs[n], &pmin, &pmax);
-
-	if (rc != NVML_SUCCESS) {
-		if (!nvmlh->nvmlDeviceGetPowerManagementLimit)
-			return -ENOSYS;
-	}
-	nvmlh->nvmlDeviceGetPowerManagementLimit(nvmlh->devs[n], &prev_limit);
-	if (!pmax) pmax = prev_limit;
-
-	plimit = min(plimit, pmax);
-	plimit = max(plimit, pmin);
-	rc = nvmlh->nvmlDeviceSetPowerManagementLimit(nvmlh->devs[n], plimit);
-	if (rc != NVML_SUCCESS) {
-		applog(LOG_WARNING, "GPU #%d: plimit %s", dev_id, nvmlh->nvmlErrorString(rc));
-		return -1;
-	}
-
-	if (!opt_quiet) {
-		applog(LOG_INFO, "GPU #%d: power limit set to %uW (allowed range is %u-%u)",
-			dev_id, plimit/1000U, pmin/1000U, pmax/1000U);
-	}
-
-	limit_prev[dev_id] = prev_limit;
-	return 1;
-}
 
 int nvml_get_gpucount(nvml_handle *nvmlh, int *gpucount)
 {
@@ -593,7 +573,6 @@ int cuda_get_gpucount(nvml_handle *nvmlh, int *gpucount)
 	*gpucount = nvmlh->cuda_gpucount;
 	return 0;
 }
-
 
 int nvml_get_gpu_name(nvml_handle *nvmlh, int cudaindex, char *namebuf, int bufsize)
 {
@@ -790,9 +769,7 @@ int nvml_destroy(nvml_handle *nvmlh)
 #ifdef WIN32
 #include "nvapi/nvapi_ccminer.h"
 
-static int nvapi_dev_map[MAX_GPUS] = { 0 };
 static NvDisplayHandle hDisplay_a[NVAPI_MAX_PHYSICAL_GPUS * 2] = { 0 };
-static NvPhysicalGpuHandle phys[NVAPI_MAX_PHYSICAL_GPUS] = { 0 };
 static NvU32 nvapi_dev_cnt = 0;
 
 int nvapi_temperature(unsigned int devNum, unsigned int *temperature)
@@ -960,6 +937,54 @@ int nvapi_getbios(unsigned int devNum, char *desc, unsigned int maxlen)
 	}
 	return 0;
 }
+uint8_t nvapi_get_plimit(unsigned int devNum)
+{
+	NvAPI_Status ret = NVAPI_OK;
+	NVAPI_GPU_POWER_STATUS pol = {0};
+	pol.version = NVAPI_GPU_POWER_STATUS_VER;
+	if((ret = NvAPI_DLL_ClientPowerPoliciesGetStatus(phys[devNum], &pol)) != NVAPI_OK)
+	{
+		NvAPI_ShortString string;
+		NvAPI_GetErrorMessage(ret, string);
+		if(opt_debug)
+			applog(LOG_DEBUG, "NVAPI PowerPoliciesGetStatus: %s", string);
+		return 0;
+	}
+	return (uint8_t)(pol.entries[0].power / 1000); // in percent
+}
+
+int nvapi_set_plimit(unsigned int devNum, uint16_t percent)
+{
+	NvAPI_Status ret = NVAPI_OK;
+	uint32_t val = percent * 1000;
+
+	NVAPI_GPU_POWER_INFO nfo = {0};
+	nfo.version = NVAPI_GPU_POWER_INFO_VER;
+	ret = NvAPI_DLL_ClientPowerPoliciesGetInfo(phys[devNum], &nfo);
+	if(ret == NVAPI_OK)
+	{
+		if(val == 0)
+			val = nfo.entries[0].def_power;
+		else if(val < nfo.entries[0].min_power)
+			val = nfo.entries[0].min_power;
+		else if(val > nfo.entries[0].max_power)
+			val = nfo.entries[0].max_power;
+	}
+
+	NVAPI_GPU_POWER_STATUS pol = {0};
+	pol.version = NVAPI_GPU_POWER_STATUS_VER;
+	pol.flags = 1;
+	pol.entries[0].power = val;
+	if((ret = NvAPI_DLL_ClientPowerPoliciesSetStatus(phys[devNum], &pol)) != NVAPI_OK)
+	{
+		NvAPI_ShortString string;
+		NvAPI_GetErrorMessage(ret, string);
+		if(opt_debug)
+			applog(LOG_DEBUG, "NVAPI PowerPoliciesSetStatus: %s", string);
+		return -1;
+	}
+	return ret;
+}
 
 int nvapi_init()
 {
@@ -1113,18 +1138,21 @@ int gpu_busid(struct cgpu_info *gpu)
 	return busid;
 }
 
-/* not used in api (too much variable) */
 unsigned int gpu_power(struct cgpu_info *gpu)
 {
 	unsigned int mw = 0;
 	int support = -1;
-	if (hnvml) {
+	if(hnvml)
+	{
 		support = nvml_get_power_usage(hnvml, gpu->gpu_id, &mw);
 	}
 #ifdef WIN32
-	if (support == -1) {
+	if(support == -1)
+	{
 		unsigned int pct = 0;
 		nvapi_getusage(nvapi_dev_map[gpu->gpu_id], &pct);
+		pct *= nvapi_get_plimit(nvapi_dev_map[gpu->gpu_id]);
+		pct /= 100;
 		mw = pct; // to fix
 	}
 #endif
@@ -1133,6 +1161,92 @@ unsigned int gpu_power(struct cgpu_info *gpu)
 		// average
 		mw = (gpu->gpu_power + mw) / 2;
 	}
+	return mw;
+}
+
+int nvml_set_plimit(nvml_handle *nvmlh, int dev_id)
+{
+	nvmlReturn_t rc = NVML_ERROR_UNKNOWN;
+	uint32_t gpu_clk = 0, mem_clk = 0;
+	int n = nvmlh->cuda_nvml_device_id[dev_id];
+	if(n < 0 || n >= nvmlh->nvml_gpucount)
+		return -ENODEV;
+
+	if(!device_plimit[dev_id])
+		return 0; // nothing to do
+
+	if(!nvmlh->nvmlDeviceSetPowerManagementLimit)
+		return -ENOSYS;
+
+	uint32_t plimit = device_plimit[dev_id] * 1000;
+	uint32_t pmin = 1000, pmax = 0, prev_limit = 0;
+	if(nvmlh->nvmlDeviceGetPowerManagementLimitConstraints)
+		rc = nvmlh->nvmlDeviceGetPowerManagementLimitConstraints(nvmlh->devs[n], &pmin, &pmax);
+
+	if(rc != NVML_SUCCESS)
+	{
+		if(!nvmlh->nvmlDeviceGetPowerManagementLimit)
+			return -ENOSYS;
+	}
+	nvmlh->nvmlDeviceGetPowerManagementLimit(nvmlh->devs[n], &prev_limit);
+	if(!pmax) pmax = prev_limit;
+
+	plimit = min(plimit, pmax);
+	plimit = max(plimit, pmin);
+	rc = nvmlh->nvmlDeviceSetPowerManagementLimit(nvmlh->devs[n], plimit);
+	if(rc != NVML_SUCCESS)
+	{
+#ifndef WIN32
+		applog(LOG_WARNING, "GPU #%d: plimit %s", dev_id, nvmlh->nvmlErrorString(rc));
+#endif
+		return -1;
+	}
+	else
+	{
+		device_plimit[dev_id] = plimit / 1000;
+		nvml_plimit_set = true;
+	}
+
+	if(!opt_quiet)
+	{
+		applog(LOG_INFO, "GPU #%d: power limit set to %uW (allowed range is %u-%u)",
+			   dev_id, plimit / 1000U, pmin / 1000U, pmax / 1000U);
+	}
+
+	limit_prev[dev_id] = prev_limit;
+	return 1;
+}
+
+uint32_t nvml_get_plimit(nvml_handle *nvmlh, int dev_id)
+{
+	uint32_t plimit = 0;
+	int n = nvmlh ? nvmlh->cuda_nvml_device_id[dev_id] : -1;
+	if(n < 0 || n >= nvmlh->nvml_gpucount)
+		return 0;
+
+	if(nvmlh->nvmlDeviceGetPowerManagementLimit)
+	{
+		nvmlh->nvmlDeviceGetPowerManagementLimit(nvmlh->devs[n], &plimit);
+	}
+	return plimit;
+}
+
+unsigned int gpu_plimit(struct cgpu_info *gpu)
+{
+	unsigned int mw = 0;
+	int support = -1;
+	if(hnvml)
+	{
+		mw = nvml_get_plimit(hnvml, gpu->gpu_id);
+		support = (mw > 0);
+	}
+#ifdef WIN32
+	// NVAPI value is in % (< 100 so)
+	if(support == -1)
+	{
+		mw = nvapi_get_plimit(nvapi_dev_map[gpu->gpu_id]);
+	}
+#endif
 	return mw;
 }
 

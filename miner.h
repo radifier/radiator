@@ -386,25 +386,41 @@ extern int scanhash_sia(int thr_id, uint32_t *pdata,
 /* api related */
 void *api_thread(void *userdata);
 void api_set_throughput(int thr_id, uint32_t throughput);
+void bench_set_throughput(int thr_id, uint32_t throughput);
+
+struct monitor_info
+{
+	uint32_t gpu_temp;
+	uint32_t gpu_fan;
+	uint32_t gpu_clock;
+	uint32_t gpu_memclock;
+	uint32_t gpu_power;
+
+	pthread_mutex_t lock;
+	pthread_cond_t sampling_signal;
+	volatile bool sampling_flag;
+	uint32_t tm_displayed;
+};
 
 struct cgpu_info
 {
 	uint8_t gpu_id;
 	uint8_t thr_id;
-	int accepted;
-	int rejected;
-	int hw_errors;
+	uint16_t hw_errors;
+	unsigned accepted;
+	uint32_t rejected;
 	double khashes;
-	uint8_t intensity_int;
-	uint8_t has_monitoring;
+	int has_monitoring;
 	float gpu_temp;
 	uint16_t gpu_fan;
 	uint16_t gpu_fan_rpm;
 	uint16_t gpu_arch;
-	int gpu_clock;
-	int gpu_memclock;
-	size_t gpu_mem;
+	uint32_t gpu_clock;
+	uint32_t gpu_memclock;
+	uint64_t gpu_mem;
+	uint64_t gpu_memfree;
 	uint32_t gpu_power;
+	uint32_t gpu_plimit;
 	double gpu_vddc;
 	int16_t gpu_pstate;
 	int16_t gpu_bus;
@@ -416,8 +432,10 @@ struct cgpu_info
 
 	char gpu_sn[64];
 	char gpu_desc[64];
-	float intensity;
+	double intensity;
 	uint32_t throughput;
+
+	struct monitor_info monitor;
 };
 
 struct thr_api {
@@ -498,6 +516,7 @@ extern char* device_name[MAX_GPUS];
 extern int device_map[MAX_GPUS];
 extern long  device_sm[MAX_GPUS];
 extern uint32_t gpus_intensity[MAX_GPUS];
+double throughput2intensity(uint32_t throughput);
 
 #define CL_N    "\x1B[0m"
 #define CL_RED  "\x1B[31m"

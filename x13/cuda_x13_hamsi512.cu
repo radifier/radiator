@@ -524,7 +524,7 @@ __global__ __launch_bounds__(256,4)
 void x13_hamsi512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *g_hash )
 {
     const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-//    if (thread < threads)
+    if (thread < threads)
     {
 		const uint32_t d_alpha_n[32] = 
 		{

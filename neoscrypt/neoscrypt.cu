@@ -11,7 +11,7 @@ extern void get_cuda_arch_neo_tpruvot(int *version);
 extern void get_cuda_arch_neo(int *version); 
 extern int cuda_arch[MAX_GPUS];
 void neoscrypt_init(int thr_id, uint32_t threads);
-void neoscrypt_setBlockTarget_tpruvot(uint32_t* const pdata, uint32_t* const target);
+void neoscrypt_setBlockTarget_tpruvot(int thr_id, uint32_t* const pdata, uint32_t* const target);
 void neoscrypt_hash_tpruvot(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *resNonces, bool stratum);
 
 int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
@@ -142,7 +142,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		else endiandata[k] = pdata[k];
 	}
 	if(use_tpruvot)
-		neoscrypt_setBlockTarget_tpruvot(endiandata, ptarget);
+		neoscrypt_setBlockTarget_tpruvot(thr_id, endiandata, ptarget);
 	else
 		neoscrypt_setBlockTarget(thr_id, endiandata, ptarget);
 	
