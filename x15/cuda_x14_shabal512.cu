@@ -373,7 +373,7 @@ void x14_shabal512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t 
 		0x950C3434, 0xAED9A06D, 0x2537DC8D, 0x7CDB5969
 	};
 
-//	if (thread < threads)
+	if (thread < threads)
 	{
 		const uint32_t nounce =  (startNounce + thread);
 		const uint32_t hashPosition = nounce - startNounce;

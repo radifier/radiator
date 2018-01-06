@@ -223,7 +223,7 @@ __global__
 void blakeKeccak256_gpu_hash_80(const uint32_t threads, const uint32_t startNonce, uint32_t * Hash)
 {
 	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-//	if (thread < threads)
+	if (thread < threads)
 	{
 		const uint32_t nonce = startNonce + thread;
 		uint32_t h[8];

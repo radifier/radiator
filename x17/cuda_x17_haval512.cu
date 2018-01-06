@@ -102,7 +102,7 @@ __global__
 void x17_haval256_gpu_hash_64(uint32_t threads, uint32_t startNounce, const uint64_t *const __restrict__ g_hash, uint32_t target, uint32_t *const __restrict__ ret)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-//	if (thread < threads)
+	if (thread < threads)
 	{
 		uint32_t *inpHash = (uint32_t*)&g_hash[8 * thread];
 		uint32_t hash[16];
