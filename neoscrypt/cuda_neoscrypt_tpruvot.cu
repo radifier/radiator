@@ -1478,7 +1478,7 @@ void neoscrypt_hash_tpruvot(int thr_id, uint32_t threads, uint32_t startNounce, 
 		CUDA_SAFE_CALL(cudaDeviceSynchronize());
 	CUDA_SAFE_CALL(cudaGetLastError());
 
-	neoscrypt_gpu_hash_ending << <grid2, block2 >> > (stratum, startNounce, d_NNonce[thr_id]); //fastkdf+end
+	neoscrypt_gpu_hash_ending << <grid2, block2 >> > (threads, stratum, startNounce, d_NNonce[thr_id]); //fastkdf+end
 	if(opt_debug)
 		CUDA_SAFE_CALL(cudaDeviceSynchronize());
 	CUDA_SAFE_CALL(cudaMemcpy(resNonces, d_NNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost));
