@@ -1270,6 +1270,8 @@ __global__ __launch_bounds__(TPB2, 1) void neoscrypt_gpu_hash_start(int stratum,
 
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	const uint32_t nonce = startNonce + thread;
+	if(thread >= threads)
+		return;
 
 	const uint32_t ZNonce = (stratum) ? cuda_swab32(nonce) : nonce; //freaking morons !!!
 
@@ -1286,6 +1288,8 @@ __global__ __launch_bounds__(TPB, 1) void neoscrypt_gpu_hash_chacha1_stream1(uin
 	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	const int shift = SHIFT * 8 * thread;
 	const unsigned int shiftTr = 8 * thread;
+	if(thread >= threads)
+		return;
 
 	vectypeS __align__(16) X[8];
 	for(int i = 0; i<8; i++)
@@ -1309,6 +1313,8 @@ __global__ __launch_bounds__(TPB, 1) void neoscrypt_gpu_hash_chacha2_stream1(uin
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	const int shift = SHIFT * 8 * thread;
 	const int shiftTr = 8 * thread;
+	if(thread >= threads)
+		return;
 
 	vectypeS __align__(16) X[8];
 #pragma unroll
@@ -1334,6 +1340,8 @@ __global__ __launch_bounds__(TPB, 1) void neoscrypt_gpu_hash_salsa1_stream1(uint
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	const int shift = SHIFT * 8 * thread;
 	const int shiftTr = 8 * thread;
+	if(thread >= threads)
+		return;
 
 	vectypeS __align__(16) Z[8];
 #pragma unroll
@@ -1357,6 +1365,8 @@ __global__ __launch_bounds__(TPB, 1) void neoscrypt_gpu_hash_salsa2_stream1(uint
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	const int shift = SHIFT * 8 * thread;
 	const int shiftTr = 8 * thread;
+	if(thread >= threads)
+		return;
 
 	vectypeS __align__(16) X[8];
 #pragma unroll
@@ -1392,6 +1402,8 @@ __global__ __launch_bounds__(TPB2, 8) void neoscrypt_gpu_hash_ending(int stratum
 	__syncthreads();
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	const uint32_t nonce = startNonce + thread;
+	if(thread >= threads)
+		return;
 
 	const int shiftTr = 8 * thread;
 	vectypeS __align__(16) Z[8];
