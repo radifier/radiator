@@ -70,6 +70,7 @@ void cuda_devicenames();
 void cuda_devicereset();
 int cuda_finddevice(char *name);
 void cuda_print_devices();
+void cuda_get_device_sm();
 
 #include "nvml.h"
 #ifdef USE_WRAPNVML
@@ -2799,6 +2800,7 @@ int main(int argc, char *argv[])
 	else if(!hnvml)
 		applog(LOG_INFO, "GPU monitoring is not available.");
 #endif
+	cuda_get_device_sm();
 
 	/* parse command line */
 	parse_cmdline(argc, argv);
