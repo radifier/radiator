@@ -111,12 +111,20 @@ void cuda_devicenames()
 
 void cuda_get_device_sm()
 {
+	cudaDeviceProp props;
+	cudaError_t err;
+	int dev_id;
+
 	for(int i = 0; i < opt_n_threads; i++)
 	{
-		char vendorname[32] = {0};
-		int dev_id = device_map[i];
-		cudaDeviceProp props;
-		cudaError_t err = cudaGetDeviceProperties(&props, dev_id);
+		dev_id = device_map[i];
+		err = cudaSetDevice(device_map[i]);
+		if(err != cudaSuccess)
+		{
+			applog(LOG_ERR, "%s", cudaGetErrorString(err));
+			exit(1);
+		}
+		err = cudaGetDeviceProperties(&props, dev_id);
 		if(err != cudaSuccess)
 		{
 			applog(LOG_ERR, "%s", cudaGetErrorString(err));

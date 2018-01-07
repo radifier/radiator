@@ -2800,10 +2800,14 @@ int main(int argc, char *argv[])
 	else if(!hnvml)
 		applog(LOG_INFO, "GPU monitoring is not available.");
 #endif
-	cuda_get_device_sm();
 
 	/* parse command line */
 	parse_cmdline(argc, argv);
+
+	if(!opt_n_threads)
+		opt_n_threads = active_gpus;
+
+	cuda_get_device_sm();
 
 	if(opt_protocol)
 	{
@@ -2926,8 +2930,6 @@ int main(int argc, char *argv[])
 			applog(LOG_DEBUG, "Binding process to cpu mask %x", opt_affinity);
 		affine_to_cpu_mask(-1, opt_affinity);
 	}
-	if(!opt_n_threads)
-		opt_n_threads = active_gpus;
 
 #ifdef HAVE_SYSLOG_H
 	if(use_syslog)
