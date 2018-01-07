@@ -6,6 +6,7 @@
 // STEP8_IF and STEP8_MAJ beinhalten je 2x 8-fach parallel Operations
 
 #define TPB 256
+#include "miner.h"
 #include "cuda_helper.h"
 #include "cuda_vector.h"
 #include <stdio.h>
@@ -710,17 +711,14 @@ void x11_simd512_gpu_compress_64_maxwell(uint32_t threads, uint32_t startNounce,
 }
 
 __global__ void __launch_bounds__(TPB, 4)
-x11_simd512_gpu_compress1_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint4 *g_fft4, uint32_t *g_state)
+x11_simd512_gpu_compress1_64(uint32_t threads, uint32_t *g_hash, uint4 *g_fft4, uint32_t *g_state)
 {
 	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-//	if(thread < threads)
+	if(thread < threads)
 	{
-		uint32_t nounce = startNounce + thread;
+		uint32_t *Hash = &g_hash[16 * thread];
 
-		int hashPosition = nounce - startNounce;
-		uint32_t *Hash = (uint32_t*)&g_hash[8 * hashPosition];
-
-		Compression1(Hash, hashPosition, g_fft4, g_state);
+		Compression1(Hash, thread, g_fft4, g_state);
 	}
 }
 
@@ -728,7 +726,7 @@ __global__ void __launch_bounds__(TPB, 1)
 x11_simd512_gpu_compress2_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint4 *g_fft4, uint32_t *g_state)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-//	if (thread < threads)
+	if (thread < threads)
 	{
 		const uint32_t nounce =  (startNounce + thread);
 
@@ -743,7 +741,7 @@ __global__ void  __launch_bounds__(TPB, 4)
 x11_simd512_gpu_final_64(uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint4 *g_fft4, uint32_t *g_state)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
-//	if (thread < threads)
+	if (thread < threads)
 	{
 		const uint32_t nounce = (startNounce + thread);
 
@@ -790,7 +788,7 @@ void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce,
 		dim3 block(TPB);
 		dim3 grid((threads + TPB - 1) / TPB);
 		x11_simd512_gpu_expand_64 << <grid8, block, 0, gpustream[thr_id] >> > (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id]);
-		x11_simd512_gpu_compress1_64 << < grid, block, 0, gpustream[thr_id] >> > (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id], d_state[thr_id]);
+		x11_simd512_gpu_compress1_64 << < grid, block, 0, gpustream[thr_id] >> > (threads, d_hash, d_temp4[thr_id], d_state[thr_id]);
 		x11_simd512_gpu_compress2_64 << < grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id], d_state[thr_id]);
 		x11_simd512_gpu_final_64 << <grid, block, 0, gpustream[thr_id] >> > (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id], d_state[thr_id]);
 	}
