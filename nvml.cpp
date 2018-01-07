@@ -316,6 +316,7 @@ nvml_handle * nvml_create()
 	return nvmlh;
 }
 
+#ifdef WIN32
 // Replacement for WIN32 CUDA 6.5 on pascal
 int nvapiMemGetInfo(int dev_id, uint64_t *free, uint64_t *total)
 {
@@ -330,6 +331,7 @@ int nvapiMemGetInfo(int dev_id, uint64_t *free, uint64_t *total)
 	}
 	return (int)ret;
 }
+#endif
 
 #define MAXCLOCKS 255
 /* apply config clocks to an used device */
