@@ -70,6 +70,7 @@ void cuda_devicenames();
 void cuda_devicereset();
 int cuda_finddevice(char *name);
 void cuda_print_devices();
+void cuda_get_device_sm();
 
 #include "nvml.h"
 #ifdef USE_WRAPNVML
@@ -2803,6 +2804,11 @@ int main(int argc, char *argv[])
 	/* parse command line */
 	parse_cmdline(argc, argv);
 
+	if(!opt_n_threads)
+		opt_n_threads = active_gpus;
+
+	cuda_get_device_sm();
+
 	if(opt_protocol)
 	{
 		curl_version_info_data *info;
@@ -2924,8 +2930,6 @@ int main(int argc, char *argv[])
 			applog(LOG_DEBUG, "Binding process to cpu mask %x", opt_affinity);
 		affine_to_cpu_mask(-1, opt_affinity);
 	}
-	if(!opt_n_threads)
-		opt_n_threads = active_gpus;
 
 #ifdef HAVE_SYSLOG_H
 	if(use_syslog)
