@@ -2779,6 +2779,15 @@ int main(int argc, char *argv[])
 	{
 		device_map[i] = i;
 	}
+
+	/* parse command line */
+	parse_cmdline(argc, argv);
+
+	if(!opt_n_threads)
+		opt_n_threads = active_gpus;
+
+	cuda_get_device_sm();
+
 	cuda_devicenames(); 
 
 #ifdef USE_WRAPNVML
@@ -2802,14 +2811,6 @@ int main(int argc, char *argv[])
 	else if(!hnvml)
 		applog(LOG_INFO, "GPU monitoring is not available.");
 #endif
-
-	/* parse command line */
-	parse_cmdline(argc, argv);
-
-	if(!opt_n_threads)
-		opt_n_threads = active_gpus;
-
-	cuda_get_device_sm();
 
 	if(opt_protocol)
 	{
