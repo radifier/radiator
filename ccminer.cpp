@@ -2779,6 +2779,8 @@ int main(int argc, char *argv[])
 	{
 		device_map[i] = i;
 	}
+	cuda_devicenames(); 
+
 #ifdef USE_WRAPNVML
 #if defined(__linux__) || defined(_WIN64)
 	/* nvml is currently not the best choice on Windows (only in x64) */
