@@ -22,7 +22,7 @@ do {                                                                  \
 	if (cudaSuccess != err) {                                         \
 		fprintf(stderr, "Cuda error in func '%s' at line %i : %s.\n", \
 		         __FUNCTION__, __LINE__, cudaGetErrorString(err) );   \
-		exit(EXIT_FAILURE);                                           \
+		proper_exit(EXIT_FAILURE);                                           \
 		}                                                                 \
 } while (0)
 
@@ -142,7 +142,7 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		if(err != cudaSuccess)
 		{
 			applog(LOG_ERR, "GPU #%d: %s", device_map[thr_id], cudaGetErrorString(err));
-			exit(EXIT_FAILURE);
+			proper_exit(EXIT_FAILURE);
 		}
 	} while(!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
 
