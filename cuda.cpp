@@ -63,16 +63,7 @@ int cuda_version()
 void cuda_devicenames()
 {
 	cudaError_t err;
-	int GPU_N;
-	err = cudaGetDeviceCount(&GPU_N);
-	if(err != cudaSuccess)
-	{
-		applog(LOG_ERR, "Unable to query number of CUDA devices! Is an nVidia driver installed?");
-		exit(1);
-	}
-
-	GPU_N = min(MAX_GPUS, GPU_N);
-	for(int i = 0; i < GPU_N; i++)
+	for(int i = 0; i < opt_n_threads; i++)
 	{
 		char vendorname[32] = {0};
 		int dev_id = device_map[i];
