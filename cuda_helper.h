@@ -259,8 +259,8 @@ extern void proper_exit(int reason);
 do {                                                                  \
 	cudaError_t err = call;                                           \
 	if (cudaSuccess != err) {                                         \
-		fprintf(stderr, "Cuda error in func '%s' at line %i : %s.\n", \
-		         __FUNCTION__, __LINE__, cudaGetErrorString(err) );   \
+		fprintf(stderr, "GPU #%d: Cuda error in func '%s' at line %i : %s.\n", \
+		         device_map[thr_id], __FUNCTION__, __LINE__, cudaGetErrorString(err) );   \
 		proper_exit(EXIT_FAILURE);                                           \
 	}                                                                 \
 } while (0)

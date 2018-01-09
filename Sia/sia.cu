@@ -236,7 +236,7 @@ int scanhash_sia(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_no
 	uint32_t throughput = min(throughputmax, (max_nonce - first_nonce));
 	throughput -= throughput % (blocksize*npt);
 
-	sia_precalc(gpustream[thr_id], (uint64_t *)pdata);
+	sia_precalc(thr_id, gpustream[thr_id], (uint64_t *)pdata);
 
 	uint32_t endiandata[20];
 	for(int k = 0; k < 20; k++)

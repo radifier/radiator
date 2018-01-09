@@ -301,7 +301,7 @@ void sia_gpu_init(int thr_id)
 	CUDA_SAFE_CALL(cudaMalloc(&hash_d, 4 * 8));
 }
 
-void sia_precalc(cudaStream_t cudastream, const uint64_t *blockHeader)
+void sia_precalc(int thr_id, cudaStream_t cudastream, const uint64_t *blockHeader)
 {
 	vpre_h[0] = 0xBB1838E7A0A44BF9u + blockHeader[0]; vpre_h[12] = ROTR64(0x510E527FADE68281u ^ vpre_h[0], 32); vpre_h[8] = 0x6a09e667f3bcc908u + vpre_h[12]; vpre_h[4] = ROTR64(0x510e527fade682d1u ^ vpre_h[8], 24);
 	vpre_h[0] = vpre_h[0] + vpre_h[4] + blockHeader[1];       vpre_h[12] = ROTR64(vpre_h[12] ^ vpre_h[0], 16);              vpre_h[8] = vpre_h[8] + vpre_h[12];               vpre_h[4] = ROTR64(vpre_h[4] ^ vpre_h[8], 63);
