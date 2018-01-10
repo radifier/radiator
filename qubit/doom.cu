@@ -47,6 +47,8 @@ extern int scanhash_doom(int thr_id, uint32_t *pdata,
 	static THREAD volatile bool init = false;
 	if(!init)
 	{
+		if(throughputmax == 1<<22)
+			applog(LOG_INFO, "GPU #%d: using default intensity 22", device_map[thr_id]);
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		CUDA_SAFE_CALL(cudaDeviceReset());
 		CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));

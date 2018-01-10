@@ -50,6 +50,8 @@ extern int scanhash_myriad(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	static THREAD volatile bool init = false;
 	if(!init)
 	{
+		if(throughputmax == 1<<19)
+			applog(LOG_INFO, "GPU #%d: using default intensity 19", device_map[thr_id]);
 #if BIG_DEBUG
 #else
 #if defined WIN32 && !defined _WIN64

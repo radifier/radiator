@@ -198,6 +198,8 @@ extern int scanhash_x17(int thr_id, uint32_t *pdata,
 
 	if (!init[thr_id])
 	{
+		if(throughputmax == intensity)
+			applog(LOG_INFO, "GPU #%d: using default intensity %.3f", device_map[thr_id], throughput2intensity(throughputmax));
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		CUDA_SAFE_CALL(cudaDeviceReset());
 		CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
@@ -227,7 +229,7 @@ extern int scanhash_x17(int thr_id, uint32_t *pdata,
 
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], 16ULL * sizeof(uint32_t) * throughputmax));
 		CUDA_SAFE_CALL(cudaMallocHost(&(h_found), 2 * sizeof(uint32_t)));
-
+ 
 		mining_has_stopped[thr_id] = false;
 		init[thr_id] = true;
 	}

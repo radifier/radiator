@@ -230,6 +230,8 @@ int scanhash_sia(int thr_id, uint32_t *pdata, uint32_t *ptarget, uint32_t max_no
 		sia_gpu_init(thr_id);
 
 		throughputmax = device_intensity(device_map[thr_id], __func__, 1U << 28);
+		if(throughputmax == 1<<28)
+			applog(LOG_INFO, "GPU #%d: using default intensity 28", device_map[thr_id]);
 		mining_has_stopped[thr_id] = false;
 		init = true;
 	}

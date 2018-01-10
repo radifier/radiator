@@ -453,6 +453,8 @@ extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 
 	if (!init[thr_id]) 
 	{
+		if(throughputmax == 128U * 2560)
+			applog(LOG_INFO, "GPU #%d: using default intensity %.3f", device_map[thr_id], throughput2intensity(throughputmax));
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		CUDA_SAFE_CALL(cudaDeviceReset());
 		CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));

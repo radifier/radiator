@@ -139,8 +139,8 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 	static THREAD bool init = false;
 	if (!init)
 	{ 
-		if(!gpus_intensity[thr_id] && opt_debug)
-			applog(LOG_WARNING, "Using default intensity (%d threads)", throughputmax);
+		if(throughputmax == intensity)
+			applog(LOG_INFO, "GPU #%d: using default intensity %.3f", device_map[thr_id], throughput2intensity(throughputmax));
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		CUDA_SAFE_CALL(cudaDeviceReset());
 		CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));

@@ -66,6 +66,8 @@ extern int scanhash_groestlcoin(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	static THREAD volatile bool init = false;
 	if(!init)
     {
+		if(throughputmax == intensity)
+			applog(LOG_INFO, "GPU #%d: using default intensity %.3f", device_map[thr_id], throughput2intensity(throughputmax));
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		CUDA_SAFE_CALL(cudaDeviceReset());
 		CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));

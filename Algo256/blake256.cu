@@ -693,8 +693,8 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	uint32_t crcsum;
 #endif
 	unsigned int intensity = 28;
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1U << intensity);
-	throughput = min(throughput, max_nonce - first_nonce) & 0xfffffc00;
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, 1U << intensity);
+	uint32_t throughput = min(throughputmax, max_nonce - first_nonce) & 0xfffffc00;
 
 	int rc = 0;
 
@@ -717,6 +717,8 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	static THREAD volatile bool init = false;
 	if(!init)
 	{
+		if(throughputmax == intensity)
+			applog(LOG_INFO, "GPU #%d: using default intensity %.3f", device_map[thr_id], throughput2intensity(throughputmax));
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		CUDA_SAFE_CALL(cudaDeviceReset());
 		CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));

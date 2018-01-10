@@ -50,8 +50,8 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 	const int swap = 1;
 
 	uint32_t intensity = (device_sm[device_map[thr_id]] > 500) ? 1 << 28 : 1 << 27;;
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, intensity); // 256*4096
-	throughput = min(throughput, max_nonce - first_nonce) & 0xfffffc00;
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, intensity); // 256*4096
+	uint32_t throughput = min(throughputmax, max_nonce - first_nonce) & 0xfffffc00;
 
 	if (opt_benchmark)
 	{
@@ -62,6 +62,8 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 	static THREAD volatile bool init = false;
 	if(!init)
 	{
+		if(throughputmax == intensity)
+			applog(LOG_INFO, "GPU #%d: using default intensity %.3f", device_map[thr_id], throughput2intensity(throughputmax));
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		CUDA_SAFE_CALL(cudaDeviceReset());
 		CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
