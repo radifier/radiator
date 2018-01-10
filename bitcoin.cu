@@ -128,8 +128,8 @@ int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 	static THREAD uint32_t *h_nounce = nullptr;
 
 	const uint32_t first_nonce = pdata[19];
-	uint32_t throughput = device_intensity(device_map[thr_id], __func__, 1U << 28);
-	throughput = min(throughput, (max_nonce - first_nonce)) & 0xfffffc00;
+	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, 1U << 28);
+	uint32_t throughput = min(throughputmax, (max_nonce - first_nonce)) & 0xfffffc00;
 
 	if (opt_benchmark)
 		ptarget[7] = 0x0005;
@@ -137,6 +137,8 @@ int scanhash_bitcoin(int thr_id, uint32_t *pdata,
 	static THREAD volatile bool init = false;
 	if(!init)
 	{
+		if(throughputmax == 1<<28)
+			applog(LOG_INFO, "GPU #%d: using default intensity 28", device_map[thr_id]);
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		CUDA_SAFE_CALL(cudaDeviceReset());
 		CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));

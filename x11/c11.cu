@@ -165,6 +165,8 @@ int scanhash_c11(int thr_id, uint32_t *pdata,
 		else intensity = (256 * 256 * 19);
 #endif
 		throughputmax = device_intensity(device_map[thr_id], __func__, intensity);
+		if(throughputmax == intensity)
+			applog(LOG_INFO, "GPU #%d: using default intensity %.3f", device_map[thr_id], throughput2intensity(throughputmax));
 #if defined WIN32 && !defined _WIN64
 		// 2GB limit for cudaMalloc
 		if(throughputmax > 0x7fffffffULL / (64 * sizeof(uint4)))

@@ -38,6 +38,8 @@ extern int scanhash_fugue256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 	static THREAD volatile bool init = false;
 	if(!init)
 	{
+		if(throughputmax == intensity)
+			applog(LOG_INFO, "GPU #%d: using default intensity %.3f", device_map[thr_id], throughput2intensity(throughputmax));
 #if defined WIN32 && !defined _WIN64
 		// 2GB limit for cudaMalloc
 		if(throughputmax > 0x7fffffffULL / (8 * sizeof(uint32_t)))
