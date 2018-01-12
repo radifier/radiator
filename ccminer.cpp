@@ -2751,6 +2751,23 @@ int main(int argc, char *argv[])
 	printf("CUDA support by Christian Buchner, Christian H. and DJM34\n");
 	printf("Includes optimizations implemented by sp-hash, klaust, tpruvot and tsiv.\n\n");
 
+#ifdef WIN32
+	if(CUDART_VERSION == 8000 && _MSC_VER > 1900)
+		printf("WARNING! CUDA 8 is not compatible with Visual Studio versions newer than 2015\n\n");
+#endif
+#if !defined __clang__ && defined __GNUC__
+	if(CUDART_VERSION == 8000 && __GNUC__ > 5)
+	{
+		printf("WARNING! GCC %d IS NOT COMPATIBLE WITH CUDA 8!\n");
+		printf("PLEASE USE GCC 5\n");
+	}
+	if((CUDART_VERSION == 9000 || CUDART_VERSION == 9010) && __GNUC__ > 6)
+	{
+		printf("WARNING! GCC %d IS NOT COMPATIBLE WITH CUDA 9!\n");
+		printf("PLEASE USE GCC 6\n\n");
+	}
+#endif
+
 	rpc_user = strdup("");
 	rpc_pass = strdup("");
 
