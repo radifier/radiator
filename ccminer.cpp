@@ -71,6 +71,7 @@ void cuda_devicereset();
 int cuda_finddevice(char *name);
 void cuda_print_devices();
 void cuda_get_device_sm();
+void cuda_reset_device(int thr_id, bool *init);
 
 #include "nvml.h"
 #ifdef USE_WRAPNVML
@@ -89,6 +90,11 @@ struct workio_cmd {
 		struct work	*work;
 	} u;
 };
+
+bool opt_debug_diff = false;
+bool opt_debug_threads = false;
+bool opt_showdiff = true;
+bool opt_hwmonitor = true;
 
 static const char *algo_names[] = {
 	"bitcoin",
@@ -149,6 +155,7 @@ static json_t *opt_config = nullptr;
 static const bool opt_time = true;
 enum sha_algos opt_algo;
 int opt_n_threads = 0;
+int gpu_threads = 1;
 int opt_affinity = -1;
 int opt_priority = 0;
 static double opt_difficulty = 1; // CH
@@ -156,14 +163,20 @@ static bool opt_extranonce = true;
 bool opt_trust_pool = false;
 int num_cpus;
 int active_gpus;
+bool need_nvsettings = false;
+bool need_memclockrst = false;
 char * device_name[MAX_GPUS] = { nullptr };
 int device_map[MAX_GPUS] = { 0 };
 long  device_sm[MAX_GPUS] = { 0 };
 uint32_t gpus_intensity[MAX_GPUS] = {0};
+int32_t device_mem_offsets[MAX_GPUS] = {0};
 uint32_t device_gpu_clocks[MAX_GPUS] = {0};
 uint32_t device_mem_clocks[MAX_GPUS] = {0};
 uint32_t device_plimit[MAX_GPUS] = {0};
 int8_t device_pstate[MAX_GPUS];
+int32_t device_led[MAX_GPUS] = {-1, -1};
+int opt_led_mode = 0;
+uint8_t device_tlimit[MAX_GPUS] = {0};
 char *rpc_user = NULL;
 static char *rpc_url = nullptr;
 static char *rpc_userpass = nullptr;
@@ -179,16 +192,17 @@ int longpoll_thr_id = -1;
 int stratum_thr_id = -1;
 int api_thr_id = -1;
 bool stratum_need_reset = false;
+volatile bool abort_flag = false;
 struct work_restart *work_restart = NULL;
 struct stratum_ctx stratum = { 0 };
 bool stop_mining = false;
 volatile bool mining_has_stopped[MAX_GPUS];
 
 pthread_mutex_t applog_lock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t stats_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t stats_lock = PTHREAD_MUTEX_INITIALIZER;
 uint32_t accepted_count = 0L;
 uint32_t rejected_count = 0L;
-static double thr_hashrates[MAX_GPUS];
+double thr_hashrates[MAX_GPUS];
 uint64_t global_hashrate = 0;
 double   global_diff = 0.0;
 uint64_t net_hashrate = 0;
@@ -292,7 +306,7 @@ Options:\n\
       --mem-clock=N     Set the gpu memory max clock (346.72+ driver)\n\
       --gpu-clock=N     Set the gpu engine max clock (346.72+ driver)\n\
       --pstate=N        Set the gpu power state (352.21+ driver)\n\
-			--plimit=N        Set the gpu power limit(352.21 + driver)\n"
+      --plimit=N        Set the gpu power limit(352.21 + driver)\n"
 #endif
 "";
 
@@ -2805,11 +2819,23 @@ int main(int argc, char *argv[])
 	if(!hnvml && nvapi_init() == 0)
 	{
 		applog(LOG_INFO, "NVAPI GPU monitoring enabled.");
-		cuda_devicenames(); // refresh gpu vendor name
+		if(!hnvml)
+		{
+			cuda_devicenames(); // refresh gpu vendor name
+		}
+		nvapi_init_settings();
 	}
 #endif
 	else if(!hnvml)
 		applog(LOG_INFO, "GPU monitoring is not available.");
+	// force reinit to set default device flags
+	if(!hnvml)
+	{
+		for(int n = 0; n < active_gpus; n++)
+		{
+			cuda_reset_device(n, NULL);
+		}
+	}
 #endif
 
 	if(opt_protocol)
@@ -3022,11 +3048,11 @@ int main(int argc, char *argv[])
 				gpu_reinit = true;
 			if(nvml_set_plimit(hnvml, device_map[n]) == 1)
 				gpu_reinit = true;
-			if(nvml_set_clocks(hnvml, device_map[n]) == 1)
+			if(!is_windows() && nvml_set_clocks(hnvml, device_map[n]) == 1)
 				gpu_reinit = true;
 			if(gpu_reinit)
 			{
-//				cuda_reset_device(n, NULL);
+				cuda_reset_device(n, NULL);
 			}
 		}
 	}
