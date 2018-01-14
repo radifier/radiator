@@ -281,3 +281,11 @@ double throughput2intensity(uint32_t throughput)
 	}
 	return intensity;
 }
+
+void cuda_reset_device(int thr_id, bool *init)
+{
+	int dev_id = device_map[thr_id];
+	cudaSetDevice(dev_id);
+	cudaDeviceReset();
+	cudaDeviceSynchronize();
+}
