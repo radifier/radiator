@@ -1070,7 +1070,6 @@ static void *workio_thread(void *userdata)
 	}
 
 	tq_freeze(mythr->q);
-	curl_easy_cleanup(curl);
 
 	return NULL;
 }
@@ -1988,8 +1987,6 @@ out:
 	free(hdr_path);
 	free(lp_url);
 	tq_freeze(mythr->q);
-	if(curl)
-		curl_easy_cleanup(curl);
 
 	return NULL;
 }
