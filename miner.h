@@ -75,9 +75,11 @@ void *alloca (size_t);
 
 #ifdef HAVE_SYSLOG_H
 #include <syslog.h>
-#define LOG_BLUE 0x10 /* unique value */
+#define LOG_BLUE 0x10
+#define LOG_RAW  0x99
 #else
-enum {
+enum
+{
 	LOG_ERR,
 	LOG_WARNING,
 	LOG_NOTICE,
@@ -85,6 +87,7 @@ enum {
 	LOG_DEBUG,
 	/* custom notices */
 	LOG_BLUE = 0x10,
+	LOG_RAW = 0x99
 };
 #endif
 
@@ -481,6 +484,7 @@ struct thr_info {
 extern int cuda_num_devices();
 extern int cuda_version();
 extern int cuda_gpu_clocks(struct cgpu_info *gpu);
+int cuda_gpu_info(struct cgpu_info *gpu);
 extern bool opt_verify;
 extern bool opt_benchmark;
 extern bool opt_debug;
@@ -507,7 +511,7 @@ extern int longpoll_thr_id;
 extern int stratum_thr_id;
 extern int api_thr_id;
 extern bool opt_trust_pool;
-
+extern volatile bool abort_flag;
 extern uint64_t global_hashrate;
 extern double   global_diff;
 
@@ -515,8 +519,10 @@ extern double   global_diff;
 extern char* device_name[MAX_GPUS];
 extern int device_map[MAX_GPUS];
 extern long  device_sm[MAX_GPUS];
+extern uint32_t device_plimit[MAX_GPUS];
 extern uint32_t gpus_intensity[MAX_GPUS];
 double throughput2intensity(uint32_t throughput);
+extern void gpulog(int prio, int thr_id, const char *fmt, ...);
 
 #define CL_N    "\x1B[0m"
 #define CL_RED  "\x1B[31m"
