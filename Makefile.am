@@ -20,7 +20,8 @@ ccminer_SOURCES = elist.h miner.h compat.h \
 			  compat/sys/time.h compat/getopt/getopt.h \
 			  crc32.c hefty1.c \
 			  ccminer.cpp util.cpp \
-			  api.cpp hashlog.cpp nvml.cpp stats.cpp sysinfos.cpp cuda.cpp \
+			  api.cpp hashlog.cpp stats.cpp sysinfos.cpp cuda.cpp \
+			  nvml.cpp nvml.h nvsettings.cpp \
 			  cuda_helper.h cuda_vector.h \
 			  sph/neoscrypt.h sph/neoscrypt.cpp \
 			  sph/sha256_Y.h sph/sha256_Y.c sph/sph_sha2.c \
