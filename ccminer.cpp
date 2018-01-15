@@ -451,10 +451,6 @@ void get_currentalgo(char* buf, int sz)
 */
 void proper_exit(int reason)
 {
-#ifdef USE_WRAPNVML
-	if(hnvml)
-		nvml_destroy(hnvml);
-#endif
 	if(opt_n_threads > 0)
 	{
 		time_t start = time(NULL);
@@ -489,12 +485,12 @@ void proper_exit(int reason)
 	}
 	if(need_memclockrst)
 	{
-#	ifdef WIN32
+#ifdef WIN32
 		for(int n = 0; n < opt_n_threads; n++)
 		{
 			nvapi_toggle_clocks(n, false);
 		}
-#	endif
+#endif
 	}
 #endif
 
