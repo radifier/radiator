@@ -449,51 +449,60 @@ void get_currentalgo(char* buf, int sz)
 /**
 * Exit app
 */
+static bool already_exiting = false; // make sure only one thread executes proper_exit()
 void proper_exit(int reason)
 {
-	if(opt_n_threads > 0)
+	extern struct stratum_ctx stratum;
+	if(already_exiting)
+		sleep(10);
+	else
 	{
-		time_t start = time(NULL);
-		stop_mining = true;
-		applog(LOG_INFO, "stopping %d threads", opt_n_threads);
-		bool everything_stopped;
-		do
+		already_exiting = true;
+		if(opt_n_threads > 0)
 		{
-			everything_stopped = true;
-			for(int i = 0; i < opt_n_threads; i++)
+			time_t start = time(NULL);
+			stop_mining = true;
+			applog(LOG_INFO, "stopping %d threads", opt_n_threads);
+			bool everything_stopped;
+			do
 			{
-				if(!mining_has_stopped[i])
-					everything_stopped = false;
-			}
-		} while(!everything_stopped && (time(NULL) - start) < 5);
-		applog(LOG_INFO, "resetting GPUs");
-		cuda_devicereset();
-	}
-	curl_global_cleanup();
+				everything_stopped = true;
+				for(int i = 0; i < opt_n_threads; i++)
+				{
+					if(!mining_has_stopped[i])
+						everything_stopped = false;
+				}
+			} while(!everything_stopped && (time(NULL) - start) < 5);
+			applog(LOG_INFO, "resetting GPUs");
+			cuda_devicereset();
+		}
+		pthread_mutex_lock(&stratum.sock_lock);
+		curl_global_cleanup();
+		pthread_mutex_unlock(&stratum.sock_lock);
 
 #ifdef WIN32
-	timeEndPeriod(1);
+		timeEndPeriod(1);
 #endif
 #ifdef USE_WRAPNVML
-	if(hnvml)
-	{
-		for(int n = 0; n < opt_n_threads; n++)
+		if(hnvml)
 		{
-			nvml_reset_clocks(hnvml, device_map[n]);
+			for(int n = 0; n < opt_n_threads; n++)
+			{
+				nvml_reset_clocks(hnvml, device_map[n]);
+			}
+			nvml_destroy(hnvml);
 		}
-		nvml_destroy(hnvml);
-	}
-	if(need_memclockrst)
-	{
+		if(need_memclockrst)
+		{
 #ifdef WIN32
-		for(int n = 0; n < opt_n_threads; n++)
-		{
-			nvapi_toggle_clocks(n, false);
+			for(int n = 0; n < opt_n_threads; n++)
+			{
+				nvapi_toggle_clocks(n, false);
+			}
+#endif
 		}
 #endif
 	}
-#endif
-
 	sleep(1);
 	exit(reason);
 }
@@ -1099,7 +1108,7 @@ static void *workio_thread(void *userdata)
 
 		workio_cmd_free(wc);
 	}
-
+	curl_easy_cleanup(curl);
 	tq_freeze(mythr->q);
 
 	return NULL;
@@ -2015,6 +2024,7 @@ start:
 	}
 
 out:
+	curl_easy_cleanup(curl);
 	free(hdr_path);
 	free(lp_url);
 	tq_freeze(mythr->q);
@@ -2066,7 +2076,6 @@ out:
 static void *stratum_thread(void *userdata)
 {
 	struct thr_info *mythr = (struct thr_info *)userdata;
-	char *s;
 
 	stratum.url = (char*)tq_pop(mythr->q, NULL);
 	if(!stratum.url)
@@ -2135,19 +2144,15 @@ static void *stratum_thread(void *userdata)
 		if(!stratum_socket_full(&stratum, opt_timeout))
 		{
 			applog(LOG_ERR, "Stratum connection timed out");
-			s = NULL;
+			stratum_need_reset = true;
 		}
 		else
-			s = stratum_recv_line(&stratum);
-		if(!s)
 		{
-			stratum_disconnect(&stratum);
-			applog(LOG_ERR, "Stratum connection interrupted");
-			continue;
+			char *s = stratum_recv_line(&stratum);
+			if(s != NULL && !stratum_handle_method(&stratum, s))
+				stratum_handle_response(s);
+			free(s);
 		}
-		if(!stratum_handle_method(&stratum, s))
-			stratum_handle_response(s);
-		free(s);
 	}
 
 out:
