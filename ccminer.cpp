@@ -1108,6 +1108,7 @@ static void *workio_thread(void *userdata)
 
 		workio_cmd_free(wc);
 	}
+	curl_easy_cleanup(curl);
 	tq_freeze(mythr->q);
 
 	return NULL;
