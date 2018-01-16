@@ -464,7 +464,7 @@ json_t *json_rpc_call(CURL *curl, const char *url,
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_err_str);
 	if(opt_protocol)
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-	CURLcode rc = curl_easy_setopt(curl, CURLOPT_URL, url);
+	rc = curl_easy_setopt(curl, CURLOPT_URL, url);
 	if(rc != CURLE_OK)
 	{
 		if(strlen(curl_err_str)>0)
