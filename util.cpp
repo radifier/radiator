@@ -1163,7 +1163,8 @@ void stratum_disconnect(struct stratum_ctx *sctx)
 		sctx->disconnects++;
 		curl_easy_cleanup(sctx->curl);
 		sctx->curl = NULL;
-		sctx->sockbuf[0] = '\0';
+		if(sctx->sockbuf)
+			sctx->sockbuf[0] = '\0';
 	}
 	if(sctx->job.job_id)
 	{
@@ -1750,7 +1751,7 @@ static bool stratum_benchdata(json_t *result, json_t *params, int thr_id)
 
 	if(!cgpu || !opt_stratum_stats) return false;
 
-#if defined(WIN32) && (defined(_M_X64) || defined(__x86_64__))
+#if defined WIN32 && defined _WIN64
 	strcpy(os, "win64");
 #else
 	strcpy(os, is_windows() ? "win32" : "linux");
