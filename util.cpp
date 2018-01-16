@@ -1077,6 +1077,7 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 	if(sctx->curl_url == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
+		pthread_mutex_unlock(&sctx->sock_lock);
 		proper_exit(2);
 	}
 	sprintf(sctx->curl_url, "http%s", strstr(url, "://"));
@@ -1093,6 +1094,7 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 			applog(LOG_ERR, "CURLOPT_URL error: %s", curl_easy_strerror(rc));
 		curl_easy_cleanup(curl);
 		sctx->curl = NULL;
+		pthread_mutex_unlock(&sctx->sock_lock);
 		return false;
 	}
 	curl_easy_setopt(curl, CURLOPT_FRESH_CONNECT, 1);
@@ -1131,6 +1133,7 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 			applog(LOG_ERR, "Stratum connect failed: %s", curl_easy_strerror(rc));
 		curl_easy_cleanup(curl);
 		sctx->curl = NULL;
+		pthread_mutex_unlock(&sctx->sock_lock);
 		return false;
 	}
 
@@ -1138,7 +1141,7 @@ bool stratum_connect(struct stratum_ctx *sctx, const char *url)
 	/* CURLINFO_LASTSOCKET is broken on Win64; only use it as a last resort */
 	curl_easy_getinfo(curl, CURLINFO_LASTSOCKET, (long *)&sctx->sock);
 #endif
-
+	pthread_mutex_unlock(&sctx->sock_lock);
 	return true;
 }
 
