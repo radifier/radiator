@@ -152,7 +152,7 @@ void applog(int prio, const char *fmt, ...)
 		if(!use_colors)
 			color = "";
 
-		len = 40 + (int)strlen(fmt) + 2;
+		len = 160 + (int)strlen(fmt) + 2;
 		f = (char*)alloca(len);
 		sprintf(f, "[%d-%02d-%02d %02d:%02d:%02d]%s %s%s\n",
 				tm.tm_year + 1900,
