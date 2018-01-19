@@ -1108,7 +1108,7 @@ static void *workio_thread(void *userdata)
 
 		workio_cmd_free(wc);
 	}
-	curl_easy_cleanup(curl);
+
 	tq_freeze(mythr->q);
 
 	return NULL;
@@ -2024,7 +2024,6 @@ start:
 	}
 
 out:
-	curl_easy_cleanup(curl);
 	free(hdr_path);
 	free(lp_url);
 	tq_freeze(mythr->q);
@@ -2076,6 +2075,7 @@ out:
 static void *stratum_thread(void *userdata)
 {
 	struct thr_info *mythr = (struct thr_info *)userdata;
+	char *s;
 
 	stratum.url = (char*)tq_pop(mythr->q, NULL);
 	if(!stratum.url)
@@ -2144,15 +2144,19 @@ static void *stratum_thread(void *userdata)
 		if(!stratum_socket_full(&stratum, opt_timeout))
 		{
 			applog(LOG_ERR, "Stratum connection timed out");
-			stratum_need_reset = true;
+			s = NULL;
 		}
 		else
+			s = stratum_recv_line(&stratum);
+		if(!s)
 		{
-			char *s = stratum_recv_line(&stratum);
-			if(s != NULL && !stratum_handle_method(&stratum, s))
-				stratum_handle_response(s);
-			free(s);
+			stratum_disconnect(&stratum);
+			applog(LOG_ERR, "Stratum connection interrupted");
+			continue;
 		}
+		if(!stratum_handle_method(&stratum, s))
+			stratum_handle_response(s);
+		free(s);
 	}
 
 out:
