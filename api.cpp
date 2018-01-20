@@ -778,33 +778,24 @@ static void api()
 	// try for 1 minute ... in case the old one hasn't completely gone yet
 	bound = 0;
 	bindstart = time(NULL);
-	while (bound == 0) {
-		if (bind(*apisock, (struct sockaddr *)(&serv), sizeof(serv)) < 0) {
+	while(bound == 0)
+	{
+		if(bind(*apisock, (struct sockaddr *)(&serv), sizeof(serv)) < 0)
+		{
 			binderror = strerror(errno);
-			if ((time(NULL) - bindstart) > 61)
+			if((time(NULL) - bindstart) > 61)
 				break;
-			else if (opt_api_listen == 4068) {
-				/* when port is default one, use first available */
-//				if (opt_debug)
-					applog(LOG_WARNING, "API bind to port %d failed, trying port %u",
-						port, (uint32_t) port+1);
-				port++;
-				serv.sin_port = htons(port);
-				sleep(1);
-			} else {
-				if (!opt_quiet || opt_debug || opt_protocol)
+			else
+			{
+				if(!opt_quiet || opt_debug || opt_protocol)
 					applog(LOG_WARNING, "API bind to port %u failed - trying again in 20sec",
-						(uint32_t) port);
+					(uint32_t)port);
 				sleep(20);
 			}
 		}
-		else {
+		else
+		{
 			bound = 1;
-			if (opt_api_listen != port) {
-				applog(LOG_WARNING, "API bind to port %d failed - using port %u",
-					opt_api_listen, (uint32_t) port);
-				opt_api_listen = port;
-			}
 		}
 	}
 
