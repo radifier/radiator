@@ -19,8 +19,9 @@
 #ifdef WIN32
 #ifndef __cplusplus
 #define inline __inline
-#endif
 #define snprintf(...) _snprintf(__VA_ARGS__)
+#endif
+#undef strdup
 #define strdup(x) _strdup(x)
 #define strncasecmp(x,y,z) _strnicmp(x,y,z)
 #define strcasecmp(x,y) _stricmp(x,y)
