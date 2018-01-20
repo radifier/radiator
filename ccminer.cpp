@@ -210,7 +210,7 @@ uint64_t net_hashrate = 0;
 uint64_t net_blocks = 0;
 
 int opt_statsavg = 30;
-uint16_t opt_api_listen = 4068; /* 0 to disable */
+uint16_t opt_api_listen = 0; /* 0 to disable */
 bool opt_stratum_stats = true;
 static char* opt_syslog_pfx = nullptr;
 char *opt_api_allow = nullptr;
@@ -293,7 +293,7 @@ Options:\n\
   -P, --protocol-dump   verbose dump of protocol-level activities\n\
       --cpu-affinity    set process affinity to cpu core(s), mask 0x3 for cores 0 and 1\n\
       --cpu-priority    set process priority (default: 0 idle, 2 normal to 5 highest)\n\
-  -b, --api-bind        IP/Port for the miner API (default: 127.0.0.1:4068)\n\
+  -b, --api-bind=...    IP address and port number for the miner API (example: 127.0.0.1:4068)\n\
   -S, --syslog          use system log for output messages\n\
       --syslog-prefix=... allow to change syslog tool name\n\
   -B, --background      run the miner in the background\n\
