@@ -273,7 +273,7 @@ Options:\n\
   -u, --user=USERNAME   username for mining server\n\
   -p, --pass=PASSWORD   password for mining server\n\
       --cert=FILE       certificate for mining server using SSL\n\
-  -x, --proxy=[PROTOCOL://]HOST[:PORT]  connect through a proxy\n\
+  -x, --proxy=...       [PROTOCOL://]HOST[:PORT]  connect through a proxy\n\
   -t, --threads=N       number of miner threads (default: number of nVidia GPUs)\n\
   -r, --retries=N       number of times to retry if a network call fails\n\
                           (default: retry indefinitely)\n\
@@ -286,7 +286,7 @@ Options:\n\
       --no-gbt          disable getblocktemplate support (height check in solo)\n\
       --no-longpoll     disable X-Long-Polling support\n\
       --no-stratum      disable X-Stratum support\n\
-	-e                    disable extranonce\n\
+  -e                    disable extranonce\n\
   -q, --quiet           disable per-thread hashmeter output\n\
       --no-color        disable colored output\n\
   -D, --debug           enable debug output\n\
@@ -312,21 +312,16 @@ Options:\n\
 "";
 
 static char const short_options[] =
-#ifndef WIN32
-"B"
-#endif
 #ifdef HAVE_SYSLOG_H
 "S"
 #endif
-"a:c:i:Dhp:Px:nqr:R:s:t:T:o:u:O:Vd:f:m:N:b:e";
+"a:c:i:Dhp:Px:nqr:R:s:t:T:o:u:O:Vd:f:m:N:b:eB";
 
 static struct option const options[] =
 {
 	{ "algo", 1, NULL, 'a' },
 	{ "api-bind", 1, NULL, 'b' },
-#ifndef WIN32
 	{ "background", 0, NULL, 'B' },
-#endif
 	{ "benchmark", 0, NULL, 1005 },
 	{ "cert", 1, NULL, 1001 },
 	{ "no-cpu-verify", 0, NULL, 1022 },
@@ -2895,8 +2890,8 @@ int main(int argc, char *argv[])
 	{
 #ifndef WIN32
 		i = fork();
-		if(i < 0) proper_exit(EXIT_CODE_SW_INIT_ERROR);
-		if(i > 0) proper_exit(EXIT_CODE_OK);
+		if(i < 0) proper_exit(EXIT_FAILURE);
+		if(i > 0) proper_exit(EXIT_FAILURE);
 		i = setsid();
 		if(i < 0)
 			applog(LOG_ERR, "setsid() failed (errno = %d)", errno);
