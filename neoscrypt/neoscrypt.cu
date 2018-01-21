@@ -53,12 +53,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			use_tpruvot = true;
 
 		unsigned int intensity = (256 * 64 * 1); // -i 14
-		if(strstr(props.name, "Titan V"))
-		{
-			intensity = 256 * 64 * 5;
-			use_tpruvot = true;
-		}
-		if(strstr(props.name, "Titan Xp"))
+		if(strstr(props.name, " Xp"))
 		{
 			intensity = 256 * 64 * 5;
 			use_tpruvot = true;
