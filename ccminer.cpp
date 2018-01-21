@@ -2891,12 +2891,12 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-#ifndef WIN32
 	if(opt_background)
 	{
+#ifndef WIN32
 		i = fork();
-		if(i < 0) exit(1);
-		if(i > 0) exit(0);
+		if(i < 0) proper_exit(EXIT_CODE_SW_INIT_ERROR);
+		if(i > 0) proper_exit(EXIT_CODE_OK);
 		i = setsid();
 		if(i < 0)
 			applog(LOG_ERR, "setsid() failed (errno = %d)", errno);
@@ -2905,10 +2905,23 @@ int main(int argc, char *argv[])
 			applog(LOG_ERR, "chdir() failed (errno = %d)", errno);
 		signal(SIGHUP, signal_handler);
 		signal(SIGTERM, signal_handler);
-	}
-	/* Always catch Ctrl+C */
-	signal(SIGINT, signal_handler);
 #else
+		HWND hcon = GetConsoleWindow();
+		if(hcon)
+		{
+			// this method also hide parent command line window
+			ShowWindow(hcon, SW_HIDE);
+		}
+		else
+		{
+			HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+			CloseHandle(h);
+			FreeConsole();
+		}
+#endif
+	}
+
+#ifdef WIN32
 	SetConsoleCtrlHandler((PHANDLER_ROUTINE)ConsoleHandler, TRUE);
 	if(opt_priority > 0)
 	{
