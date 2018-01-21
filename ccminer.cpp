@@ -646,15 +646,23 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 	char s[384];
 
 	/* discard if a newer block was received */
-	/*
 	stale_work = work->height && work->height < g_work.height;
-	if (have_stratum && !stale_work) {
-	pthread_mutex_lock(&g_work_lock);
-	if (strlen(work->job_id + 8))
-	stale_work = strcmp(work->job_id + 8, g_work.job_id + 8);
-	pthread_mutex_unlock(&g_work_lock);
+	if(have_stratum && !stale_work)
+	{
+		pthread_mutex_lock(&g_work_lock);
+		if(strlen(work->job_id + 8))
+			if(strncmp(work->job_id + 8, g_work.job_id + 8, sizeof(g_work.job_id) - 8) != 0)
+				stale_work = true;
+			else
+				stale_work = false;
+		if(stale_work)
+		{
+			if(opt_debug) applog(LOG_DEBUG, "outdated job %s, new %s",
+								 work->job_id + 8, g_work.job_id + 8);
+		}
+		pthread_mutex_unlock(&g_work_lock);
 	}
-	*/
+
 	if(!have_stratum && !stale_work && allow_gbt)
 	{
 		struct work wheight = { 0 };
