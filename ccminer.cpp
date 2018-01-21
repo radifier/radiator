@@ -273,7 +273,7 @@ Options:\n\
   -u, --user=USERNAME   username for mining server\n\
   -p, --pass=PASSWORD   password for mining server\n\
       --cert=FILE       certificate for mining server using SSL\n\
-  -x, --proxy=[PROTOCOL://]HOST[:PORT]  connect through a proxy\n\
+  -x, --proxy=...       [PROTOCOL://]HOST[:PORT]  connect through a proxy\n\
   -t, --threads=N       number of miner threads (default: number of nVidia GPUs)\n\
   -r, --retries=N       number of times to retry if a network call fails\n\
                           (default: retry indefinitely)\n\
@@ -286,7 +286,7 @@ Options:\n\
       --no-gbt          disable getblocktemplate support (height check in solo)\n\
       --no-longpoll     disable X-Long-Polling support\n\
       --no-stratum      disable X-Stratum support\n\
-	-e                    disable extranonce\n\
+  -e                    disable extranonce\n\
   -q, --quiet           disable per-thread hashmeter output\n\
       --no-color        disable colored output\n\
   -D, --debug           enable debug output\n\
@@ -312,21 +312,16 @@ Options:\n\
 "";
 
 static char const short_options[] =
-#ifndef WIN32
-"B"
-#endif
 #ifdef HAVE_SYSLOG_H
 "S"
 #endif
-"a:c:i:Dhp:Px:nqr:R:s:t:T:o:u:O:Vd:f:m:N:b:e";
+"a:c:i:Dhp:Px:nqr:R:s:t:T:o:u:O:Vd:f:m:N:b:eB";
 
 static struct option const options[] =
 {
 	{ "algo", 1, NULL, 'a' },
 	{ "api-bind", 1, NULL, 'b' },
-#ifndef WIN32
 	{ "background", 0, NULL, 'B' },
-#endif
 	{ "benchmark", 0, NULL, 1005 },
 	{ "cert", 1, NULL, 1001 },
 	{ "no-cpu-verify", 0, NULL, 1022 },
@@ -651,15 +646,23 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 	char s[384];
 
 	/* discard if a newer block was received */
-	/*
 	stale_work = work->height && work->height < g_work.height;
-	if (have_stratum && !stale_work) {
-	pthread_mutex_lock(&g_work_lock);
-	if (strlen(work->job_id + 8))
-	stale_work = strcmp(work->job_id + 8, g_work.job_id + 8);
-	pthread_mutex_unlock(&g_work_lock);
+	if(have_stratum && !stale_work)
+	{
+		pthread_mutex_lock(&g_work_lock);
+		if(strlen(work->job_id + 8))
+			if(strncmp(work->job_id + 8, g_work.job_id + 8, sizeof(g_work.job_id) - 8) != 0)
+				stale_work = true;
+			else
+				stale_work = false;
+		if(stale_work)
+		{
+			if(opt_debug) applog(LOG_DEBUG, "outdated job %s, new %s",
+								 work->job_id + 8, g_work.job_id + 8);
+		}
+		pthread_mutex_unlock(&g_work_lock);
 	}
-	*/
+
 	if(!have_stratum && !stale_work && allow_gbt)
 	{
 		struct work wheight = { 0 };
@@ -2891,12 +2894,12 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-#ifndef WIN32
 	if(opt_background)
 	{
+#ifndef WIN32
 		i = fork();
-		if(i < 0) exit(1);
-		if(i > 0) exit(0);
+		if(i < 0) proper_exit(EXIT_FAILURE);
+		if(i > 0) proper_exit(EXIT_FAILURE);
 		i = setsid();
 		if(i < 0)
 			applog(LOG_ERR, "setsid() failed (errno = %d)", errno);
@@ -2905,10 +2908,23 @@ int main(int argc, char *argv[])
 			applog(LOG_ERR, "chdir() failed (errno = %d)", errno);
 		signal(SIGHUP, signal_handler);
 		signal(SIGTERM, signal_handler);
-	}
-	/* Always catch Ctrl+C */
-	signal(SIGINT, signal_handler);
 #else
+		HWND hcon = GetConsoleWindow();
+		if(hcon)
+		{
+			// this method also hide parent command line window
+			ShowWindow(hcon, SW_HIDE);
+		}
+		else
+		{
+			HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+			CloseHandle(h);
+			FreeConsole();
+		}
+#endif
+	}
+
+#ifdef WIN32
 	SetConsoleCtrlHandler((PHANDLER_ROUTINE)ConsoleHandler, TRUE);
 	if(opt_priority > 0)
 	{

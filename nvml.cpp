@@ -1892,13 +1892,14 @@ int nvapi_init_settings()
 		if (device_pstate[dev_id]) {
 			// dunno how via nvapi or/and pascal
 		}
-		if (device_led[dev_id] != -1) {
+/*		if (device_led[dev_id] != -1) {
 			int err = nvapi_set_led(nvapi_dev_map[dev_id], device_led[dev_id], device_name[dev_id]);
 			if (err != 0) {
 				gpulog(LOG_WARNING, n, "Unable to set led value (err %d)", err);
 			}
 			device_led_state[dev_id] = device_led[dev_id];
 		}
+*/
 	}
 
 	return ret;
