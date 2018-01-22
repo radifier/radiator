@@ -1418,9 +1418,8 @@ void neoscrypt_gpu_hash_ending(uint32_t threads, const int stratum, const uint32
 
 	if(outbuf <= c_target[1])
 	{
-		resNonces[0] = nonce;
 		uint32_t tmp = atomicExch(resNonces, nonce);
-		if(tmp != UINT32_MAX)
+		if(tmp != 0xffffffff)
 			resNonces[1] = tmp;
 	}
 }
