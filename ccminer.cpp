@@ -1906,23 +1906,12 @@ static void *miner_thread(void *userdata)
 			}
 
 			// second nonce found, submit too (on pool only!)
-			if(opt_algo != ALGO_SIA)
+			if(rc > 1)
 			{
-				if(rc > 1 && nonceptr[2])
-				{
-					nonceptr[0] = found2;
-					if(!submit_work(mythr, &work))
-						break;
-				}
+				nonceptr[0] = found2;
+				if(!submit_work(mythr, &work))
+					break;
 			}
-			else
-				if(rc > 1 && nonceptr[12])
-				{
-					nonceptr[0] = found2;
-					if(!submit_work(mythr, &work))
-						break;
-				}
-
 		}
 		nonceptr[0] = start_nonce + hashes_done;
 
