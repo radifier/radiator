@@ -679,8 +679,9 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 
 	if(stale_work)
 	{
-		if(opt_debug)
-			applog(LOG_WARNING, "stale work detected, discarding");
+//		if(opt_debug)
+			applog(LOG_WARNING, "stale share detected, discarding");
+		rejected_count++;
 		return true;
 	}
 	calc_diff(work, 0);
