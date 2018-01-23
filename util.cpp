@@ -36,6 +36,7 @@ using namespace std;
 extern enum sha_algos opt_algo;
 extern char curl_err_str[];
 extern bool stop_mining;
+extern bool send_stale;
 
 bool opt_tracegpu = false;
 
@@ -1635,6 +1636,7 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 			hex2bin(sctx->job.nreward, nreward, 2);
 	}
 	sctx->job.clean = clean;
+	send_stale = !clean;
 
 	sctx->job.diff = sctx->next_diff;
 
