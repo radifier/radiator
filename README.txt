@@ -1,4 +1,4 @@
-ccMiner release 8.18(KlausT-mod) (January 1st, 2018)
+ccMiner release 8.19(KlausT-mod) (January 24st, 2018)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -133,12 +133,11 @@ its command line interface and options.
   -P, --protocol-dump   verbose dump of protocol-level activities
       --cpu-affinity    set process affinity to cpu core(s), mask 0x3 for cores 0 and 1
       --cpu-priority    set process priority (default: 0 idle, 2 normal to 5 highest)
-  -b, --api-bind        IP/Port for the miner API (default: 127.0.0.1:4068)
+  -b, --api-bind        IP/Port for the miner API (example: 127.0.0.1:4068)
   -S, --syslog          use system log for output messages
       --syslog-prefix=... allow to change syslog tool name
   -B, --background      run the miner in the background
       --benchmark       run in offline benchmark mode
-      --cputest         debug hashes from cpu algorithms
       --no-cpu-verify   don't verify the found results
   -c, --config=FILE     load a JSON-format configuration file
       --plimit=N        Set the gpu power limit to N Watt (driver version >=352.21)
@@ -173,13 +172,8 @@ The wallet must also be started with the -server option and/or with the server=1
 With the -b parameter you can open your ccminer to your network, use -b 0.0.0.0:4068 if required.
 On windows, setting 0.0.0.0 will ask firewall permissions on the first launch. Its normal.
 
-Default API feature is only enabled for localhost queries by default, on port 4068.
-
 You can test this api on linux with "telnet <miner-ip> 4068" and type "help" to list the commands.
 Default api format is delimited text. If required a php json wrapper is present in api/ folder.
-
-I plan to add a json format later, if requests are formatted in json too..
-
 
 >>> Additional Notes <<<
 
@@ -238,11 +232,21 @@ features.
 2017-12-15 v8.16: add sm_71 (Titan cards) (CUDA 9 and newer versions)
 2017-12-21 v8.17: fix possible problem with high intensities
                   fix bug in -d option
-		  fix Linux build
+                  fix Linux build
 2018-01-01 v8.18: more speed for Titan V with Lyra2v2 and possibly neoscrypt (untested)
                   Linux: better default intensity
-		  some small bug fixes
-				  
+                  some small bug fixes
+2018-01-23 v8.19: fix x17 for Linux builds without NVML
+                  show default intensity when not using the -i option
+                  add gpu number to the cuda error messages
+                  stratum: show reason of auth failure (when supported by the pool)
+				  API is now disabled by default
+                  Neoscrypt: Titan Xp fix
+                  Windows: fix --background option
+                  fixed: send a second share when we find it
+                  enable stale share detection
+				  send stale shares when the pool supports it
+
 >>> AUTHORS <<<
 
 Notable contributors to this application are:
@@ -259,10 +263,3 @@ cpuminer application (Jeff Garzik, pooler), it's original HVC-fork
 and the HVC-fork available at hvc.1gh.com
 
 Source code is included to satisfy GNU GPL V3 requirements.
-
-
-With kind regards,
-
-   Christian Buchner ( Christian.Buchner@gmail.com )
-   Christian H. ( Chris84 )
-   Tanguy Pruvot ( tpruvot@github )
