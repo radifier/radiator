@@ -2202,7 +2202,10 @@ static void parse_arg(int key, char *arg)
 			}
 		}
 		if(i == ARRAY_SIZE(algo_names))
-			show_usage_and_exit(1);
+		{
+			printf(usage);
+			exit(EXIT_FAILURE);
+		}
 		break;
 	case 'b':
 		p = strstr(arg, ":");
@@ -2244,7 +2247,7 @@ static void parse_arg(int key, char *arg)
 		if(!json_is_object(opt_config))
 		{
 			applog(LOG_ERR, "JSON decode of %s failed", arg);
-			proper_exit(1);
+			exit(1);
 		}
 		break;
 	}
@@ -2252,7 +2255,11 @@ static void parse_arg(int key, char *arg)
 		d = atof(arg);
 		v = (uint32_t)d;
 		if(v < 0 || v > 31)
-			show_usage_and_exit(1);
+		{
+			printf("Intensity value out of range\n");
+			printf("Try --help for more information!\n");
+			exit(EXIT_FAILURE);
+		}
 		else
 		{
 			int n = 0;
@@ -2300,7 +2307,7 @@ static void parse_arg(int key, char *arg)
 		break;
 	case 'n': /* --ndevs */
 		cuda_print_devices();
-		proper_exit(0);
+		exit(0);
 		break;
 	case 'q':
 		opt_quiet = true;
@@ -2315,31 +2322,46 @@ static void parse_arg(int key, char *arg)
 	case 'r':
 		v = atoi(arg);
 		if(v < -1 || v > 9999)	/* sanity check */
-			show_usage_and_exit(1);
+		{
+			printf("Value for number of retries is out of range\n");
+			exit(EXIT_FAILURE);
+		}
 		opt_retries = v;
 		break;
 	case 'R':
 		v = atoi(arg);
 		if(v < 1 || v > 9999)	/* sanity check */
-			show_usage_and_exit(1);
+		{
+			printf("Value for retry pause is out of range\n");
+			exit(EXIT_FAILURE);
+		}
 		opt_fail_pause = v;
 		break;
 	case 's':
 		v = atoi(arg);
 		if(v < 1 || v > 9999)	/* sanity check */
-			show_usage_and_exit(1);
+		{
+			printf("Value for scantime is out of range\n");
+			exit(EXIT_FAILURE);
+		}
 		opt_scantime = v;
 		break;
 	case 'T':
 		v = atoi(arg);
 		if(v < 1 || v > 99999)	/* sanity check */
-			show_usage_and_exit(1);
+		{
+			printf("Value for timeout is out of range\n");
+			exit(EXIT_FAILURE);
+		}
 		opt_timeout = v;
 		break;
 	case 't':
 		v = atoi(arg);
 		if(v < 1 || v > 9999)	/* sanity check */
-			show_usage_and_exit(1);
+		{
+			printf("Value for number of threads is out of range\n");
+			exit(EXIT_FAILURE);
+		}
 		opt_n_threads = v;
 		break;
 	case 'u':
@@ -2352,7 +2374,10 @@ static void parse_arg(int key, char *arg)
 		{
 			if(strncasecmp(arg, "http://", 7) && strncasecmp(arg, "https://", 8) &&
 			   strncasecmp(arg, "stratum+tcp://", 14))
-			   show_usage_and_exit(1);
+			{
+				printf("URL error\n");
+				exit(EXIT_FAILURE);
+			}
 			free(rpc_url);
 			rpc_url = strdup(arg);
 			short_url = &rpc_url[(p - arg) + 3];
@@ -2360,13 +2385,16 @@ static void parse_arg(int key, char *arg)
 		else
 		{
 			if(!strlen(arg) || *arg == '/')
-				show_usage_and_exit(1);
+			{
+				printf("URL error\n");
+				exit(EXIT_FAILURE);
+			}
 			free(rpc_url);
 			rpc_url = (char*)malloc(strlen(arg) + 8);
 			if(rpc_url == NULL)
 			{
-				applog(LOG_ERR, "Out of memory!");
-				proper_exit(1);
+				applog(LOG_ERR, "Out of memory!\n");
+				exit(1);
 			}
 			sprintf(rpc_url, "http://%s", arg);
 			short_url = &rpc_url[7];
@@ -2386,7 +2414,7 @@ static void parse_arg(int key, char *arg)
 				rpc_user = (char*)calloc(sp - ap + 1, 1);
 				if(rpc_user == NULL)
 				{
-					applog(LOG_ERR, "Out of memory!");
+					applog(LOG_ERR, "Out of memory!\n");
 					proper_exit(1);
 				}
 				strncpy(rpc_user, ap, sp - ap);
@@ -2406,14 +2434,17 @@ static void parse_arg(int key, char *arg)
 	case 'O':			/* --userpass */
 		p = strchr(arg, ':');
 		if(!p)
-			show_usage_and_exit(1);
+		{
+			printf("username:password error\n");
+			exit(EXIT_FAILURE);
+		}
 		free(rpc_userpass);
 		rpc_userpass = strdup(arg);
 		free(rpc_user);
 		rpc_user = (char*)calloc(p - arg + 1, 1);
 		if(rpc_user == NULL)
 		{
-			applog(LOG_ERR, "Out of memory!");
+			applog(LOG_ERR, "Out of memory!\n");
 			proper_exit(1);
 		}
 		strncpy(rpc_user, arg, p - arg);
@@ -2483,7 +2514,10 @@ static void parse_arg(int key, char *arg)
 	case 1021:
 		v = atoi(arg);
 		if(v < 0 || v > 5)	/* sanity check */
-			show_usage_and_exit(1);
+		{
+			printf("cpu priority value out of range\n");
+			exit(EXIT_FAILURE);
+		}
 		opt_priority = v;
 		break;
 	case 1022:
@@ -2509,11 +2543,11 @@ static void parse_arg(int key, char *arg)
 				else
 				{
 					if(gpu[i] == true)
-						applog(LOG_WARNING, "Selected gpu #%d more than once in -d option. This is not supported.", i);
+						applog(LOG_WARNING, "Selected gpu #%d more than once in -d option. This is not supported.\n", i);
 					else
 					{
-						applog(LOG_ERR, "Non-existant CUDA device #%d specified in -d option", i);
-						proper_exit(1);
+						applog(LOG_ERR, "Non-existant CUDA device #%d specified in -d option\n", i);
+						exit(1);
 					}
 				}
 			}
@@ -2524,8 +2558,8 @@ static void parse_arg(int key, char *arg)
 					device_map[opt_n_threads++] = device;
 				else
 				{
-					applog(LOG_ERR, "Non-existant CUDA device '%s' specified in -d option", pch);
-					proper_exit(1);
+					applog(LOG_ERR, "Non-existant CUDA device '%s' specified in -d option\n", pch);
+					exit(1);
 				}
 			}
 			// set number of active gpus
@@ -2537,13 +2571,19 @@ static void parse_arg(int key, char *arg)
 	case 'f': // CH - Divisor for Difficulty
 		d = atof(arg);
 		if(d == 0)	/* sanity check */
-			show_usage_and_exit(1);
+		{
+			printf("Error: diff factor can't be 0\n");
+			exit(EXIT_FAILURE);
+		}
 		opt_difficulty = d;
 		break;
 	case 'm': // --diff-multiplier
 		d = atof(arg);
 		if(d <= 0.)
-			show_usage_and_exit(1);
+		{
+			printf("Error: diff multiplier can't be zero or negative\n");
+			exit(EXIT_FAILURE);
+		}
 		opt_difficulty = 1.0/d;
 		break;
 	case 'e':
@@ -2552,7 +2592,8 @@ static void parse_arg(int key, char *arg)
 	case 'V':
 		show_version_and_exit();
 	case 'h':
-		show_usage_and_exit(0);
+		printf(usage);
+		exit(EXIT_SUCCESS);
 	case 1070: /* --gpu-clock */
 	{
 		char *pch = strtok(arg, ",");
@@ -2606,7 +2647,8 @@ static void parse_arg(int key, char *arg)
 	}
 	break;
 	default:
-		show_usage_and_exit(1);
+		printf(usage);
+		exit(EXIT_FAILURE);
 	}
 
 	if(use_syslog)
