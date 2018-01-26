@@ -2835,12 +2835,12 @@ int main(int argc, char *argv[])
 #if !defined __clang__ && defined __GNUC__
 	if(CUDART_VERSION == 8000 && __GNUC__ > 5)
 	{
-		printf("WARNING! GCC %d IS NOT COMPATIBLE WITH CUDA 8!\n");
+		printf("WARNING! GCC %d IS NOT COMPATIBLE WITH CUDA 8!\n", __GNUC__);
 		printf("PLEASE USE GCC 5\n");
 	}
 	if((CUDART_VERSION == 9000 || CUDART_VERSION == 9010) && __GNUC__ > 6)
 	{
-		printf("WARNING! GCC %d IS NOT COMPATIBLE WITH CUDA 9!\n");
+		printf("WARNING! GCC %d IS NOT COMPATIBLE WITH CUDA 9!\n", __GNUC__);
 		printf("PLEASE USE GCC 6\n\n");
 	}
 #endif
