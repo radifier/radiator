@@ -2874,6 +2874,20 @@ int main(int argc, char *argv[])
 		device_map[i] = i;
 	}
 
+	for(int i = 0; i < active_gpus; i++)
+	{
+		int dev_id = device_map[i];
+		cudaError_t err;
+		cudaDeviceProp props;
+		err = cudaGetDeviceProperties(&props, dev_id);
+		if(err != cudaSuccess)
+		{
+			applog(LOG_ERR, "%s", cudaGetErrorString(err));
+			exit(1);
+		}
+		device_name[dev_id] = props.name;
+	}
+
 	/* parse command line */
 	parse_cmdline(argc, argv);
 
@@ -2881,8 +2895,6 @@ int main(int argc, char *argv[])
 		opt_n_threads = active_gpus;
 
 	cuda_get_device_sm();
-
-	cuda_devicenames(); 
 
 	if(opt_protocol)
 	{
