@@ -75,11 +75,6 @@ void cuda_devicenames()
 			exit(1);
 		}
 
-		if(device_name[dev_id])
-		{
-			free(device_name[dev_id]);
-			device_name[dev_id] = NULL;
-		}
 #ifdef USE_WRAPNVML
 		if(gpu_vendor((uint8_t)props.pciBusID, vendorname) > 0 && strlen(vendorname))
 		{
@@ -94,9 +89,7 @@ void cuda_devicenames()
 			else
 				sprintf(device_name[dev_id], "%s %s", vendorname, props.name);
 		}
-		else
 #endif
-			device_name[dev_id] = strdup(props.name);
 	}
 }
 
