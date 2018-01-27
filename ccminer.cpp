@@ -2796,6 +2796,16 @@ static int msver(void)
 	return version;
 }
 
+bool strictaliasingtest(short *h, long *k)
+{
+	*h = 5;
+	*k = 6;
+	if(*h == 5)
+		return true;
+	else
+		return false;
+}
+
 int main(int argc, char *argv[])
 {
 	struct thr_info *thr;
@@ -2836,7 +2846,7 @@ int main(int argc, char *argv[])
 	if(CUDART_VERSION == 8000 && __GNUC__ > 5)
 	{
 		printf("WARNING! GCC %d IS NOT COMPATIBLE WITH CUDA 8!\n", __GNUC__);
-		printf("PLEASE USE GCC 5\n");
+		printf("PLEASE USE GCC 5\n\n");
 	}
 	if((CUDART_VERSION == 9000 || CUDART_VERSION == 9010) && __GNUC__ > 6)
 	{
@@ -2844,6 +2854,13 @@ int main(int argc, char *argv[])
 		printf("PLEASE USE GCC 6\n\n");
 	}
 #endif
+
+	long      sat[1];
+	if(strictaliasingtest((short *)sat, sat))
+	{
+		printf("Warning! This build may produce wrong results or even crash!\n");
+		printf("Please use the -fno-strict-aliasing compiler option!\n\n");
+	}
 
 	rpc_user = strdup("");
 	rpc_pass = strdup("");
