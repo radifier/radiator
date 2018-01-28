@@ -2902,7 +2902,7 @@ int main(int argc, char *argv[])
 			applog(LOG_ERR, "%s", cudaGetErrorString(err));
 			exit(1);
 		}
-		device_name[dev_id] = props.name;
+		device_name[dev_id] = strdup(props.name);
 	}
 
 	/* parse command line */
