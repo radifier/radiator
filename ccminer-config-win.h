@@ -195,3 +195,5 @@
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 /* #undef size_t */
+
+#define NVML_LIBPATH "%PROGRAMFILES%\\NVIDIA Corporation\\NVSMI\\nvml.dll"

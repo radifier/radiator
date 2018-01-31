@@ -15,6 +15,12 @@
  *
  */
 
+#ifndef WIN32
+#include "ccminer-config.h"
+#else
+#include "ccminer-config-win.h"
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -94,19 +100,11 @@ nvml_handle * nvml_create()
 	int i=0;
 	nvml_handle *nvmlh = NULL;
 
-#ifdef WIN32
-	/* Windows (do not use slashes, else ExpandEnvironmentStrings will mix them) */
-#define  libnvidia_ml "%PROGRAMFILES%\\NVIDIA Corporation\\NVSMI\\nvml.dll"
-#else
-	/* linux assumed */
-#define  libnvidia_ml "libnvidia-ml.so"
-#endif
-
 	char tmp[512];
 #ifdef WIN32
-	ExpandEnvironmentStrings(libnvidia_ml, tmp, sizeof(tmp));
+	ExpandEnvironmentStrings(NVML_LIBPATH, tmp, sizeof(tmp));
 #else
-	strcpy(tmp, libnvidia_ml);
+	strcpy(tmp, NVML_LIBPATH);
 #endif
 
 	void *nvml_dll = wrap_dlopen(tmp);
