@@ -149,9 +149,8 @@ if test "x$have_win32" = xtrue; then
   NVML_LIBPATH="%PROGRAMFILES%\\\\NVIDIA Corporation\\\\NVSMI\\\\nvml.dll"
   m4_define([NVML_LIBPATH_HELP], [nvidia-ml library path/filename [default=%PROGRAMFILES%\\\\NVIDIA Corporation\\\\NVSMI\\\\nvml.dll]])
 else
-  # Should be libnvidia-ml.so.1 ?
-  NVML_LIBPATH="libnvidia-ml.so"
-  m4_define([NVML_LIBPATH_HELP], [nvidia-ml library path/filename [default=libnvidia-ml.so]])
+  NVML_LIBPATH="libnvidia-ml.so.1"
+  m4_define([NVML_LIBPATH_HELP], [nvidia-ml library path/filename [default=libnvidia-ml.so.1]])
 fi
 AC_ARG_WITH([nvml],
   [AS_HELP_STRING([--with-nvml],
