@@ -143,10 +143,23 @@ dnl Setup CUDA paths
 AC_ARG_WITH([cuda],
    [  --with-cuda=PATH    prefix where cuda is installed [default=/usr/local/cuda]])
 
+# nvml library
+if test "x$have_win32" = xtrue; then
+  # Windows (do not use slashes, else ExpandEnvironmentStrings will mix them)
+  NVML_LIBPATH="%PROGRAMFILES%\\\\NVIDIA Corporation\\\\NVSMI\\\\nvml.dll"
+  m4_define([NVML_LIBPATH_HELP], [nvidia-ml library path/filename [default=%PROGRAMFILES%\\\\NVIDIA Corporation\\\\NVSMI\\\\nvml.dll]])
+else
+  # Should be libnvidia-ml.so.1 ?
+  NVML_LIBPATH="libnvidia-ml.so"
+  m4_define([NVML_LIBPATH_HELP], [nvidia-ml library path/filename [default=libnvidia-ml.so]])
+fi
 AC_ARG_WITH([nvml],
-   [  --with-nvml=PATH    prefix where libnvml is installed [default=/usr/lib]])
+  [AS_HELP_STRING([--with-nvml],
+  NVML_LIBPATH_HELP)],
+  [with_nvml=$withval],
+  [with_nvml=$NVML_LIBPATH])
 
-AM_CONDITIONAL([HAVE_NVML], [test -n "$with_nvml"])
+AM_CONDITIONAL([HAVE_NVML], [test "x$with_nvml" != xno])
 
 NVCC="nvcc"
 
@@ -164,11 +177,13 @@ else
   CUDA_LDFLAGS="-L/usr/local/cuda/lib$SUFFIX"
 fi
 
-if test -n "$with_nvml" ; then
-  NVML_LIBPATH=$with_nvml
+if test "x$with_nvml" != xno ; then
+  if test "x$with_nvml" != xyes ; then
+    NVML_LIBPATH=$with_nvml
+  fi
   CUDA_LDFLAGS="$CUDA_LDFLAGS -ldl"
 fi
-AC_SUBST(NVML_LIBPATH)
+AC_DEFINE_UNQUOTED(NVML_LIBPATH, ["$NVML_LIBPATH"], [nvml library to dlopen])
 
 AC_SUBST(CUDA_CFLAGS)
 AC_SUBST(CUDA_INCLUDES)
