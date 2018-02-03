@@ -96,7 +96,9 @@ bool opt_debug_threads = false;
 bool opt_showdiff = true;
 bool opt_hwmonitor = true;
 
-static const char *algo_names[] = {
+static const char *algo_names[] =
+{
+	"invalid",
 	"bitcoin",
 	"blake",
 	"blakecoin",
@@ -153,7 +155,7 @@ int opt_timeout = 120;
 static int opt_scantime = 25;
 static json_t *opt_config = nullptr;
 static const bool opt_time = true;
-enum sha_algos opt_algo;
+enum sha_algos opt_algo = ALGO_INVALID;
 int opt_n_threads = 0;
 int gpu_threads = 1;
 int opt_affinity = -1;
@@ -2201,11 +2203,6 @@ static void parse_arg(int key, char *arg)
 				break;
 			}
 		}
-		if(i == ARRAY_SIZE(algo_names))
-		{
-			printf(usage);
-			exit(EXIT_FAILURE);
-		}
 		break;
 	case 'b':
 		p = strstr(arg, ":");
@@ -2907,6 +2904,11 @@ int main(int argc, char *argv[])
 
 	/* parse command line */
 	parse_cmdline(argc, argv);
+	if(opt_algo == ALGO_INVALID)
+	{
+		applog(LOG_ERR, "Error: no algo or invalid algo");
+		exit(EXIT_FAILURE);
+	}
 
 	if(!opt_n_threads)
 		opt_n_threads = active_gpus;

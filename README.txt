@@ -1,4 +1,4 @@
-ccMiner release 8.19(KlausT-mod) (January 24st, 2018)
+ccMiner release 8.20(KlausT-mod) (Februar 3rd, 2018)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -221,7 +221,7 @@ features.
 2017-07-17 v8.10: fix Orbitcoin solo mining (Neoscrypt)
 2017-07-25 v8.11: change some timeout values
                   fix Feathercoin solo mining (Neoscrypt)
-				  show chance to find a block while solo mining
+                  show chance to find a block while solo mining
 2017-08-17 v8.12: fix Myriad-Groestl speed bug
 2017-08-26 v8.13: fix retry bug
                   faster neoscrypt for 1080/1080Ti
@@ -240,12 +240,16 @@ features.
                   show default intensity when not using the -i option
                   add gpu number to the cuda error messages
                   stratum: show reason of auth failure (when supported by the pool)
-				  API is now disabled by default
+                  API is now disabled by default
                   Neoscrypt: Titan Xp fix
                   Windows: fix --background option
                   fixed: send a second share when we find it
                   enable stale share detection
-				  send stale shares when the pool supports it
+                  send stale shares when the pool supports it
+2018-02-03 v8.20: fix crash when using options --ndevs or --help
+                  API: fix possible crash when checking cpu frequency under Linux
+                  fix gpu name bug when using different cards in the same system
+                  add some error messages
 
 >>> AUTHORS <<<
 

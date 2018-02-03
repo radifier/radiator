@@ -635,6 +635,7 @@ struct work {
 
 enum sha_algos
 {
+	ALGO_INVALID,
 	ALGO_BITCOIN,
 	ALGO_BLAKE,
 	ALGO_BLAKECOIN,
