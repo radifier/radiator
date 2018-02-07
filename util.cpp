@@ -1297,7 +1297,7 @@ start:
 	free(sret);
 	if(!val)
 	{
-		applog(LOG_ERR, "JSON decode failed(%d): %s", err.line, err.text);
+		applog(LOG_ERR, "Stratum subscribe: JSON decode failed(%d): %s", err.line, err.text);
 		goto out;
 	}
 
@@ -1311,14 +1311,14 @@ start:
 
 	if(!res_val || json_is_null(res_val) || (err_val && !json_is_null(err_val)))
 	{
-		if(opt_debug || retry)
+		if(retry)
 		{
 			free(s);
 			if(err_val)
 				s = json_dumps(err_val, JSON_INDENT(3));
 			else
 				s = strdup("(unknown reason)");
-			applog(LOG_ERR, "JSON-RPC call failed: %s", s);
+			applog(LOG_ERR, "Stratum subscribe failed: %s", s);
 		}
 		goto out;
 	}
@@ -1383,7 +1383,10 @@ bool stratum_authorize(struct stratum_ctx *sctx, const char *user, const char *p
 	{
 		sret = stratum_recv_line(sctx);
 		if(!sret)
+		{
+			applog(LOG_ERR, "Error: no answer to Stratum authorization request");
 			goto out;
+		}
 		if(!stratum_handle_method(sctx, sret))
 			break;
 		free(sret);
