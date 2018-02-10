@@ -515,6 +515,7 @@ extern bool opt_trust_pool;
 extern volatile bool abort_flag;
 extern uint64_t global_hashrate;
 extern double   global_diff;
+extern unsigned int cudaschedule;
 
 #define MAX_GPUS 16
 extern char* device_name[MAX_GPUS];

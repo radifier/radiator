@@ -283,7 +283,7 @@ __host__ void myriadgroestl_cpu_init(int thr_id, uint32_t threads)
 {
 	CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 	CUDA_SAFE_CALL(cudaDeviceReset());
-	CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
+	CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaschedule));
 	CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 	CUDA_SAFE_CALL(cudaStreamCreate(&stream[0]));
 	CUDA_SAFE_CALL(cudaStreamCreate(&stream[1]));

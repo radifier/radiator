@@ -201,6 +201,7 @@ bool send_stale;
 struct stratum_ctx stratum = { 0 };
 bool stop_mining = false;
 volatile bool mining_has_stopped[MAX_GPUS];
+unsigned int cudaschedule = cudaDeviceScheduleBlockingSync;
 
 pthread_mutex_t applog_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t stats_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -296,6 +297,10 @@ Options:\n\
   -P, --protocol-dump   verbose dump of protocol-level activities\n\
       --cpu-affinity    set process affinity to cpu core(s), mask 0x3 for cores 0 and 1\n\
       --cpu-priority    set process priority (default: 0 idle, 2 normal to 5 highest)\n\
+      --cuda-schedule   set CUDA scheduling option:\n\
+                        0: BlockingSync (default)\n\
+                        1: Spin\n\
+                        2: Yield\n\
   -b, --api-bind=...    IP address and port number for the miner API (example: 127.0.0.1:4068)\n\
   -S, --syslog          use system log for output messages\n\
       --syslog-prefix=... allow to change syslog tool name\n\
@@ -322,47 +327,48 @@ static char const short_options[] =
 
 static struct option const options[] =
 {
-	{ "algo", 1, NULL, 'a' },
-	{ "api-bind", 1, NULL, 'b' },
-	{ "background", 0, NULL, 'B' },
-	{ "benchmark", 0, NULL, 1005 },
-	{ "cert", 1, NULL, 1001 },
-	{ "no-cpu-verify", 0, NULL, 1022 },
-	{ "config", 1, NULL, 'c' },
-	{ "cputest", 0, NULL, 1006 },
-	{ "cpu-affinity", 1, NULL, 1020 },
-	{ "cpu-priority", 1, NULL, 1021 },
-	{ "debug", 0, NULL, 'D' },
-	{ "help", 0, NULL, 'h' },
-	{ "intensity", 1, NULL, 'i' },
-	{ "ndevs", 0, NULL, 'n' },
-	{ "no-color", 0, NULL, 1002 },
-	{ "no-gbt", 0, NULL, 1011 },
-	{ "no-longpoll", 0, NULL, 1003 },
-	{ "no-stratum", 0, NULL, 1007 },
-	{ "pass", 1, NULL, 'p' },
-	{ "protocol-dump", 0, NULL, 'P' },
-	{ "proxy", 1, NULL, 'x' },
-	{ "quiet", 0, NULL, 'q' },
-	{ "retries", 1, NULL, 'r' },
-	{ "retry-pause", 1, NULL, 'R' },
-	{ "scantime", 1, NULL, 's' },
-	{ "statsavg", 1, NULL, 'N' },
+	{"algo", 1, NULL, 'a'},
+	{"api-bind", 1, NULL, 'b'},
+	{"background", 0, NULL, 'B'},
+	{"benchmark", 0, NULL, 1005},
+	{"cert", 1, NULL, 1001},
+	{"no-cpu-verify", 0, NULL, 1022},
+	{"config", 1, NULL, 'c'},
+	{"cputest", 0, NULL, 1006},
+	{"cpu-affinity", 1, NULL, 1020},
+	{"cpu-priority", 1, NULL, 1021},
+	{"cuda-schedule", 1, NULL, 1025},
+	{"debug", 0, NULL, 'D'},
+	{"help", 0, NULL, 'h'},
+	{"intensity", 1, NULL, 'i'},
+	{"ndevs", 0, NULL, 'n'},
+	{"no-color", 0, NULL, 1002},
+	{"no-gbt", 0, NULL, 1011},
+	{"no-longpoll", 0, NULL, 1003},
+	{"no-stratum", 0, NULL, 1007},
+	{"pass", 1, NULL, 'p'},
+	{"protocol-dump", 0, NULL, 'P'},
+	{"proxy", 1, NULL, 'x'},
+	{"quiet", 0, NULL, 'q'},
+	{"retries", 1, NULL, 'r'},
+	{"retry-pause", 1, NULL, 'R'},
+	{"scantime", 1, NULL, 's'},
+	{"statsavg", 1, NULL, 'N'},
 #ifdef HAVE_SYSLOG_H
-	{ "syslog", 0, NULL, 'S' },
-	{ "syslog-prefix", 1, NULL, 1008 },
+	{"syslog", 0, NULL, 'S'},
+	{"syslog-prefix", 1, NULL, 1008},
 #endif
-	{ "threads", 1, NULL, 't' },
-	{ "Disable extranounce support", 1, NULL, 'e' },
-	{ "timeout", 1, NULL, 'T' },
-	{ "url", 1, NULL, 'o' },
-	{ "user", 1, NULL, 'u' },
-	{ "userpass", 1, NULL, 'O' },
-	{ "version", 0, NULL, 'V' },
-	{ "devices", 1, NULL, 'd' },
-	{ "diff-multiplier", 1, NULL, 'm' },
-	{ "diff-factor", 1, NULL, 'f' },
-	{ "diff", 1, NULL, 'f' }, // compat
+	{"threads", 1, NULL, 't'},
+	{"Disable extranounce support", 1, NULL, 'e'},
+	{"timeout", 1, NULL, 'T'},
+	{"url", 1, NULL, 'o'},
+	{"user", 1, NULL, 'u'},
+	{"userpass", 1, NULL, 'O'},
+	{"version", 0, NULL, 'V'},
+	{"devices", 1, NULL, 'd'},
+	{"diff-multiplier", 1, NULL, 'm'},
+	{"diff-factor", 1, NULL, 'f'},
+	{"diff", 1, NULL, 'f'}, // compat
 	{"gpu-clock", 1, NULL, 1070},
 	{"mem-clock", 1, NULL, 1071},
 	{"pstate", 1, NULL, 1072},
@@ -2519,6 +2525,23 @@ static void parse_arg(int key, char *arg)
 		break;
 	case 1022:
 		opt_verify = false;
+		break;
+	case 1025: // cuda-schedule
+		switch(atoi(arg))
+		{
+			case 0:
+				cudaschedule = cudaDeviceScheduleBlockingSync;
+				break;
+			case 1:
+				cudaschedule = cudaDeviceScheduleSpin;
+				break;
+			case 2:
+				cudaschedule = cudaDeviceScheduleYield;
+				break;
+			default:
+				applog(LOG_WARNING, "Warning: invalid value for --cuda-schedule option");
+				cudaschedule = cudaDeviceScheduleBlockingSync;
+		}
 		break;
 	case 'd': // CB
 	{
