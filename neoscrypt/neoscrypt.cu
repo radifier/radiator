@@ -37,7 +37,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 	{
 		CUDA_SAFE_CALL(cudaSetDevice(device_map[thr_id]));
 		CUDA_SAFE_CALL(cudaDeviceReset());
-		CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
+		CUDA_SAFE_CALL(cudaSetDeviceFlags(cudaschedule));
 		CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 
 		cudaDeviceProp props;
