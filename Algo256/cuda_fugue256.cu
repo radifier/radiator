@@ -6,6 +6,7 @@
 #include "cuda_helper.h"
 #include <host_defines.h>
 
+extern unsigned int cudaschedule;
 
 #define USE_SHARED 1
 
