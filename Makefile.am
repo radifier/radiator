@@ -77,6 +77,12 @@ ccminer_LDFLAGS  = $(PTHREAD_FLAGS) @CUDA_LDFLAGS@
 ccminer_LDADD    = @LIBCURL@ @JANSSON_LIBS@ @PTHREAD_LIBS@ @WS2_LIBS@ @CUDA_LIBS@ @OPENMP_CFLAGS@ @LIBS@ $(nvml_libs)
 ccminer_CPPFLAGS = @LIBCURL_CPPFLAGS@ @OPENMP_CFLAGS@ $(CPPFLAGS) $(PTHREAD_FLAGS) -fno-strict-aliasing $(JANSSON_INCLUDES) $(DEF_INCLUDES) $(nvml_defs) -DSCRYPT_KECCAK512 -DSCRYPT_CHACHA -DSCRYPT_CHOOSE_COMPILETIME
 
+if HAVE_OSX
+ccminer_CPPFLAGS += -I/usr/local/llvm/lib/clang/4.0.0/include
+ccminer_LDFLAGS += -L/usr/local/llvm/lib
+ccminer_LDADD += -lomp
+endif
+
 nvcc_ARCH  = -gencode=arch=compute_61,code=sm_61
 nvcc_ARCH += -gencode=arch=compute_52,code=sm_52
 nvcc_ARCH += -gencode=arch=compute_50,code=sm_50
