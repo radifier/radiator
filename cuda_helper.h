@@ -171,10 +171,8 @@ static __device__ __forceinline__ uint32_t cuda_swab32(const uint32_t x)
 	}
 #else
 	/* host */
-	#ifdef __GNUC__
-		#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))
-			#define cuda_swab32(x) __builtin_bswap32(x)
-		#endif
+	#if defined __GNUC__ && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))
+		#define cuda_swab32(x) __builtin_bswap32(x)
 	#else
 		#ifdef _MSC_VER
 			#define cuda_swab32(x) _byteswap_ulong(x)
@@ -232,10 +230,8 @@ static __device__ __forceinline__ uint64_t cuda_swab64(uint64_t x)
 }
 #else
 	/* host */
-	#ifdef __GNUC__
-		#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))
-			#define cuda_swab64(x) __builtin_bswap64(x)
-		#endif
+	#if defined __GNUC__ && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))
+		#define cuda_swab64(x) __builtin_bswap64(x)
 	#else
 		#ifdef _MSC_VER
 			#define cuda_swab64(x) _byteswap_uint64(x)
