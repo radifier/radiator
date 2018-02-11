@@ -431,7 +431,8 @@ static void affine_to_cpu_mask(int id, uint8_t mask)
 	}
 	cpuset_setaffinity(CPU_LEVEL_WHICH, CPU_WHICH_TID, -1, sizeof(cpuset_t), &set);
 }
-#else /* Windows */
+#else
+#ifdef WIN32
 static inline void drop_policy(void)
 {}
 static void affine_to_cpu_mask(int id, uint8_t mask)
@@ -441,6 +442,14 @@ static void affine_to_cpu_mask(int id, uint8_t mask)
 	else
 		SetThreadAffinityMask(GetCurrentThread(), mask);
 }
+#else // OSX is not linux
+static inline void drop_policy(void)
+{
+}
+static void affine_to_cpu_mask(int id, uint8_t mask)
+{
+}
+#endif
 #endif
 
 static bool get_blocktemplate(CURL *curl, struct work *work);
