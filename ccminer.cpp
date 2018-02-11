@@ -1285,10 +1285,12 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 	/* Increment extranonce2 */
 	if(opt_extranonce)
 	{
-		for(i = 0; i < (int)sctx->xnonce2_size && !++sctx->job.xnonce2[i]; i++);
+		i = 0;
+		do
 		{
 			sctx->job.xnonce2[i]++;
-		}
+			i++;
+		} while(i < (int)sctx->xnonce2_size && sctx->job.xnonce2[i - 1] == 0);
 	}
 	static uint32_t highnonce = 0;
 	if(opt_algo == ALGO_SIA)
