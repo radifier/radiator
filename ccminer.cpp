@@ -669,10 +669,12 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 	{
 		pthread_mutex_lock(&g_work_lock);
 		if(strlen(work->job_id + 8))
+		{
 			if(!send_stale && strncmp(work->job_id + 8, g_work.job_id + 8, sizeof(g_work.job_id) - 8) != 0)
 				stale_work = true;
 			else
 				stale_work = false;
+		}
 		if(!send_stale && stale_work)
 		{
 			if(opt_debug) applog(LOG_DEBUG, "outdated job %s, new %s",
@@ -1839,14 +1841,16 @@ static void *miner_thread(void *userdata)
 			double dtime = (double)diff.tv_sec + 1e-6 * diff.tv_usec;
 
 			/* hashrate factors for some algos */
-			double rate_factor = 1.0;
+			double rate_factor;
 			switch(opt_algo)
 			{
-			case ALGO_JACKPOT:
-			case ALGO_QUARK:
-				// to stay comparable to other ccminer forks or pools
-				rate_factor = 0.5;
-				break;
+				case ALGO_JACKPOT:
+				case ALGO_QUARK:
+					// to stay comparable to other ccminer forks or pools
+					rate_factor = 0.5;
+					break;
+				default:
+					rate_factor = 1.0;
 			}
 
 			/* store thread hashrate */
