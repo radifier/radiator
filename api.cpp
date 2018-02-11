@@ -886,7 +886,7 @@ static void api()
 				if (params != NULL)
 					*(params++) = '\0';
 
-				if (opt_debug || opt_protocol && n > 0)
+				if ((opt_debug || opt_protocol) && n > 0)
 					applog(LOG_DEBUG, "API: exec command %s(%s)", buf, params ? params : "");
 
 				for (i = 0; i < CMDMAX; i++) {
