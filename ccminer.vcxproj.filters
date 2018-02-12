@@ -93,9 +93,6 @@
     <ClCompile Include="crc32.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hefty1.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="sph\aes_helper.c">
       <Filter>Source Files\sph</Filter>
     </ClCompile>
@@ -235,9 +232,6 @@
     </ClInclude>
     <ClInclude Include="compat\stdbool.h">
       <Filter>Header Files\compat</Filter>
-    </ClInclude>
-    <ClInclude Include="hefty1.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cuda_groestlcoin.h">
       <Filter>Header Files\CUDA</Filter>

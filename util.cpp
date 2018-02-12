@@ -1772,10 +1772,18 @@ static bool stratum_benchdata(json_t *result, json_t *params, int thr_id)
 
 	if(!cgpu || !opt_stratum_stats) return false;
 
-#if defined WIN32 && defined _WIN64
+#ifdef _WIN64
 	strcpy(os, "win64");
 #else
-	strcpy(os, is_windows() ? "win32" : "linux");
+	#ifdef WIN32
+		strcpy(os, "win32");
+	#else
+		#ifdef __APPLE__
+			strcpy(os, "OSX");
+		#else
+			strcpy(os, "linux");
+		#endif
+	#endif
 #endif
 
 #ifdef USE_WRAPNVML

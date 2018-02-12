@@ -18,7 +18,7 @@ bin_PROGRAMS = ccminer
 ccminer_SOURCES = elist.h miner.h compat.h \
 			  compat/inttypes.h compat/stdbool.h compat/unistd.h \
 			  compat/sys/time.h compat/getopt/getopt.h \
-			  crc32.c hefty1.c \
+			  crc32.c \
 			  ccminer.cpp util.cpp \
 			  api.cpp hashlog.cpp stats.cpp sysinfos.cpp cuda.cpp \
 			  nvml.cpp nvml.h nvsettings.cpp \
@@ -77,6 +77,12 @@ ccminer_LDFLAGS  = $(PTHREAD_FLAGS) @CUDA_LDFLAGS@
 ccminer_LDADD    = @LIBCURL@ @JANSSON_LIBS@ @PTHREAD_LIBS@ @WS2_LIBS@ @CUDA_LIBS@ @OPENMP_CFLAGS@ @LIBS@ $(nvml_libs)
 ccminer_CPPFLAGS = @LIBCURL_CPPFLAGS@ @OPENMP_CFLAGS@ $(CPPFLAGS) $(PTHREAD_FLAGS) -fno-strict-aliasing $(JANSSON_INCLUDES) $(DEF_INCLUDES) $(nvml_defs) -DSCRYPT_KECCAK512 -DSCRYPT_CHACHA -DSCRYPT_CHOOSE_COMPILETIME
 
+if HAVE_OSX
+ccminer_CPPFLAGS += -I/usr/local/llvm/lib/clang/4.0.0/include
+ccminer_LDFLAGS += -L/usr/local/llvm/lib
+ccminer_LDADD += -lomp
+endif
+
 nvcc_ARCH  = -gencode=arch=compute_61,code=sm_61
 nvcc_ARCH += -gencode=arch=compute_52,code=sm_52
 nvcc_ARCH += -gencode=arch=compute_50,code=sm_50
@@ -86,7 +92,7 @@ nvcc_ARCH += -gencode=arch=compute_30,code=sm_30
 nvcc_ARCH += -gencode=arch=compute_70,code=sm_70
 
 nvcc_FLAGS = $(nvcc_ARCH) @CUDA_INCLUDES@ -I. @CUDA_CFLAGS@
-nvcc_FLAGS += $(JANSSON_INCLUDES) --ptxas-options="-v"
+nvcc_FLAGS += $(JANSSON_INCLUDES)
 
 # we're now targeting all major compute architectures within one binary.
 .cu.o:
@@ -130,7 +136,7 @@ skein.o: skein.cu
 	$(NVCC) $(nvcc_FLAGS) --maxrregcount=64 -o $@ -c $<
 
 neoscrypt/cuda_neoscrypt.o: neoscrypt/cuda_neoscrypt.cu
-	$(NVCC) -gencode=arch=compute_61,code=sm_61 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_50,code=sm_50 -gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_37,code=sm_37 -gencode=arch=compute_70,code=sm_70 @CUDA_INCLUDES@ -I. @CUDA_CFLAGS@ --ptxas-options="-v" -o $@ -c $<
+	$(NVCC) -gencode=arch=compute_61,code=sm_61 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_50,code=sm_50 -gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_37,code=sm_37 -gencode=arch=compute_70,code=sm_70 @CUDA_INCLUDES@ -I. @CUDA_CFLAGS@ -o $@ -c $<
 
 neoscrypt/cuda_neoscrypt_tpruvot.o: neoscrypt/cuda_neoscrypt_tpruvot.cu
-	$(NVCC) -gencode=arch=compute_61,code=sm_61 -gencode=arch=compute_70,code=sm_70 @CUDA_INCLUDES@ -I. $(JANSSON_INCLUDES) @CUDA_CFLAGS@ --ptxas-options="-v" -o $@ -c $<
+	$(NVCC) -gencode=arch=compute_61,code=sm_61 -gencode=arch=compute_70,code=sm_70 @CUDA_INCLUDES@ -I. $(JANSSON_INCLUDES) @CUDA_CFLAGS@ -o $@ -c $<
