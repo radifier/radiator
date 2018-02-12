@@ -18,7 +18,7 @@ bin_PROGRAMS = ccminer
 ccminer_SOURCES = elist.h miner.h compat.h \
 			  compat/inttypes.h compat/stdbool.h compat/unistd.h \
 			  compat/sys/time.h compat/getopt/getopt.h \
-			  crc32.c hefty1.c \
+			  crc32.c \
 			  ccminer.cpp util.cpp \
 			  api.cpp hashlog.cpp stats.cpp sysinfos.cpp cuda.cpp \
 			  nvml.cpp nvml.h nvsettings.cpp \

@@ -297,7 +297,6 @@
     <ClCompile Include="api.cpp" />
     <ClCompile Include="sysinfos.cpp" />
     <ClCompile Include="crc32.c" />
-    <ClCompile Include="hefty1.c" />
     <ClCompile Include="myriadgroestl.cpp" />
     <ClCompile Include="lyra2\Lyra2.c" />
     <ClCompile Include="lyra2\Sponge.c" />
@@ -351,7 +350,6 @@
     <ClInclude Include="cuda_helper.h" />
     <ClInclude Include="cuda_vector.h" />
     <ClInclude Include="elist.h" />
-    <ClInclude Include="hefty1.h" />
     <ClInclude Include="lyra2\cuda_lyra2v2_sm3.cuh" />
     <ClInclude Include="lyra2\cuda_lyra2_vectors.h" />
     <ClInclude Include="miner.h" />
