@@ -49,8 +49,6 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			mining_has_stopped[thr_id] = true;
 			proper_exit(2);
 		}
-		if(cc == 30)
-			use_tpruvot = true;
 
 		unsigned int intensity = (256 * 64 * 1); // -i 14
 		if(strstr(props.name, " Xp"))
