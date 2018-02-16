@@ -116,7 +116,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		throughputmax = device_intensity(device_map[thr_id], __func__, intensity) / 2;
 		//		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);	
 		if(throughputmax == intensity/2)
-			applog(LOG_INFO, "GPU #%d: using default intensity %.3f", device_map[thr_id], throughput2intensity(throughputmax));
+			applog(LOG_INFO, "GPU #%d: using default intensity %.3f", device_map[thr_id], throughput2intensity(throughputmax*2));
 		CUDA_SAFE_CALL(cudaMallocHost(&foundNonce, 2 * 4));
 
 #if defined WIN32 && !defined _WIN64
