@@ -66,6 +66,15 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			intensity = 256 * 64 * 5;
 			use_tpruvot = true;
 		}
+		else if(strstr(props.name, "P104"))
+		{
+			intensity = 256 * 64 * 5;
+			use_tpruvot = true;
+		}
+		else if(strstr(props.name, "P106"))
+		{
+			intensity = 256 * 64 * 5;
+		}
 		else if(strstr(props.name, "1070"))
 		{
 			intensity = 256 * 64 * 5;
@@ -97,6 +106,11 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		else if(strstr(props.name, "950"))
 		{
 			intensity = (256 * 64 * 2);
+		}
+		if(cc == 70 || cc == 60) // Tesla P100/V100 or Titan V
+		{
+			intensity = 256 * 64 * 5;
+			use_tpruvot = true;
 		}
 
 		throughputmax = device_intensity(device_map[thr_id], __func__, intensity) / 2;
