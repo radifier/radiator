@@ -37,6 +37,7 @@ extern enum sha_algos opt_algo;
 extern char curl_err_str[];
 extern bool stop_mining;
 extern bool send_stale;
+extern const char *algo_names[];
 
 bool opt_tracegpu = false;
 
@@ -1623,7 +1624,11 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 		sctx->job.height = getblocheight(sctx);
 	else
 		sctx->job.height = 1;
-
+	if(!opt_quiet)
+	{
+		applog(LOG_BLUE, "Received new %s block header", algo_names[opt_algo]);
+		applog(LOG_BLUE, "block height %d, %d transactions", sctx->job.height, merkle_count);
+	}
 	for(i = 0; i < sctx->job.merkle_count; i++)
 		free(sctx->job.merkle[i]);
 	free(sctx->job.merkle);
