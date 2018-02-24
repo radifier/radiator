@@ -96,7 +96,7 @@ bool opt_debug_threads = false;
 bool opt_showdiff = true;
 bool opt_hwmonitor = true;
 
-static const char *algo_names[] =
+const char *algo_names[] =
 {
 	"invalid",
 	"bitcoin",
@@ -2142,9 +2142,9 @@ static void *stratum_thread(void *userdata)
 			g_work_time = time(NULL);
 			if(stratum.job.clean)
 			{
-				if(!opt_quiet)
-					applog(LOG_BLUE, "%s %s block %d", short_url, algo_names[opt_algo],
-					stratum.job.height);
+//				if(!opt_quiet)
+//					applog(LOG_BLUE, "%s %s block %d", short_url, algo_names[opt_algo],
+//					stratum.job.height);
 				restart_threads();
 				if(check_dups)
 					hashlog_purge_old();
