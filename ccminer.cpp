@@ -1384,7 +1384,7 @@ static void *miner_thread(void *userdata)
 	struct work work;
 	uint64_t loopcnt = 0;
 	uint32_t max_nonce;
-	uint32_t end_nonce = UINT32_MAX / opt_n_threads * (thr_id + 1) - (thr_id + 1);
+	uint64_t end_nonce = 0x100000000ull / opt_n_threads * (thr_id + 1) - 1;
 	bool extrajob = false;
 	char s[16];
 	int rc = 0;
@@ -1476,7 +1476,7 @@ static void *miner_thread(void *userdata)
 			pthread_mutex_lock(&g_work_lock);
 			if(loopcnt == 0 || time(NULL) >= (g_work_time + opt_scantime))
 				extrajob = true;
-			if(nonceptr[0] >= end_nonce - 0x00010000 || extrajob)
+			if(nonceptr[0] >= end_nonce - 0x00004000 || extrajob)
 			{
 				extrajob = false;
 				int loop = 0;
@@ -1494,7 +1494,7 @@ static void *miner_thread(void *userdata)
 		else
 		{
 			pthread_mutex_lock(&g_work_lock);
-			if((time(NULL) - g_work_time) >= scan_time || nonceptr[0] >= (end_nonce - 0x10000))
+			if((time(NULL) - g_work_time) >= scan_time || nonceptr[0] >= (end_nonce - 0x00004000))
 			{
 				if(opt_debug && g_work_time && !opt_quiet)
 					applog(LOG_DEBUG, "work time %u/%us nonce %x/%x", time(NULL) - g_work_time,
@@ -1550,7 +1550,7 @@ static void *miner_thread(void *userdata)
 			if(opt_debug && opt_algo == ALGO_SIA)
 				applog(LOG_DEBUG, "thread %d: high nonce = %08X", thr_id, work.data[9]);
 			memcpy(&work, &g_work, sizeof(struct work));
-			nonceptr[0] = (UINT32_MAX / opt_n_threads) * thr_id; // 0 if single thr
+			nonceptr[0] = (uint32_t)((0x100000000ull / opt_n_threads) * thr_id); // 0 if single thr
 		}
 		else
 		{
@@ -1634,7 +1634,7 @@ static void *miner_thread(void *userdata)
 			end_nonce = UINT32_MAX;
 
 		if((max64 + start_nonce) >= end_nonce)
-			max_nonce = end_nonce;
+			max_nonce = (uint32_t)end_nonce;
 		else
 			max_nonce = (uint32_t)(max64 + start_nonce);
 
