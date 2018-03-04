@@ -9,7 +9,9 @@ extern "C" {
 
 #include "miner.h"
 #include "cuda_helper.h"
-
+extern "C" {
+#include "SHA3api_ref.h"
+}
 extern void blakeKeccak256_cpu_hash_80(const int thr_id, const uint32_t threads, const uint32_t startNonce, uint64_t *Hash);
 extern void blake256_cpu_setBlock_80(int thr_id, uint32_t *pdata);
 
@@ -63,10 +65,12 @@ extern "C" void lyra2v2_hash(void *state, const void *input)
 	sph_cubehash256(&ctx_cube, hashA, 32);
 	sph_cubehash256_close(&ctx_cube, hashB);
 
-
+/*
 	sph_bmw256_init(&ctx_bmw);
 	sph_bmw256(&ctx_bmw, hashB, 32);
 	sph_bmw256_close(&ctx_bmw, hashA);
+*/
+	BMWHash(256, (const BitSequence*)hashB, 256, (BitSequence*)hashA);
 
 	memcpy(state, hashA, 32);
 }

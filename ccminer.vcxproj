@@ -268,6 +268,7 @@
     <CudaCompile Include="bitcoin.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
+    <ClCompile Include="BlueMidnightWish_opt.c" />
     <ClCompile Include="compat\getopt\getopt_long.c" />
     <ClCompile Include="compat\gettimeofday.c" />
     <ClCompile Include="compat\winansi.cpp" />
@@ -356,6 +357,7 @@
     <ClInclude Include="neoscrypt\cuda_vector_tpruvot.cuh" />
     <ClInclude Include="neoscrypt\cuda_vector_uint2x4.cuh" />
     <ClInclude Include="nvml.h" />
+    <ClInclude Include="SHA3api_ref.h" />
     <ClInclude Include="Sia\sia.h" />
     <ClInclude Include="sph\neoscrypt.h" />
     <ClInclude Include="sph\sha256_Y.h" />
