@@ -207,6 +207,9 @@
     <ClCompile Include="nvsettings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BlueMidnightWish_opt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="compat.h">
@@ -364,6 +367,9 @@
     </ClInclude>
     <ClInclude Include="neoscrypt\cuda_vector_tpruvot.cuh">
       <Filter>Header Files\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="SHA3api_ref.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
