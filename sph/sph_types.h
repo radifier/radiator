@@ -816,7 +816,9 @@ static inline void sph_enc64be_aligned(void *dst, sph_u64 val);
 #undef SPH_64
 #undef SPH_64_TRUE
 
-#if 1 // defined __STDC__ && __STDC_VERSION__ >= 199901L
+#include <limits.h>
+
+#if defined _MSC_VER || (defined __STDC__ && __STDC_VERSION__ >= 199901L)
 
 /*
  * On C99 implementations, we can use <stdint.h> to get an exact 64-bit
