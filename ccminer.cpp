@@ -2292,7 +2292,7 @@ static void parse_arg(int key, char *arg)
 				{ /* 0 = default */
 					if((d - v) > 0.0)
 					{
-						uint32_t adds = (uint32_t)floor((d - v) * (1 << (v - 8))) * 256;
+						uint32_t adds = (uint32_t)floor((d - v) * (1 << v));
 						gpus_intensity[n] = (1 << v) + adds;
 						applog(LOG_INFO, "Adding %u threads to intensity %u, %u cuda threads",
 							   adds, v, gpus_intensity[n]);
