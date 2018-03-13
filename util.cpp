@@ -39,6 +39,9 @@ extern bool stop_mining;
 extern bool send_stale;
 extern const char *algo_names[];
 
+extern bool opt_logfile;
+extern FILE *logfilepointer;
+
 bool opt_tracegpu = false;
 
 struct data_buffer
@@ -129,6 +132,7 @@ void applog(int prio, const char *fmt, ...)
 	{
 		const char* color = "";
 		char *f;
+		char *fl;
 		int len;
 		struct tm tm, *tm_p;
 		time_t now = time(NULL);
@@ -156,6 +160,8 @@ void applog(int prio, const char *fmt, ...)
 
 		len = 160 + (int)strlen(fmt) + 2;
 		f = (char*)alloca(len);
+		pthread_mutex_lock(&applog_lock);
+
 		sprintf(f, "[%d-%02d-%02d %02d:%02d:%02d]%s %s%s\n",
 				tm.tm_year + 1900,
 				tm.tm_mon + 1,
@@ -167,9 +173,23 @@ void applog(int prio, const char *fmt, ...)
 				fmt,
 				use_colors ? CL_N : ""
 				);
-		pthread_mutex_lock(&applog_lock);
 		vfprintf(stderr, f, ap);	/* atomic write to stderr */
 		fflush(stderr);
+		if (opt_logfile)
+		{
+			fl = (char*)alloca(len);
+			sprintf(fl, "[%d-%02d-%02d %02d:%02d:%02d] %s\n",
+					tm.tm_year + 1900,
+					tm.tm_mon + 1,
+					tm.tm_mday,
+					tm.tm_hour,
+					tm.tm_min,
+					tm.tm_sec,
+					fmt
+			);
+			vfprintf(logfilepointer, fl, ap);	/* atomic write to logfile */
+			fflush(logfilepointer);
+		}
 		pthread_mutex_unlock(&applog_lock);
 	}
 	va_end(ap);
