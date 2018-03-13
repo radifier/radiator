@@ -202,6 +202,9 @@ struct stratum_ctx stratum = { 0 };
 bool stop_mining = false;
 volatile bool mining_has_stopped[MAX_GPUS];
 unsigned int cudaschedule = cudaDeviceScheduleBlockingSync;
+FILE *logfilepointer;
+char *logfilename;
+bool opt_logfile = false;
 
 pthread_mutex_t applog_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t stats_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -302,6 +305,7 @@ Options:\n\
                         1: Spin\n\
                         2: Yield\n\
   -b, --api-bind=...    IP address and port number for the miner API (example: 127.0.0.1:4068)\n\
+      --logfile=FILE    create logfile\n\
   -S, --syslog          use system log for output messages\n\
       --syslog-prefix=... allow to change syslog tool name\n\
   -B, --background      run the miner in the background\n\
@@ -373,6 +377,7 @@ static struct option const options[] =
 	{"mem-clock", 1, NULL, 1071},
 	{"pstate", 1, NULL, 1072},
 	{"plimit", 1, NULL, 1073},
+	{"logfile", 1, NULL, 1074},
 	{0, 0, 0, 0}
 };
 
@@ -516,6 +521,8 @@ void proper_exit(int reason)
 		}
 #endif
 	}
+	if(opt_logfile)
+		fclose(logfilepointer);
 	sleep(1);
 	exit(reason);
 }
@@ -2678,6 +2685,20 @@ static void parse_arg(int key, char *arg)
 			int dev_id = device_map[n++];
 			device_plimit[dev_id] = atoi(pch);
 			pch = strtok(NULL, ",");
+		}
+	}
+	break;
+	case 1074: /* --logfile */
+	{
+		if (strlen(arg) > 0)
+			logfilename = strdup(arg);
+		logfilepointer = fopen(logfilename, "w");
+		if (logfilepointer == NULL)
+			printf("\nWarning: can't create file %s\nLogging to file is disabled\n", logfilename);
+		else
+		{
+			printf("\nLogfile = %s\n", logfilename);
+			opt_logfile = true;
 		}
 	}
 	break;
