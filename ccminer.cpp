@@ -2691,15 +2691,19 @@ static void parse_arg(int key, char *arg)
 	case 1074: /* --logfile */
 	{
 		if (strlen(arg) > 0)
-			logfilename = strdup(arg);
-		logfilepointer = fopen(logfilename, "w");
-		if (logfilepointer == NULL)
-			printf("\nWarning: can't create file %s\nLogging to file is disabled\n", logfilename);
-		else
 		{
-			printf("\nLogfile = %s\n", logfilename);
-			opt_logfile = true;
+			logfilename = strdup(arg);
+			logfilepointer = fopen(logfilename, "w");
+			if (logfilepointer == NULL)
+				printf("\nWarning: can't create file %s\nLogging to file is disabled\n", logfilename);
+			else
+			{
+				printf("\nLogfile = %s\n", logfilename);
+				opt_logfile = true;
+			}
 		}
+		else
+			printf("\nNo logfile name.\nLogging to file is disabled\n ");
 	}
 	break;
 	default:
