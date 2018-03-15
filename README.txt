@@ -1,28 +1,23 @@
-ccMiner release 8.20(KlausT-mod) (Februar 3rd, 2018)
+ccMiner release 8.21(KlausT-mod) (March 15th, 2018)
 ---------------------------------------------------------------
 
 ***************************************************************
 If you find this tool useful and like to support its continued 
           development, then consider a donation.
 
-KlausT @github:
+KlausT:
   BTC 1QDwdLPrPYSoPqS7pB2kGG84YX6hEcQ4JN
+      bc1qpt7qnvjaqu8t24xqajgyfqan2v00hrdgrut0zq
   BCH 1AH1u7B4KtDTUBgmT6NrXyahNEgTac3fL7
+      qpjupzv3nevqzlkyxx5d736xt78jvet7usm479kl73
 
-tpruvot@github:
-  BTC donation address: 1AJdfCpLWPNoAMDfHF1wD5y8VgKSSTHxPo
-  DRK  : XeVrkPrWB7pDbdFLfKhF1Z3xpqhsx6wkH3
-  NEOS : NaEcVrdzoCWHUYXb7X8QoafoKS9UV69Yk4
-  XST  : S9TqZucWgT6ajZLDBxQnHUtmkotCEHn9z9
+tpruvot:
+  BTC 1AJdfCpLWPNoAMDfHF1wD5y8VgKSSTHxPo
 
-sp-hash@github:
-  BTC: 1CTiNJyoUmbdMRACtteRWXhGqtSETYd6Vd
-  DRK: XdgfWywdxABwMdrGUd2xseb6CYy1UKi9jX
-  
 DJM34:
   BTC donation address: 1NENYmxwZGHsKFmyjTc5WferTn5VTFb7Ze
 
-cbuchner v1.2:
+cbuchner:
   LTC donation address: LKS1WDKGED647msBQfLBHV3Ls8sveGncnm
   BTC donation address: 16hJF5mceSojnTD3ZTUDqdRhDyPJzoRakM
 
@@ -131,9 +126,15 @@ its command line interface and options.
       --no-color        disable colored output
   -D, --debug           enable debug output
   -P, --protocol-dump   verbose dump of protocol-level activities
+      --cuda-schedule   set CUDA scheduling option:
+                        0: BlockingSync (default)
+                        1: Spin
+                        2: Yield
+                        This is influencing the hashing speed and CPU load
       --cpu-affinity    set process affinity to cpu core(s), mask 0x3 for cores 0 and 1
       --cpu-priority    set process priority (default: 0 idle, 2 normal to 5 highest)
   -b, --api-bind        IP/Port for the miner API (example: 127.0.0.1:4068)
+      --logfile=filename Create a logfile
   -S, --syslog          use system log for output messages
       --syslog-prefix=... allow to change syslog tool name
   -B, --background      run the miner in the background
@@ -249,6 +250,12 @@ features.
                   API: fix possible crash when checking cpu frequency under Linux
                   fix gpu name bug when using different cards in the same system
                   add some error messages
+2018-03-15 v8.21: add option --cuda-schedule
+                  add option --logfile
+                  make ccminer compilable under OSX
+                  Neoscrypt: detect  P104-100 and Tesla P100/V100
+                  Linux: fix Lyra2v2 verification bug
+                  fix for intensities between 8 and 9
 
 >>> AUTHORS <<<
 
