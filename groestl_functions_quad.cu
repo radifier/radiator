@@ -230,7 +230,7 @@ static __device__ __forceinline__ void G256_ShiftBytesQ_quad(uint32_t &x7, uint3
 static __device__ __forceinline__ void G256_MixFunction_quad(uint32_t *r)
 {
 #define SHIFT64_16(hi, lo)    __byte_perm(lo, hi, 0x5432)
-#define A(v, u)             __shfl_sync(0xffffffff, (int)r[v], ((threadIdx.x+u)&0x03), 4)
+#define A(v, u)             SHFL((int)r[v], ((threadIdx.x+u)&0x03), 4)
 #define S(idx, l)            SHIFT64_16( A(idx, (l+1)), A(idx, l) )
 
 #define DOUBLE_ODD(i, bc)        ( S(i, (bc)) ^ A(i, (bc) + 1) )

@@ -39,7 +39,7 @@ static __device__ __forceinline__ void ST4S(uint2 *shared_mem, const int index, 
 
 static __device__ __forceinline__ uint2 shuffle2(uint2 a, uint32_t b, uint32_t c)
 {
-	return make_uint2(__shfl_sync(0xffffffff, a.x, b, c), __shfl_sync(0xffffffff, a.y, b, c));
+	return make_uint2(SHFL(a.x, b, c), SHFL(a.y, b, c));
 }
 
 static __device__ __forceinline__
@@ -391,12 +391,12 @@ void lyra2v2_gpu_hash_32_2(uint32_t threads)
 
 		for(int i = 0; i < 3; i++)
 		{
-			rowa = __shfl_sync(0xffffffff, state[0].x, 0, 4) & 3;
+			rowa = SHFL(state[0].x, 0, 4) & 3;
 			reduceDuplexRowt2(shared_mem, prev, rowa, i, state);
 			prev = i;
 		}
 
-		rowa = __shfl_sync(0xffffffff, state[0].x, 0, 4) & 3;
+		rowa = SHFL(state[0].x, 0, 4) & 3;
 		reduceDuplexRowt2x4(shared_mem, rowa, state);
 
 		((uint2*)DMatrix)[(0 * gridDim.x * blockDim.y + thread) * blockDim.x + threadIdx.x] = state[0];

@@ -1346,14 +1346,14 @@ static __forceinline__ __device__ uint16 swapvec(const uint16 &buf)
 static __device__ __forceinline__ uint28 shuffle4(const uint28 &var, int lane)
 {
 uint28 res;
-res.x.x = __shfl_sync(0xffffffff, var.x.x, lane);
-res.x.y = __shfl_sync(0xffffffff, var.x.y, lane);
-res.y.x = __shfl_sync(0xffffffff, var.y.x, lane);
-res.y.y = __shfl_sync(0xffffffff, var.y.y, lane);
-res.z.x = __shfl_sync(0xffffffff, var.z.x, lane);
-res.z.y = __shfl_sync(0xffffffff, var.z.y, lane);
-res.w.x = __shfl_sync(0xffffffff, var.w.x, lane);
-res.w.y = __shfl_sync(0xffffffff, var.w.y, lane);
+res.x.x = SHFL(var.x.x, lane);
+res.x.y = SHFL(var.x.y, lane);
+res.y.x = SHFL(var.y.x, lane);
+res.y.y = SHFL(var.y.y, lane);
+res.z.x = SHFL(var.z.x, lane);
+res.z.y = SHFL(var.z.y, lane);
+res.w.x = SHFL(var.w.x, lane);
+res.w.y = SHFL(var.w.y, lane);
 return res;
 }
 
@@ -1363,20 +1363,20 @@ static __device__ __forceinline__ ulonglong4 shuffle4(ulonglong4 var, int lane)
 	ulonglong4 res;
     uint2 temp;
 	temp = vectorize(var.x);
-	temp.x = __shfl_sync(0xffffffff, temp.x, lane);
-	temp.y = __shfl_sync(0xffffffff, temp.y, lane);
+	temp.x = SHFL(temp.x, lane);
+	temp.y = SHFL(temp.y, lane);
 	res.x = devectorize(temp);
 	temp = vectorize(var.y);
-	temp.x = __shfl_sync(0xffffffff, temp.x, lane);
-	temp.y = __shfl_sync(0xffffffff, temp.y, lane);
+	temp.x = SHFL(temp.x, lane);
+	temp.y = SHFL(temp.y, lane);
 	res.y = devectorize(temp);
 	temp = vectorize(var.z);
-	temp.x = __shfl_sync(0xffffffff, temp.x, lane);
-	temp.y = __shfl_sync(0xffffffff, temp.y, lane);
+	temp.x = SHFL(temp.x, lane);
+	temp.y = SHFL(temp.y, lane);
 	res.z = devectorize(temp);
 	temp = vectorize(var.w);
-	temp.x = __shfl_sync(0xffffffff, temp.x, lane);
-	temp.y = __shfl_sync(0xffffffff, temp.y, lane);
+	temp.x = SHFL(temp.x, lane);
+	temp.y = SHFL(temp.y, lane);
 	res.w = devectorize(temp);
 	return res;
 }
