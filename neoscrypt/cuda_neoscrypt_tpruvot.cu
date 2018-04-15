@@ -1299,10 +1299,10 @@ void neoscrypt_gpu_hash_start(uint32_t threads, const int stratum, const uint32_
 
 __global__
 __launch_bounds__(TPB, 1)
-void neoscrypt_gpu_hash_chacha1(uint32_t threads)
+void neoscrypt_gpu_hash_chacha1()
 {
 	const uint32_t thread = (blockDim.y * blockIdx.x + threadIdx.y);
-	const uint32_t shift = SHIFT * 8U * (thread & 8191);
+	const uint32_t threads = (gridDim.x * blockDim.y);
 	const uint32_t shiftTr = 8U * thread;
 	if(thread >= threads)
 		return;
@@ -1319,7 +1319,7 @@ void neoscrypt_gpu_hash_chacha1(uint32_t threads)
 #pragma nounroll
 	for(int i = 0; i < 128; i++)
 	{
-		uint32_t offset = shift + i * 8U;
+		ptrdiff_t offset = 8U * (thread + threads * i);
 		for(int j = 0; j < 4; j++)
 			((uint4*)(W + offset))[j * 4 + threadIdx.x] = X[j];
 		neoscrypt_chacha(X);
@@ -1328,7 +1328,7 @@ void neoscrypt_gpu_hash_chacha1(uint32_t threads)
 #pragma nounroll
 	for(int t = 0; t < 128; t++)
 	{
-		uint32_t offset = shift + (WarpShuffle(X[3].x, 0, 4) & 0x7F) * 8U;
+		ptrdiff_t offset = 8U * (thread + threads * (WarpShuffle(X[3].x, 0, 4) & 0x7F));
 		for(int j = 0; j < 4; j++)
 			X[j] ^= ((uint4*)(W + offset))[j * 4 + threadIdx.x];
 		neoscrypt_chacha(X);
@@ -1346,10 +1346,10 @@ void neoscrypt_gpu_hash_chacha1(uint32_t threads)
 
 __global__
 __launch_bounds__(TPB, 1)
-void neoscrypt_gpu_hash_salsa1(uint32_t threads)
+void neoscrypt_gpu_hash_salsa1()
 {
 	const uint32_t thread = (blockDim.y * blockIdx.x + threadIdx.y);
-	const uint32_t shift = SHIFT * 8U * (thread & 8191);
+	const uint32_t threads = (gridDim.x * blockDim.y);
 	const uint32_t shiftTr = 8U * thread;
 	if(thread >= threads)
 		return;
@@ -1366,7 +1366,7 @@ void neoscrypt_gpu_hash_salsa1(uint32_t threads)
 #pragma nounroll
 	for(int i = 0; i < 128; i++)
 	{
-		uint32_t offset = shift + i * 8U;
+		ptrdiff_t offset = 8U * (thread + threads * i);
 		for(int j = 0; j < 4; j++)
 			((uint4*)(W + offset))[j * 4 + threadIdx.x] = Z[j];
 		neoscrypt_salsa(Z);
@@ -1375,7 +1375,7 @@ void neoscrypt_gpu_hash_salsa1(uint32_t threads)
 #pragma nounroll
 	for(int t = 0; t < 128; t++)
 	{
-		uint32_t offset = shift + (WarpShuffle(Z[3].x, 0, 4) & 0x7F) * 8U;
+		uint32_t offset = 8U * (thread + threads * (WarpShuffle(Z[3].x, 0, 4) & 0x7F));
 		for(int j = 0; j < 4; j++)
 			Z[j] ^= ((uint4*)(W + offset))[j * 4 + threadIdx.x];
 		neoscrypt_salsa(Z);
@@ -1435,7 +1435,7 @@ void neoscrypt_init(int thr_id, uint32_t threads)
 	CUDA_SAFE_CALL(cudaFuncSetAttribute(neoscrypt_gpu_hash_start, cudaFuncAttributePreferredSharedMemoryCarveout, 100)); // make Titan V faster
 	CUDA_SAFE_CALL(cudaFuncSetAttribute(neoscrypt_gpu_hash_ending, cudaFuncAttributePreferredSharedMemoryCarveout, 100)); // make Titan V faster
 	CUDA_SAFE_CALL(cudaMalloc(&d_NNonce[thr_id], 2 * sizeof(uint32_t)));
-	CUDA_SAFE_CALL(cudaMalloc(&hash1, 32ULL * 128 * sizeof(uint64_t) * min(8192, threads)));
+	CUDA_SAFE_CALL(cudaMalloc(&hash1, 32ULL * 128 * sizeof(uint64_t) * threads));
 	CUDA_SAFE_CALL(cudaMalloc(&Trans1, 32ULL * sizeof(uint64_t) * threads));
 	CUDA_SAFE_CALL(cudaMalloc(&Trans2, 32ULL * sizeof(uint64_t) * threads));
 	CUDA_SAFE_CALL(cudaMalloc(&Trans3, 32ULL * sizeof(uint64_t) * threads));
@@ -1470,9 +1470,9 @@ void neoscrypt_hash_tpruvot(int thr_id, uint32_t threads, uint32_t startNounce, 
 
 	neoscrypt_gpu_hash_start << <grid2, block2 >> > (threads, stratum, startNounce); //fastkdf
 	CUDA_SAFE_CALL(cudaGetLastError());
-	neoscrypt_gpu_hash_salsa1 << <grid3, block3 >> > (threads);
+	neoscrypt_gpu_hash_salsa1 << <grid3, block3 >> > ();
 	CUDA_SAFE_CALL(cudaGetLastError());
-	neoscrypt_gpu_hash_chacha1 << <grid3, block3 >> > (threads);
+	neoscrypt_gpu_hash_chacha1 << <grid3, block3 >> > ();
 	if(opt_debug)
 		CUDA_SAFE_CALL(cudaDeviceSynchronize());
 	CUDA_SAFE_CALL(cudaGetLastError());
