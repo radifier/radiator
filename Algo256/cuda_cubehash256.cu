@@ -277,4 +277,6 @@ void cubehash256_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce,
 
 	cubehash256_gpu_hash_32 << <grid, block, 0, gpustream[thr_id] >> > (threads, startNounce, (uint2*)d_hash);
 	CUDA_SAFE_CALL(cudaGetLastError());
+	if(opt_debug)
+		CUDA_SAFE_CALL(cudaDeviceSynchronize());
 }

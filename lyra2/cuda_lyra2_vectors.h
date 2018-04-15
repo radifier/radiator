@@ -12,10 +12,6 @@
 #define __LDG_PTR   "r"
 #endif
 
-#if __CUDA_ARCH__ < 300
-#define __shfl(x, y) (x)
-#endif
-
 #if __CUDA_ARCH__ < 320 && !defined(__ldg4)
 #define __ldg4(x) (*(x))
 #endif
@@ -689,47 +685,39 @@ static __forceinline__ __device__ uint16 swapvec(const uint16 &buf)
 
 static __device__ __forceinline__ uint28 shuffle4(const uint28 &var, int lane)
 {
-#if __CUDA_ARCH__ >= 300
 	uint28 res;
-	res.x.x = __shfl(var.x.x, lane);
-	res.x.y = __shfl(var.x.y, lane);
-	res.y.x = __shfl(var.y.x, lane);
-	res.y.y = __shfl(var.y.y, lane);
-	res.z.x = __shfl(var.z.x, lane);
-	res.z.y = __shfl(var.z.y, lane);
-	res.w.x = __shfl(var.w.x, lane);
-	res.w.y = __shfl(var.w.y, lane);
+	res.x.x = SHFL(var.x.x, lane);
+	res.x.y = SHFL(var.x.y, lane);
+	res.y.x = SHFL(var.y.x, lane);
+	res.y.y = SHFL(var.y.y, lane);
+	res.z.x = SHFL(var.z.x, lane);
+	res.z.y = SHFL(var.z.y, lane);
+	res.w.x = SHFL(var.w.x, lane);
+	res.w.y = SHFL(var.w.y, lane);
 	return res;
-#else
-	return var;
-#endif
 }
 
 static __device__ __forceinline__ ulonglong4 shuffle4(ulonglong4 var, int lane)
 {
-#if __CUDA_ARCH__ >= 300
 	ulonglong4 res;
 	uint2 temp;
 	temp = vectorize(var.x);
-	temp.x = __shfl(temp.x, lane);
-	temp.y = __shfl(temp.y, lane);
+	temp.x = SHFL(temp.x, lane);
+	temp.y = SHFL(temp.y, lane);
 	res.x = devectorize(temp);
 	temp = vectorize(var.y);
-	temp.x = __shfl(temp.x, lane);
-	temp.y = __shfl(temp.y, lane);
+	temp.x = SHFL(temp.x, lane);
+	temp.y = SHFL(temp.y, lane);
 	res.y = devectorize(temp);
 	temp = vectorize(var.z);
-	temp.x = __shfl(temp.x, lane);
-	temp.y = __shfl(temp.y, lane);
+	temp.x = SHFL(temp.x, lane);
+	temp.y = SHFL(temp.y, lane);
 	res.z = devectorize(temp);
 	temp = vectorize(var.w);
-	temp.x = __shfl(temp.x, lane);
-	temp.y = __shfl(temp.y, lane);
+	temp.x = SHFL(temp.x, lane);
+	temp.y = SHFL(temp.y, lane);
 	res.w = devectorize(temp);
 	return res;
-#else
-	return var;
-#endif
 }
 
 #endif // #ifndef CUDA_LYRA_VECTOR_H

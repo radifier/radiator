@@ -6,7 +6,7 @@
 
 #include <cstdio>
 #include <memory.h>
-
+#include "cuda_helper.h"
 #include "cuda_lyra2v2_sm3.cuh"
 
 #ifdef __INTELLISENSE__
@@ -39,7 +39,7 @@ static __device__ __forceinline__ void ST4S(uint2 *shared_mem, const int index, 
 
 static __device__ __forceinline__ uint2 shuffle2(uint2 a, uint32_t b, uint32_t c)
 {
-	return make_uint2(__shfl(a.x, b, c), __shfl(a.y, b, c));
+	return make_uint2(SHFL(a.x, b, c), SHFL(a.y, b, c));
 }
 
 static __device__ __forceinline__
@@ -391,12 +391,12 @@ void lyra2v2_gpu_hash_32_2(uint32_t threads)
 
 		for(int i = 0; i < 3; i++)
 		{
-			rowa = __shfl(state[0].x, 0, 4) & 3;
+			rowa = SHFL(state[0].x, 0, 4) & 3;
 			reduceDuplexRowt2(shared_mem, prev, rowa, i, state);
 			prev = i;
 		}
 
-		rowa = __shfl(state[0].x, 0, 4) & 3;
+		rowa = SHFL(state[0].x, 0, 4) & 3;
 		reduceDuplexRowt2x4(shared_mem, rowa, state);
 
 		((uint2*)DMatrix)[(0 * gridDim.x * blockDim.y + thread) * blockDim.x + threadIdx.x] = state[0];
@@ -433,9 +433,6 @@ void lyra2v2_gpu_hash_32_3(uint32_t threads, uint2 *outputHash)
 
 #else
 #include "cuda_helper.h"
-#if __CUDA_ARCH__ < 200
-__device__ void* DMatrix;
-#endif
 __global__ void lyra2v2_gpu_hash_32_1(uint32_t threads, uint2 *inputHash)
 {}
 __global__ void lyra2v2_gpu_hash_32_2(uint32_t threads)
@@ -449,7 +446,10 @@ __host__
 void lyra2v2_cpu_init(int thr_id, uint64_t *d_matrix)
 {
 	// just assign the device pointer allocated in main loop
-	cudaMemcpyToSymbol(DMatrix, &d_matrix, sizeof(uint64_t*), 0, cudaMemcpyHostToDevice);
+	CUDA_SAFE_CALL(cudaFuncSetAttribute(lyra2v2_gpu_hash_32_2, cudaFuncAttributePreferredSharedMemoryCarveout, 100)); // make Titan V faster
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(DMatrix, &d_matrix, sizeof(uint64_t*), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+	if(opt_debug)
+		CUDA_SAFE_CALL(cudaDeviceSynchronize());
 }
 
 __host__
@@ -467,8 +467,14 @@ void lyra2v2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uin
 		dim3 block4(4, TPB5x2 / 4);
 
 		lyra2v2_gpu_hash_32_1 << < grid2, block2, 0, gpustream[thr_id] >> > (threads, (uint2*)g_hash);
+		if(opt_debug)
+			CUDA_SAFE_CALL(cudaDeviceSynchronize());
 		lyra2v2_gpu_hash_32_2 << < grid4, block4, 384 * TPB5x2, gpustream[thr_id] >> > (threads);
+		if(opt_debug)
+			CUDA_SAFE_CALL(cudaDeviceSynchronize());
 		lyra2v2_gpu_hash_32_3 << < grid2, block2, 0, gpustream[thr_id] >> > (threads, (uint2*)g_hash);
+		if(opt_debug)
+			CUDA_SAFE_CALL(cudaDeviceSynchronize());
 
 	}
 	else
@@ -482,6 +488,8 @@ void lyra2v2_cpu_hash_32(int thr_id, uint32_t threads, uint32_t startNounce, uin
 		dim3 grid((threads + tpb - 1) / tpb);
 		dim3 block(tpb);
 		lyra2v2_gpu_hash_32_v3 << < grid, block, 0, gpustream[thr_id] >> > (threads, startNounce, (uint2*)g_hash);
+		if(opt_debug)
+			CUDA_SAFE_CALL(cudaDeviceSynchronize());
 
 	}
 	CUDA_SAFE_CALL(cudaGetLastError());

@@ -102,7 +102,7 @@ __global__ void jackpot_compactTest_gpu_SCAN(uint32_t *data, int width, uint32_t
 
 	for (int i=1; i<=width; i*=2)
 	{
-		uint32_t n = __shfl_up((int)value, i, width);
+		uint32_t n = SHFL_UP((int)value, i, width);
 
 		if (lane_id >= i) value += n;
 	}
@@ -129,7 +129,7 @@ __global__ void jackpot_compactTest_gpu_SCAN(uint32_t *data, int width, uint32_t
 
 		for (int i=1; i<=width; i*=2)
 		{
-			uint32_t n = __shfl_up((int)warp_sum, i, width);
+			uint32_t n = SHFL_UP((int)warp_sum, i, width);
 
 		if (lane_id >= i) warp_sum += n;
 		}
