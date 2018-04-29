@@ -37,7 +37,6 @@ extern "C" void lyra2v2_hash(void *state, const void *input)
 	sph_blake256_context      ctx_blake;
 	sph_keccak256_context     ctx_keccak;
 	sph_skein256_context      ctx_skein;
-	sph_bmw256_context        ctx_bmw;
 	sph_cubehash256_context   ctx_cube;
 
 	uint32_t hashA[8], hashB[8];
