@@ -76,24 +76,32 @@ extern cudaError_t MyStreamSynchronize(cudaStream_t stream, int situation, int t
 // #define SPH_T64(x) ((x) & SPH_C64(0xFFFFFFFFFFFFFFFF))
 #endif
 
-#if defined CUDART_VERSION && __CUDA_ARCH__ >= 300
 static __device__ __forceinline__ int SHFL(int var, int src, int width = 32)
 {
+#if defined __CUDA_ARCH__ && __CUDA_ARCH__ >= 300
 #if CUDART_VERSION >= 9010
 	return __shfl_sync(0xffffffff, var, src, width);
 #else
 	return __shfl(var, src, width);
 #endif
+#else // this doesn't work
+	return var;
+#endif
 }
+
+static __device__ __forceinline__ int SHFL_UP(int var, int src, int width = 32)
+{
+#if defined __CUDA_ARCH__ && __CUDA_ARCH__ >= 300
 #if CUDART_VERSION >= 9010
-#define SHFL_UP(a, b, c) __shfl_up_sync(0xffffffff, (a), (b), (c))
+	return __shfl_up_sync(0xffffffff, var, src, width);
 #else
-#define SHFL_UP(a, b, c) __shfl_up((a), (b), (c))
+	return __shfl_up(var, src, width);
 #endif
 #else // this doesn't work
-#define SHFL
-#define SHFL_UP
+	return var;
 #endif
+}
+
 
 
 #if defined _MSC_VER && !defined __CUDA_ARCH__
