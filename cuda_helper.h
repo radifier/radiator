@@ -76,7 +76,7 @@ extern cudaError_t MyStreamSynchronize(cudaStream_t stream, int situation, int t
 // #define SPH_T64(x) ((x) & SPH_C64(0xFFFFFFFFFFFFFFFF))
 #endif
 
-#if defined CUDART_VERSION
+#if defined CUDART_VERSION && __CUDA_ARCH__ >= 300
 static __device__ __forceinline__ int SHFL(int var, int src, int width = 32)
 {
 #if CUDART_VERSION >= 9010
@@ -90,6 +90,9 @@ static __device__ __forceinline__ int SHFL(int var, int src, int width = 32)
 #else
 #define SHFL_UP(a, b, c) __shfl_up((a), (b), (c))
 #endif
+#else // this doesn't work
+#define SHFL
+#define SHFL_UP
 #endif
 
 
