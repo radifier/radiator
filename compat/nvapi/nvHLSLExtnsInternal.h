@@ -1,3 +1,37 @@
+ /************************************************************************************************************************************\
+|*                                                                                                                                    *|
+|*     Copyright © 2012 NVIDIA Corporation.  All rights reserved.                                                                     *|
+|*                                                                                                                                    *|
+|*  NOTICE TO USER:                                                                                                                   *|
+|*                                                                                                                                    *|
+|*  This software is subject to NVIDIA ownership rights under U.S. and international Copyright laws.                                  *|
+|*                                                                                                                                    *|
+|*  This software and the information contained herein are PROPRIETARY and CONFIDENTIAL to NVIDIA                                     *|
+|*  and are being provided solely under the terms and conditions of an NVIDIA software license agreement.                             *|
+|*  Otherwise, you have no rights to use or access this software in any manner.                                                       *|
+|*                                                                                                                                    *|
+|*  If not covered by the applicable NVIDIA software license agreement:                                                               *|
+|*  NVIDIA MAKES NO REPRESENTATION ABOUT THE SUITABILITY OF THIS SOFTWARE FOR ANY PURPOSE.                                            *|
+|*  IT IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY OF ANY KIND.                                                           *|
+|*  NVIDIA DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,                                                                     *|
+|*  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE.                       *|
+|*  IN NO EVENT SHALL NVIDIA BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,                               *|
+|*  OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,  WHETHER IN AN ACTION OF CONTRACT,                         *|
+|*  NEGLIGENCE OR OTHER TORTIOUS ACTION,  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOURCE CODE.            *|
+|*                                                                                                                                    *|
+|*  U.S. Government End Users.                                                                                                        *|
+|*  This software is a "commercial item" as that term is defined at 48 C.F.R. 2.101 (OCT 1995),                                       *|
+|*  consisting  of "commercial computer  software"  and "commercial computer software documentation"                                  *|
+|*  as such terms are  used in 48 C.F.R. 12.212 (SEPT 1995) and is provided to the U.S. Government only as a commercial end item.     *|
+|*  Consistent with 48 C.F.R.12.212 and 48 C.F.R. 227.7202-1 through 227.7202-4 (JUNE 1995),                                          *|
+|*  all U.S. Government End Users acquire the software with only those rights set forth herein.                                       *|
+|*                                                                                                                                    *|
+|*  Any use of this software in individual and commercial software must include,                                                      *|
+|*  in the user documentation and internal comments to the code,                                                                      *|
+|*  the above Disclaimer (as applicable) and U.S. Government End Users Notice.                                                        *|
+|*                                                                                                                                    *|
+ \************************************************************************************************************************************/
+
 ////////////////////////// NVIDIA SHADER EXTENSIONS /////////////////
 // internal functions
 // Functions in this file are not expected to be called by apps directly
@@ -24,14 +58,23 @@ struct NvShaderExtnStruct
 
 // RW structured buffer for Nvidia shader extensions
 
-// Application needs to define NV_SHADER_EXTN_SLOT as a unused slot, which should be
+// Application needs to define NV_SHADER_EXTN_SLOT as a unused slot, which should be 
 // set using NvAPI_D3D11_SetNvShaderExtnSlot() call before creating the first shader that
 // uses nvidia shader extensions. E.g before including this file in shader define it as:
 // #define NV_SHADER_EXTN_SLOT u7
 
+// For SM5.1, application needs to define NV_SHADER_EXTN_REGISTER_SPACE as register space
+// E.g. before including this file in shader define it as:
+// #define NV_SHADER_EXTN_REGISTER_SPACE space2
+
 // Note that other operations to this UAV will be ignored so application
 // should bind a null resource
+
+#ifdef NV_SHADER_EXTN_REGISTER_SPACE
+RWStructuredBuffer<NvShaderExtnStruct> g_NvidiaExt : register( NV_SHADER_EXTN_SLOT, NV_SHADER_EXTN_REGISTER_SPACE );
+#else
 RWStructuredBuffer<NvShaderExtnStruct> g_NvidiaExt : register( NV_SHADER_EXTN_SLOT );
+#endif
 
 
 //----------------------------------------------------------------------------//
@@ -267,7 +310,7 @@ uint __NvAtomicOpFP16x2(RWByteAddressBuffer uav, uint byteAddress, uint fp16x2Va
     g_NvidiaExt[index].src2u.x = atomicOpType;
     g_NvidiaExt[index].opcode  = NV_EXTN_OP_FP16_ATOMIC;
 
-    return g_NvidiaExt[index].dst0u.x;
+    return g_NvidiaExt[index].dst0u.x;    
 }
 
 //----------------------------------------------------------------------------//
@@ -276,7 +319,7 @@ uint __NvAtomicOpFP16x2(RWByteAddressBuffer uav, uint byteAddress, uint fp16x2Va
 // the uint paramater 'fp16x2Val' is treated as two fp16 values
 // the passed sub-opcode 'op' should be an immediate constant
 // the returned value are the two fp16 values (.x and .y components) packed into a single uint
-// Warning: Behaviour of these set of functions is undefined if the UAV is not
+// Warning: Behaviour of these set of functions is undefined if the UAV is not 
 // of R16G16_FLOAT format (might result in app crash or TDR)
 
 uint __NvAtomicOpFP16x2(RWTexture1D<float2> uav, uint address, uint fp16x2Val, uint atomicOpType)
@@ -288,7 +331,7 @@ uint __NvAtomicOpFP16x2(RWTexture1D<float2> uav, uint address, uint fp16x2Val, u
     g_NvidiaExt[index].src2u.x    = atomicOpType;
     g_NvidiaExt[index].opcode     = NV_EXTN_OP_FP16_ATOMIC;
 
-    return g_NvidiaExt[index].dst0u.x;
+    return g_NvidiaExt[index].dst0u.x;    
 }
 
 uint __NvAtomicOpFP16x2(RWTexture2D<float2> uav, uint2 address, uint fp16x2Val, uint atomicOpType)
@@ -300,7 +343,7 @@ uint __NvAtomicOpFP16x2(RWTexture2D<float2> uav, uint2 address, uint fp16x2Val, 
     g_NvidiaExt[index].src2u.x    = atomicOpType;
     g_NvidiaExt[index].opcode     = NV_EXTN_OP_FP16_ATOMIC;
 
-    return g_NvidiaExt[index].dst0u.x;
+    return g_NvidiaExt[index].dst0u.x;    
 }
 
 uint __NvAtomicOpFP16x2(RWTexture3D<float2> uav, uint3 address, uint fp16x2Val, uint atomicOpType)
@@ -312,17 +355,17 @@ uint __NvAtomicOpFP16x2(RWTexture3D<float2> uav, uint3 address, uint fp16x2Val, 
     g_NvidiaExt[index].src2u.x    = atomicOpType;
     g_NvidiaExt[index].opcode     = NV_EXTN_OP_FP16_ATOMIC;
 
-    return g_NvidiaExt[index].dst0u.x;
+    return g_NvidiaExt[index].dst0u.x;    
 }
 
 //----------------------------------------------------------------------------//
 
 // performs Atomic operation on a R16G16B16A16_FLOAT UAV at the given address
-// the uint2 paramater 'fp16x2Val' is treated as four fp16 values
+// the uint2 paramater 'fp16x2Val' is treated as four fp16 values 
 // i.e, fp16x2Val.x = uav.xy and fp16x2Val.y = uav.yz
 // the passed sub-opcode 'op' should be an immediate constant
 // the returned value are the four fp16 values (.xyzw components) packed into uint2
-// Warning: Behaviour of these set of functions is undefined if the UAV is not
+// Warning: Behaviour of these set of functions is undefined if the UAV is not 
 // of R16G16B16A16_FLOAT format (might result in app crash or TDR)
 
 uint2 __NvAtomicOpFP16x2(RWTexture1D<float4> uav, uint address, uint2 fp16x2Val, uint atomicOpType)
