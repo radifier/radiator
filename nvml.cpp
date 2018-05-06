@@ -2197,75 +2197,85 @@ void *monitor_thread(void *userdata)
 
 	while (!abort_flag && !opt_quiet)
 	{
+		cudaError_t err;
 		// This thread monitors card's power lazily during scans, one at a time...
 		thr_id = (thr_id + 1) % opt_n_threads;
 		struct cgpu_info *cgpu = &thr_info[thr_id].gpu;
-		int dev_id = cgpu->gpu_id; cudaSetDevice(dev_id);
-
-		if (hnvml != NULL && cgpu)
+		int dev_id = cgpu->gpu_id;
+		err = cudaSetDevice(dev_id);
+		if(err == cudaSuccess)
 		{
-			char khw[32] = { 0 };
-			uint64_t clock = 0, mem_clock = 0;
-			uint32_t fanpercent = 0, power = 0;
-			double tempC = 0, khs_per_watt = 0;
-			uint32_t counter = 0;
-			int max_loops = 1000;
+			if(hnvml != NULL && cgpu)
+			{
+				char khw[32] = { 0 };
+				uint64_t clock = 0, mem_clock = 0;
+				uint32_t fanpercent = 0, power = 0;
+				double tempC = 0, khs_per_watt = 0;
+				uint32_t counter = 0;
+				int max_loops = 1000;
 
-			pthread_cond_wait(&cgpu->monitor.sampling_signal, &cgpu->monitor.lock);
+				pthread_cond_wait(&cgpu->monitor.sampling_signal, &cgpu->monitor.lock);
 
-			do {
-				unsigned int tmp_clock=0, tmp_memclock=0;
-				nvml_get_current_clocks(dev_id, &tmp_clock, &tmp_memclock);
+				do
+				{
+					unsigned int tmp_clock = 0, tmp_memclock = 0;
+					nvml_get_current_clocks(dev_id, &tmp_clock, &tmp_memclock);
 #ifdef WIN32
-				if (tmp_clock < 200) {
-					// workaround for buggy drivers 378.x (real clock)
-					tmp_clock = nvapi_get_gpu_clock(nvapi_dev_map[dev_id]);
-				}
-#endif
-				if (tmp_clock < 200) {
-					// some older cards only report a base clock with cuda props.
-					if (cuda_gpu_info(cgpu) == 0) {
-						tmp_clock = cgpu->gpu_clock/1000;
-						tmp_memclock = cgpu->gpu_memclock/1000;
+					if(tmp_clock < 200)
+					{
+  // workaround for buggy drivers 378.x (real clock)
+						tmp_clock = nvapi_get_gpu_clock(nvapi_dev_map[dev_id]);
 					}
+#endif
+					if(tmp_clock < 200)
+					{
+  // some older cards only report a base clock with cuda props.
+						if(cuda_gpu_info(cgpu) == 0)
+						{
+							tmp_clock = cgpu->gpu_clock / 1000;
+							tmp_memclock = cgpu->gpu_memclock / 1000;
+						}
+					}
+					clock += tmp_clock;
+					mem_clock += tmp_memclock;
+					tempC += gpu_temp(cgpu);
+					fanpercent += gpu_fanpercent(cgpu);
+					power += gpu_power(cgpu);
+					counter++;
+
+					usleep(50000);
+					if(abort_flag) goto abort;
+
+				} while(cgpu->monitor.sampling_flag && (--max_loops));
+
+				cgpu->monitor.gpu_temp = (uint32_t)(tempC / counter);
+				cgpu->monitor.gpu_fan = fanpercent / counter;
+				cgpu->monitor.gpu_power = power / counter;
+				cgpu->monitor.gpu_clock = (uint32_t)(clock / counter);
+				cgpu->monitor.gpu_memclock = (uint32_t)(mem_clock / counter);
+
+				if(power)
+				{
+					khs_per_watt = stats_get_speed(thr_id, thr_hashrates[thr_id]);
+					khs_per_watt = khs_per_watt / ((double)power / counter);
+					format_hashrate(khs_per_watt * 1000, khw);
+					if(strlen(khw))
+						sprintf(&khw[strlen(khw) - 1], "W %uW ", cgpu->monitor.gpu_power / 1000);
 				}
-				clock += tmp_clock;
-				mem_clock += tmp_memclock;
-				tempC += gpu_temp(cgpu);
-				fanpercent += gpu_fanpercent(cgpu);
-				power += gpu_power(cgpu);
-				counter++;
 
-				usleep(50000);
-				if (abort_flag) goto abort;
+				if(opt_hwmonitor && (time(NULL) - cgpu->monitor.tm_displayed) > 60)
+				{
+					gpulog(LOG_INFO, thr_id, "%u MHz %s%uC FAN %u%%",
+						   cgpu->monitor.gpu_clock/*, cgpu->monitor.gpu_memclock*/,
+						   khw, cgpu->monitor.gpu_temp, cgpu->monitor.gpu_fan
+					);
+					cgpu->monitor.tm_displayed = (uint32_t)time(NULL);
+				}
 
-			} while (cgpu->monitor.sampling_flag && (--max_loops));
-
-			cgpu->monitor.gpu_temp = (uint32_t) (tempC/counter);
-			cgpu->monitor.gpu_fan = fanpercent/counter;
-			cgpu->monitor.gpu_power = power/counter;
-			cgpu->monitor.gpu_clock = (uint32_t) (clock/counter);
-			cgpu->monitor.gpu_memclock = (uint32_t) (mem_clock/counter);
-
-			if (power) {
-				khs_per_watt = stats_get_speed(thr_id, thr_hashrates[thr_id]);
-				khs_per_watt = khs_per_watt / ((double)power / counter);
-				format_hashrate(khs_per_watt * 1000, khw);
-				if (strlen(khw))
-					sprintf(&khw[strlen(khw)-1], "W %uW ", cgpu->monitor.gpu_power / 1000);
+				pthread_mutex_unlock(&cgpu->monitor.lock);
 			}
-
-			if (opt_hwmonitor && (time(NULL) - cgpu->monitor.tm_displayed) > 60) {
-				gpulog(LOG_INFO, thr_id, "%u MHz %s%uC FAN %u%%",
-					cgpu->monitor.gpu_clock/*, cgpu->monitor.gpu_memclock*/,
-					khw, cgpu->monitor.gpu_temp, cgpu->monitor.gpu_fan
-				);
-				cgpu->monitor.tm_displayed = (uint32_t)time(NULL);
-			}
-
-			pthread_mutex_unlock(&cgpu->monitor.lock);
+			usleep(500); // safety
 		}
-		usleep(500); // safety
 	}
 abort:
 	if (opt_debug_threads)
