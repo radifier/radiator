@@ -47,7 +47,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		{
 			applog(LOG_ERR, "GPU #%d: this gpu is not supported", device_map[thr_id]);
 			mining_has_stopped[thr_id] = true;
-			proper_exit(2);
+			proper_exit(EXIT_FAILURE);
 		}
 
 		unsigned int intensity = (256 * 64 * 1); // -i 14
@@ -125,7 +125,7 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 		{
 			applog(LOG_ERR, "intensity too high");
 			mining_has_stopped[thr_id] = true;
-			proper_exit(2);
+			proper_exit(EXIT_FAILURE);
 		}
 #endif
 		if(use_tpruvot)

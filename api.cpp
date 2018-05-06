@@ -446,7 +446,7 @@ static size_t base64_encode(const uchar *indata, size_t insize, char *outptr, si
 	if(outbuf == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
-		proper_exit(1);
+		proper_exit(EXIT_FAILURE);
 	}
 
 	while (inlen > 0) {
@@ -561,7 +561,7 @@ static int websocket_handshake(SOCKETTYPE c, char *result, char *clientkey)
 	if(data == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
-		proper_exit(1);
+		proper_exit(EXIT_FAILURE);
 	}
 	else {
 		uchar *p = data;
@@ -591,7 +591,7 @@ static void setup_ipaccess()
 	if(buf == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
-		proper_exit(1);
+		proper_exit(EXIT_FAILURE);
 	}
 
 	strcpy(buf, opt_api_allow);
@@ -605,7 +605,7 @@ static void setup_ipaccess()
 	if(ipaccess == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
-		proper_exit(1);
+		proper_exit(EXIT_FAILURE);
 	}
 
 	ips = 0;
@@ -739,7 +739,7 @@ static void api()
 	if(apisock == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
-		proper_exit(1);
+		proper_exit(EXIT_FAILURE);
 	}
 	*apisock = INVSOCK;
 
@@ -816,7 +816,7 @@ static void api()
 	if(buffer == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
-		proper_exit(1);
+		proper_exit(EXIT_FAILURE);
 	}
 
 	counter = 0;

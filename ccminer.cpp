@@ -1182,7 +1182,7 @@ static bool get_work(struct thr_info *thr, struct work *work)
 	if(wc == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
-		proper_exit(2);
+		proper_exit(EXIT_FAILURE);
 	}
 
 	wc->cmd = WC_GET_WORK;
@@ -1215,14 +1215,14 @@ static bool submit_work(struct thr_info *thr, const struct work *work_in)
 	if(wc == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
-		proper_exit(2);
+		proper_exit(EXIT_FAILURE);
 	}
 
 	wc->u.work = (struct work *)aligned_calloc(sizeof(*work_in));
 	if(wc->u.work == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
-		proper_exit(2);
+		proper_exit(EXIT_FAILURE);
 	}
 
 	wc->cmd = WC_SUBMIT_WORK;
@@ -1993,7 +1993,7 @@ start:
 		if(lp_url == NULL)
 		{
 			applog(LOG_ERR, "Out of memory!");
-			proper_exit(2);
+			proper_exit(EXIT_FAILURE);
 		}
 
 		sprintf(lp_url, "%s%s%s", rpc_url, need_slash ? "/" : "", copy_start);
@@ -2201,7 +2201,7 @@ static void show_version_and_exit(void)
 		   PTW32_VERSION_STRING,
 #endif
 		   curl_version());
-	proper_exit(0);
+	proper_exit(EXIT_SUCCESS);
 }
 
 static void show_usage_and_exit(int status)
@@ -2440,7 +2440,7 @@ static void parse_arg(int key, char *arg)
 				if(rpc_user == NULL)
 				{
 					applog(LOG_ERR, "Out of memory!\n");
-					proper_exit(1);
+					proper_exit(EXIT_FAILURE);
 				}
 				strncpy(rpc_user, ap, sp - ap);
 				free(rpc_pass);
@@ -2470,7 +2470,7 @@ static void parse_arg(int key, char *arg)
 		if(rpc_user == NULL)
 		{
 			applog(LOG_ERR, "Out of memory!\n");
-			proper_exit(1);
+			proper_exit(EXIT_FAILURE);
 		}
 		strncpy(rpc_user, arg, p - arg);
 		free(rpc_pass);
@@ -2507,7 +2507,7 @@ static void parse_arg(int key, char *arg)
 		break;
 	case 1006:
 		print_hash_tests();
-		proper_exit(0);
+		proper_exit(EXIT_SUCCESS);
 		break;
 	case 1003:
 		want_longpoll = false;
@@ -2807,11 +2807,11 @@ static void signal_handler(int sig)
 	case SIGINT:
 		signal(sig, SIG_IGN);
 		applog(LOG_INFO, "SIGINT received, exiting");
-		proper_exit(2);
+		proper_exit(EXIT_FAILURE);
 		break;
 	case SIGTERM:
 		applog(LOG_INFO, "SIGTERM received, exiting");
-		proper_exit(2);
+		proper_exit(EXIT_FAILURE);
 		break;
 	}
 }
@@ -2822,11 +2822,11 @@ BOOL WINAPI ConsoleHandler(DWORD dwType)
 	{
 	case CTRL_C_EVENT:
 		applog(LOG_INFO, "CTRL_C_EVENT received, exiting");
-		proper_exit(2);
+		proper_exit(EXIT_FAILURE);
 		break;
 	case CTRL_BREAK_EVENT:
 		applog(LOG_INFO, "CTRL_BREAK_EVENT received, exiting");
-		proper_exit(2);
+		proper_exit(EXIT_FAILURE);
 		break;
 	default:
 		return false;
@@ -3004,7 +3004,7 @@ int main(int argc, char *argv[])
 		if(rpc_userpass == NULL)
 		{
 			applog(LOG_ERR, "Out of memory!");
-			proper_exit(2);
+			proper_exit(EXIT_FAILURE);
 		}
 		sprintf(rpc_userpass, "%s:%s", rpc_user, rpc_pass);
 	}
@@ -3122,12 +3122,15 @@ int main(int argc, char *argv[])
 	if(work_restart == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
-		proper_exit(2);
+		proper_exit(EXIT_FAILURE);
 	}
 
 	thr_info = (struct thr_info *)calloc(opt_n_threads + 4, sizeof(*thr));
-	if(!thr_info)
-		return 1;
+	if(thr_info == NULL)
+	{
+		applog(LOG_ERR, "Out of memory!");
+		proper_exit(EXIT_FAILURE);
+	}
 
 	/* init workio thread info */
 	work_thr_id = opt_n_threads;
@@ -3297,7 +3300,7 @@ int main(int argc, char *argv[])
 
 	applog(LOG_INFO, "workio thread dead, exiting.");
 
-	proper_exit(0);
+	proper_exit(EXIT_SUCCESS);
 
 	return 0;
 }

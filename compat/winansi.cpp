@@ -361,7 +361,7 @@ int winansi_vfprintf(FILE *stream, const char *format, va_list list)
 		if(buf == NULL)
 		{
 			applog(LOG_ERR, "Out of memory!");
-			proper_exit(2);
+			proper_exit(EXIT_FAILURE);
 		}
 
 		len = vsnprintf(buf, len + 1, format, list);

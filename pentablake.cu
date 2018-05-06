@@ -467,7 +467,7 @@ extern int scanhash_pentablake(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 			applog(LOG_ERR, "intensity too high");
 			mining_has_stopped[thr_id] = true;
 			cudaStreamDestroy(gpustream[thr_id]);
-			proper_exit(2);
+			proper_exit(EXIT_FAILURE);
 		}
 #endif
 		CUDA_SAFE_CALL(cudaMalloc(&d_hash, 64ULL * throughputmax));

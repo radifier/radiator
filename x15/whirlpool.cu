@@ -77,7 +77,7 @@ extern int scanhash_whc(int thr_id, uint32_t *pdata,
 			applog(LOG_ERR, "intensity too high");
 			mining_has_stopped[thr_id] = true;
 			cudaStreamDestroy(gpustream[thr_id]);
-			proper_exit(2);
+			proper_exit(EXIT_FAILURE);
 		}
 #endif
 

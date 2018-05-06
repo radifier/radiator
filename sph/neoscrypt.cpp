@@ -701,7 +701,7 @@ static void neoscrypt_fastkdf(const uchar *password, uint password_len, const uc
 	if(stack == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
-		proper_exit(2);
+		proper_exit(EXIT_FAILURE);
 	}
 	/* Align and set up the buffers in stack */
     //uchar stack[2 * kdf_buf_size + prf_input_size + prf_key_size + prf_output_size + stack_align];
@@ -907,7 +907,7 @@ void neoscrypt(const uchar *password, uchar *output, uint profile) {
 	if(stack == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
-		proper_exit(2);
+		proper_exit(EXIT_FAILURE);
 	}
 	/* X = r * 2 * SCRYPT_BLOCK_SIZE */
     X = (uint *) &stack[stack_align & ~(stack_align - 1)];

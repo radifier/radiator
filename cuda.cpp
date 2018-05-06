@@ -82,7 +82,7 @@ void cuda_devicenames()
 			if(device_name[dev_id] == NULL)
 			{
 				applog(LOG_ERR, "Out of memory!");
-				proper_exit(1);
+				proper_exit(EXIT_FAILURE);
 			}
 			if(!strncmp(props.name, "GeForce ", 8))
 				sprintf(device_name[dev_id], "%s %s", vendorname, &props.name[8]);
