@@ -2880,6 +2880,10 @@ int main(int argc, char *argv[])
 #else
 	printf("ccminer " PACKAGE_VERSION " (32bit) for nVidia GPUs\n");
 #endif
+	printf("\nBased on pooler cpuminer 2.3.2 and the tpruvot@github fork\n");
+	printf("CUDA support by Christian Buchner, Christian H. and DJM34\n");
+	printf("Includes optimizations and additions implemented by sp-hash, tpruvot, tsiv and others.\n\n");
+
 #ifdef _MSC_VER
 	printf("Compiled with Visual Studio %d ", msver());
 #else
@@ -2893,10 +2897,7 @@ int main(int argc, char *argv[])
 #endif
 #endif
 #endif
-	printf("using Nvidia CUDA Toolkit %d.%d\n\n", CUDART_VERSION / 1000, (CUDART_VERSION % 1000) / 10);
-	printf("Based on pooler cpuminer 2.3.2 and the tpruvot@github fork\n");
-	printf("CUDA support by Christian Buchner, Christian H. and DJM34\n");
-	printf("Includes optimizations implemented by sp-hash, klaust, tpruvot and tsiv.\n\n");
+	printf("using the Nvidia CUDA Toolkit %d.%d\n\n", CUDART_VERSION / 1000, (CUDART_VERSION % 1000) / 10);
 
 #ifdef WIN32
 	if(CUDART_VERSION == 8000 && _MSC_VER > 1900)
