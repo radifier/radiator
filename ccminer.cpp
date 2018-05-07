@@ -194,6 +194,7 @@ struct thr_api *thr_api = nullptr;
 int longpoll_thr_id = -1;
 int stratum_thr_id = -1;
 int api_thr_id = -1;
+int monitor_thr_id = -1;
 bool stratum_need_reset = false;
 volatile bool abort_flag = false;
 struct work_restart *work_restart = NULL;
@@ -3271,6 +3272,19 @@ int main(int argc, char *argv[])
 		}
 	}
 
+#ifdef USE_WRAPNVML
+	// to monitor gpu activitity during work, a thread is required
+	monitor_thr_id = opt_n_threads + 4;
+	thr = &thr_info[monitor_thr_id];
+	thr->id = monitor_thr_id;
+	thr->q = tq_new();
+	if(thr->q)
+		if(unlikely(pthread_create(&thr->pth, NULL, monitor_thread, thr)))
+		{
+			applog(LOG_ERR, "Monitoring thread %d create failed", i);
+		}
+#endif
+
 	/* start mining threads */
 	for(i = 0; i < opt_n_threads; i++)
 	{
@@ -3283,11 +3297,13 @@ int main(int argc, char *argv[])
 		thr->q = tq_new();
 		if(!thr->q)
 			return 1;
+		pthread_mutex_init(&thr->gpu.monitor.lock, NULL);
+		pthread_cond_init(&thr->gpu.monitor.sampling_signal, NULL);
 
 		if(unlikely(pthread_create(&thr->pth, NULL, miner_thread, thr)))
 		{
 			applog(LOG_ERR, "thread %d create failed", i);
-			return 1;
+			proper_exit(EXIT_FAILURE);
 		}
 	}
 
@@ -3298,6 +3314,23 @@ int main(int argc, char *argv[])
 
 	/* main loop - simply wait for workio thread to exit */
 	pthread_join(thr_info[work_thr_id].pth, NULL);
+
+	/* wait for mining threads */
+	for(i = 0; i < opt_n_threads; i++)
+	{
+		struct cgpu_info *cgpu = &thr_info[i].gpu;
+		if(monitor_thr_id != -1 && cgpu)
+		{
+			pthread_cond_signal(&cgpu->monitor.sampling_signal);
+		}
+		pthread_join(thr_info[i].pth, NULL);
+	}
+
+	if(monitor_thr_id != -1)
+	{
+		pthread_join(thr_info[monitor_thr_id].pth, NULL);
+		//tq_free(thr_info[monitor_thr_id].q);
+	}
 
 	applog(LOG_INFO, "workio thread dead, exiting.");
 
