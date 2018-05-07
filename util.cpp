@@ -1280,11 +1280,11 @@ out:
 bool stratum_subscribe(struct stratum_ctx *sctx)
 {
 	json_error_t err;
-	json_t *val;
+	json_t *val = NULL;
 	json_t *res_val;
 	json_t *err_val;
 	bool ret = false, retry = false;
-	char *sret;
+	char *sret = NULL;
 	char *sid;
 
 start:
