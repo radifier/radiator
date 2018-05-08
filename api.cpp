@@ -845,7 +845,7 @@ static void api()
 			char *wskey = NULL;
 			n = recv(c, &buf[0], SOCK_REC_BUFSZ, 0);
 
-			fail = SOCKETFAIL(n) || n < 0;
+			fail = SOCKETFAIL(n) || n == 0;
 			if (fail)
 				buf[0] = '\0';
 			else if (n > 0 && buf[n-1] == '\n') {
