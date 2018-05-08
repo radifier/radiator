@@ -2198,6 +2198,7 @@ void *monitor_thread(void *userdata)
 	while (!abort_flag && !opt_quiet)
 	{
 		cudaError_t err;
+
 		// This thread monitors card's power lazily during scans, one at a time...
 		thr_id = (thr_id + 1) % opt_n_threads;
 		struct cgpu_info *cgpu = &thr_info[thr_id].gpu;
@@ -2265,17 +2266,19 @@ void *monitor_thread(void *userdata)
 
 				if(opt_hwmonitor && (time(NULL) - cgpu->monitor.tm_displayed) > 60)
 				{
-					gpulog(LOG_INFO, thr_id, "%u MHz %s%uC FAN %u%%",
+					applog(LOG_INFO, "GPU #%d: %u MHz %s%uC FAN %u%%", device_map[thr_id],
 						   cgpu->monitor.gpu_clock/*, cgpu->monitor.gpu_memclock*/,
 						   khw, cgpu->monitor.gpu_temp, cgpu->monitor.gpu_fan
 					);
-					cgpu->monitor.tm_displayed = (uint32_t)time(NULL);
+					cgpu->monitor.tm_displayed = time(NULL);
 				}
 
 				pthread_mutex_unlock(&cgpu->monitor.lock);
 			}
 			usleep(500); // safety
 		}
+		else
+			applog(LOG_ERR, "Monitoring error: cudaSetDevice() failed");
 	}
 abort:
 	if (opt_debug_threads)

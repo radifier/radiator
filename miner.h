@@ -403,7 +403,7 @@ struct monitor_info
 	pthread_mutex_t lock;
 	pthread_cond_t sampling_signal;
 	volatile bool sampling_flag;
-	uint32_t tm_displayed;
+	time_t tm_displayed;
 };
 
 struct cgpu_info
