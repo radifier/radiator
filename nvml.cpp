@@ -2215,6 +2215,7 @@ void *monitor_thread(void *userdata)
 				uint32_t counter = 0;
 				int max_loops = 1000;
 
+				pthread_mutex_lock(&cgpu->monitor.lock);
 				pthread_cond_wait(&cgpu->monitor.sampling_signal, &cgpu->monitor.lock);
 
 				do

@@ -1389,6 +1389,7 @@ static void *miner_thread(void *userdata)
 {
 	struct thr_info *mythr = (struct thr_info *)userdata;
 	int thr_id = mythr->id;
+	struct cgpu_info *cgpu = &thr_info[thr_id].gpu;
 	struct work work;
 	uint64_t loopcnt = 0;
 	uint32_t max_nonce;
@@ -1454,6 +1455,7 @@ static void *miner_thread(void *userdata)
 	}
 
 	get_cuda_arch(&cuda_arch[thr_id]);
+	pthread_cond_signal(&cgpu->monitor.sampling_signal);
 
 	while(!stop_mining)
 	{
@@ -1669,6 +1671,10 @@ static void *miner_thread(void *userdata)
 			mining_has_stopped[thr_id] = true;
 			pthread_exit(nullptr);
 		}
+		if(cgpu && loopcnt > 1)
+		{
+			cgpu->monitor.sampling_flag = true;
+		}
 
 		/* scan nonces for a proof-of-work hash */
 		switch(opt_algo)
@@ -1843,6 +1849,11 @@ static void *miner_thread(void *userdata)
 				applog(LOG_NOTICE, CL_CYN "found => %08x" CL_GRN " %08x", nonceptr[12], swab32(nonceptr[12])); // data[21]
 		}
 		timeval_subtract(&diff, &tv_end, &tv_start);
+
+		if(cgpu && diff.tv_sec)
+		{ // stop monitoring
+			cgpu->monitor.sampling_flag = false;
+		}
 
 		if(diff.tv_sec > 0 || (diff.tv_sec == 0 && diff.tv_usec>2000)) // avoid totally wrong hash rates
 		{
@@ -3271,6 +3282,12 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
+	for(i = 0; i < opt_n_threads; i++)
+	{
+		thr = &thr_info[i];
+		pthread_mutex_init(&thr->gpu.monitor.lock, NULL);
+		pthread_cond_init(&thr->gpu.monitor.sampling_signal, NULL);
+	}
 
 #ifdef USE_WRAPNVML
 	// to monitor gpu activitity during work, a thread is required
@@ -3297,8 +3314,6 @@ int main(int argc, char *argv[])
 		thr->q = tq_new();
 		if(!thr->q)
 			return 1;
-		pthread_mutex_init(&thr->gpu.monitor.lock, NULL);
-		pthread_cond_init(&thr->gpu.monitor.sampling_signal, NULL);
 
 		if(unlikely(pthread_create(&thr->pth, NULL, miner_thread, thr)))
 		{
@@ -3318,11 +3333,6 @@ int main(int argc, char *argv[])
 	/* wait for mining threads */
 	for(i = 0; i < opt_n_threads; i++)
 	{
-		struct cgpu_info *cgpu = &thr_info[i].gpu;
-		if(monitor_thr_id != -1 && cgpu)
-		{
-			pthread_cond_signal(&cgpu->monitor.sampling_signal);
-		}
 		pthread_join(thr_info[i].pth, NULL);
 	}
 
