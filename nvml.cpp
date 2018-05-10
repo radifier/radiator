@@ -1968,7 +1968,7 @@ float gpu_temp(struct cgpu_info *gpu)
 	float tc = 0.0;
 	unsigned int tmp = 0;
 	if (hnvml) {
-		if(nvml_get_tempC(hnvml, gpu->gpu_id, &tmp) != 0)
+		if(nvml_get_tempC(hnvml, gpu->gpu_id, &tmp) == 0)
 			tc = (float)tmp;
 	}
 #ifdef WIN32
