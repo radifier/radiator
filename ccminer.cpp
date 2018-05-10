@@ -1455,7 +1455,6 @@ static void *miner_thread(void *userdata)
 	}
 
 	get_cuda_arch(&cuda_arch[thr_id]);
-	pthread_cond_signal(&cgpu->monitor.sampling_signal);
 
 	while(!stop_mining)
 	{
@@ -3285,6 +3284,7 @@ int main(int argc, char *argv[])
 	for(i = 0; i < opt_n_threads; i++)
 	{
 		thr = &thr_info[i];
+		thr->gpu.monitor.sampling_flag = false;
 		pthread_mutex_init(&thr->gpu.monitor.lock, NULL);
 		pthread_cond_init(&thr->gpu.monitor.sampling_signal, NULL);
 	}

@@ -1968,13 +1968,13 @@ float gpu_temp(struct cgpu_info *gpu)
 	float tc = 0.0;
 	unsigned int tmp = 0;
 	if (hnvml) {
-		nvml_get_tempC(hnvml, gpu->gpu_id, &tmp);
-		tc = (float)tmp;
+		if(nvml_get_tempC(hnvml, gpu->gpu_id, &tmp) != 0)
+			tc = (float)tmp;
 	}
 #ifdef WIN32
 	else {
-		nvapi_temperature(nvapi_dev_map[gpu->gpu_id], &tmp);
-		tc = (float)tmp;
+		if(nvapi_temperature(nvapi_dev_map[gpu->gpu_id], &tmp) == 0)
+			tc = (float)tmp;
 	}
 #endif
 	return tc;
@@ -2214,32 +2214,46 @@ void *monitor_thread(void *userdata)
 				double tempC = 0, khs_per_watt = 0;
 				uint32_t counter = 0;
 				int max_loops = 1000;
+				int err;
+				int errmem;
+				bool valid;
 
-				pthread_mutex_lock(&cgpu->monitor.lock);
-				pthread_cond_wait(&cgpu->monitor.sampling_signal, &cgpu->monitor.lock);
-
-				do
+				valid = false;
+				while(cgpu->monitor.sampling_flag && max_loops > 0);
 				{
 					unsigned int tmp_clock = 0, tmp_memclock = 0;
-					nvml_get_current_clocks(dev_id, &tmp_clock, &tmp_memclock);
+					err = nvml_get_current_clocks(dev_id, &tmp_clock, &tmp_memclock);
+					errmem = err;
 #ifdef WIN32
 					if(tmp_clock < 200)
 					{
   // workaround for buggy drivers 378.x (real clock)
 						tmp_clock = nvapi_get_gpu_clock(nvapi_dev_map[dev_id]);
+						if(tmp_clock == 0)
+							err = -1;
+						else
+							err = 0;
 					}
 #endif
 					if(tmp_clock < 200)
 					{
-  // some older cards only report a base clock with cuda props.
-						if(cuda_gpu_info(cgpu) == 0)
+ // some older cards only report a base clock with cuda props.
+						err = cuda_gpu_info(cgpu);
+						errmem = err;
+						if(err == 0)
 						{
 							tmp_clock = cgpu->gpu_clock / 1000;
 							tmp_memclock = cgpu->gpu_memclock / 1000;
 						}
 					}
-					clock += tmp_clock;
-					mem_clock += tmp_memclock;
+					if(err != 0)
+						clock += tmp_clock;
+					else
+						clock += clock/counter;
+					if(errmem == 0)
+						mem_clock += tmp_memclock;
+					else
+						mem_clock += mem_clock / counter;
 					tempC += gpu_temp(cgpu);
 					fanpercent += gpu_fanpercent(cgpu);
 					power += gpu_power(cgpu);
@@ -2247,39 +2261,40 @@ void *monitor_thread(void *userdata)
 
 					usleep(50000);
 					if(abort_flag) goto abort;
-
-				} while(cgpu->monitor.sampling_flag && (--max_loops));
-
-				cgpu->monitor.gpu_temp = (uint32_t)(tempC / counter);
-				cgpu->monitor.gpu_fan = fanpercent / counter;
-				cgpu->monitor.gpu_power = power / counter;
-				cgpu->monitor.gpu_clock = (uint32_t)(clock / counter);
-				cgpu->monitor.gpu_memclock = (uint32_t)(mem_clock / counter);
-
-				if(power)
+					--max_loops;
+					valid = true;
+				};
+				if(valid)
 				{
-					khs_per_watt = stats_get_speed(thr_id, thr_hashrates[thr_id]);
-					khs_per_watt = khs_per_watt / ((double)power / counter);
-					format_hashrate(khs_per_watt * 1000, khw);
-					if(strlen(khw))
-						sprintf(&khw[strlen(khw) - 1], "W %uW ", cgpu->monitor.gpu_power / 1000);
-				}
+					cgpu->monitor.gpu_temp = (uint32_t)(tempC / counter);
+					cgpu->monitor.gpu_fan = fanpercent / counter;
+					cgpu->monitor.gpu_power = power / counter;
+					cgpu->monitor.gpu_clock = (uint32_t)(clock / counter);
+					cgpu->monitor.gpu_memclock = (uint32_t)(mem_clock / counter);
 
-				if(opt_hwmonitor && (time(NULL) - cgpu->monitor.tm_displayed) > 60)
-				{
-					applog(LOG_INFO, "GPU #%d: %u MHz %s%uC FAN %u%%", device_map[thr_id],
-						   cgpu->monitor.gpu_clock/*, cgpu->monitor.gpu_memclock*/,
-						   khw, cgpu->monitor.gpu_temp, cgpu->monitor.gpu_fan
-					);
-					cgpu->monitor.tm_displayed = time(NULL);
-				}
+					if(power)
+					{
+						khs_per_watt = stats_get_speed(thr_id, thr_hashrates[thr_id]);
+						khs_per_watt = khs_per_watt / ((double)power / counter);
+						format_hashrate(khs_per_watt * 1000, khw);
+						if(strlen(khw))
+							sprintf(&khw[strlen(khw) - 1], "W %uW ", cgpu->monitor.gpu_power / 1000);
+					}
 
-				pthread_mutex_unlock(&cgpu->monitor.lock);
+					if(opt_hwmonitor && (time(NULL) - cgpu->monitor.tm_displayed) > 60)
+					{
+						applog(LOG_NOTICE, "GPU #%d: %u MHz %s%uC FAN %u%%", device_map[thr_id],
+							   cgpu->monitor.gpu_clock/*, cgpu->monitor.gpu_memclock*/,
+							   khw, cgpu->monitor.gpu_temp, cgpu->monitor.gpu_fan
+						);
+						cgpu->monitor.tm_displayed = time(NULL);
+					}
+				}
 			}
 			usleep(500); // safety
 		}
 		else
-			applog(LOG_ERR, "Monitoring error: cudaSetDevice() failed");
+			applog(LOG_WARNING, "Monitoring error: cudaSetDevice() failed");
 	}
 abort:
 	if (opt_debug_threads)
