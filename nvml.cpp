@@ -2219,51 +2219,54 @@ void *monitor_thread(void *userdata)
 				bool valid;
 
 				valid = false;
-				while(cgpu->monitor.sampling_flag && max_loops > 0);
+				if(cgpu->monitor.sampling_flag)
 				{
-					unsigned int tmp_clock = 0, tmp_memclock = 0;
-					err = nvml_get_current_clocks(dev_id, &tmp_clock, &tmp_memclock);
-					errmem = err;
-#ifdef WIN32
-					if(tmp_clock < 200)
+					do
 					{
-  // workaround for buggy drivers 378.x (real clock)
-						tmp_clock = nvapi_get_gpu_clock(nvapi_dev_map[dev_id]);
-						if(tmp_clock == 0)
-							err = -1;
-						else
-							err = 0;
-					}
-#endif
-					if(tmp_clock < 200)
-					{
- // some older cards only report a base clock with cuda props.
-						err = cuda_gpu_info(cgpu);
+						unsigned int tmp_clock = 0, tmp_memclock = 0;
+						err = nvml_get_current_clocks(dev_id, &tmp_clock, &tmp_memclock);
 						errmem = err;
-						if(err == 0)
+#ifdef WIN32
+						if(tmp_clock < 100)
 						{
-							tmp_clock = cgpu->gpu_clock / 1000;
-							tmp_memclock = cgpu->gpu_memclock / 1000;
+	  // workaround for buggy drivers 378.x (real clock)
+							tmp_clock = nvapi_get_gpu_clock(nvapi_dev_map[dev_id]);
+							if(tmp_clock == 0)
+								err = -1;
+							else
+								err = 0;
 						}
-					}
-					if(err != 0)
-						clock += tmp_clock;
-					else
-						clock += clock/counter;
-					if(errmem == 0)
-						mem_clock += tmp_memclock;
-					else
-						mem_clock += mem_clock / counter;
-					tempC += gpu_temp(cgpu);
-					fanpercent += gpu_fanpercent(cgpu);
-					power += gpu_power(cgpu);
-					counter++;
+#endif
+						if(tmp_clock < 100)
+						{
+	 // some older cards only report a base clock with cuda props.
+							err = cuda_gpu_info(cgpu);
+							errmem = err;
+							if(err == 0)
+							{
+								tmp_clock = cgpu->gpu_clock / 1000;
+								tmp_memclock = cgpu->gpu_memclock / 1000;
+							}
+						}
+						if(err == 0)
+							clock += tmp_clock;
+						else
+							clock += clock / counter;
+						if(errmem == 0)
+							mem_clock += tmp_memclock;
+						else
+							mem_clock += mem_clock / counter;
+						tempC += gpu_temp(cgpu);
+						fanpercent += gpu_fanpercent(cgpu);
+						power += gpu_power(cgpu);
+						counter++;
 
-					usleep(50000);
-					if(abort_flag) goto abort;
-					--max_loops;
-					valid = true;
-				};
+						usleep(50000);
+						if(abort_flag) goto abort;
+						--max_loops;
+						valid = true;
+					} while(cgpu->monitor.sampling_flag && max_loops > 0);
+				}
 				if(valid)
 				{
 					cgpu->monitor.gpu_temp = (uint32_t)(tempC / counter);
