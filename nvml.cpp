@@ -2256,8 +2256,8 @@ void *monitor_thread(void *userdata)
 							mem_clock += tmp_memclock;
 						else
 							mem_clock += mem_clock / counter;
-						tempC += gpu_temp(cgpu);
-						fanpercent += gpu_fanpercent(cgpu);
+						tempC = gpu_temp(cgpu);
+						fanpercent = gpu_fanpercent(cgpu);
 						power += gpu_power(cgpu);
 						counter++;
 
@@ -2269,8 +2269,8 @@ void *monitor_thread(void *userdata)
 				}
 				if(valid)
 				{
-					cgpu->monitor.gpu_temp = (uint32_t)(tempC / counter);
-					cgpu->monitor.gpu_fan = fanpercent / counter;
+					cgpu->monitor.gpu_temp = tempC;
+					cgpu->monitor.gpu_fan = fanpercent;
 					cgpu->monitor.gpu_power = power / counter;
 					cgpu->monitor.gpu_clock = (uint32_t)(clock / counter);
 					cgpu->monitor.gpu_memclock = (uint32_t)(mem_clock / counter);
@@ -2281,13 +2281,13 @@ void *monitor_thread(void *userdata)
 						khs_per_watt = khs_per_watt / ((double)power / counter);
 						format_hashrate(khs_per_watt * 1000, khw);
 						if(strlen(khw))
-							sprintf(&khw[strlen(khw) - 1], "W %uW ", cgpu->monitor.gpu_power / 1000);
+							sprintf(&khw[strlen(khw) - 1], "W, %uW", cgpu->monitor.gpu_power / 1000);
 					}
 
 					if(opt_hwmonitor && (time(NULL) - cgpu->monitor.tm_displayed) > 60)
 					{
-						applog(LOG_NOTICE, "GPU #%d: %u MHz %s%uC FAN %u%%", device_map[thr_id],
-							   cgpu->monitor.gpu_clock/*, cgpu->monitor.gpu_memclock*/,
+						applog(LOG_NOTICE, "GPU #%d: %u MHz core, %u MHz mem, %s, %uC, FAN %u%%", device_map[thr_id],
+							   cgpu->monitor.gpu_clock, cgpu->monitor.gpu_memclock,
 							   khw, cgpu->monitor.gpu_temp, cgpu->monitor.gpu_fan
 						);
 						cgpu->monitor.tm_displayed = time(NULL);
