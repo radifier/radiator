@@ -173,8 +173,8 @@ void applog(int prio, const char *fmt, ...)
 				fmt,
 				use_colors ? CL_N : ""
 				);
-		vfprintf(stderr, f, ap);	/* atomic write to stderr */
-		fflush(stderr);
+		vfprintf(stdout, f, ap);	/* atomic write to stderr */
+		fflush(stdout);
 		if (opt_logfile)
 		{
 			fl = (char*)alloca(len);
@@ -223,7 +223,7 @@ void gpulog(int prio, int thr_id, const char *fmt, ...)
 	}
 	else
 	{
-		fprintf(stderr, "%s OOM!\n", __func__);
+		fprintf(stdout, "%s OOM!\n", __func__);
 	}
 
 	va_end(ap);

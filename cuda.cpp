@@ -133,7 +133,7 @@ void cuda_print_devices()
 			applog(LOG_ERR, "%s", cudaGetErrorString(err));
 			exit(1);
 		}
-		fprintf(stderr, "GPU #%d: SM %d.%d %s\n", m, props.major, props.minor, device_name[n]);
+		fprintf(stdout, "GPU #%d: SM %d.%d %s\n", m, props.major, props.minor, device_name[n]);
 	}
 }
 

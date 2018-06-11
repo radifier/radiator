@@ -20,7 +20,7 @@ extern volatile bool mining_has_stopped[MAX_GPUS];
 do {                                                                  \
 	cudaError_t err = call;                                           \
 	if (cudaSuccess != err) {                                         \
-		fprintf(stderr, "Cuda error in func '%s' at line %i : %s.\n", \
+		fprintf(stdout, "Cuda error in func '%s' at line %i : %s.\n", \
 		         __FUNCTION__, __LINE__, cudaGetErrorString(err) );   \
 		proper_exit(EXIT_FAILURE);                                           \
 		}                                                                 \
