@@ -94,7 +94,7 @@ struct workio_cmd {
 bool opt_debug_diff = false;
 bool opt_debug_threads = false;
 bool opt_showdiff = true;
-bool opt_hwmonitor = true;
+bool opt_hwmonitor = false;
 
 const char *algo_names[] =
 {
@@ -297,6 +297,7 @@ Options:\n\
   -e                    disable extranonce\n\
   -q, --quiet           disable per-thread hashmeter output\n\
       --no-color        disable colored output\n\
+      --hwmonitor       show data like temperature, fan speed, etc.\n\
   -D, --debug           enable debug output\n\
   -P, --protocol-dump   verbose dump of protocol-level activities\n\
       --cpu-affinity    set process affinity to cpu core(s), mask 0x3 for cores 0 and 1\n\
@@ -379,6 +380,7 @@ static struct option const options[] =
 	{"pstate", 1, NULL, 1072},
 	{"plimit", 1, NULL, 1073},
 	{"logfile", 1, NULL, 1074},
+	{"hwmonitor", 0, NULL, 1075},
 	{0, 0, 0, 0}
 };
 
@@ -2716,6 +2718,9 @@ static void parse_arg(int key, char *arg)
 		else
 			printf("\nNo logfile name.\nLogging to file is disabled\n ");
 	}
+	case 1075:
+		opt_hwmonitor = true;
+		break;
 	break;
 	default:
 		printf(usage);

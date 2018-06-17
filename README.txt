@@ -124,6 +124,7 @@ its command line interface and options.
   -e                    disable extranonce
   -q, --quiet           disable per-thread hashmeter output
       --no-color        disable colored output
+      --hwmonitor       show data like temperature, fan speed, etc.
   -D, --debug           enable debug output
   -P, --protocol-dump   verbose dump of protocol-level activities
       --cuda-schedule   set CUDA scheduling option:
