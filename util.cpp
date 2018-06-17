@@ -113,6 +113,7 @@ void applog(int prio, const char *fmt, ...)
 			switch(prio)
 			{
 			case LOG_BLUE: prio = LOG_NOTICE; break;
+			case LOG_HW:   prio = LOG_INFO; break;
 			}
 		}
 
@@ -149,6 +150,11 @@ void applog(int prio, const char *fmt, ...)
 		case LOG_NOTICE:  color = CL_WHT; break;
 		case LOG_INFO:    color = ""; break;
 		case LOG_DEBUG:   color = CL_GRY; break;
+
+		case LOG_HW:
+			color = CL_MAG;
+			prio = LOG_INFO;
+			break;
 
 		case LOG_BLUE:
 			prio = LOG_NOTICE;

@@ -2286,7 +2286,7 @@ void *monitor_thread(void *userdata)
 
 					if(opt_hwmonitor && (time(NULL) - cgpu->monitor.tm_displayed) > 60)
 					{
-						applog(LOG_NOTICE, "GPU #%d: %u MHz core, %u MHz mem, %s, %uC, FAN %u%%", device_map[thr_id],
+						applog(LOG_HW, "GPU #%d: %u MHz core, %u MHz mem, %s, %uC, FAN %u%%", device_map[thr_id],
 							   cgpu->monitor.gpu_clock, cgpu->monitor.gpu_memclock,
 							   khw, cgpu->monitor.gpu_temp, cgpu->monitor.gpu_fan
 						);

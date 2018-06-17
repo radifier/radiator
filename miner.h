@@ -88,6 +88,7 @@ enum
 	LOG_DEBUG,
 	/* custom notices */
 	LOG_BLUE = 0x10,
+	LOG_HW = 0x20,
 	LOG_RAW = 0x99
 };
 #endif
