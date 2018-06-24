@@ -77,6 +77,7 @@ void *alloca (size_t);
 #ifdef HAVE_SYSLOG_H
 #include <syslog.h>
 #define LOG_BLUE 0x10
+#define LOG_HW 0x20
 #define LOG_RAW  0x99
 #else
 enum
