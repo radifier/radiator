@@ -73,7 +73,8 @@ int LYRA2(void *K, uint64_t kLen, const void *pwd, uint64_t pwdlen, const void *
     //Allocates pointers to each row of the matrix
     uint64_t **memMatrix = malloc(nRows * sizeof (uint64_t*));
     if (memMatrix == NULL) {
-      return -1;
+		free(wholeMatrix);
+		return -1;
     }
     //Places the pointers in the correct positions
     uint64_t *ptrWord = wholeMatrix;
@@ -125,7 +126,8 @@ int LYRA2(void *K, uint64_t kLen, const void *pwd, uint64_t pwdlen, const void *
     //Sponge state: 16 uint64_t, BLOCK_LEN_INT64 words of them for the bitrate (b) and the remainder for the capacity (c)
     uint64_t *state = malloc(16 * sizeof (uint64_t));
     if (state == NULL) {
-      return -1;
+		free(memMatrix);
+		return -1;
     }
     initState(state);
     //==========================================================================/
@@ -241,6 +243,7 @@ int LYRA2_old(void *K, uint64_t kLen, const void *pwd, uint64_t pwdlen, const vo
 	//Allocates pointers to each row of the matrix
 	uint64_t **memMatrix = malloc(nRows * sizeof(uint64_t*));
 	if (memMatrix == NULL) {
+		free(wholeMatrix);
 		return -1;
 	}
 	//Places the pointers in the correct positions
@@ -293,6 +296,7 @@ int LYRA2_old(void *K, uint64_t kLen, const void *pwd, uint64_t pwdlen, const vo
 	//Sponge state: 16 uint64_t, BLOCK_LEN_INT64 words of them for the bitrate (b) and the remainder for the capacity (c)
 	uint64_t *state = malloc(16 * sizeof(uint64_t));
 	if (state == NULL) {
+		free(memMatrix);
 		return -1;
 	}
 	initState(state);
