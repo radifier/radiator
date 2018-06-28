@@ -2718,10 +2718,10 @@ static void parse_arg(int key, char *arg)
 		else
 			printf("\nNo logfile name.\nLogging to file is disabled\n ");
 	}
+	break;
 	case 1075:
 		opt_hwmonitor = true;
 		break;
-	break;
 	default:
 		printf(usage);
 		exit(EXIT_FAILURE);
