@@ -1052,10 +1052,7 @@ static bool workio_get_work(struct workio_cmd *wc, CURL *curl)
 
 	ret_work = (struct work*)aligned_calloc(sizeof(*ret_work));
 	if(!ret_work)
-	{
-		applog(LOG_ERR, "Out of memory!");
-		proper_exit(EXIT_FAILURE);
-	}
+		return false;
 
 	/* obtain new work from bitcoin via JSON-RPC */
 	while(!get_upstream_work(curl, ret_work))
@@ -1074,8 +1071,8 @@ static bool workio_get_work(struct workio_cmd *wc, CURL *curl)
 	}
 
 	/* send work to requesting thread */
-	tq_push(wc->thr->q, ret_work);
-	aligned_free(ret_work);
+	if(!tq_push(wc->thr->q, ret_work))
+		aligned_free(ret_work);
 
 	return true;
 }
@@ -1200,7 +1197,6 @@ static bool get_work(struct thr_info *thr, struct work *work)
 		workio_cmd_free(wc);
 		return false;
 	}
-	workio_cmd_free(wc);
 
 	/* wait for response, a unit of work */
 	work_heap = (struct work *)tq_pop(thr->q, NULL);
@@ -1240,7 +1236,6 @@ static bool submit_work(struct thr_info *thr, const struct work *work_in)
 	if(!tq_push(thr_info[work_thr_id].q, wc))
 		goto err_out;
 
-	workio_cmd_free(wc);
 	return true;
 
 err_out:
