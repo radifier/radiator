@@ -54,7 +54,11 @@ extern "C" void lyra2v2_hash(void *state, const void *input)
 	sph_cubehash256_close(&ctx_cube, hashA);
 
 
-	LYRA2(hashB, 32, hashA, 32, hashA, 32, 1, 4, 4);
+	if(LYRA2(hashB, 32, hashA, 32, hashA, 32, 1, 4, 4) == -1)
+	{
+		applog(LOG_ERR, "out of memory");
+		proper_exit(EXIT_FAILURE);
+	}
 
 	sph_skein256_init(&ctx_skein);
 	sph_skein256(&ctx_skein, hashB, 32);
