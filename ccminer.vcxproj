@@ -267,7 +267,7 @@
   <ItemGroup>
     <CudaCompile Include="Algo256\cuda_bmw256.cu" />
     <CudaCompile Include="Algo256\cuda_cubehash256.cu" />
-    <CudaCompile Include="bitcoin.cu">
+    <CudaCompile Include="bitcoin.cpp">
       <FileType>CppCode</FileType>
     </CudaCompile>
     <ClCompile Include="BlueMidnightWish_opt.c" />
@@ -285,10 +285,10 @@
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37</CodeGeneration>
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|x64'">compute_70,sm_70;compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37</CodeGeneration>
     </CudaCompile>
-    <CudaCompile Include="Sia\sia.cu" />
+    <CudaCompile Include="Sia\sia.cpp" />
     <ClCompile Include="nvapi.cpp" />
     <ClCompile Include="nvsettings.cpp" />
-    <ClCompile Include="sph\neoscrypt.cpp" />
+    <ClCompile Include="sph\neoscrypt-cpu.cpp" />
     <ClCompile Include="sph\sha256_Y.c" />
     <ClCompile Include="sph\sph_sha2.c" />
     <ClCompile Include="util.cpp" />
@@ -396,10 +396,10 @@
     </CudaCompile>
     <CudaCompile Include="cuda_myriadgroestl.cu">
     </CudaCompile>
-    <CudaCompile Include="cuda_nist5.cu">
+    <CudaCompile Include="nist5.cpp">
     </CudaCompile>
     <CudaCompile Include="lyra2\cuda_lyra2v2.cu" />
-    <CudaCompile Include="lyra2\lyra2REv2.cu" />
+    <CudaCompile Include="lyra2\lyra2REv2.cpp" />
     <CudaCompile Include="cuda_x11_aes_noasm.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -411,14 +411,14 @@
     </CudaCompile>
     <CudaCompile Include="JHA\cuda_jha_keccak512.cu">
     </CudaCompile>
-    <CudaCompile Include="JHA\jackpotcoin.cu">
+    <CudaCompile Include="JHA\jackpotcoin.cpp">
     </CudaCompile>
     <CudaCompile Include="Algo256\blake256.cu">
       <MaxRegCount>64</MaxRegCount>
       <AdditionalOptions Condition="'$(Configuration)'=='Release'">--ptxas-options="-dlcm=cg" %(AdditionalOptions)</AdditionalOptions>
       <FastMath>true</FastMath>
     </CudaCompile>
-    <CudaCompile Include="Algo256\keccak256.cu" />
+    <CudaCompile Include="Algo256\keccak256.cpp" />
     <CudaCompile Include="Algo256\cuda_blake256.cu" />
     <CudaCompile Include="Algo256\cuda_fugue256.cu" />
     <CudaCompile Include="Algo256\cuda_groestl256.cu" />
@@ -430,7 +430,7 @@
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37;</CodeGeneration>
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|x64'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37;compute_70,sm_70</CodeGeneration>
     </CudaCompile>
-    <CudaCompile Include="neoscrypt\neoscrypt.cu">
+    <CudaCompile Include="neoscrypt\neoscrypt.cpp">
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37;</CodeGeneration>
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|x64'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37;</CodeGeneration>
     </CudaCompile>
@@ -462,21 +462,21 @@
     </CudaCompile>
     <CudaCompile Include="quark\cuda_skein512.cu">
     </CudaCompile>
-    <CudaCompile Include="quark\quarkcoin.cu">
+    <CudaCompile Include="quark\quarkcoin.cpp">
     </CudaCompile>
-    <CudaCompile Include="qubit\deep.cu">
+    <CudaCompile Include="qubit\deep.cpp">
     </CudaCompile>
-    <CudaCompile Include="qubit\doom.cu">
+    <CudaCompile Include="qubit\doom.cpp">
     </CudaCompile>
-    <CudaCompile Include="qubit\qubit.cu">
+    <CudaCompile Include="qubit\qubit.cpp">
     </CudaCompile>
     <CudaCompile Include="qubit\qubit_luffa512.cu">
     </CudaCompile>
     <CudaCompile Include="Sia\cuda_sia.cu" />
-    <CudaCompile Include="skein.cu">
+    <CudaCompile Include="skein.cpp">
       <MaxRegCount>64</MaxRegCount>
     </CudaCompile>
-    <CudaCompile Include="x11\c11.cu" />
+    <CudaCompile Include="x11\c11.cpp" />
     <CudaCompile Include="x11\cuda_x11_aes.cu">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </CudaCompile>
@@ -492,27 +492,27 @@
     <CudaCompile Include="x11\cuda_x11_simd512.cu">
       <MaxRegCount>64</MaxRegCount>
     </CudaCompile>
-    <CudaCompile Include="x11\fresh.cu">
+    <CudaCompile Include="x11\fresh.cpp">
     </CudaCompile>
-    <CudaCompile Include="x11\s3.cu" />
+    <CudaCompile Include="x11\s3.cpp" />
     <CudaCompile Include="x11\simd_functions.cu">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </CudaCompile>
-    <CudaCompile Include="x11\x11.cu">
+    <CudaCompile Include="x11\x11.cpp">
     </CudaCompile>
     <CudaCompile Include="x13\cuda_x13_hamsi512.cu">
       <MaxRegCount>72</MaxRegCount>
     </CudaCompile>
     <CudaCompile Include="x13\cuda_x13_fugue512.cu">
     </CudaCompile>
-    <CudaCompile Include="x13\x13.cu">
+    <CudaCompile Include="x13\x13.cpp">
     </CudaCompile>
     <CudaCompile Include="x15\cuda_whirlpoolx.cu" />
     <CudaCompile Include="x15\cuda_x14_shabal512.cu">
     </CudaCompile>
     <CudaCompile Include="x15\cuda_x15_whirlpool.cu">
     </CudaCompile>
-    <CudaCompile Include="x15\whirlpoolx.cu" />
+    <CudaCompile Include="x15\whirlpoolx.cpp" />
     <CudaCompile Include="x17\cuda_x17_haval512.cu">
     </CudaCompile>
     <CudaCompile Include="x17\cuda_x17_sha512.cu">
@@ -520,11 +520,11 @@
     </CudaCompile>
     <CudaCompile Include="x15\whirlpool.cu">
     </CudaCompile>
-    <CudaCompile Include="x15\x14.cu">
+    <CudaCompile Include="x15\x14.cpp">
     </CudaCompile>
-    <CudaCompile Include="x15\x15.cu">
+    <CudaCompile Include="x15\x15.cpp">
     </CudaCompile>
-    <CudaCompile Include="x17\x17.cu">
+    <CudaCompile Include="x17\x17.cpp">
     </CudaCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
