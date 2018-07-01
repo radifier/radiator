@@ -61,39 +61,33 @@ void stats_remember_speed(int thr_id, uint32_t hashcount, double hashrate, uint8
  */
 double stats_get_speed(int thr_id, double def_speed)
 {
-	uint64_t gpu;
+	const uint64_t keymsk = 0xffULL; // last u8 is the gpu
 	double speed = 0.0;
+	int records = 0;
 
-	if(thr_id >= 0)
+	std::map<uint64_t, stats_data>::reverse_iterator i = tlastscans.rbegin();
+	while(i != tlastscans.rend() && records < opt_statsavg)
 	{
-		gpu = device_map[thr_id];
-
-		const uint64_t keymsk = 0xffULL; // last u8 is the gpu
-		int records = 0;
-
-		std::map<uint64_t, stats_data>::reverse_iterator i = tlastscans.rbegin();
-		while(i != tlastscans.rend() && records < opt_statsavg)
-		{
-			if(!i->second.ignored)
-				if(thr_id >= 0 || (keymsk & i->first) == gpu)
+		if(!i->second.ignored)
+			if(thr_id == -1 || (keymsk & i->first) == device_map[thr_id])
+			{
+				if(i->second.hashcount > 1000)
 				{
-					if(i->second.hashcount > 1000)
-					{
-						speed += i->second.hashrate;
-						records++;
-						// applog(LOG_BLUE, "%d %x %.1f", thr_id, i->second.thr_id, i->second.hashrate);
-					}
+					speed += i->second.hashrate;
+					records++;
+					// applog(LOG_BLUE, "%d %x %.1f", thr_id, i->second.thr_id, i->second.hashrate);
 				}
-			++i;
-		}
-
-		if(records)
-			speed /= (double)(records);
-		else
-			speed = def_speed;
+			}
+		++i;
 	}
+
+	if(records)
+		speed /= (double)(records);
 	else
-		speed = def_speed * (double)(opt_n_threads);
+		speed = def_speed;
+
+	if(thr_id == -1)
+		speed *= (double)(opt_n_threads);
 
 	return speed;
 }
