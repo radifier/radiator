@@ -7,6 +7,7 @@
 #include "ccminer-config-win.h"
 #endif
 
+#include <string.h>
 #ifndef __cplusplus
 #include <stdbool.h>
 #endif
