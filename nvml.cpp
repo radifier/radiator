@@ -347,7 +347,7 @@ int nvml_set_clocks(nvml_handle *nvmlh, int dev_id)
 	// these functions works for the 960 and the 970 (346.72+), and for the 750 Ti with driver ~361+
 	uint32_t nclocks = 0, mem_clocks[32] = { 0 };
 	nvmlh->nvmlDeviceGetSupportedMemoryClocks(nvmlh->devs[n], &nclocks, NULL);
-	nclocks = min(nclocks, 32);
+	nclocks = min(nclocks, 32U);
 	if (nclocks)
 		nvmlh->nvmlDeviceGetSupportedMemoryClocks(nvmlh->devs[n], &nclocks, mem_clocks);
 	for (uint8_t u=0; u < nclocks; u++) {
@@ -460,7 +460,7 @@ int nvml_set_pstate(nvml_handle *nvmlh, int dev_id)
 	uint32_t nclocks = 0, mem_clocks[32] = { 0 };
 	int8_t wanted_pstate = device_pstate[dev_id];
 	nvmlh->nvmlDeviceGetSupportedMemoryClocks(nvmlh->devs[n], &nclocks, NULL);
-	nclocks = min(nclocks, 32);
+	nclocks = min(nclocks, 32U);
 	if (nclocks)
 		nvmlh->nvmlDeviceGetSupportedMemoryClocks(nvmlh->devs[n], &nclocks, mem_clocks);
 	if ((uint32_t) wanted_pstate+1 > nclocks) {
