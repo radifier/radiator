@@ -1575,7 +1575,7 @@ static void *miner_thread(void *userdata)
 		if(have_stratum)
 			max64time = LP_SCANTIME;
 		else
-			max64time = (uint32_t)max(1, scan_time + g_work_time - time(NULL));
+			max64time = (uint32_t)max((time_t)1, (time_t)scan_time + g_work_time - time(NULL));
 
 		max64 = max64time * (uint32_t)thr_hashrates[thr_id];
 
@@ -1637,7 +1637,7 @@ static void *miner_thread(void *userdata)
 		max64 = max(minmax, max64);
 
 		// we can't scan more than uint capacity
-		max64 = min(UINT32_MAX, max64);
+		max64 = min((uint64_t)0xffffffff, max64);
 		start_nonce = nonceptr[0];
 
 		/* never let small ranges at end */
