@@ -699,69 +699,87 @@ static __device__ __inline__ uint2 ROR2(const uint2 v, const int n)
 
 static __device__ __inline__ uint32_t ROL8(const uint32_t x)
 {
+#ifdef __CUDA_ARCH__
 	return __byte_perm(x, x, 0x2103);
+#endif
 }
 static __device__ __inline__ uint32_t ROL16(const uint32_t x)
 {
+#ifdef __CUDA_ARCH__
 	return __byte_perm(x, x, 0x1032);
+#endif
 }
 static __device__ __inline__ uint32_t ROL24(const uint32_t x)
 {
+#ifdef __CUDA_ARCH__
 	return __byte_perm(x, x, 0x0321);
+#endif
 }
 
 static __device__ __inline__ uint2 ROR8(const uint2 a)
 {
+#ifdef __CUDA_ARCH__
 	uint2 result;
 	result.x = __byte_perm(a.y, a.x, 0x0765);
 	result.y = __byte_perm(a.y, a.x, 0x4321);
 
 	return result;
+#endif
 }
 
 static __device__ __inline__ uint2 ROR16(const uint2 a)
 {
+#ifdef __CUDA_ARCH__
 	uint2 result;
 	result.x = __byte_perm(a.y, a.x, 0x1076);
 	result.y = __byte_perm(a.y, a.x, 0x5432);
 
 	return result;
+#endif
 }
 
 static __device__ __inline__ uint2 ROR24(const uint2 a)
 {
+#ifdef __CUDA_ARCH__
 	uint2 result;
 	result.x = __byte_perm(a.y, a.x, 0x2107);
 	result.y = __byte_perm(a.y, a.x, 0x6543);
 
 	return result;
+#endif
 }
 
 static __device__ __inline__ uint2 ROL8(const uint2 a)
 {
+#ifdef __CUDA_ARCH__
 	uint2 result;
 	result.x = __byte_perm(a.y, a.x, 0x6543);
 	result.y = __byte_perm(a.y, a.x, 0x2107);
 
 	return result;
+#endif
 }
 
 static __device__ __inline__ uint2 ROL16(const uint2 a)
 {
+#ifdef __CUDA_ARCH__
 	uint2 result;
 	result.x = __byte_perm(a.y, a.x, 0x5432);
 	result.y = __byte_perm(a.y, a.x, 0x1076);
 
 	return result;
+#endif
 }
 
 static __device__ __inline__ uint2 ROL24(const uint2 a)
 {
+#ifdef __CUDA_ARCH__
 	uint2 result;
 	result.x = __byte_perm(a.y, a.x, 0x4321);
 	result.y = __byte_perm(a.y, a.x, 0x0765);
 
 	return result;
+#endif
 }
 
 #if  __CUDA_ARCH__ >= 320 && !defined NOASM
