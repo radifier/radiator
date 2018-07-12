@@ -603,6 +603,7 @@ static __device__ __forceinline__ uint2 operator+ (uint2 a, uint2 b)
 
 static __device__ __forceinline__ uint2 operator+ (uint2 a, uint32_t b)
 {
+#ifdef __CUDA_ARCH__
 	uint2 result;
 	asm("{\n\t"
 		"add.cc.u32 %0,%2,%4; \n\t"
@@ -610,6 +611,7 @@ static __device__ __forceinline__ uint2 operator+ (uint2 a, uint32_t b)
 		"}\n\t"
 		: "=r"(result.x), "=r"(result.y) : "r"(a.x), "r"(a.y), "r"(b), "r"(0));
 	return result;
+#endif
 }
 static __device__ __forceinline__ uint2 operator- (uint2 a, uint2 b)
 {

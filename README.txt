@@ -1,4 +1,4 @@
-ccMiner release 8.21(KlausT-mod) (March 15th, 2018)
+ccMiner release 8.22(KlausT-mod) (Juli 12th, 2018)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -258,6 +258,8 @@ features.
                   Neoscrypt: detect  P104-100 and Tesla P100/V100
                   Linux: fix Lyra2v2 verification bug
                   fix for intensities between 8 and 9
+2018-07-12 v8.22: add --hwmonitor option
+                  some bug fixes
 
 >>> AUTHORS <<<
 
