@@ -39,7 +39,7 @@ ccminer_SOURCES = elist.h miner.h compat.h \
 			  quark/cuda_bmw512.cu quark/cuda_quark_keccak512.cu quark/cuda_jh512keccak512.cu \
 			  quark/quarkcoin.cpp \
 			  quark/cuda_quark_compactionTest.cu  \
-			  nist5.cu pentablake.cu skein.cpp \
+			  nist5.cpp pentablake.cu skein.cpp \
 			  Sia/sia.cpp Sia/cuda_sia.cu \
 			  sph/bmw.c sph/blake.c sph/groestl.c sph/jh.c sph/keccak.c sph/skein.c \
 			  BlueMidnightWish_opt.c SHA3api_ref.h \
