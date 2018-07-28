@@ -2308,7 +2308,7 @@ static void parse_arg(int key, char *arg)
 			{
 				d = atof(pch);
 				v = (uint32_t)d;
-				if(v > 7)
+				if(v > 8)
 				{ /* 0 = default */
 					if((d - v) > 0.0)
 					{
@@ -2324,6 +2324,8 @@ static void parse_arg(int key, char *arg)
 							   v, gpus_intensity[n]);
 					}
 				}
+				else
+					applog(LOG_WARNING, "invalid intensity, using default intensity");
 				last = gpus_intensity[n];
 				n++;
 				pch = strpbrk(pch, ",");
