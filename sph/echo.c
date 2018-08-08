@@ -321,9 +321,9 @@ mix_column(sph_u64 W[16][2], int ia, int ib, int ic, int id)
 		sph_u32 K1 = sc->C1; \
 		sph_u32 K2 = sc->C2; \
 		sph_u32 K3 = sc->C3; \
-		unsigned u; \
+		unsigned x; \
 		INPUT_BLOCK_SMALL(sc); \
-		for (u = 0; u < 8; u ++) { \
+		for (x = 0; x < 8; x ++) { \
 			BIG_ROUND; \
 		} \
 		FINAL_SMALL; \
@@ -334,9 +334,9 @@ mix_column(sph_u64 W[16][2], int ia, int ib, int ic, int id)
 		sph_u32 K1 = sc->C1; \
 		sph_u32 K2 = sc->C2; \
 		sph_u32 K3 = sc->C3; \
-		unsigned u; \
+		unsigned x; \
 		INPUT_BLOCK_BIG(sc); \
-		for (u = 0; u < 10; u ++) { \
+		for (x = 0; x < 10; x ++) { \
 			BIG_ROUND; \
 		} \
 		FINAL_BIG; \

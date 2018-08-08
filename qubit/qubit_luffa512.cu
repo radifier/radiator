@@ -963,20 +963,20 @@ __host__ void qubit_cpu_precalc(int thr_id)
 		0xf5df3999, 0x0fc688f1, 0xb07224cc, 0x03e86cea
 	};
 
-	for (int i = 0; i<8; i++)
+	for (i = 0; i<8; i++)
 		statebuffer[i] = BYTES_SWAP32(*(((uint32_t*)PaddedMessage) + i));
 	rnd512cpu(statebuffer, statechainv);
 
-	for (int i = 0; i<8; i++)
+	for (i = 0; i<8; i++)
 		statebuffer[i] = BYTES_SWAP32(*(((uint32_t*)PaddedMessage) + i + 8));
 
 	rnd512cpu(statebuffer, statechainv);
 
 
-	for (int i = 0; i<8; i++)
+	for (i = 0; i<8; i++)
 	{
 		t[i] = statechainv[i];
-		for (int j = 1; j<5; j++)
+		for (j = 1; j<5; j++)
 		{
 			t[i] ^= statechainv[i + 8 * j];
 		}
@@ -984,8 +984,8 @@ __host__ void qubit_cpu_precalc(int thr_id)
 
 	MULT2(t, 0);
 
-	for (int j = 0; j<5; j++) {
-		for (int i = 0; i<8; i++) {
+	for (j = 0; j<5; j++) {
+		for (i = 0; i<8; i++) {
 			statechainv[i + 8 * j] ^= t[i];
 		}
 	}
@@ -1055,15 +1055,15 @@ void qubit_luffa512_cpu_setBlock_80(int thr_id, void *pdata)
 __host__
 void qubit_luffa512_cpufinal_setBlock_80(int thr_id, void *pdata, const void *ptarget)
 {
-	unsigned char PaddedMessage[128];
+	unsigned char PaddedMsg[128];
 
-	memcpy(PaddedMessage, pdata, 80);
-	memset(PaddedMessage+80, 0, 48);
-	PaddedMessage[80] = 0x80;
-	PaddedMessage[111] = 1;
-	PaddedMessage[126] = 0x02;
-	PaddedMessage[127] = 0x80;
+	memcpy(PaddedMsg, pdata, 80);
+	memset(PaddedMsg+80, 0, 48);
+	PaddedMsg[80] = 0x80;
+	PaddedMsg[111] = 1;
+	PaddedMsg[126] = 0x02;
+	PaddedMsg[127] = 0x80;
 
 	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_Target, ptarget, 8 * sizeof(uint32_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
-	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedMessage80, PaddedMessage, 16 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
+	CUDA_SAFE_CALL(cudaMemcpyToSymbolAsync(c_PaddedMessage80, PaddedMsg, 16 * sizeof(uint64_t), 0, cudaMemcpyHostToDevice, gpustream[thr_id]));
 }

@@ -2582,7 +2582,6 @@ static void parse_arg(int key, char *arg)
 		break;
 	case 'd': // CB
 	{
-		int i;
 		bool gpu[32] = {false};
 		int ngpus = cuda_num_devices();
 		char * pch = strtok(arg, ",");
@@ -2944,7 +2943,7 @@ int main(int argc, char *argv[])
 	rpc_user = strdup("");
 	rpc_pass = strdup("");
 
-	for(int i = 0; i < MAX_GPUS; i++)
+	for(i = 0; i < MAX_GPUS; i++)
 		device_pstate[i] = -1;
 
 	// number of cpus for thread affinity
@@ -2970,7 +2969,7 @@ int main(int argc, char *argv[])
 		device_map[i] = i;
 	}
 
-	for(int i = 0; i < active_gpus; i++)
+	for(i = 0; i < active_gpus; i++)
 	{
 		int dev_id = device_map[i];
 		cudaError_t err;
@@ -3159,7 +3158,7 @@ int main(int argc, char *argv[])
 	if(!thr->q)
 		return 1;
 
-	for(int i = 0; i < MAX_GPUS; i++)
+	for(i = 0; i < MAX_GPUS; i++)
 		mining_has_stopped[i] = true;
 
 #ifdef WIN32

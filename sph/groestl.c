@@ -1366,10 +1366,9 @@ static const sph_u64 T7[] = {
 
 #define FINAL_SMALL   do { \
 		sph_u64 x[8]; \
-		size_t u; \
 		memcpy(x, H, sizeof x); \
 		PERM_SMALL_P(x); \
-		for (u = 0; u < 8; u ++) \
+		for (int u = 0; u < 8; u ++) \
 			H[u] ^= x[u]; \
 	} while (0)
 
@@ -1657,10 +1656,9 @@ static const sph_u64 T7[] = {
 
 #define FINAL_BIG   do { \
 		sph_u64 x[16]; \
-		size_t u; \
 		memcpy(x, H, sizeof x); \
 		PERM_BIG_P(x); \
-		for (u = 0; u < 16; u ++) \
+		for (int u = 0; u < 16; u++) \
 			H[u] ^= x[u]; \
 	} while (0)
 
@@ -2815,7 +2813,7 @@ groestl_small_close(sph_groestl_small_context *sc,
 {
 	unsigned char *buf;
 	unsigned char pad[72];
-	size_t u, ptr, pad_len;
+	size_t ptr, pad_len;
 #if SPH_64
 	sph_u64 count;
 #else
@@ -2860,7 +2858,7 @@ groestl_small_close(sph_groestl_small_context *sc,
 	READ_STATE_SMALL(sc);
 	FINAL_SMALL;
 #if SPH_GROESTL_64
-	for (u = 0; u < 4; u ++)
+	for (int u = 0; u < 4; u ++)
 		enc64e(pad + (u << 3), H[u + 4]);
 #else
 	for (u = 0; u < 8; u ++)
@@ -2951,7 +2949,7 @@ groestl_big_close(sph_groestl_big_context *sc,
 {
 	unsigned char *buf;
 	unsigned char pad[136];
-	size_t ptr, pad_len, u;
+	size_t ptr, pad_len;
 #if SPH_64
 	sph_u64 count;
 #else
@@ -2997,7 +2995,7 @@ groestl_big_close(sph_groestl_big_context *sc,
 	READ_STATE_BIG(sc);
 	FINAL_BIG;
 #if SPH_GROESTL_64
-	for (u = 0; u < 8; u ++)
+	for (int u = 0; u < 8; u ++)
 		enc64e(pad + (u << 3), H[u + 8]);
 #else
 	for (u = 0; u < 16; u ++)

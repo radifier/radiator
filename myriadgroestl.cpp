@@ -85,7 +85,6 @@ extern int scanhash_myriad(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 		if(stop_mining) {mining_has_stopped[thr_id] = true; pthread_exit(nullptr);}
 		if(h_found[0] != 0xffffffff)
 		{
-			const uint32_t Htarg = ptarget[7];
 			uint32_t vhash64[8]={0};
 			if(opt_verify){ be32enc(&endiandata[19], h_found[0]);
 			myriadhash(vhash64, endiandata);
