@@ -753,6 +753,7 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 				hashlog_dump_job(work->job_id);
 			}
 			free(noncestr);
+			free(ntimestr);
 			// prevent useless computing on some pools
 			g_work_time = 0;
 			restart_threads();
