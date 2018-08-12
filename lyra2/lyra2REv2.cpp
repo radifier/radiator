@@ -214,7 +214,7 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 					{
 						pdata[21] = foundNonce[1];
 						res++;
-						if(opt_benchmark)  applog(LOG_INFO, "GPU #%d Found second nonce %08x", thr_id, foundNonce[1]);
+						if(opt_benchmark)  applog(LOG_INFO, "GPU #%d Found second nonce %08x", device_map[thr_id], foundNonce[1]);
 					}
 					else
 					{
@@ -223,7 +223,7 @@ int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 					}
 				}
 				pdata[19] = foundNonce[0];
-				if (opt_benchmark) applog(LOG_INFO, "GPU #%d Found nonce % 08x", thr_id, foundNonce[0]);
+				if (opt_benchmark) applog(LOG_INFO, "GPU #%d Found nonce % 08x", device_map[thr_id], foundNonce[0]);
 				return res;
 			}
 			else

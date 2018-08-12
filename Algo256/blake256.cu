@@ -765,7 +765,7 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 			//applog(LOG_BLUE, "%08x %16llx", vhashcpu[6], targetHigh);
 			if (vhashcpu[7] <= target7 && fulltest(vhashcpu, ptarget))
 			{
-				if (opt_benchmark) applog(LOG_INFO, "GPU #%d Found nounce %08x", thr_id, foundNonce);
+				if (opt_benchmark) applog(LOG_INFO, "GPU #%d Found nounce %08x", device_map[thr_id], foundNonce);
 				rc = 1;
 				*hashes_done = pdata[19] - first_nonce + throughput;
 				pdata[19] = foundNonce;
@@ -780,7 +780,7 @@ extern int scanhash_blake256(int thr_id, uint32_t *pdata, uint32_t *ptarget,
 					if (vhashcpu[7] <= target7 && fulltest(vhashcpu, ptarget))
 					{
 						pdata[21] = extra_results[thr_id][0];
-						if(opt_benchmark) applog(LOG_INFO, "GPU #%d Found second nounce %08x", thr_id, extra_results[thr_id][0]);
+						if(opt_benchmark) applog(LOG_INFO, "GPU #%d Found second nounce %08x", device_map[thr_id], extra_results[thr_id][0]);
 //						applog(LOG_BLUE, "1:%x 2:%x", foundNonce, extra_results[thr_id][0]);
 						rc = 2;
 					}

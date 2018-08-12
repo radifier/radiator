@@ -238,26 +238,26 @@ int scanhash_c11(int thr_id, uint32_t *pdata,
 						pdata[21] = foundnonces[1];
 						res++;
 						if(opt_benchmark)
-							applog(LOG_INFO, "GPU #%d: Found second nonce %08x", thr_id, foundnonces[1]);
+							applog(LOG_INFO, "GPU #%d: Found second nonce %08x", device_map[thr_id], foundnonces[1]);
 					}
 					else
 					{
 						if(vhash64[7] != Htarg)
 						{
-							applog(LOG_INFO, "GPU #%d: result for %08x does not validate on CPU!", thr_id, foundnonces[1]);
+							applog(LOG_INFO, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], foundnonces[1]);
 						}
 					}
 				}
 				pdata[19] = foundnonces[0];
 				if(opt_benchmark)
-					applog(LOG_INFO, "GPU #%d: Found nonce %08x", thr_id, foundnonces[0]);
+					applog(LOG_INFO, "GPU #%d: Found nonce %08x", device_map[thr_id], foundnonces[0]);
 				return res;
 			}
 			else
 			{
 				if(vhash64[7] != Htarg)
 				{
-					applog(LOG_INFO, "GPU #%d: result for %08x does not validate on CPU!", thr_id, foundnonces[0]);
+					applog(LOG_INFO, "GPU #%d: result for %08x does not validate on CPU!", device_map[thr_id], foundnonces[0]);
 				}
 			}
 		}
