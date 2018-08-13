@@ -483,7 +483,6 @@ void proper_exit(int reason)
 		{
 			time_t start = time(NULL);
 			stop_mining = true;
-			applog(LOG_INFO, "stopping %d threads", opt_n_threads);
 			bool everything_stopped;
 			do
 			{
@@ -494,7 +493,6 @@ void proper_exit(int reason)
 						everything_stopped = false;
 				}
 			} while(!everything_stopped && (time(NULL) - start) < 5);
-			applog(LOG_INFO, "resetting GPUs");
 			cuda_devicereset();
 		}
 		pthread_mutex_lock(&stratum.sock_lock);
@@ -2820,15 +2818,13 @@ static void signal_handler(int sig)
 	switch(sig)
 	{
 	case SIGHUP:
-		applog(LOG_INFO, "SIGHUP received");
 		break;
 	case SIGINT:
+	case SIGTSTP:
 		signal(sig, SIG_IGN);
-		applog(LOG_INFO, "SIGINT received, exiting");
 		proper_exit(EXIT_FAILURE);
 		break;
 	case SIGTERM:
-		applog(LOG_INFO, "SIGTERM received, exiting");
 		proper_exit(EXIT_FAILURE);
 		break;
 	}
@@ -3054,6 +3050,8 @@ int main(int argc, char *argv[])
 			applog(LOG_ERR, "chdir() failed (errno = %d)", errno);
 		signal(SIGHUP, signal_handler);
 		signal(SIGTERM, signal_handler);
+		signal(SIGINT, signal_handler);
+		signal(SIGTSTP, signal_handler);
 #else
 		HWND hcon = GetConsoleWindow();
 		if(hcon)
