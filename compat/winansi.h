@@ -3,8 +3,8 @@
  */
 #ifdef WIN32
 #include <windows.h>
-#include <stddef.h>
-#include <stdio.h>
+#include <cstddef>
+#include <cstdio>
 
 #define isatty(fd) _isatty(fd)
 #define fileno(fd) _fileno(fd)

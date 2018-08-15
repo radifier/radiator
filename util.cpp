@@ -15,6 +15,7 @@
 #include <cstdarg>
 #include <cstring>
 #include <cinttypes>
+using namespace std;
 #include <unistd.h>
 #include <jansson.h>
 #include <curl/curl.h>
@@ -31,7 +32,6 @@
 #endif
 #include "miner.h"
 #include "elist.h"
-using namespace std;
 
 extern enum sha_algos opt_algo;
 extern char curl_err_str[];
