@@ -120,9 +120,10 @@ void applog(int prio, const char *fmt, ...)
 		va_copy(ap2, ap);
 		len = vsnprintf(NULL, 0, fmt, ap2) + 1;
 		va_end(ap2);
-		buf = (char*)alloca(len);
+		buf = (char*)malloc(len);
 		if(vsnprintf(buf, len, fmt, ap) >= 0)
 			syslog(prio, "%s", buf);
+		free(buf);
 	}
 #else
 	if(0)
@@ -165,7 +166,7 @@ void applog(int prio, const char *fmt, ...)
 			color = "";
 
 		len = 160 + (int)strlen(fmt) + 2;
-		f = (char*)alloca(len);
+		f = (char*)malloc(len);
 		pthread_mutex_lock(&applog_lock);
 
 		sprintf(f, "[%d-%02d-%02d %02d:%02d:%02d]%s %s%s\n",
@@ -181,6 +182,7 @@ void applog(int prio, const char *fmt, ...)
 				);
 		vfprintf(stdout, f, ap);	/* atomic write to stderr */
 		fflush(stdout);
+		free(f);
 		if (opt_logfile)
 		{
 			fl = (char*)alloca(len);
@@ -195,6 +197,7 @@ void applog(int prio, const char *fmt, ...)
 			);
 			vfprintf(logfilepointer, fl, ap);	/* atomic write to logfile */
 			fflush(logfilepointer);
+			free(fl);
 		}
 		pthread_mutex_unlock(&applog_lock);
 	}
@@ -685,7 +688,7 @@ err_out:
 
 /**
 * Unlike malloc, calloc set the memory to zero
-*/
+
 void *aligned_calloc(int size)
 {
 	const int ALIGN = 64; // cache line
@@ -719,6 +722,7 @@ void aligned_free(void *ptr)
 	free(((void**)ptr)[-1]);
 #endif
 }
+*/
 
 void cbin2hex(char *out, const char *in, size_t len)
 {

@@ -1034,7 +1034,7 @@ static void workio_cmd_free(struct workio_cmd *wc)
 	switch(wc->cmd)
 	{
 	case WC_SUBMIT_WORK:
-		aligned_free(wc->u.work);
+		free(wc->u.work);
 		break;
 	default: /* do nothing */
 		break;
@@ -1049,7 +1049,7 @@ static bool workio_get_work(struct workio_cmd *wc, CURL *curl)
 	struct work *ret_work;
 	int failures = 0;
 
-	ret_work = (struct work*)aligned_calloc(sizeof(*ret_work));
+	ret_work = (struct work*)calloc(1, sizeof(*ret_work));
 	if(!ret_work)
 		return false;
 
@@ -1059,7 +1059,7 @@ static bool workio_get_work(struct workio_cmd *wc, CURL *curl)
 		if(unlikely((opt_retries >= 0) && (++failures > opt_retries)))
 		{
 			applog(LOG_ERR, "json_rpc_call failed, terminating workio thread");
-			aligned_free(ret_work);
+			free(ret_work);
 			return false;
 		}
 
@@ -1071,7 +1071,7 @@ static bool workio_get_work(struct workio_cmd *wc, CURL *curl)
 
 	/* send work to requesting thread */
 	if(!tq_push(wc->thr->q, ret_work))
-		aligned_free(ret_work);
+		free(ret_work);
 
 	return true;
 }
@@ -1204,7 +1204,7 @@ static bool get_work(struct thr_info *thr, struct work *work)
 
 	/* copy returned work into storage provided by caller */
 	memcpy(work, work_heap, sizeof(*work));
-	aligned_free(work_heap);
+	free(work_heap);
 
 	return true;
 }
@@ -1220,7 +1220,7 @@ static bool submit_work(struct thr_info *thr, const struct work *work_in)
 		proper_exit(EXIT_FAILURE);
 	}
 
-	wc->u.work = (struct work *)aligned_calloc(sizeof(*work_in));
+	wc->u.work = (struct work *)calloc(1, sizeof(*work_in));
 	if(wc->u.work == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
