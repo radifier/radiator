@@ -1180,7 +1180,7 @@ static bool get_work(struct thr_info *thr, struct work *work)
 	}
 
 	/* fill out work request message */
-	wc = (struct workio_cmd *)calloc(1, sizeof(*wc));
+	wc = (struct workio_cmd *)calloc(1, sizeof(struct workio_cmd));
 	if(wc == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
@@ -1213,7 +1213,7 @@ static bool submit_work(struct thr_info *thr, const struct work *work_in)
 {
 	struct workio_cmd *wc;
 	/* fill out work request message */
-	wc = (struct workio_cmd *)calloc(1, sizeof(*wc));
+	wc = (struct workio_cmd *)calloc(1, sizeof(struct workio_cmd));
 	if(wc == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");

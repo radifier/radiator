@@ -185,7 +185,7 @@ void applog(int prio, const char *fmt, ...)
 		free(f);
 		if (opt_logfile)
 		{
-			fl = (char*)alloca(len);
+			fl = (char*)malloc(len);
 			sprintf(fl, "[%d-%02d-%02d %02d:%02d:%02d] %s\n",
 					tm.tm_year + 1900,
 					tm.tm_mon + 1,
