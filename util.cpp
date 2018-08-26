@@ -133,9 +133,7 @@ void applog(int prio, const char *fmt, ...)
 	else
 	{
 		const char* color = "";
-		char *f;
-		char *fl;
-		int len;
+		char f[16000];
 		struct tm tm, *tm_p;
 		time_t now = time(NULL);
 
@@ -165,11 +163,9 @@ void applog(int prio, const char *fmt, ...)
 		if(!use_colors)
 			color = "";
 
-		len = 160 + (int)strlen(fmt) + 2;
-		f = (char*)malloc(len);
 		pthread_mutex_lock(&applog_lock);
 
-		sprintf(f, "[%d-%02d-%02d %02d:%02d:%02d]%s %s%s\n",
+		snprintf(f, sizeof(f), "[%d-%02d-%02d %02d:%02d:%02d]%s %s%s\n",
 				tm.tm_year + 1900,
 				tm.tm_mon + 1,
 				tm.tm_mday,
@@ -182,11 +178,9 @@ void applog(int prio, const char *fmt, ...)
 				);
 		vfprintf(stdout, f, ap);	/* atomic write to stderr */
 		fflush(stdout);
-		free(f);
 		if (opt_logfile)
 		{
-			fl = (char*)malloc(len);
-			sprintf(fl, "[%d-%02d-%02d %02d:%02d:%02d] %s\n",
+			snprintf(f, sizeof(f), "[%d-%02d-%02d %02d:%02d:%02d] %s\n",
 					tm.tm_year + 1900,
 					tm.tm_mon + 1,
 					tm.tm_mday,
@@ -195,9 +189,8 @@ void applog(int prio, const char *fmt, ...)
 					tm.tm_sec,
 					fmt
 			);
-			vfprintf(logfilepointer, fl, ap);	/* atomic write to logfile */
+			vfprintf(logfilepointer, f, ap);	/* atomic write to logfile */
 			fflush(logfilepointer);
-			free(fl);
 		}
 		pthread_mutex_unlock(&applog_lock);
 	}
