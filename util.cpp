@@ -1495,7 +1495,7 @@ out:
 * Extract block height     L H... here len=3, height=0x1333e8
 * "...0000000000ffffffff2703e83313062f503253482f043d61105408"
 */
-static uint32_t getblocheight(struct stratum_ctx *sctx)
+static uint32_t getblockheight(struct stratum_ctx *sctx)
 {
 	uint32_t height = 0;
 	uint8_t hlen = 0, *p, *m;
@@ -1644,7 +1644,7 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 	hex2bin(sctx->job.prevhash, prevhash, 32);
 
 	if(opt_algo != ALGO_SIA)
-		sctx->job.height = getblocheight(sctx);
+		sctx->job.height = getblockheight(sctx);
 	else
 		sctx->job.height = 1;
 	if(!opt_quiet)
