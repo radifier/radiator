@@ -1362,7 +1362,7 @@ static __device__ __forceinline__ void SIMD_Compress_Final(uint32_t *const __res
 	STEP8_IF_35(IV[3], 25,  4, &A[8], &A[16], &A[24], A);
 }
 
-static __device__ __forceinline__ void Final(uint32_t *const __restrict__ hashval, const int texture_id, const uint4 *const __restrict__ g_fft4, const uint32_t *const __restrict__ g_state)
+static __device__ __forceinline__ void Final(uint32_t *const __restrict__ hashval, const uint32_t *const __restrict__ g_state)
 {
 	uint32_t A[32];
 	int i;

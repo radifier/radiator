@@ -6,6 +6,8 @@
 // STEP8_IF and STEP8_MAJ beinhalten je 2x 8-fach parallel Operations
 
 #define TPB 256
+#define TPB5 256
+
 #include "miner.h"
 #include "cuda_helper.h"
 #include "cuda_vector.h"
@@ -263,14 +265,15 @@ __device__ __forceinline__ void FFT_16(int *y) {
 /***************************************************/
 
 static __device__ __forceinline__
-void Expansion(const uint32_t *const __restrict__ data, uint4 *const __restrict__ g_temp4)
+void Expansion(const uint32_t data0, const uint32_t data1, uint4 *const __restrict__ g_temp4)
 {
 	/* Message Expansion using Number Theoretical Transform similar to FFT */
 	int expanded[32];
 #pragma unroll 4
-	for (int i=0; i < 4; i++) {
-		expanded[i] = __byte_perm(SHFL((int)data[0], 2 * i, 8), SHFL((int)data[0], (2 * i) + 1, 8), threadIdx.x & 7) & 0xff;
-		expanded[4 + i] = __byte_perm(SHFL((int)data[1], 2 * i, 8), SHFL((int)data[1], (2 * i) + 1, 8), threadIdx.x & 7) & 0xff;
+	for(int i = 0; i < 4; i++)
+	{
+		expanded[i]     = __byte_perm(SHFL((int)data0, 2 * i, 8), SHFL((int)data0, (2 * i) + 1, 8), threadIdx.x & 7) & 0xff;
+		expanded[4 + i] = __byte_perm(SHFL((int)data1, 2 * i, 8), SHFL((int)data1, (2 * i) + 1, 8), threadIdx.x & 7) & 0xff;
 	}
 
 	expanded[9] = 0;
@@ -671,42 +674,25 @@ x11_simd512_gpu_expand_64(uint32_t threads, uint32_t startNounce, const uint64_t
 	uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x)/8;
 	if (thread < threads)
 	{
-		const uint32_t nounce = (startNounce + thread);
+		uint32_t *inpHash = (uint32_t*)&g_hash[8 * thread];
 
-		const uint32_t hashPosition = nounce - startNounce;
-
-		uint32_t *inpHash = (uint32_t*)&g_hash[8 * hashPosition];
-
-		// Hash einlesen und auf 8 Threads und 2 Register verteilen
-		uint32_t Hash[2];
-
-		#pragma unroll 2
-		for (int i=0; i<2; i++)
-			Hash[i] = inpHash[8*i + (threadIdx.x & 7)];
-
-		// Puffer für expandierte Nachricht
-		uint4 *temp4 = &g_temp4[64 * hashPosition];
-
-		Expansion(Hash, temp4);
+		Expansion(inpHash[threadIdx.x & 7], inpHash[8 + (threadIdx.x & 7)], &g_temp4[64 * thread]);
 	}
 }
 
-__global__ __launch_bounds__(TPB, 2)
+__global__ __launch_bounds__(TPB5, 2)
 void x11_simd512_gpu_compress_64_maxwell(uint32_t threads, uint32_t startNounce, uint64_t *g_hash, uint4 *g_fft4)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (thread < threads)
 	{
-		const uint32_t nounce = (startNounce + thread);
 		uint4 g_state[64];
 
+		uint32_t *const Hash = (uint32_t*)&g_hash[8 * thread];
 
-		const uint32_t hashPosition = nounce - startNounce;
-		uint32_t *const Hash = (uint32_t*)&g_hash[8 * hashPosition];
-
-		Compression1(Hash, hashPosition, g_fft4, (uint32_t *)g_state);
-		Compression2(hashPosition, g_fft4, (uint32_t *)&g_state);
-		Final(Hash, hashPosition, g_fft4, (uint32_t *)&g_state);
+		Compression1(Hash, thread, g_fft4, (uint32_t *)g_state);
+		Compression2(thread, g_fft4, (uint32_t *)&g_state);
+		Final(Hash, (uint32_t *)&g_state);
 	}
 }
 
@@ -748,7 +734,7 @@ x11_simd512_gpu_final_64(uint32_t threads, uint32_t startNounce, uint64_t *g_has
 		const uint32_t hashPosition = nounce - startNounce;
 		uint32_t *const Hash = (uint32_t*)&g_hash[8 * hashPosition];
 
-		Final(Hash, hashPosition, g_fft4, g_state);
+		Final(Hash, g_state);
 	}
 }
 
@@ -771,15 +757,13 @@ void x11_simd512_cpu_free(int thr_id)
 }
 
 __host__
-void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash, uint32_t simdthreads)
+void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash)
 {
-	dim3 grid8(((threads + simdthreads - 1) / simdthreads) * 8);
-
-
 	if (device_sm[device_map[thr_id]] >= 500) 
 	{
-		dim3 block(simdthreads);
-		dim3 grid((threads + simdthreads - 1) / simdthreads);
+		dim3 block(TPB5);
+		dim3 grid8(((threads + TPB5 - 1) / TPB5) * 8);
+		dim3 grid((threads + TPB5 - 1) / TPB5);
 		x11_simd512_gpu_expand_64 << <grid8, block, 0, gpustream[thr_id] >> > (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id]);
 		x11_simd512_gpu_compress_64_maxwell << < grid, block, 0, gpustream[thr_id] >> > (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id]);
 	}
@@ -787,6 +771,7 @@ void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce,
 	{
 		dim3 block(TPB);
 		dim3 grid((threads + TPB - 1) / TPB);
+		dim3 grid8(((threads + TPB - 1) / TPB) * 8);
 		x11_simd512_gpu_expand_64 << <grid8, block, 0, gpustream[thr_id] >> > (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id]);
 		x11_simd512_gpu_compress1_64 << < grid, block, 0, gpustream[thr_id] >> > (threads, d_hash, d_temp4[thr_id], d_state[thr_id]);
 		x11_simd512_gpu_compress2_64 << < grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, (uint64_t*)d_hash, d_temp4[thr_id], d_state[thr_id]);

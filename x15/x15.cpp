@@ -29,9 +29,7 @@ extern "C" {
 
 extern void quark_blake512_cpu_init(int thr_id);
 extern void quark_blake512_cpu_setBlock_80(int thr_id, uint64_t *pdata);
-extern void quark_blake512_cpu_setBlock_80_multi(int thr_id, uint64_t *pdata);
 extern void quark_blake512_cpu_hash_80(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
-extern void quark_blake512_cpu_hash_80_multi(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 
 extern void quark_bmw512_cpu_init(int thr_id, uint32_t threads);
 extern void quark_bmw512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_nonceVector, uint32_t *d_hash);
@@ -51,7 +49,7 @@ extern void x11_luffaCubehash512_cpu_hash_64(int thr_id, uint32_t threads, uint3
 extern void x11_shavite512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 
 extern int  x11_simd512_cpu_init(int thr_id, uint32_t threads);
-extern void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash, const uint32_t simdthreads);
+extern void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 
 extern void x11_echo512_cpu_init(int thr_id, uint32_t threads);
 extern void x11_echo512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
@@ -69,8 +67,6 @@ extern void x15_whirlpool_cpu_hash_64(int thr_id, uint32_t threads, uint32_t sta
 extern void x15_whirlpool_cpu_free(int thr_id);
 
 extern void quark_compactTest_cpu_init(int thr_id, uint32_t threads);
-extern void quark_compactTest_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, const uint32_t *inpHashes,
-											const uint32_t *d_noncesTrue, uint32_t *nrmTrue, uint32_t *d_noncesFalse, uint32_t *nrmFalse);
 
 // X15 CPU Hash function
 void x15hash(void *output, const void *input)
@@ -171,7 +167,6 @@ extern int scanhash_x15(int thr_id, uint32_t *pdata,
 	if (device_sm[device_map[thr_id]] == 520)  intensity = 256 * 256 * 22;
 	uint32_t throughputmax = device_intensity(device_map[thr_id], __func__, intensity); // 19=256*256*8;
 	uint32_t throughput = min(throughputmax, (max_nonce - first_nonce)) & 0xfffffc00;
-	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
 
 	if (opt_benchmark)
 		ptarget[7] = 0x0fF;
@@ -229,7 +224,7 @@ extern int scanhash_x15(int thr_id, uint32_t *pdata,
 		quark_keccak512_cpu_hash_64(thr_id, throughput, pdata[19], NULL, d_hash);
 		x11_luffaCubehash512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
 		x11_shavite512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
-		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash,simdthreads);
+		x11_simd512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
 		x11_echo512_cpu_hash_64(thr_id, throughput, pdata[19],  d_hash);
 		x13_hamsi512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
 		x13_fugue512_cpu_hash_64(thr_id, throughput, pdata[19],  d_hash);

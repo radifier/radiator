@@ -22,15 +22,13 @@ extern void x11_cubehash512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t s
 extern void x11_shavite512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 
 extern int x11_simd512_cpu_init(int thr_id, uint32_t threads);
-extern void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash,const uint32_t simdthreads);
+extern void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 
 extern void x11_echo512_cpu_init(int thr_id, uint32_t threads);
 //extern void x11_echo512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, uint32_t *d_hash);
 extern void x11_echo512_cpu_hash_64_final(int thr_id, uint32_t threads, uint32_t startNounce, const uint32_t *d_hash, uint32_t target, uint32_t *h_found);
 
 extern void quark_compactTest_cpu_init(int thr_id, uint32_t threads);
-extern void quark_compactTest_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce, const uint32_t *inpHashes,
-											const uint32_t *d_noncesTrue, uint32_t *nrmTrue, uint32_t *d_noncesFalse, uint32_t *nrmFalse);
 
 void qubithash(void *state, const void *input)
 {
@@ -78,8 +76,7 @@ extern int scanhash_qubit(int thr_id, uint32_t *pdata,
 	const uint32_t first_nonce = pdata[19];
 
 	uint32_t intensity = 256 * 256 * 10;
-	uint32_t simdthreads = (device_sm[device_map[thr_id]] > 500) ? 256 : 32;
-
+	
 	cudaDeviceProp props;
 	cudaGetDeviceProperties(&props, device_map[thr_id]);
 	if(strstr(props.name, "1080"))
@@ -160,7 +157,7 @@ extern int scanhash_qubit(int thr_id, uint32_t *pdata,
 		qubit_luffa512_cpu_hash_80(thr_id, throughput, pdata[19], d_hash);
 		x11_cubehash512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
 		x11_shavite512_cpu_hash_64(thr_id, throughput, pdata[19], d_hash);
-		x11_simd512_cpu_hash_64(thr_id,throughput, pdata[19], d_hash,simdthreads);
+		x11_simd512_cpu_hash_64(thr_id,throughput, pdata[19], d_hash);
 		x11_echo512_cpu_hash_64_final(thr_id, throughput, pdata[19], d_hash, ptarget[7], h_found);
 		cudaStreamSynchronize(gpustream[thr_id]);
 		if(stop_mining) {mining_has_stopped[thr_id] = true; cudaStreamDestroy(gpustream[thr_id]); pthread_exit(nullptr);}
