@@ -22,16 +22,16 @@ static uint4 *d_temp4[MAX_GPUS];
 texture<uint4, 1, cudaReadModeElementType> texRef1D_128;
 #endif
 
-__constant__ uint8_t c_perm0[8] = { 2, 3, 6, 7, 0, 1, 4, 5 };
-__constant__ uint8_t c_perm1[8] = { 6, 7, 2, 3, 4, 5, 0, 1 };
-__constant__ uint8_t c_perm2[8] = { 7, 6, 5, 4, 3, 2, 1, 0 };
-__constant__ uint8_t c_perm3[8] = { 1, 0, 3, 2, 5, 4, 7, 6 };
-__constant__ uint8_t c_perm4[8] = { 0, 1, 4, 5, 6, 7, 2, 3 };
-__constant__ uint8_t c_perm5[8] = { 6, 7, 2, 3, 0, 1, 4, 5 };
-__constant__ uint8_t c_perm6[8] = { 6, 7, 0, 1, 4, 5, 2, 3 };
-__constant__ uint8_t c_perm7[8] = { 4, 5, 2, 3, 6, 7, 0, 1 };
+__constant__ int c_perm0[8] = { 2, 3, 6, 7, 0, 1, 4, 5 };
+__constant__ int c_perm1[8] = { 6, 7, 2, 3, 4, 5, 0, 1 };
+__constant__ int c_perm2[8] = { 7, 6, 5, 4, 3, 2, 1, 0 };
+__constant__ int c_perm3[8] = { 1, 0, 3, 2, 5, 4, 7, 6 };
+__constant__ int c_perm4[8] = { 0, 1, 4, 5, 6, 7, 2, 3 };
+__constant__ int c_perm5[8] = { 6, 7, 2, 3, 0, 1, 4, 5 };
+__constant__ int c_perm6[8] = { 6, 7, 0, 1, 4, 5, 2, 3 };
+__constant__ int c_perm7[8] = { 4, 5, 2, 3, 6, 7, 0, 1 };
 
-__constant__ short c_FFT128_8_16_Twiddle[128] = {
+__constant__ int c_FFT128_8_16_Twiddle[128] = {
 	1,   1,   1,   1,   1,    1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
 	1,  60,   2, 120,   4,  -17,   8, -34,  16, -68,  32, 121,  64, -15, 128, -30,
 	1,  46,  60, -67,   2,   92, 120, 123,   4, -73, -17, -11,   8, 111, -34, -22,
@@ -42,7 +42,7 @@ __constant__ short c_FFT128_8_16_Twiddle[128] = {
 	1, -61, 123, -50, -34,   18, -70, -99, 128, -98,  67,  25,  17,  -9,  35, -79
 };
 
-__constant__ short c_FFT256_2_128_Twiddle[128] = {
+__constant__ int c_FFT256_2_128_Twiddle[128] = {
 	  1,  41,-118,  45,  46,  87, -31,  14,
 	 60,-110, 116,-127, -67,  80, -61,  69,
 	  2,  82,  21,  90,  92, -83, -62,  28,
@@ -65,8 +65,8 @@ __constant__ short c_FFT256_2_128_Twiddle[128] = {
 /************* the round function ****************/
 
 
-#define IF(x, y, z) (((y ^ z) & x) ^ z)
-#define MAJ(x, y, z) ((z &y) | ((z|y) & x))
+#define IF(x, y, z) ((((y) ^ (z)) & (x)) ^ (z))
+#define MAJ(x, y, z) (((z) & (y)) | (((z) | (y)) & (x)))
 
 
 #include "x11/simd_functions.cu"
@@ -77,79 +77,105 @@ __constant__ short c_FFT256_2_128_Twiddle[128] = {
  * Reduce modulo 257; result is in [-127; 383]
  * REDUCE(x) := (x&255) - (x>>8)
  */
-#define REDUCE(x) \
-	(((x)&255) - ((x)>>8))
+static __device__ __forceinline__ int REDUCE(int x)
+{
+	return (x & 255) - (x >> 8);
+}
 
 /*
  * Reduce from [-127; 383] to [-128; 128]
  * EXTRA_REDUCE_S(x) := x<=128 ? x : x-257
  */
-#define EXTRA_REDUCE_S(x) \
-	((x)<=128 ? (x) : (x)-257)
+static __device__ __forceinline__ int  EXTRA_REDUCE_S(int x)
+{
+	return x <= 128 ? x : x - 257;
+}
 
 /*
  * Reduce modulo 257; result is in [-128; 128]
  */
-#define REDUCE_FULL_S(x) \
-	EXTRA_REDUCE_S(REDUCE(x))
+#define REDUCE_FULL_S(x) EXTRA_REDUCE_S(REDUCE(x))
+
+#define X(i) y[stripe*i]
+
+#define DO_REDUCE1(i) X(i) = REDUCE(X(i))
+
+#define DO_REDUCE_FULL_S1(i) \
+	X(i) = REDUCE(X(i)); \
+	X(i) = EXTRA_REDUCE_S(X(i));
+
+#define DO_REDUCE_FULL_S(i) \
+		y[i] = REDUCE(y[i]); \
+		y[i] = EXTRA_REDUCE_S(y[i]);
+
+#define BUTTERFLY1(i,j,n) {\
+	uint32_t u= y[stripe * i]; \
+	uint32_t v= y[stripe * j]; \
+	X(i) = u + v; \
+	X(j) = (u - v) << (2 * n);}
+
+#define BUTTERFLY2(i,j,n){ \
+	uint32_t u = expanded[2 * i]; \
+	uint32_t v = expanded[2 * j]; \
+	expanded[2 * i] = u + v; \
+	expanded[2 * j] = (u - v) << (2 * n);}
+
+#define DO_REDUCE2(i) \
+	expanded[2 * i] = REDUCE(expanded[2 * i])
+
+#define DO_REDUCE3(i) \
+	expanded[2 * i+ 16] = REDUCE(expanded[2 * i + 16])
+
+#define DO_REDUCE_FULL_S2(i) \
+	expanded[2 * i] = REDUCE(expanded[2 * i]); \
+	expanded[2 * i] = EXTRA_REDUCE_S(expanded[2 * i]);
+
+#define DO_REDUCE_FULL_S3(i) \
+	expanded[2 * i + 16] = REDUCE(expanded[2 * i+ 16]); \
+	expanded[2 * i + 16] = EXTRA_REDUCE_S(expanded[2 * i + 16]);
+
+#define BUTTERFLY3(i,j,n){ \
+	uint32_t u = expanded[2  *i + 16]; \
+	uint32_t v = expanded[2 * j + 16]; \
+	expanded[2 * i + 16] = u + v; \
+	expanded[2 * j + 16] = (u  -v) << (2 * n);}
 
 static __device__ __forceinline__
-void FFT_8(int *y, int stripe) {
-
+void FFT_8(int *y, int stripe)
+{
 /*
  * FFT_8 using w=4 as 8th root of unity
  * Unrolled decimation in frequency (DIF) radix-2 NTT.
  * Output data is in revbin_permuted order.
  */
-	uint32_t u, v;
-#define X(i) y[stripe*i]
+	BUTTERFLY1(0, 4, 0);
+	BUTTERFLY1(1, 5, 1);
+	BUTTERFLY1(2, 6, 2);
+	BUTTERFLY1(3, 7, 3);
 
-#define DO_REDUCE(i) \
-	X(i) = REDUCE(X(i))
+	DO_REDUCE1(6);
+	DO_REDUCE1(7);
 
-#define DO_REDUCE_FULL_S(i) \
-	X(i) = REDUCE(X(i)); \
-	X(i) = EXTRA_REDUCE_S(X(i));
+	BUTTERFLY1(0, 2, 0);
+	BUTTERFLY1(4, 6, 0);
+	BUTTERFLY1(1, 3, 2);
+	BUTTERFLY1(5, 7, 2);
 
-#define BUTTERFLY(i,j,n) \
-	u= y[stripe*i]; \
-	v= y[stripe*j]; \
-	X(i) = u+v; \
-	X(j) = (u-v) << (2*n);
+	DO_REDUCE1(7);
 
-	BUTTERFLY(0, 4, 0);
-	BUTTERFLY(1, 5, 1);
-	BUTTERFLY(2, 6, 2);
-	BUTTERFLY(3, 7, 3);
+	BUTTERFLY1(0, 1, 0);
+	BUTTERFLY1(2, 3, 0);
+	BUTTERFLY1(4, 5, 0);
+	BUTTERFLY1(6, 7, 0);
 
-	DO_REDUCE(6);
-	DO_REDUCE(7);
-
-	BUTTERFLY(0, 2, 0);
-	BUTTERFLY(4, 6, 0);
-	BUTTERFLY(1, 3, 2);
-	BUTTERFLY(5, 7, 2);
-
-	DO_REDUCE(7);
-
-	BUTTERFLY(0, 1, 0);
-	BUTTERFLY(2, 3, 0);
-	BUTTERFLY(4, 5, 0);
-	BUTTERFLY(6, 7, 0);
-
-	DO_REDUCE_FULL_S(0);
-	DO_REDUCE_FULL_S(1);
-	DO_REDUCE_FULL_S(2);
-	DO_REDUCE_FULL_S(3);
-	DO_REDUCE_FULL_S(4);
-	DO_REDUCE_FULL_S(5);
-	DO_REDUCE_FULL_S(6);
-	DO_REDUCE_FULL_S(7);
-
-#undef X
-#undef DO_REDUCE
-#undef DO_REDUCE_FULL_S
-#undef BUTTERFLY
+	DO_REDUCE_FULL_S1(0);
+	DO_REDUCE_FULL_S1(1);
+	DO_REDUCE_FULL_S1(2);
+	DO_REDUCE_FULL_S1(3);
+	DO_REDUCE_FULL_S1(4);
+	DO_REDUCE_FULL_S1(5);
+	DO_REDUCE_FULL_S1(6);
+	DO_REDUCE_FULL_S1(7);
 }
 
 __device__ __forceinline__ void FFT_16(int *y) {
@@ -159,9 +185,6 @@ __device__ __forceinline__ void FFT_16(int *y) {
  * Unrolled decimation in frequency (DIF) radix-2 NTT.
  * Output data is in revbin_permuted order.
  */
-#define DO_REDUCE_FULL_S(i) \
-		y[i] = REDUCE(y[i]); \
-		y[i] = EXTRA_REDUCE_S(y[i]);
 	int u,v;
 
 	// BUTTERFLY(0, 8, 0);
@@ -172,12 +195,11 @@ __device__ __forceinline__ void FFT_16(int *y) {
 	// BUTTERFLY(5, 13, 5);
 	// BUTTERFLY(6, 14, 6);
 	// BUTTERFLY(7, 15, 7);
-	{
-		u = y[0]; // 0..7
-		v = y[1]; // 8..15
-		y[0] = u+v;
-		y[1] = (u-v) << (threadIdx.x&7);
-	}
+
+	u = y[0]; // 0..7
+	v = y[1]; // 8..15
+	y[0] = u + v;
+	y[1] = (u - v) << (threadIdx.x & 7);
 
 	// DO_REDUCE(11);
 	// DO_REDUCE(12);
@@ -190,27 +212,26 @@ __device__ __forceinline__ void FFT_16(int *y) {
 	// BUTTERFLY( 1, 5, 2);
 	// BUTTERFLY( 2, 6, 4);
 	// BUTTERFLY( 3, 7, 6);
-	{
-		u = SHFL((int)y[0],  (threadIdx.x&3),8); // 0,1,2,3  0,1,2,3
-		v = SHFL((int)y[0],4+(threadIdx.x&3),8); // 4,5,6,7  4,5,6,7
-		y[0] = ((threadIdx.x&7) < 4) ? (u+v) : ((u-v) << (2*(threadIdx.x&3)));
-	}
+
+	u = SHFL((int)y[0], (threadIdx.x & 3), 8); // 0,1,2,3  0,1,2,3
+	v = SHFL((int)y[0], 4 + (threadIdx.x & 3), 8); // 4,5,6,7  4,5,6,7
+	y[0] = ((threadIdx.x & 7) < 4) ? (u + v) : ((u - v) << (2 * (threadIdx.x & 3)));
 
 	// BUTTERFLY( 8, 12, 0);
 	// BUTTERFLY( 9, 13, 2);
 	// BUTTERFLY(10, 14, 4);
 	// BUTTERFLY(11, 15, 6);
-	{
-		u = SHFL((int)y[1],  (threadIdx.x&3),8); // 8,9,10,11    8,9,10,11
-		v = SHFL((int)y[1],4+(threadIdx.x&3),8); // 12,13,14,15  12,13,14,15
-		y[1] = ((threadIdx.x&7) < 4) ? (u+v) : ((u-v) << (2*(threadIdx.x&3)));
-	}
+
+	u = SHFL((int)y[1], (threadIdx.x & 3), 8); // 8,9,10,11    8,9,10,11
+	v = SHFL((int)y[1], 4 + (threadIdx.x & 3), 8); // 12,13,14,15  12,13,14,15
+	y[1] = ((threadIdx.x & 7) < 4) ? (u + v) : ((u - v) << (2 * (threadIdx.x & 3)));
 
 	// DO_REDUCE(5);
 	// DO_REDUCE(7);
 	// DO_REDUCE(13);
 	// DO_REDUCE(15);
-	if ((threadIdx.x&1) && (threadIdx.x&7) >= 4) {
+	if ((threadIdx.x&1) && (threadIdx.x&7) >= 4)
+	{
 		y[0] = REDUCE(y[0]);  // 5, 7
 		y[1] = REDUCE(y[1]);  // 13, 15
 	}
@@ -219,46 +240,40 @@ __device__ __forceinline__ void FFT_16(int *y) {
 	// BUTTERFLY( 1, 3, 4);
 	// BUTTERFLY( 4, 6, 0);
 	// BUTTERFLY( 5, 7, 4);
-	{
-		u = SHFL((int)y[0],  (threadIdx.x&5),8); // 0,1,0,1  4,5,4,5
-		v = SHFL((int)y[0],2+(threadIdx.x&5),8); // 2,3,2,3  6,7,6,7
-		y[0] = ((threadIdx.x&3) < 2) ? (u+v) : ((u-v) << (4*(threadIdx.x&1)));
-	}
+
+	u = SHFL((int)y[0], (threadIdx.x & 5), 8); // 0,1,0,1  4,5,4,5
+	v = SHFL((int)y[0], 2 + (threadIdx.x & 5), 8); // 2,3,2,3  6,7,6,7
+	y[0] = ((threadIdx.x & 3) < 2) ? (u + v) : ((u - v) << (4 * (threadIdx.x & 1)));
 
 	// BUTTERFLY( 8, 10, 0);
 	// BUTTERFLY( 9, 11, 4);
 	// BUTTERFLY(12, 14, 0);
 	// BUTTERFLY(13, 15, 4);
-	{
-		u = SHFL((int)y[1],  (threadIdx.x&5),8); // 8,9,8,9      12,13,12,13
-		v = SHFL((int)y[1],2+(threadIdx.x&5),8); // 10,11,10,11  14,15,14,15
-		y[1] = ((threadIdx.x&3) < 2) ? (u+v) : ((u-v) << (4*(threadIdx.x&1)));
-	}
+
+	u = SHFL((int)y[1], (threadIdx.x & 5), 8); // 8,9,8,9      12,13,12,13
+	v = SHFL((int)y[1], 2 + (threadIdx.x & 5), 8); // 10,11,10,11  14,15,14,15
+	y[1] = ((threadIdx.x & 3) < 2) ? (u + v) : ((u - v) << (4 * (threadIdx.x & 1)));
 
 	// BUTTERFLY( 0, 1, 0);
 	// BUTTERFLY( 2, 3, 0);
 	// BUTTERFLY( 4, 5, 0);
 	// BUTTERFLY( 6, 7, 0);
-	{
-		u = SHFL((int)y[0],  (threadIdx.x&6),8); // 0,0,2,2      4,4,6,6
-		v = SHFL((int)y[0],1+(threadIdx.x&6),8); // 1,1,3,3      5,5,7,7
-		y[0] = ((threadIdx.x&1) < 1) ? (u+v) : (u-v);
-	}
+
+	u = SHFL((int)y[0], (threadIdx.x & 6), 8); // 0,0,2,2      4,4,6,6
+	v = SHFL((int)y[0], 1 + (threadIdx.x & 6), 8); // 1,1,3,3      5,5,7,7
+	y[0] = ((threadIdx.x & 1) < 1) ? (u + v) : (u - v);
 
 	// BUTTERFLY( 8, 9, 0);
 	// BUTTERFLY(10, 11, 0);
 	// BUTTERFLY(12, 13, 0);
 	// BUTTERFLY(14, 15, 0);
-	{
-		u = SHFL((int)y[1],  (threadIdx.x&6),8); // 8,8,10,10    12,12,14,14
-		v = SHFL((int)y[1],1+(threadIdx.x&6),8); // 9,9,11,11    13,13,15,15
-		y[1] = ((threadIdx.x&1) < 1) ? (u+v) : (u-v);
-	}
+
+	u = SHFL((int)y[1], (threadIdx.x & 6), 8); // 8,8,10,10    12,12,14,14
+	v = SHFL((int)y[1], 1 + (threadIdx.x & 6), 8); // 9,9,11,11    13,13,15,15
+	y[1] = ((threadIdx.x & 1) < 1) ? (u + v) : (u - v);
 
 	DO_REDUCE_FULL_S( 0); // 0...7
 	DO_REDUCE_FULL_S( 1); // 8...15
-
-#undef DO_REDUCE_FULL_S
 }
 
 
@@ -267,13 +282,15 @@ __device__ __forceinline__ void FFT_16(int *y) {
 static __device__ __forceinline__
 void Expansion(const uint32_t data0, const uint32_t data1, uint4 *const __restrict__ g_temp4)
 {
+	unsigned int tidx7 = threadIdx.x & 7;
+
 	/* Message Expansion using Number Theoretical Transform similar to FFT */
 	int expanded[32];
 #pragma unroll 4
 	for(int i = 0; i < 4; i++)
 	{
-		expanded[i]     = __byte_perm(SHFL((int)data0, 2 * i, 8), SHFL((int)data0, (2 * i) + 1, 8), threadIdx.x & 7) & 0xff;
-		expanded[4 + i] = __byte_perm(SHFL((int)data1, 2 * i, 8), SHFL((int)data1, (2 * i) + 1, 8), threadIdx.x & 7) & 0xff;
+		expanded[i]     = __byte_perm(SHFL((int)data0, 2 * i, 8), SHFL((int)data0, (2 * i) + 1, 8), tidx7) & 0xff;
+		expanded[4 + i] = __byte_perm(SHFL((int)data1, 2 * i, 8), SHFL((int)data1, (2 * i) + 1, 8), tidx7) & 0xff;
 	}
 
 	expanded[9] = 0;
@@ -293,7 +310,7 @@ void Expansion(const uint32_t data0, const uint32_t data1, uint4 *const __restri
 
 	#pragma unroll 8
 	for (int i = 0; i<8; i++)
-		expanded[16 + i] = REDUCE(expanded[i] * c_FFT256_2_128_Twiddle[8 * i + (threadIdx.x & 7)]);
+		expanded[16 + i] = REDUCE(expanded[i] * c_FFT256_2_128_Twiddle[8 * i + tidx7]);
 
 
 //#pragma unroll 8
@@ -305,7 +322,7 @@ void Expansion(const uint32_t data0, const uint32_t data1, uint4 *const __restri
 	expanded[15 + 16] = 0;
 
 	/* handle X^255 with an additional butterfly */
-	if ((threadIdx.x & 7) == 7)
+	if (tidx7 == 7)
 	{
 		expanded[15] = 1;
 		expanded[31] = 0x0100 * 94; 
@@ -314,64 +331,42 @@ void Expansion(const uint32_t data0, const uint32_t data1, uint4 *const __restri
 	//	FFT_128_full(expanded);
 
 		int i;
-		uint32_t u, v;
-
-#define DO_REDUCE(i) \
-	expanded[2*i] = REDUCE(expanded[2*i])
-
-#define DO_REDUCE_FULL_S(i) \
-	expanded[2*i] = REDUCE(expanded[2*i]); \
-	expanded[2*i] = EXTRA_REDUCE_S(expanded[2*i]);
-
-#define BUTTERFLY(i,j,n) \
-	u= expanded[2*i]; \
-	v= expanded[2*j]; \
-	expanded[2*i] = u+v; \
-	expanded[2*j] = (u-v) << (2*n);
 
 //		BUTTERFLY(0, 4, 0);		//0 8 0
 		expanded[2 * 4] = expanded[2 * 0];
 
 //		BUTTERFLY(1, 5, 1);		//2 10 2
-		u = expanded[2 * 1];
-		expanded[2 * 5] = (u ) << (2 * 1);
+		expanded[2 * 5] = expanded[2 * 1] << (2 * 1);
 
 //		BUTTERFLY(2, 6, 2);		//4 12 4
-		u = expanded[2 * 2];
-		expanded[2 * 6] = (u) << (2 * 2);
+		expanded[2 * 6] = expanded[2 * 2] << (2 * 2);
 
 //		BUTTERFLY(3, 7, 3);		//6 14 6
-		u = expanded[2 * 3];
-		expanded[2 * 7] = (u) << (2 * 3);
+		expanded[2 * 7] = expanded[2 * 3] << (2 * 3);
 
 		expanded[2 * 6] = REDUCE(expanded[2 * 6]);
 		expanded[2 * 7] = REDUCE(expanded[2 * 7]);
 
-		BUTTERFLY(0, 2, 0);
-		BUTTERFLY(4, 6, 0);
-		BUTTERFLY(1, 3, 2);
-		BUTTERFLY(5, 7, 2);
+		BUTTERFLY2(0, 2, 0);
+		BUTTERFLY2(4, 6, 0);
+		BUTTERFLY2(1, 3, 2);
+		BUTTERFLY2(5, 7, 2);
 
-		DO_REDUCE(7);
+		DO_REDUCE2(7);
 
-		BUTTERFLY(0, 1, 0);
-		BUTTERFLY(2, 3, 0);
-		BUTTERFLY(4, 5, 0);
-		BUTTERFLY(6, 7, 0);
+		BUTTERFLY2(0, 1, 0);
+		BUTTERFLY2(2, 3, 0);
+		BUTTERFLY2(4, 5, 0);
+		BUTTERFLY2(6, 7, 0);
 
-		DO_REDUCE_FULL_S(0);
-		DO_REDUCE_FULL_S(1);
-		DO_REDUCE_FULL_S(2);
-		DO_REDUCE_FULL_S(3);
-		DO_REDUCE_FULL_S(4);
-		DO_REDUCE_FULL_S(5);
-		DO_REDUCE_FULL_S(6);
-		DO_REDUCE_FULL_S(7);
-
-#undef X
-#undef DO_REDUCE
-#undef DO_REDUCE_FULL_S
-#undef BUTTERFLY
+		DO_REDUCE_FULL_S2(0);
+		DO_REDUCE_FULL_S2(1);
+		DO_REDUCE_FULL_S2(2);
+		DO_REDUCE_FULL_S2(3);
+		DO_REDUCE_FULL_S2(4);
+		DO_REDUCE_FULL_S2(5);
+		DO_REDUCE_FULL_S2(6);
+		DO_REDUCE_FULL_S2(7);
 
 //		FFT_8(expanded + 0, 2); // eight parallel FFT8's
 
@@ -381,7 +376,7 @@ void Expansion(const uint32_t data0, const uint32_t data1, uint4 *const __restri
 		expanded[1] = REDUCE(expanded[1]);
 #pragma unroll
 		for (i = 2; i<16; i++)
-			expanded[i] = REDUCE(expanded[i] * c_FFT128_8_16_Twiddle[i * 8 + (threadIdx.x & 7)]);
+			expanded[i] = REDUCE(expanded[i] * c_FFT128_8_16_Twiddle[i * 8 + tidx7]);
 
 		//#pragma unroll 8
 		for (i = 0; i<16; i += 2)
@@ -391,73 +386,52 @@ void Expansion(const uint32_t data0, const uint32_t data1, uint4 *const __restri
 		
 //		FFT_128_full(expanded + 16);
 
-#define DO_REDUCE(i) \
-	expanded[2*i+ 16] = REDUCE(expanded[2*i+ 16])
-
-#define DO_REDUCE_FULL_S(i) \
-	expanded[2*i+ 16] = REDUCE(expanded[2*i+ 16]); \
-	expanded[2*i+ 16] = EXTRA_REDUCE_S(expanded[2*i+ 16]);
-
-#define BUTTERFLY(i,j,n) \
-	u= expanded[2*i+ 16]; \
-	v= expanded[2*j+ 16]; \
-	expanded[2*i+ 16] = u+v; \
-	expanded[2*j+ 16] = (u-v) << (2*n);
-
 		//		BUTTERFLY(0, 4, 0);		//0 8 0
 		expanded[2 * 4 + 16] = expanded[2 * 0 + 16];
 
 		//		BUTTERFLY(1, 5, 1);		//2 10 2
-		u = expanded[2 * 1 + 16];
-		expanded[2 * 5 + 16] = (u) << (2 * 1);
+		expanded[2 * 5 + 16] = expanded[2 * 1 + 16] << (2 * 1);
 
 		//		BUTTERFLY(2, 6, 2);		//4 12 4
-		u = expanded[2 * 2 + 16];
-		expanded[2 * 6 + 16] = (u) << (2 * 2);
+		expanded[2 * 6 + 16] = expanded[2 * 2 + 16] << (2 * 2);
 
 		//		BUTTERFLY(3, 7, 3);		//6 14 6
-		u = expanded[2 * 3 + 16];
-		expanded[2 * 7 + 16] = (u) << (2 * 3);
+		expanded[2 * 7 + 16] = expanded[2 * 3 + 16] << (2 * 3);
 
 		expanded[2 * 6 + 16] = REDUCE(expanded[2 * 6 + 16]);
 		expanded[2 * 7 + 16] = REDUCE(expanded[2 * 7 + 16]);
 
-		BUTTERFLY(0, 2, 0);
-		BUTTERFLY(4, 6, 0);
-		BUTTERFLY(1, 3, 2);
-		BUTTERFLY(5, 7, 2);
+		BUTTERFLY3(0, 2, 0);
+		BUTTERFLY3(4, 6, 0);
+		BUTTERFLY3(1, 3, 2);
+		BUTTERFLY3(5, 7, 2);
 
-		DO_REDUCE(7);
+		DO_REDUCE3(7);
 
-		BUTTERFLY(0, 1, 0);
-		BUTTERFLY(2, 3, 0);
-		BUTTERFLY(4, 5, 0);
-		BUTTERFLY(6, 7, 0);
+		BUTTERFLY3(0, 1, 0);
+		BUTTERFLY3(2, 3, 0);
+		BUTTERFLY3(4, 5, 0);
+		BUTTERFLY3(6, 7, 0);
 
-		DO_REDUCE_FULL_S(0);
-		DO_REDUCE_FULL_S(1);
-		DO_REDUCE_FULL_S(2);
-		DO_REDUCE_FULL_S(3);
-		DO_REDUCE_FULL_S(4);
-		DO_REDUCE_FULL_S(5);
-		DO_REDUCE_FULL_S(6);
-		DO_REDUCE_FULL_S(7);
-
-#undef X
-#undef DO_REDUCE
-#undef DO_REDUCE_FULL_S
-#undef BUTTERFLY
+		DO_REDUCE_FULL_S3(0);
+		DO_REDUCE_FULL_S3(1);
+		DO_REDUCE_FULL_S3(2);
+		DO_REDUCE_FULL_S3(3);
+		DO_REDUCE_FULL_S3(4);
+		DO_REDUCE_FULL_S3(5);
+		DO_REDUCE_FULL_S3(6);
+		DO_REDUCE_FULL_S3(7);
 
 		//		FFT_8(expanded + 0, 2); // eight parallel FFT8's
-
 
 		FFT_8(expanded + 1 + 16, 2); // eight parallel FFT8's
 
 		expanded[0 + 16] = REDUCE(expanded[0 + 16]);
 		expanded[1 + 16] = REDUCE(expanded[1 + 16]);
+
 #pragma unroll
 		for (i = 2; i<16; i++)
-			expanded[i + 16] = REDUCE(expanded[i + 16] * c_FFT128_8_16_Twiddle[i * 8 + (threadIdx.x & 7)]);
+			expanded[i + 16] = REDUCE(expanded[i + 16] * c_FFT128_8_16_Twiddle[i * 8 + tidx7]);
 
 		//#pragma unroll 8
 		for (i = 0; i<16; i += 2)
@@ -479,17 +453,17 @@ void Expansion(const uint32_t data0, const uint32_t data1, uint4 *const __restri
 
 	P1 = expanded[ 0]; P2 = SHFL(expanded[ 2], (threadIdx.x-1)&7, 8); P = even ? P1 : P2;
 	Q1 = expanded[16]; Q2 = SHFL(expanded[18], (threadIdx.x-1)&7, 8); Q = even ? Q1 : Q2;
-	vec0.x = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm0[threadIdx.x&7], 8);
+	vec0.x = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm0[tidx7], 8);
 	P1 = expanded[ 8]; P2 = SHFL(expanded[10], (threadIdx.x-1)&7, 8); P = even ? P1 : P2;
 	Q1 = expanded[24]; Q2 = SHFL(expanded[26], (threadIdx.x-1)&7, 8); Q = even ? Q1 : Q2;
-	vec0.y = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm0[threadIdx.x&7], 8);
+	vec0.y = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm0[tidx7], 8);
 	P1 = expanded[ 4]; P2 = SHFL(expanded[ 6], (threadIdx.x-1)&7, 8); P = even ? P1 : P2;
 	Q1 = expanded[20]; Q2 = SHFL(expanded[22], (threadIdx.x-1)&7, 8); Q = even ? Q1 : Q2;
-	vec0.z = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm0[threadIdx.x&7], 8);
+	vec0.z = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm0[tidx7], 8);
 	P1 = expanded[12]; P2 = SHFL(expanded[14], (threadIdx.x-1)&7, 8); P = even ? P1 : P2;
 	Q1 = expanded[28]; Q2 = SHFL(expanded[30], (threadIdx.x-1)&7, 8); Q = even ? Q1 : Q2;
-	vec0.w = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm0[threadIdx.x&7], 8);
-	g_temp4[threadIdx.x&7] = vec0;
+	vec0.w = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm0[tidx7], 8);
+	g_temp4[tidx7] = vec0;
 
 //  1   9   5  13   3  11   7  15      17  25  21  29  19  27  23  31         6 6 6 6 6 6 6 6     6 6 6 6 6 6 6 6
 //  1   9   5  13   3  11   7  15      17  25  21  29  19  27  23  31         2 2 2 2 2 2 2 2     2 2 2 2 2 2 2 2
@@ -500,17 +474,17 @@ void Expansion(const uint32_t data0, const uint32_t data1, uint4 *const __restri
 
 	P1 = expanded[ 1]; P2 = SHFL(expanded[ 3], (threadIdx.x-1)&7, 8); P = even ? P1 : P2;
 	Q1 = expanded[17]; Q2 = SHFL(expanded[19], (threadIdx.x-1)&7, 8); Q = even ? Q1 : Q2;
-	vec0.x = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm1[threadIdx.x&7], 8);
+	vec0.x = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm1[tidx7], 8);
 	P1 = expanded[ 9]; P2 = SHFL(expanded[11], (threadIdx.x-1)&7, 8); P = even ? P1 : P2;
 	Q1 = expanded[25]; Q2 = SHFL(expanded[27], (threadIdx.x-1)&7, 8); Q = even ? Q1 : Q2;
-	vec0.y = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm1[threadIdx.x&7], 8);
+	vec0.y = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm1[tidx7], 8);
 	P1 = expanded[ 5]; P2 = SHFL(expanded[ 7], (threadIdx.x-1)&7, 8); P = even ? P1 : P2;
 	Q1 = expanded[21]; Q2 = SHFL(expanded[23], (threadIdx.x-1)&7, 8); Q = even ? Q1 : Q2;
-	vec0.z = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm1[threadIdx.x&7], 8);
+	vec0.z = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm1[tidx7], 8);
 	P1 = expanded[13]; P2 = SHFL(expanded[15], (threadIdx.x-1)&7, 8); P = even ? P1 : P2;
 	Q1 = expanded[29]; Q2 = SHFL(expanded[31], (threadIdx.x-1)&7, 8); Q = even ? Q1 : Q2;
-	vec0.w = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm1[threadIdx.x&7], 8);
-	g_temp4[8+(threadIdx.x&7)] = vec0;
+	vec0.w = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm1[tidx7], 8);
+	g_temp4[8 + tidx7] = vec0;
 
 //  1   9   5  13   3  11   7  15      17  25  21  29  19  27  23  31         7 7 7 7 7 7 7 7     7 7 7 7 7 7 7 7
 //  1   9   5  13   3  11   7  15      17  25  21  29  19  27  23  31         5 5 5 5 5 5 5 5     5 5 5 5 5 5 5 5
@@ -519,21 +493,21 @@ void Expansion(const uint32_t data0, const uint32_t data1, uint4 *const __restri
 
 	// 7 5 3 1
 
-	bool hi = (threadIdx.x&7)>=4;
+	bool hi = tidx7 >=4;
 
 	P1 = hi?expanded[ 1]:expanded[ 0]; P2 = SHFL(hi?expanded[ 3]:expanded[ 2], (threadIdx.x+1)&7, 8); P = !even ? P1 : P2;
 	Q1 = hi?expanded[17]:expanded[16]; Q2 = SHFL(hi?expanded[19]:expanded[18], (threadIdx.x+1)&7, 8); Q = !even ? Q1 : Q2;
-	vec0.x = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm2[threadIdx.x&7], 8);
+	vec0.x = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm2[tidx7], 8);
 	P1 = hi?expanded[ 9]:expanded[ 8]; P2 = SHFL(hi?expanded[11]:expanded[10], (threadIdx.x+1)&7, 8); P = !even ? P1 : P2;
 	Q1 = hi?expanded[25]:expanded[24]; Q2 = SHFL(hi?expanded[27]:expanded[26], (threadIdx.x+1)&7, 8); Q = !even ? Q1 : Q2;
-	vec0.y = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm2[threadIdx.x&7], 8);
+	vec0.y = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm2[tidx7], 8);
 	P1 = hi?expanded[ 5]:expanded[ 4]; P2 = SHFL(hi?expanded[ 7]:expanded[ 6], (threadIdx.x+1)&7, 8); P = !even ? P1 : P2;
 	Q1 = hi?expanded[21]:expanded[20]; Q2 = SHFL(hi?expanded[23]:expanded[22], (threadIdx.x+1)&7, 8); Q = !even ? Q1 : Q2;
-	vec0.z = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm2[threadIdx.x&7], 8);
+	vec0.z = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm2[tidx7], 8);
 	P1 = hi?expanded[13]:expanded[12]; P2 = SHFL(hi?expanded[15]:expanded[14], (threadIdx.x+1)&7, 8); P = !even ? P1 : P2;
 	Q1 = hi?expanded[29]:expanded[28]; Q2 = SHFL(hi?expanded[31]:expanded[30], (threadIdx.x+1)&7, 8); Q = !even ? Q1 : Q2;
-	vec0.w = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm2[threadIdx.x&7], 8);
-	g_temp4[16+(threadIdx.x&7)] = vec0;
+	vec0.w = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm2[tidx7], 8);
+	g_temp4[16+ tidx7] = vec0;
 
 //  1   9   5  13   3  11   7  15      17  25  21  29  19  27  23  31         1 1 1 1 1 1 1 1     1 1 1 1 1 1 1 1
 //  1   9   5  13   3  11   7  15      17  25  21  29  19  27  23  31         3 3 3 3 3 3 3 3     3 3 3 3 3 3 3 3
@@ -542,21 +516,21 @@ void Expansion(const uint32_t data0, const uint32_t data1, uint4 *const __restri
 
   // 1 3 5 7
 
-	bool lo = (threadIdx.x&7)<4;
+	bool lo = tidx7<4;
 
 	P1 = lo?expanded[ 1]:expanded[ 0]; P2 = SHFL(lo?expanded[ 3]:expanded[ 2], (threadIdx.x+1)&7, 8); P = !even ? P1 : P2;
 	Q1 = lo?expanded[17]:expanded[16]; Q2 = SHFL(lo?expanded[19]:expanded[18], (threadIdx.x+1)&7, 8); Q = !even ? Q1 : Q2;
-	vec0.x = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm3[threadIdx.x&7], 8);
+	vec0.x = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm3[tidx7], 8);
 	P1 = lo?expanded[ 9]:expanded[ 8]; P2 = SHFL(lo?expanded[11]:expanded[10], (threadIdx.x+1)&7, 8); P = !even ? P1 : P2;
 	Q1 = lo?expanded[25]:expanded[24]; Q2 = SHFL(lo?expanded[27]:expanded[26], (threadIdx.x+1)&7, 8); Q = !even ? Q1 : Q2;
-	vec0.y = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm3[threadIdx.x&7], 8);
+	vec0.y = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm3[tidx7], 8);
 	P1 = lo?expanded[ 5]:expanded[ 4]; P2 = SHFL(lo?expanded[ 7]:expanded[ 6], (threadIdx.x+1)&7, 8); P = !even ? P1 : P2;
 	Q1 = lo?expanded[21]:expanded[20]; Q2 = SHFL(lo?expanded[23]:expanded[22], (threadIdx.x+1)&7, 8); Q = !even ? Q1 : Q2;
-	vec0.z = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm3[threadIdx.x&7], 8);
+	vec0.z = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm3[tidx7], 8);
 	P1 = lo?expanded[13]:expanded[12]; P2 = SHFL(lo?expanded[15]:expanded[14], (threadIdx.x+1)&7, 8); P = !even ? P1 : P2;
 	Q1 = lo?expanded[29]:expanded[28]; Q2 = SHFL(lo?expanded[31]:expanded[30], (threadIdx.x+1)&7, 8); Q = !even ? Q1 : Q2;
-	vec0.w = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm3[threadIdx.x&7], 8);
-	g_temp4[24+(threadIdx.x&7)] = vec0;
+	vec0.w = SHFL((int)__byte_perm(185*P,  185*Q , 0x5410), c_perm3[tidx7], 8);
+	g_temp4[24+ tidx7] = vec0;
 
 //  1   9   5  13   3  11   7  15       1   9   5  13   3  11   7  15         0 0 0 0 0 0 0 0     1 1 1 1 1 1 1 1
 //  0   8   4  12   2  10   6  14       0   8   4  12   2  10   6  14         4 4 4 4 4 4 4 4     5 5 5 5 5 5 5 5
@@ -573,21 +547,21 @@ void Expansion(const uint32_t data0, const uint32_t data1, uint4 *const __restri
 	P1 = sel?expanded[0]:expanded[1]; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	Q2 = sel?expanded[2]:expanded[3]; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.x = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm4[threadIdx.x&7], 8);
+	vec0.x = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm4[tidx7], 8);
 	P1 = sel?expanded[8]:expanded[9]; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	Q2 = sel?expanded[10]:expanded[11]; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.y = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm4[threadIdx.x&7], 8);
+	vec0.y = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm4[tidx7], 8);
 	P1 = sel?expanded[4]:expanded[5]; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	Q2 = sel?expanded[6]:expanded[7]; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.z = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm4[threadIdx.x&7], 8);
+	vec0.z = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm4[tidx7], 8);
 	P1 = sel?expanded[12]:expanded[13]; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	Q2 = sel?expanded[14]:expanded[15]; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.w = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm4[threadIdx.x&7], 8);
+	vec0.w = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm4[tidx7], 8);
 
-	g_temp4[32+(threadIdx.x&7)] = vec0;
+	g_temp4[32+ tidx7] = vec0;
 
 //  0   8   4  12   2  10   6  14       0   8   4  12   2  10   6  14         6 6 6 6 6 6 6 6     7 7 7 7 7 7 7 7
 //  1   9   5  13   3  11   7  15       1   9   5  13   3  11   7  15         2 2 2 2 2 2 2 2     3 3 3 3 3 3 3 3
@@ -597,21 +571,21 @@ void Expansion(const uint32_t data0, const uint32_t data1, uint4 *const __restri
 	P1 = sel?expanded[1]:expanded[0]; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	Q2 = sel?expanded[3]:expanded[2]; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.x = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm5[threadIdx.x&7], 8);
+	vec0.x = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm5[tidx7], 8);
 	P1 = sel?expanded[9]:expanded[8]; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	Q2 = sel?expanded[11]:expanded[10]; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.y = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm5[threadIdx.x&7], 8);
+	vec0.y = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm5[tidx7], 8);
 	P1 = sel?expanded[5]:expanded[4]; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	Q2 = sel?expanded[7]:expanded[6]; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.z = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm5[threadIdx.x&7], 8);
+	vec0.z = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm5[tidx7], 8);
 	P1 = sel?expanded[13]:expanded[12]; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	Q2 = sel?expanded[15]:expanded[14]; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.w = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm5[threadIdx.x&7], 8);
+	vec0.w = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm5[tidx7], 8);
 
-	g_temp4[40+(threadIdx.x&7)] = vec0;
+	g_temp4[40+ tidx7] = vec0;
 
 // 16  24  20  28  18  26  22  30      16  24  20  28  18  26  22  30         6 6 6 6 6 6 6 6     7 7 7 7 7 7 7 7
 // 16  24  20  28  18  26  22  30      16  24  20  28  18  26  22  30         0 0 0 0 0 0 0 0     1 1 1 1 1 1 1 1
@@ -624,21 +598,21 @@ void Expansion(const uint32_t data0, const uint32_t data1, uint4 *const __restri
 	t = SHFL(expanded[17],(threadIdx.x+4)&7,8); P1 = sel?t:expanded[16]; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	t = SHFL(expanded[19],(threadIdx.x+4)&7,8); Q2 = sel?t:expanded[18]; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.x = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm6[threadIdx.x&7], 8);
+	vec0.x = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm6[tidx7], 8);
 	t = SHFL(expanded[25],(threadIdx.x+4)&7,8); P1 = sel?t:expanded[24]; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	t = SHFL(expanded[27],(threadIdx.x+4)&7,8); Q2 = sel?t:expanded[26]; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.y = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm6[threadIdx.x&7], 8);
+	vec0.y = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm6[tidx7], 8);
 	t = SHFL(expanded[21],(threadIdx.x+4)&7,8); P1 = sel?t:expanded[20]; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	t = SHFL(expanded[23],(threadIdx.x+4)&7,8); Q2 = sel?t:expanded[22]; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.z = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm6[threadIdx.x&7], 8);
+	vec0.z = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm6[tidx7], 8);
 	t = SHFL(expanded[29],(threadIdx.x+4)&7,8); P1 = sel?t:expanded[28]; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	t = SHFL(expanded[31],(threadIdx.x+4)&7,8); Q2 = sel?t:expanded[30]; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.w = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm6[threadIdx.x&7], 8);
+	vec0.w = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm6[tidx7], 8);
 
-	g_temp4[48+(threadIdx.x&7)] = vec0;
+	g_temp4[48+ tidx7] = vec0;
 
 // 17  25  21  29  19  27  23  31      17  25  21  29  19  27  23  31         4 4 4 4 4 4 4 4     5 5 5 5 5 5 5 5
 // 17  25  21  29  19  27  23  31      17  25  21  29  19  27  23  31         2 2 2 2 2 2 2 2     3 3 3 3 3 3 3 3
@@ -650,21 +624,21 @@ void Expansion(const uint32_t data0, const uint32_t data1, uint4 *const __restri
 	t = SHFL(expanded[16],(threadIdx.x+4)&7,8); P1 = sel?expanded[17]:t; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	t = SHFL(expanded[18],(threadIdx.x+4)&7,8); Q2 = sel?expanded[19]:t; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.x = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm7[threadIdx.x&7], 8);
+	vec0.x = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm7[tidx7], 8);
 	t = SHFL(expanded[24],(threadIdx.x+4)&7,8); P1 = sel?expanded[25]:t; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	t = SHFL(expanded[26],(threadIdx.x+4)&7,8); Q2 = sel?expanded[27]:t; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.y = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm7[threadIdx.x&7], 8);
+	vec0.y = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm7[tidx7], 8);
 	t = SHFL(expanded[20],(threadIdx.x+4)&7,8); P1 = sel?expanded[21]:t; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	t = SHFL(expanded[22],(threadIdx.x+4)&7,8); Q2 = sel?expanded[23]:t; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.z = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm7[threadIdx.x&7], 8);
+	vec0.z = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm7[tidx7], 8);
 	t = SHFL(expanded[28],(threadIdx.x+4)&7,8); P1 = sel?expanded[29]:t; Q1 = SHFL(P1, threadIdx.x^1, 8);
 	t = SHFL(expanded[30],(threadIdx.x+4)&7,8); Q2 = sel?expanded[31]:t; P2 = SHFL(Q2, threadIdx.x^1, 8);
 	P = even? P1 : P2; Q = even? Q1 : Q2;
-	vec0.w = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm7[threadIdx.x&7], 8);
+	vec0.w = SHFL((int)__byte_perm(233*P,  233*Q , 0x5410), c_perm7[tidx7], 8);
 
-	g_temp4[56+(threadIdx.x&7)] = vec0;
+	g_temp4[56+ tidx7] = vec0;
 }
 
 /***************************************************/
