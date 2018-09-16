@@ -2625,16 +2625,16 @@ static void parse_arg(int key, char *arg)
 	break;
 	case 'f': // CH - Divisor for Difficulty
 		d = atof(arg);
-		if(d == 0)	/* sanity check */
+		if(d <= 0.0)	/* sanity check */
 		{
-			printf("Error: diff factor can't be 0\n");
+			printf("Error: diff factor can't be 0 or negative\n");
 			exit(EXIT_FAILURE);
 		}
 		opt_difficulty = d;
 		break;
 	case 'm': // --diff-multiplier
 		d = atof(arg);
-		if(d <= 0.)
+		if(d <= 0.0)
 		{
 			printf("Error: diff multiplier can't be zero or negative\n");
 			exit(EXIT_FAILURE);
