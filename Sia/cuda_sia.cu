@@ -68,7 +68,7 @@ static uint64_t __swap_hilo(const uint64_t source)
 
 __device__ unsigned int numberofresults;
 
-__global__ void __launch_bounds__(blocksize, 3) siakernel(uint32_t * __restrict__ nonceOut, uint64_t target, uint64_t startnonce)
+__global__ void __launch_bounds__(blocksize, 2) siakernel(uint32_t * __restrict__ nonceOut, uint64_t target, uint64_t startnonce)
 {
 	uint64_t v[16];
 	const uint64_t start = startnonce + (blockDim.x * blockIdx.x + threadIdx.x)*npt;
