@@ -56,6 +56,16 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			intensity = 256 * 64 * 5;
 			use_tpruvot = true;
 		}
+		else if(strstr(props.name, "2080"))
+		{
+			intensity = 256 * 64 * 5;
+			// use_tpruvot = true;   benchmark needed
+		}
+		else if(strstr(props.name, "2070"))
+		{
+			intensity = 256 * 64 * 5;
+			// use_tpruvot = true;  benchmark needed
+		}
 		else if(strstr(props.name, "1080 Ti"))
 		{
 			intensity = 256 * 64 * 5;
