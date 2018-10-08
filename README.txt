@@ -1,4 +1,4 @@
-ccMiner release 8.22(KlausT-mod) (Juli 12th, 2018)
+ccMiner release 8.23(KlausT-mod) (October 7th, 2018)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -260,6 +260,8 @@ features.
                   fix for intensities between 8 and 9
 2018-07-12 v8.22: add --hwmonitor option
                   some bug fixes
+2018-10-07 v8.23: skein bug fix (lost shares when mining with low difficulty)
+                  fix small memory leak
 
 >>> AUTHORS <<<
 

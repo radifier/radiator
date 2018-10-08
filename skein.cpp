@@ -115,7 +115,7 @@ int scanhash_skeincoin(int thr_id, uint32_t *pdata,
 					{
 						if (opt_debug || opt_benchmark)
 							applog(LOG_INFO, "GPU #%d: found nonce $%08X", device_map[thr_id], foundnonces[1]);
-						pdata[19 + res] = swab32_if(foundnonces[1], !swap);
+						pdata[21] = swab32_if(foundnonces[1], !swap);
 						res++;
 					}
 					else
