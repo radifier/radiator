@@ -113,6 +113,7 @@ const char *algo_names[] =
 	"jackpot",
 	"luffa",
 	"lyra2v2",
+	"lyra2v3",
 	"myr-gr",
 	"nist5",
 	"penta",
@@ -250,7 +251,8 @@ Options:\n\
 			jackpot     Jackpot (JHA)\n\
 			keccak      Keccak-256 (Maxcoin)\n\
 			luffa       Doomcoin\n\
-			lyra2v2     VertCoin\n\
+			lyra2v2     Monacoin\n\
+            lyra2v3     Vertcoin\n\
 			myr-gr      Myriad-Groestl\n\
 			neoscrypt   neoscrypt (FeatherCoin)\n\
 			nist5       NIST5 (TalkCoin)\n\
@@ -1369,6 +1371,7 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 		case ALGO_GROESTL:
 		case ALGO_KECCAK:
 		case ALGO_LYRA2v2:
+		case ALGO_LYRA2v3:
 			diff_to_target(work->target, sctx->job.diff / (256.0 * opt_difficulty));
 			break;
 		default:
@@ -1625,6 +1628,7 @@ static void *miner_thread(void *userdata)
 				minmax = 1000000 * max64time;
 				break;
 			case ALGO_LYRA2v2:
+			case ALGO_LYRA2v3:
 				minmax = 1900000 * max64time;
 				break;
 			case ALGO_NEO:
@@ -1761,6 +1765,11 @@ static void *miner_thread(void *userdata)
 		case ALGO_LYRA2v2:
 			rc = scanhash_lyra2v2(thr_id, work.data, work.target,
 				max_nonce, &hashes_done);
+			break;
+
+		case ALGO_LYRA2v3:
+			rc = scanhash_lyra2v3(thr_id, work.data, work.target,
+								  max_nonce, &hashes_done);
 			break;
 
 		case ALGO_NIST5:
