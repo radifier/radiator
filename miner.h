@@ -333,6 +333,10 @@ extern int scanhash_lyra2v2(int thr_id, uint32_t *pdata,
 	const uint32_t *ptarget, uint32_t max_nonce,
 	uint32_t *hashes_done);
 
+extern int scanhash_lyra2v3(int thr_id, uint32_t *pdata,
+							const uint32_t *ptarget, uint32_t max_nonce,
+							uint32_t *hashes_done);
+
 extern int scanhash_nist5(int thr_id, uint32_t *pdata,
 	uint32_t *ptarget, uint32_t max_nonce,
 	uint32_t *hashes_done);
@@ -657,6 +661,7 @@ enum sha_algos
 	ALGO_JACKPOT,
 	ALGO_LUFFA_DOOM,
 	ALGO_LYRA2v2,
+	ALGO_LYRA2v3,
 	ALGO_MYR_GR,
 	ALGO_NIST5,
 	ALGO_PENTABLAKE,

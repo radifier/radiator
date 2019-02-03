@@ -281,6 +281,8 @@
     <CudaCompile Include="cuda_bitcoin.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
+    <CudaCompile Include="lyra2\cuda_lyra2v3.cu" />
+    <CudaCompile Include="lyra2\lyra2REv3.cpp" />
     <CudaCompile Include="neoscrypt\cuda_neoscrypt_tpruvot.cu">
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37</CodeGeneration>
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|x64'">compute_75,sm_75;compute_70,sm_70;compute_61,sm_61;compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37</CodeGeneration>
@@ -354,6 +356,9 @@
     <ClInclude Include="cuda_vector.h" />
     <ClInclude Include="elist.h" />
     <ClInclude Include="lyra2\cuda_lyra2v2_sm3.cuh" />
+    <ClInclude Include="lyra2\cuda_lyra2v3_sm3.cuh">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="lyra2\cuda_lyra2_vectors.h" />
     <ClInclude Include="miner.h" />
     <ClInclude Include="neoscrypt\cuda_vector_tpruvot.cuh" />

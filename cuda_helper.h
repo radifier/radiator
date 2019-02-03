@@ -668,7 +668,7 @@ static __device__ __forceinline__ uint2 operator* (uint2 a, uint2 b)
 
 // uint2 method
 #if  __CUDA_ARCH__ >= 320 && !defined NOASM
-static __device__ __inline__ uint2 ROR2(const uint2 a, const int offset)
+static __device__ __forceinline__ uint2 ROR2(const uint2 a, const int offset)
 {
 	uint2 result;
 	if (offset < 32) {
@@ -682,7 +682,7 @@ static __device__ __inline__ uint2 ROR2(const uint2 a, const int offset)
 	return result;
 }
 #else
-static __device__ __inline__ uint2 ROR2(const uint2 v, const int n)
+static __device__ __forceinline__ uint2 ROR2(const uint2 v, const int n)
 {
 	uint2 result;
 	if (n <= 32) 
@@ -699,26 +699,26 @@ static __device__ __inline__ uint2 ROR2(const uint2 v, const int n)
 }
 #endif
 
-static __device__ __inline__ uint32_t ROL8(const uint32_t x)
+static __device__ __forceinline__ uint32_t ROL8(const uint32_t x)
 {
 #ifdef __CUDA_ARCH__
 	return __byte_perm(x, x, 0x2103);
 #endif
 }
-static __device__ __inline__ uint32_t ROL16(const uint32_t x)
+static __device__ __forceinline__ uint32_t ROL16(const uint32_t x)
 {
 #ifdef __CUDA_ARCH__
 	return __byte_perm(x, x, 0x1032);
 #endif
 }
-static __device__ __inline__ uint32_t ROL24(const uint32_t x)
+static __device__ __forceinline__ uint32_t ROL24(const uint32_t x)
 {
 #ifdef __CUDA_ARCH__
 	return __byte_perm(x, x, 0x0321);
 #endif
 }
 
-static __device__ __inline__ uint2 ROR8(const uint2 a)
+static __device__ __forceinline__ uint2 ROR8(const uint2 a)
 {
 #ifdef __CUDA_ARCH__
 	uint2 result;
@@ -729,7 +729,7 @@ static __device__ __inline__ uint2 ROR8(const uint2 a)
 #endif
 }
 
-static __device__ __inline__ uint2 ROR16(const uint2 a)
+static __device__ __forceinline__ uint2 ROR16(const uint2 a)
 {
 #ifdef __CUDA_ARCH__
 	uint2 result;
@@ -740,7 +740,7 @@ static __device__ __inline__ uint2 ROR16(const uint2 a)
 #endif
 }
 
-static __device__ __inline__ uint2 ROR24(const uint2 a)
+static __device__ __forceinline__ uint2 ROR24(const uint2 a)
 {
 #ifdef __CUDA_ARCH__
 	uint2 result;
@@ -751,7 +751,7 @@ static __device__ __inline__ uint2 ROR24(const uint2 a)
 #endif
 }
 
-static __device__ __inline__ uint2 ROL8(const uint2 a)
+static __device__ __forceinline__ uint2 ROL8(const uint2 a)
 {
 #ifdef __CUDA_ARCH__
 	uint2 result;
@@ -762,7 +762,7 @@ static __device__ __inline__ uint2 ROL8(const uint2 a)
 #endif
 }
 
-static __device__ __inline__ uint2 ROL16(const uint2 a)
+static __device__ __forceinline__ uint2 ROL16(const uint2 a)
 {
 #ifdef __CUDA_ARCH__
 	uint2 result;
@@ -773,7 +773,7 @@ static __device__ __inline__ uint2 ROL16(const uint2 a)
 #endif
 }
 
-static __device__ __inline__ uint2 ROL24(const uint2 a)
+static __device__ __forceinline__ uint2 ROL24(const uint2 a)
 {
 #ifdef __CUDA_ARCH__
 	uint2 result;
@@ -787,7 +787,7 @@ static __device__ __inline__ uint2 ROL24(const uint2 a)
 #if  __CUDA_ARCH__ >= 320 && !defined NOASM
 
 
-__inline__ static __device__ uint2 ROL2(const uint2 a, const int offset) {
+__forceinline__ static __device__ uint2 ROL2(const uint2 a, const int offset) {
 	uint2 result;
 	if (offset >= 32) {
 		asm("shf.l.wrap.b32 %0, %1, %2, %3;" : "=r"(result.x) : "r"(a.x), "r"(a.y), "r"(offset));
@@ -800,7 +800,7 @@ __inline__ static __device__ uint2 ROL2(const uint2 a, const int offset) {
 	return result;
 }
 #else
-__inline__ static __device__ uint2 ROL2(const uint2 v, const int n)
+__forceinline__ static __device__ uint2 ROL2(const uint2 v, const int n)
 {
 		uint2 result;
 		if (n <= 32) 
