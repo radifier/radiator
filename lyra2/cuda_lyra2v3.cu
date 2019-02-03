@@ -54,9 +54,9 @@ __device__ __forceinline__
 void Gfunc_v5(uint2 &a, uint2 &b, uint2 &c, uint2 &d)
 {
 	a += b; d = eorswap32(a, d);
-	c += d; b ^= c; b = ROR24(b);
-	a += b; d ^= a; d = ROR16(d);
-	c += d; b ^= c; b = ROR2(b, 63);
+	c += d; b = ROR24(b ^ c);
+	a += b; d = ROR16(d ^ a);
+	c += d; b = ROR2(b ^ c, 63);
 }
 
 
@@ -113,16 +113,12 @@ void reduceDuplexRowSetup2(uint2 state[4])
 
 		#pragma unroll
 		for (j = 0; j < 3; j++)
-			state1[Ncol - i - 1][j] = state0[i][j];
-
-		#pragma unroll
-		for (j = 0; j < 3; j++)
-			state1[Ncol - i - 1][j] ^= state[j];
+			state1[Ncol - i - 1][j] = state0[i][j] ^ state[j];
 	}
 
 	for (i = 0; i < Ncol; i++)
 	{
-		const uint32_t s0 = memshift * Ncol * 0 + i * memshift;
+//		const uint32_t s0 = memshift * Ncol * 0 + i * memshift;
 		const uint32_t s2 = memshift * Ncol * 2 + memshift * (Ncol - 1) - i*memshift;
 
 		#pragma unroll
@@ -133,15 +129,11 @@ void reduceDuplexRowSetup2(uint2 state[4])
 
 		#pragma unroll
 		for (j = 0; j < 3; j++)
-			state2[j] = state1[i][j];
+			state2[j] = state1[i][j] ^ state[j];
 
 		#pragma unroll
 		for (j = 0; j < 3; j++)
-			state2[j] ^= state[j];
-
-		#pragma unroll
-		for (j = 0; j < 3; j++)
-			ST4S(s2 + j, state2[j]);
+			ST4S((memshift * Ncol * 2 + memshift * (Ncol - 1) - i*memshift) + j, state2[j]);
 
 		uint2 Data0 = shuffle2(state[0], threadIdx.x - 1, 4);
 		uint2 Data1 = shuffle2(state[1], threadIdx.x - 1, 4);
@@ -159,7 +151,7 @@ void reduceDuplexRowSetup2(uint2 state[4])
 
 		#pragma unroll
 		for (j = 0; j < 3; j++)
-			ST4S(s0 + j, state0[i][j]);
+			ST4S( i * memshift + j, state0[i][j]);
 
 		#pragma unroll
 		for (j = 0; j < 3; j++)
