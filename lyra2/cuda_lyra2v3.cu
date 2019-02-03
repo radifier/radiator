@@ -440,6 +440,9 @@ void lyra2v3_cpu_init(int thr_id, uint32_t threads, uint64_t *d_matrix)
 	get_cuda_arch(&cuda_arch[thr_id]);
 	// just assign the device pointer allocated in main loop
 	cudaMemcpyToSymbol(DMatrix, &d_matrix, sizeof(uint64_t*), 0, cudaMemcpyHostToDevice);
+#if CUDART_VERSION >= 9000
+	CUDA_SAFE_CALL(cudaFuncSetAttribute(lyra2v3_gpu_hash_32_2, cudaFuncAttributePreferredSharedMemoryCarveout, 100));
+#endif
 }
 
 __host__
