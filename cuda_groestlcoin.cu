@@ -4,8 +4,6 @@
 #include <memory.h>
 
 #include "cuda_helper.h"
-#include <host_defines.h>
-
 
 // globaler Speicher für alle HeftyHashes aller Threads
 static uint32_t *d_resultNonce[MAX_GPUS];

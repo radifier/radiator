@@ -4,7 +4,6 @@
 #include "sph/sph_fugue.h"
 
 #include "cuda_helper.h"
-#include <host_defines.h>
 
 extern unsigned int cudaschedule;
 
