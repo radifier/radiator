@@ -118,9 +118,6 @@ void reduceDuplexRowSetup2(uint2 state[4])
 
 	for (i = 0; i < Ncol; i++)
 	{
-//		const uint32_t s0 = memshift * Ncol * 0 + i * memshift;
-		const uint32_t s2 = memshift * Ncol * 2 + memshift * (Ncol - 1) - i*memshift;
-
 		#pragma unroll
 		for (j = 0; j < 3; j++)
 			state[j] ^= state1[i][j] + state0[i][j];
