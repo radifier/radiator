@@ -387,6 +387,7 @@
     <ClInclude Include="sph\sph_types.h" />
     <ClInclude Include="sph\sph_whirlpool.h" />
     <ClInclude Include="sph\sysendian.h" />
+    <ClInclude Include="x11\cuda_x11_simd512_func.cuh" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lyra2\Lyra2.h" />
@@ -500,9 +501,6 @@
     <CudaCompile Include="x11\fresh.cpp">
     </CudaCompile>
     <CudaCompile Include="x11\s3.cpp" />
-    <CudaCompile Include="x11\simd_functions.cu">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </CudaCompile>
     <CudaCompile Include="x11\x11.cpp">
     </CudaCompile>
     <CudaCompile Include="x13\cuda_x13_hamsi512.cu">

@@ -374,6 +374,9 @@
     <ClInclude Include="lyra2\cuda_lyra2v3_sm3.cuh">
       <Filter>Header Files\CUDA\lyra2</Filter>
     </ClInclude>
+    <ClInclude Include="x11\cuda_x11_simd512_func.cuh">
+      <Filter>Header Files\CUDA</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="cuda.cpp">
@@ -437,9 +440,6 @@
       <Filter>Source Files\CUDA\x11</Filter>
     </CudaCompile>
     <CudaCompile Include="x11\cuda_x11_simd512.cu">
-      <Filter>Source Files\CUDA\x11</Filter>
-    </CudaCompile>
-    <CudaCompile Include="x11\simd_functions.cu">
       <Filter>Source Files\CUDA\x11</Filter>
     </CudaCompile>
     <CudaCompile Include="x13\cuda_x13_fugue512.cu">
