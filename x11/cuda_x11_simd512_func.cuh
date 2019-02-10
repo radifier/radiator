@@ -1154,7 +1154,7 @@ __device__ __forceinline__ void Round8_0(uint32_t *A, const int thr_offset,
 	uint32_t w[8];
     uint4 hv1, hv2;
 
-	int tmp = 0 + thr_offset;
+	size_t tmp = 0 + thr_offset;
 	hv1 = expanded_vector(tmp++); w[0] = hv1.x; w[1] = hv1.y; w[2] = hv1.z; w[3] = hv1.w;
 	hv2 = expanded_vector(tmp++); w[4] = hv2.x; w[5] = hv2.y; w[6] = hv2.z; w[7] = hv2.w;
 	STEP8_IF_0(w, r, s, A, &A[8], &A[16], &A[24]);
@@ -1187,7 +1187,7 @@ __device__ __forceinline__ void Round8_1(uint32_t *A, const int thr_offset,
 	uint32_t w[8];
     uint4 hv1, hv2;
 
-	int tmp = 16 + thr_offset;
+	size_t tmp = 16 + thr_offset;
     hv1 = expanded_vector(tmp++); w[0] = hv1.x; w[1] = hv1.y; w[2] = hv1.z; w[3] = hv1.w;
     hv2 = expanded_vector(tmp++); w[4] = hv2.x; w[5] = hv2.y; w[6] = hv2.z; w[7] = hv2.w;
 	STEP8_IF_8(w, r, s, A, &A[8], &A[16], &A[24]);
@@ -1220,7 +1220,7 @@ __device__ __forceinline__ void Round8_2(uint32_t *A, const int thr_offset,
 	uint32_t w[8];
     uint4 hv1, hv2;
 
-	int tmp = 32 + thr_offset;
+	size_t tmp = 32 + thr_offset;
     hv1 = expanded_vector(tmp++); w[0] = hv1.x; w[1] = hv1.y; w[2] = hv1.z; w[3] = hv1.w;
     hv2 = expanded_vector(tmp++); w[4] = hv2.x; w[5] = hv2.y; w[6] = hv2.z; w[7] = hv2.w;
 	STEP8_IF_16(w, r, s, A, &A[8], &A[16], &A[24]);
@@ -1253,7 +1253,7 @@ __device__ __forceinline__ void Round8_3(uint32_t *A, const int thr_offset,
 	uint32_t w[8];
     uint4 hv1, hv2;
 
-	int tmp = 48 + thr_offset;
+	size_t tmp = 48 + thr_offset;
     hv1 = expanded_vector(tmp++); w[0] = hv1.x; w[1] = hv1.y; w[2] = hv1.z; w[3] = hv1.w;
     hv2 = expanded_vector(tmp++); w[4] = hv2.x; w[5] = hv2.y; w[6] = hv2.z; w[7] = hv2.w;
 	STEP8_IF_24(w, r, s, A, &A[8], &A[16], &A[24]);
@@ -1284,7 +1284,7 @@ __device__ __forceinline__ void Round8_3(uint32_t *A, const int thr_offset,
 
 __device__ __forceinline__ void SIMD_Compress1(uint32_t *A, const int thr_id, const uint32_t *M, uint4 *g_fft4) {
 	int i;
-	const int thr_offset = thr_id << 6; // thr_id * 128 (je zwei elemente)
+	const size_t thr_offset = thr_id << 6; // thr_id * 128 (je zwei elemente)
 #pragma unroll 8
 	for(i=0; i<8; i++) {
 		A[i] ^= M[i];
