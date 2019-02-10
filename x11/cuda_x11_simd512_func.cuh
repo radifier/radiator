@@ -1,6 +1,6 @@
 #define SIMD_FUNCTIONS_CUH
 
-__device__ __forceinline__ void STEP8_IF_0(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_0(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -29,7 +29,7 @@ __device__ __forceinline__ void STEP8_IF_0(const uint32_t *w, const int r, const
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_1(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_1(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -58,7 +58,7 @@ __device__ __forceinline__ void STEP8_IF_1(const uint32_t *w, const int r, const
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_2(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_2(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -87,7 +87,7 @@ __device__ __forceinline__ void STEP8_IF_2(const uint32_t *w, const int r, const
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_3(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_3(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -116,7 +116,7 @@ __device__ __forceinline__ void STEP8_IF_3(const uint32_t *w, const int r, const
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_4(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_4(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -145,7 +145,7 @@ __device__ __forceinline__ void STEP8_MAJ_4(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_5(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_5(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -174,7 +174,7 @@ __device__ __forceinline__ void STEP8_MAJ_5(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_6(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_6(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -203,7 +203,7 @@ __device__ __forceinline__ void STEP8_MAJ_6(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_7(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_7(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -232,7 +232,7 @@ __device__ __forceinline__ void STEP8_MAJ_7(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_8(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_8(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -261,7 +261,7 @@ __device__ __forceinline__ void STEP8_IF_8(const uint32_t *w, const int r, const
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_9(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_9(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -290,7 +290,7 @@ __device__ __forceinline__ void STEP8_IF_9(const uint32_t *w, const int r, const
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_10(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_10(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 
 	uint32_t temp;
@@ -320,7 +320,7 @@ __device__ __forceinline__ void STEP8_IF_10(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_11(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_11(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -349,7 +349,7 @@ __device__ __forceinline__ void STEP8_IF_11(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_12(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_12(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -378,7 +378,7 @@ __device__ __forceinline__ void STEP8_MAJ_12(const uint32_t *w, const int r, con
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_13(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_13(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -407,7 +407,7 @@ __device__ __forceinline__ void STEP8_MAJ_13(const uint32_t *w, const int r, con
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_14(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_14(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -436,7 +436,7 @@ __device__ __forceinline__ void STEP8_MAJ_14(const uint32_t *w, const int r, con
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_15(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_15(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -465,7 +465,7 @@ __device__ __forceinline__ void STEP8_MAJ_15(const uint32_t *w, const int r, con
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_16(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_16(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -494,7 +494,7 @@ __device__ __forceinline__ void STEP8_IF_16(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_17(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_17(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -523,7 +523,7 @@ __device__ __forceinline__ void STEP8_IF_17(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_18(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_18(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -552,7 +552,7 @@ __device__ __forceinline__ void STEP8_IF_18(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_19(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_19(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -581,7 +581,7 @@ __device__ __forceinline__ void STEP8_IF_19(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_20(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_20(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -610,7 +610,7 @@ __device__ __forceinline__ void STEP8_MAJ_20(const uint32_t *w, const int r, con
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_21(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_21(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -639,7 +639,7 @@ __device__ __forceinline__ void STEP8_MAJ_21(const uint32_t *w, const int r, con
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_22(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_22(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -668,7 +668,7 @@ __device__ __forceinline__ void STEP8_MAJ_22(const uint32_t *w, const int r, con
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_23(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_23(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -697,7 +697,7 @@ __device__ __forceinline__ void STEP8_MAJ_23(const uint32_t *w, const int r, con
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_24(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_24(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -726,7 +726,7 @@ __device__ __forceinline__ void STEP8_IF_24(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_25(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_25(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -755,7 +755,7 @@ __device__ __forceinline__ void STEP8_IF_25(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_26(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_26(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -784,7 +784,7 @@ __device__ __forceinline__ void STEP8_IF_26(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_27(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_27(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -813,7 +813,7 @@ __device__ __forceinline__ void STEP8_IF_27(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_28(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_28(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -842,7 +842,7 @@ __device__ __forceinline__ void STEP8_MAJ_28(const uint32_t *w, const int r, con
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_29(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_29(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -871,7 +871,7 @@ __device__ __forceinline__ void STEP8_MAJ_29(const uint32_t *w, const int r, con
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_30(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_30(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -900,7 +900,7 @@ __device__ __forceinline__ void STEP8_MAJ_30(const uint32_t *w, const int r, con
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_MAJ_31(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_MAJ_31(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -929,7 +929,7 @@ __device__ __forceinline__ void STEP8_MAJ_31(const uint32_t *w, const int r, con
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_32(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_32(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -958,7 +958,7 @@ __device__ __forceinline__ void STEP8_IF_32(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_33(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_33(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -987,7 +987,7 @@ __device__ __forceinline__ void STEP8_IF_33(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_34(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_34(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -1016,7 +1016,7 @@ __device__ __forceinline__ void STEP8_IF_34(const uint32_t *w, const int r, cons
 		A[j] = R[j];
 	}
 }
-__device__ __forceinline__ void STEP8_IF_35(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
+static __device__ __forceinline__ void STEP8_IF_35(const uint32_t *w, const int r, const int s, uint32_t * A, const uint32_t * B, const uint32_t * C, uint32_t * D)
 {
 	uint32_t temp;
 	uint32_t R[8];
@@ -1058,7 +1058,7 @@ static __constant__ uint32_t d_cw0[8][8] =
 	0x582A48FD, 0xEEA81892, 0x4F7EAA01, 0xAF10A88F, 0x11581720, 0x34C124DB, 0xD1C0AB73, 0x1E5AF0D3
 };
 
-__device__ __forceinline__ void Round8_0_final(uint32_t *A, int r, int s, int t, int u)
+static __device__ __forceinline__ void Round8_0_final(uint32_t *A, int r, int s, int t, int u)
 {
 	STEP8_IF_0(d_cw0[0], r, s, A, &A[8], &A[16], &A[24]);
 	STEP8_IF_1(d_cw0[1], s, t, &A[24], A, &A[8], &A[16]);
@@ -1082,7 +1082,7 @@ static __constant__ uint32_t d_cw1[8][8] =
 	0x0E74D4A4, 0xF754CF95, 0xD84136EC, 0x3124AB73, 0x39D03B42, 0x0E74BCCB, 0x0F2DBD84, 0x41C35C80
 };
 
-__device__ __forceinline__ void Round8_1_final(uint32_t *A, int r, int s, int t, int u)
+static __device__ __forceinline__ void Round8_1_final(uint32_t *A, int r, int s, int t, int u)
 {
 	STEP8_IF_8(d_cw1[0], r, s, A, &A[8], &A[16], &A[24]);
 	STEP8_IF_9(d_cw1[1], s, t, &A[24], A, &A[8], &A[16]);
@@ -1106,7 +1106,7 @@ static __constant__ uint32_t d_cw2[8][8] =
 	0x9A1065F0, 0xB0D14F2F, 0x8D5272AE, 0xC4D73B29, 0x91DF6E21, 0x949A6B66, 0x303DCFC3, 0x5932A6CE
 };
 
-__device__ __forceinline__ void Round8_2_final(uint32_t *A, int r, int s, int t, int u)
+static __device__ __forceinline__ void Round8_2_final(uint32_t *A, int r, int s, int t, int u)
 {
 	STEP8_IF_16(d_cw2[0], r, s, A, &A[8], &A[16], &A[24]);
 	STEP8_IF_17(d_cw2[1], s, t, &A[24], A, &A[8], &A[16]);
@@ -1130,7 +1130,7 @@ static __constant__ uint32_t d_cw3[8][8] =
 	0xF1700E90, 0xB2A34D5D, 0xD0AC2F54, 0x5760A8A0, 0x8C697397, 0x624C9DB4, 0xE85617AA, 0x95836A7D
 };
 
-__device__ __forceinline__ void Round8_3_final(uint32_t *A, int r, int s, int t, int u)
+static __device__ __forceinline__ void Round8_3_final(uint32_t *A, int r, int s, int t, int u)
 {
 	STEP8_IF_24(d_cw3[0], r, s, A, &A[8], &A[16], &A[24]);
 	STEP8_IF_25(d_cw3[1], s, t, &A[24], A, &A[8], &A[16]);
@@ -1149,7 +1149,7 @@ __device__ __forceinline__ void Round8_3_final(uint32_t *A, int r, int s, int t,
 #define expanded_vector(x) __ldg(&g_fft4[x])
 #endif
 
-__device__ __forceinline__ void Round8_0(uint32_t *A, const int thr_offset,
+static __device__ __forceinline__ void Round8_0(uint32_t *A, const int thr_offset,
 		int r, int s, int t, int u, uint4 *g_fft4) {
 	uint32_t w[8];
     uint4 hv1, hv2;
@@ -1182,7 +1182,7 @@ __device__ __forceinline__ void Round8_0(uint32_t *A, const int thr_offset,
 
 
 }
-__device__ __forceinline__ void Round8_1(uint32_t *A, const int thr_offset,
+static __device__ __forceinline__ void Round8_1(uint32_t *A, const int thr_offset,
 		int r, int s, int t, int u, uint4 *g_fft4) {
 	uint32_t w[8];
     uint4 hv1, hv2;
@@ -1215,7 +1215,7 @@ __device__ __forceinline__ void Round8_1(uint32_t *A, const int thr_offset,
 
 
 }
-__device__ __forceinline__ void Round8_2(uint32_t *A, const int thr_offset,
+static __device__ __forceinline__ void Round8_2(uint32_t *A, const int thr_offset,
 		int r, int s, int t, int u, uint4 *g_fft4) {
 	uint32_t w[8];
     uint4 hv1, hv2;
@@ -1248,7 +1248,7 @@ __device__ __forceinline__ void Round8_2(uint32_t *A, const int thr_offset,
 
 
 }
-__device__ __forceinline__ void Round8_3(uint32_t *A, const int thr_offset,
+static __device__ __forceinline__ void Round8_3(uint32_t *A, const int thr_offset,
 		int r, int s, int t, int u, uint4 *g_fft4) {
 	uint32_t w[8];
     uint4 hv1, hv2;
@@ -1282,7 +1282,7 @@ __device__ __forceinline__ void Round8_3(uint32_t *A, const int thr_offset,
 
 }
 
-__device__ __forceinline__ void SIMD_Compress1(uint32_t *A, const int thr_id, const uint32_t *M, uint4 *g_fft4) {
+static __device__ __forceinline__ void SIMD_Compress1(uint32_t *A, const int thr_id, const uint32_t *M, uint4 *g_fft4) {
 	int i;
 	const size_t thr_offset = thr_id << 6; // thr_id * 128 (je zwei elemente)
 #pragma unroll 8
@@ -1294,7 +1294,7 @@ __device__ __forceinline__ void SIMD_Compress1(uint32_t *A, const int thr_id, co
 	Round8_1(A, thr_offset, 28, 19, 22, 7, g_fft4);
 }
 
-__device__ __forceinline__ void Compression1(const uint32_t *hashval, const int texture_id, uint4 *g_fft4, uint32_t *g_state) {
+static __device__ __forceinline__ void Compression1(const uint32_t *hashval, const int texture_id, uint4 *g_fft4, uint32_t *g_state) {
 	uint32_t A[32];
 	int i;
 #pragma unroll 32
@@ -1308,7 +1308,7 @@ __device__ __forceinline__ void Compression1(const uint32_t *hashval, const int 
 	for (i=0; i < 32; i++) state[threadIdx.x+blockDim.x*i] = A[i];
 }
 
-__device__ __forceinline__ void SIMD_Compress2(uint32_t *A, const int thr_id, uint4 *g_fft4) {
+static __device__ __forceinline__ void SIMD_Compress2(uint32_t *A, const int thr_id, uint4 *g_fft4) {
 	uint32_t IV[4][8];
 	int i;
 	const int thr_offset = thr_id << 6; // thr_id * 128 (je zwei elemente)
@@ -1327,7 +1327,7 @@ __device__ __forceinline__ void SIMD_Compress2(uint32_t *A, const int thr_id, ui
 	STEP8_IF_35(IV[3], 25,  4, &A[8], &A[16], &A[24], A);
 }
 
-__device__ __forceinline__ void Compression2(const int texture_id, uint4 *g_fft4, uint32_t *g_state) {
+static __device__ __forceinline__ void Compression2(const int texture_id, uint4 *g_fft4, uint32_t *g_state) {
 	uint32_t A[32];
 	int i;
 	uint32_t *state = &g_state[blockIdx.x * (blockDim.x*32)];
@@ -1338,7 +1338,7 @@ __device__ __forceinline__ void Compression2(const int texture_id, uint4 *g_fft4
 	for (i=0; i < 32; i++) state[threadIdx.x+blockDim.x*i] = A[i];
 }
 
-__device__ __forceinline__ void SIMD_Compress_Final(uint32_t *A, const uint32_t *M) {
+static __device__ __forceinline__ void SIMD_Compress_Final(uint32_t *A, const uint32_t *M) {
 	uint32_t IV[4][8];
 	int i;
 #pragma unroll 8
@@ -1363,7 +1363,7 @@ __device__ __forceinline__ void SIMD_Compress_Final(uint32_t *A, const uint32_t 
 	STEP8_IF_35(IV[3], 25,  4, &A[8], &A[16], &A[24], A);
 }
 
-__device__ __forceinline__ void Final(uint32_t *hashval, const int texture_id, uint4 *g_fft4, uint32_t *g_state) {
+static __device__ __forceinline__ void Final(uint32_t *hashval, const int texture_id, uint4 *g_fft4, uint32_t *g_state) {
 	uint32_t A[32];
 	int i;
 	uint32_t *state = &g_state[blockIdx.x * (blockDim.x*32)];

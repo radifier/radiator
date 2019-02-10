@@ -103,7 +103,7 @@ __constant__ int c_FFT256_2_128_Twiddle[128] =
  * Unrolled decimation in frequency (DIF) radix-2 NTT.
  * Output data is in revbin_permuted order.
  */
-__device__ __forceinline__
+static __device__ __forceinline__
 void FFT_8(int *y, int stripe)
 {
 #define X(i) y[stripe*i]
@@ -164,7 +164,7 @@ do { \
  * Unrolled decimation in frequency (DIF) radix-2 NTT.
  * Output data is in revbin_permuted order.
  */
-__device__ __forceinline__
+static __device__ __forceinline__
 void FFT_16(int *y)
 {
 #define DO_REDUCE_FULL_S(i) \
@@ -219,7 +219,7 @@ void FFT_16(int *y)
 #undef DO_REDUCE_FULL_S
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void FFT_128_full(int y[128])
 {
 	int i;
@@ -236,7 +236,7 @@ void FFT_128_full(int y[128])
 		FFT_16(y + i);  // eight sequential FFT16's, each one executed in parallel by 8 threads
 }
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void FFT_256_halfzero(int y[256])
 {
 	/*
@@ -267,7 +267,7 @@ void FFT_256_halfzero(int y[256])
 
 /***************************************************/
 
-__device__ __forceinline__
+static __device__ __forceinline__
 void Expansion(const uint32_t *data, uint4 *g_temp4)
 {
 	/* Message Expansion using Number Theoretical Transform similar to FFT */
