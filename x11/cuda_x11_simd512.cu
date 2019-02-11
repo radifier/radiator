@@ -507,7 +507,8 @@ void x11_simd512_gpu_final_64(uint32_t threads, uint32_t *g_hash, uint4 *g_fft4,
 __host__
 int x11_simd512_cpu_init(int thr_id, uint32_t threads)
 {
-	CUDA_SAFE_CALL(cudaMalloc(&d_temp4[thr_id], sizeof(uint4) * 64 * threads)); /* todo: prevent -i 21 */
+	size_t temp4size = sizeof(uint4) * 64 * threads;
+	CUDA_SAFE_CALL(cudaMalloc(&d_temp4[thr_id], temp4size));
 	CUDA_SAFE_CALL(cudaMalloc(&d_state[thr_id], sizeof(int) * 32 * threads));
 
 	// Texture for 128-Bit Zugriffe
@@ -516,7 +517,7 @@ int x11_simd512_cpu_init(int thr_id, uint32_t threads)
 	texRef1D_128.filterMode = cudaFilterModePoint;
 	texRef1D_128.addressMode[0] = cudaAddressModeClamp;
 
-	CUDA_SAFE_CALL(cudaBindTexture(NULL, &texRef1D_128, d_temp4[thr_id], &channelDesc128, 64*sizeof(uint4)*threads));
+	CUDA_SAFE_CALL(cudaBindTexture(0, &texRef1D_128, d_temp4[thr_id], &channelDesc128, temp4size));
 
 	return 0;
 }
@@ -546,18 +547,18 @@ void x11_simd512_cpu_hash_64(int thr_id, uint32_t threads, uint32_t startNounce,
 
 	if (device_sm[dev_id] >= 500 && cuda_arch[dev_id] >= 500)
 	{
-		x11_simd512_gpu_compress_64_maxwell <<< grid, block >>> (threads, d_hash, d_temp4[thr_id], d_state[thr_id]);
+		x11_simd512_gpu_compress_64_maxwell <<< grid, block, 0, gpustream[thr_id] >>> (threads, d_hash, d_temp4[thr_id], d_state[thr_id]);
 		CUDA_SAFE_CALL(cudaGetLastError());
 	}
 	else
 	{
-		x11_simd512_gpu_compress1_64 <<< grid, block >>> (threads, d_hash, d_temp4[thr_id], d_state[thr_id]);
+		x11_simd512_gpu_compress1_64 <<< grid, block, 0, gpustream[thr_id] >>> (threads, d_hash, d_temp4[thr_id], d_state[thr_id]);
 		CUDA_SAFE_CALL(cudaGetLastError());
-		x11_simd512_gpu_compress2_64 <<< grid, block >>> (threads, d_temp4[thr_id], d_state[thr_id]);
+		x11_simd512_gpu_compress2_64 <<< grid, block, 0, gpustream[thr_id] >>> (threads, d_temp4[thr_id], d_state[thr_id]);
 		CUDA_SAFE_CALL(cudaGetLastError());
 	}
 
-	x11_simd512_gpu_final_64 <<<grid, block>>> (threads, d_hash, d_temp4[thr_id], d_state[thr_id]);
+	x11_simd512_gpu_final_64 <<<grid, block, 0, gpustream[thr_id] >>> (threads, d_hash, d_temp4[thr_id], d_state[thr_id]);
 	CUDA_SAFE_CALL(cudaGetLastError());
 
 	//MyStreamSynchronize(NULL, order, thr_id);
