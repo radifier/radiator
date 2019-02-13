@@ -988,12 +988,12 @@ __launch_bounds__(256, 4)
 #else
 __launch_bounds__(256, 3)
 #endif
-void x11_luffaCubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint64_t *const g_hash)
+void x11_luffaCubehash512_gpu_hash_64(uint32_t threads, uint32_t startNounce, uint32_t *const g_hash)
 {
 	const uint32_t thread = (blockDim.x * blockIdx.x + threadIdx.x);
 	if(thread < threads)
 	{
-		uint32_t *const Hash = (uint32_t*)&g_hash[8 * thread];
+		uint32_t *const Hash = &g_hash[16 * thread];
 
 		uint32_t statebuffer[8];
 		uint32_t statechainv[40] =
@@ -1273,6 +1273,6 @@ __host__ void x11_luffaCubehash512_cpu_hash_64(int thr_id, uint32_t threads, uin
 	dim3 grid((threads + threadsperblock - 1) / threadsperblock);
 	dim3 block(threadsperblock);
 
-	x11_luffaCubehash512_gpu_hash_64 << <grid, block, 0, gpustream[thr_id]>> >(threads, startNounce, (uint64_t*)d_hash);
+	x11_luffaCubehash512_gpu_hash_64 << <grid, block, 0, gpustream[thr_id]>> >(threads, startNounce, d_hash);
 	CUDA_SAFE_CALL(cudaGetLastError());
 }
