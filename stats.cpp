@@ -97,14 +97,13 @@ double stats_get_speed(int thr_id, double def_speed)
  */
 int stats_get_history(int thr_id, struct stats_data *data, int max_records)
 {
-	const uint64_t gpu = device_map[thr_id];
 	const uint64_t keymsk = 0xffULL; // last u8 is the gpu
 	int records = 0;
 
 	std::map<uint64_t, stats_data>::reverse_iterator i = tlastscans.rbegin();
 	while (i != tlastscans.rend() && records < max_records) {
 		if (!i->second.ignored)
-			if (thr_id == -1 || (keymsk & i->first) == gpu) {
+			if (thr_id == -1 || (keymsk & i->first) == device_map[thr_id]) {
 				memcpy(&data[records], &(i->second), sizeof(struct stats_data));
 				records++;
 			}
