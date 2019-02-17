@@ -59,10 +59,6 @@ extern "C"{
 #undef SPH_GROESTL_64
 #endif
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4146)
-#endif
-
 /*
  * The internal representation may use either big-endian or
  * little-endian. Using the platform default representation speeds up
@@ -2825,7 +2821,7 @@ groestl_small_close(sph_groestl_small_context *sc,
 	buf = sc->buf;
 	ptr = sc->ptr;
 	z = 0x80 >> n;
-	pad[0] = ((ub & -z) | z) & 0xFF;
+	pad[0] = ((ub & (~z + 1)) | z) & 0xFF;
 	if (ptr < 56) {
 		pad_len = 64 - ptr;
 #if SPH_64
@@ -2961,7 +2957,7 @@ groestl_big_close(sph_groestl_big_context *sc,
 	buf = sc->buf;
 	ptr = sc->ptr;
 	z = 0x80 >> n;
-	pad[0] = ((ub & -z) | z) & 0xFF;
+	pad[0] = ((ub & (~z + 1)) | z) & 0xFF;
 	if (ptr < 120) {
 		pad_len = 128 - ptr;
 #if SPH_64

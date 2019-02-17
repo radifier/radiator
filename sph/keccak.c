@@ -127,10 +127,6 @@ extern "C"{
 #endif
 #endif
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4146)
-#endif
-
 #if SPH_KECCAK_64
 
 static const sph_u64 RC[] = {

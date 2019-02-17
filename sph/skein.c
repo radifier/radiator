@@ -39,10 +39,6 @@
 #define SPH_SMALL_FOOTPRINT_SKEIN   1
 #endif
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4146)
-#endif
-
 #if SPH_64
 
 #if 0
@@ -965,7 +961,7 @@ skein_big_close(sph_skein_big_context *sc, unsigned ub, unsigned n,
 		unsigned char x;
 
 		z = 0x80 >> n;
-		x = ((ub & -z) | z) & 0xFF;
+		x = ((ub & (~z + 1)) | z) & 0xFF;
 		skein_big_core(sc, &x, 1);
 	}
 

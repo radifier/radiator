@@ -47,10 +47,6 @@
 #undef SPH_JH_64
 #endif
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4146)
-#endif
-
 /*
  * The internal bitslice representation may use either big-endian or
  * little-endian (true bitslice operations do not care about the bit
@@ -959,7 +955,7 @@ jh_close(sph_jh_context *sc, unsigned ub, unsigned n,
 #endif
 
 	z = 0x80 >> n;
-	buf[0] = ((ub & -z) | z) & 0xFF;
+	buf[0] = ((ub & (~z + 1)) | z) & 0xFF;
 	if (sc->ptr == 0 && n == 0) {
 		numz = 47;
 	} else {

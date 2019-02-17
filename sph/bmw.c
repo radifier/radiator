@@ -40,10 +40,6 @@
 #define SPH_SMALL_FOOTPRINT_BMW   1
 #endif
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4146)
-#endif
-
 static const sph_u32 IV224[] = {
 	SPH_C32(0x00010203), SPH_C32(0x04050607),
 	SPH_C32(0x08090A0B), SPH_C32(0x0C0D0E0F),
@@ -680,7 +676,7 @@ bmw32_close(sph_bmw_small_context *sc, unsigned ub, unsigned n,
 	buf = sc->buf;
 	ptr = sc->ptr;
 	z = 0x80 >> n;
-	buf[ptr ++] = ((ub & -z) | z) & 0xFF;
+	buf[ptr ++] = ((ub & (~z + 1)) | z) & 0xFF;
 	h = sc->H;
 	if (ptr > (sizeof sc->buf) - 8) {
 		memset(buf + ptr, 0, (sizeof sc->buf) - ptr);
@@ -814,7 +810,7 @@ bmw64_close(sph_bmw_big_context *sc, unsigned ub, unsigned n,
 	buf = sc->buf;
 	ptr = sc->ptr;
 	z = 0x80 >> n;
-	buf[ptr ++] = ((ub & -z) | z) & 0xFF;
+	buf[ptr ++] = ((ub & (~z + 1)) | z) & 0xFF;
 	h = sc->H;
 	if (ptr > (sizeof sc->buf) - 8) {
 		memset(buf + ptr, 0, (sizeof sc->buf) - ptr);

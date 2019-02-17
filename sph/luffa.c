@@ -44,10 +44,6 @@ extern "C"{
 #define SPH_LUFFA_PARALLEL   1
 #endif
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4146)
-#endif
-
 static const sph_u32 V_INIT[5][8] = {
 	{
 		SPH_C32(0x6d251e69), SPH_C32(0x44b051e0),
@@ -1105,7 +1101,7 @@ luffa3_close(sph_luffa224_context *sc, unsigned ub, unsigned n,
 	buf = sc->buf;
 	ptr = sc->ptr;
 	z = 0x80 >> n;
-	buf[ptr ++] = ((ub & -z) | z) & 0xFF;
+	buf[ptr ++] = ((ub & (~z + 1)) | z) & 0xFF;
 	memset(buf + ptr, 0, (sizeof sc->buf) - ptr);
 	READ_STATE3(sc);
 	for (i = 0; i < 2; i ++) {
@@ -1175,7 +1171,7 @@ luffa4_close(sph_luffa384_context *sc, unsigned ub, unsigned n, void *dst)
 	ptr = sc->ptr;
 	out = dst;
 	z = 0x80 >> n;
-	buf[ptr ++] = ((ub & -z) | z) & 0xFF;
+	buf[ptr ++] = ((ub & (~z + 1)) | z) & 0xFF;
 	memset(buf + ptr, 0, (sizeof sc->buf) - ptr);
 	READ_STATE4(sc);
 	for (i = 0; i < 3; i ++) {
@@ -1255,7 +1251,7 @@ luffa5_close(sph_luffa512_context *sc, unsigned ub, unsigned n, void *dst)
 	ptr = sc->ptr;
 	out = dst;
 	z = 0x80 >> n;
-	buf[ptr ++] = ((ub & -z) | z) & 0xFF;
+	buf[ptr ++] = ((ub & (~z + 1)) | z) & 0xFF;
 	memset(buf + ptr, 0, (sizeof sc->buf) - ptr);
 	READ_STATE5(sc);
 	for (i = 0; i < 3; i ++) {

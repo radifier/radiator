@@ -60,10 +60,6 @@ extern "C"{
 #undef SPH_ECHO_64
 #endif
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4146)
-#endif
-
 #define T32   SPH_T32
 #define C32   SPH_C32
 #if SPH_64
@@ -835,7 +831,7 @@ echo_small_close(sph_echo_small_context *sc, unsigned ub, unsigned n,
 		sc->C0 = sc->C1 = sc->C2 = sc->C3 = 0;
 	}
 	z = 0x80 >> n;
-	buf[ptr ++] = ((ub & -z) | z) & 0xFF;
+	buf[ptr ++] = ((ub & (~z + 1)) | z) & 0xFF;
 	memset(buf + ptr, 0, (sizeof sc->buf) - ptr);
 	if (ptr > ((sizeof sc->buf) - 18)) {
 		echo_small_compress(sc);
@@ -894,7 +890,7 @@ echo_big_close(sph_echo_big_context *sc, unsigned ub, unsigned n,
 		sc->C0 = sc->C1 = sc->C2 = sc->C3 = 0;
 	}
 	z = 0x80 >> n;
-	buf[ptr ++] = ((ub & -z) | z) & 0xFF;
+	buf[ptr ++] = ((ub & (~z + 1)) | z) & 0xFF;
 	memset(buf + ptr, 0, (sizeof sc->buf) - ptr);
 	if (ptr > ((sizeof sc->buf) - 18)) {
 		echo_big_compress(sc);

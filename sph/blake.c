@@ -52,10 +52,6 @@ extern "C"{
 #define SPH_COMPACT_BLAKE_64   1
 #endif
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4146)
-#endif
-
 static const sph_u32 IV224[8] = {
 	SPH_C32(0xC1059ED8), SPH_C32(0x367CD507),
 	SPH_C32(0x3070DD17), SPH_C32(0xF70E5939),
@@ -854,7 +850,7 @@ blake32_close(sph_blake_small_context *sc,
 	ptr = sc->ptr;
 	bit_len = ((unsigned)ptr << 3) + n;
 	z = 0x80 >> n;
-	u.buf[ptr] = ((ub & -z) | z) & 0xFF;
+	u.buf[ptr] = ((ub & (~z + 1)) | z) & 0xFF;
 	tl = sc->T0 + bit_len;
 	th = sc->T1;
 	if (ptr == 0 && n == 0) {
@@ -959,7 +955,7 @@ blake64_close(sph_blake_big_context *sc,
 	ptr = sc->ptr;
 	bit_len = ((unsigned)ptr << 3) + n;
 	z = 0x80 >> n;
-	u.buf[ptr] = ((ub & -z) | z) & 0xFF;
+	u.buf[ptr] = ((ub & (~z + 1)) | z) & 0xFF;
 	tl = sc->T0 + bit_len;
 	th = sc->T1;
 	if (ptr == 0 && n == 0) {

@@ -76,10 +76,6 @@
  * @author   Thomas Pornin <thomas.pornin@cryptolog.com>
  */
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4146)
-#endif
-
 #undef SPH_XCAT
 #define SPH_XCAT(a, b)     SPH_XCAT_(a, b)
 #undef SPH_XCAT_
@@ -258,7 +254,7 @@ SPH_XCAT(HASH, _addbits_and_close)(void *cc,
 		unsigned z;
 
 		z = 0x80 >> n;
-		sc->buf[current ++] = ((ub & -z) | z) & 0xFF;
+		sc->buf[current ++] = ((ub & (~z + 1)) | z) & 0xFF;
 	}
 #endif
 	if (current > SPH_MAXPAD) {

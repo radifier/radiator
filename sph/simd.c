@@ -44,10 +44,6 @@ extern "C"{
 #define SPH_SMALL_FOOTPRINT_SIMD   1
 #endif
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4146)
-#endif
-
 typedef sph_u32 u32;
 typedef sph_s32 s32;
 #define C32     SPH_C32

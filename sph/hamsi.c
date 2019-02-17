@@ -108,10 +108,6 @@ extern "C"{
 #define SPH_HAMSI_EXPAND_BIG    8
 #endif
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4146)
-#endif
-
 #include "hamsi_helper.c"
 
 static const sph_u32 IV224[] = {
@@ -415,7 +411,7 @@ hamsi_small_close(sph_hamsi_small_context *sc,
     sph_enc32be(pad + 8, sc->count_low + (ptr << 3) + n);
 #endif
     z = 0x80 >> n;
-    pad[ptr ++] = ((ub & -z) | z) & 0xFF;
+    pad[ptr ++] = ((ub & (~z + 1)) | z) & 0xFF;
     while (ptr < 4)
         pad[ptr ++] = 0;
     hamsi_small(sc, pad, 2);
@@ -717,7 +713,7 @@ hamsi_big_close(sph_hamsi_big_context *sc,
     sph_enc32be(pad + 4, sc->count_low + (ptr << 3) + n);
 #endif
     z = 0x80 >> n;
-    sc->partial[ptr ++] = ((ub & -z) | z) & 0xFF;
+    sc->partial[ptr ++] = ((ub & (~z + 1)) | z) & 0xFF;
     while (ptr < 8)
         sc->partial[ptr ++] = 0;
     hamsi_big(sc, sc->partial, 1);

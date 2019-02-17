@@ -38,10 +38,6 @@
 extern "C"{
 #endif
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4146)
-#endif
-
 /*
  * Part of this code was automatically generated (the part between
  * the "BEGIN" and "END" markers).
@@ -607,7 +603,7 @@ shabal_close(void *cc, unsigned ub, unsigned n, void *dst, unsigned size_words)
 	buf = sc->buf;
 	ptr = sc->ptr;
 	z = 0x80 >> n;
-	buf[ptr] = ((ub & -z) | z) & 0xFF;
+	buf[ptr] = ((ub & (~z + 1)) | z) & 0xFF;
 	memset(buf + ptr + 1, 0, (sizeof sc->buf) - (ptr + 1));
 	READ_STATE(sc);
 	DECODE_BLOCK;

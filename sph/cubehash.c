@@ -71,10 +71,6 @@ extern "C"{
 
 #endif
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4146)
-#endif
-
 static const sph_u32 IV224[] = {
 	SPH_C32(0xB0FC8217), SPH_C32(0x1BEE1A90), SPH_C32(0x829E1A22),
 	SPH_C32(0x6362C342), SPH_C32(0x24D91C30), SPH_C32(0x03A7AA24),
@@ -588,7 +584,7 @@ cubehash_close(sph_cubehash_context *sc, unsigned ub, unsigned n,
 	buf = sc->buf;
 	ptr = sc->ptr;
 	z = 0x80 >> n;
-	buf[ptr ++] = ((ub & -z) | z) & 0xFF;
+	buf[ptr ++] = ((ub & (~z + 1)) | z) & 0xFF;
 	memset(buf + ptr, 0, (sizeof sc->buf) - ptr);
 	READ_STATE(sc);
 	INPUT_BLOCK;
