@@ -816,9 +816,7 @@ static inline void sph_enc64be_aligned(void *dst, sph_u64 val);
 #undef SPH_64
 #undef SPH_64_TRUE
 
-#include <limits.h>
-
-#if defined _MSC_VER || (defined __STDC__ && __STDC_VERSION__ >= 199901L)
+#if defined __STDC__ && __STDC_VERSION__ >= 199901L
 
 /*
  * On C99 implementations, we can use <stdint.h> to get an exact 64-bit
@@ -826,11 +824,7 @@ static inline void sph_enc64be_aligned(void *dst, sph_u64 val);
  * C99 conformance).
  */
 
-#ifdef __cplusplus
-#include <cstdint>
-#else
 #include <stdint.h>
-#endif
 
 #ifdef UINT32_MAX
 typedef uint32_t sph_u32;
@@ -868,8 +862,8 @@ typedef int_fast64_t sph_s64;
 
 typedef unsigned int sph_u32;
 typedef int sph_s32;
-//(sph_u32)
-#define SPH_C32(x)    ((x ## U))
+
+#define SPH_C32(x)    ((sph_u32)(x ## U))
 
 #else
 
@@ -936,25 +930,14 @@ typedef long long sph_s64;
  */
 
 #define SPH_T32(x)    ((x) & SPH_C32(0xFFFFFFFF))
-#if defined _MSC_VER
-#define SPH_ROTL32(x, n) _rotl(x, n)
-#define SPH_ROTR32(x, n) _rotr(x, n)
-#else
-#define SPH_ROTL32(x, n) ((x) << (n)) | ((x) >> (32 - (n)))
-#define SPH_ROTR32(x, n) ((x) >> (n)) | ((x) << (32 - (n)))
-#endif
+#define SPH_ROTL32(x, n)   SPH_T32(((x) << (n)) | ((x) >> (32 - (n))))
+#define SPH_ROTR32(x, n)   SPH_ROTL32(x, (32 - (n)))
 
 #if SPH_64
 
-#if defined _MSC_VER
-#define SPH_ROTR64(x, n) _rotr64(x, n)
-#define SPH_ROTL64(x, n) _rotl64(x, n)
-#else
-#define SPH_ROTR64(x, n)  (((x) >> (n)) | ((x) << (64 - (n))))
-#define SPH_ROTL64(x, n)  (((x) << (n)) | ((x) >> (64 - (n))))
-#endif
-
 #define SPH_T64(x)    ((x) & SPH_C64(0xFFFFFFFFFFFFFFFF))
+#define SPH_ROTL64(x, n)   SPH_T64(((x) << (n)) | ((x) >> (64 - (n))))
+#define SPH_ROTR64(x, n)   SPH_ROTL64(x, (64 - (n)))
 
 #endif
 
@@ -1018,7 +1001,7 @@ typedef long long sph_s64;
 
 #define SPH_DETECT_UNALIGNED         1
 #define SPH_DETECT_LITTLE_ENDIAN     1
-#define SPH_DETECT_UPTR              uintptr_t
+#define SPH_DETECT_UPTR              sph_u32
 #ifdef __GNUC__
 #define SPH_DETECT_I386_GCC          1
 #endif
@@ -1033,7 +1016,7 @@ typedef long long sph_s64;
 
 #define SPH_DETECT_UNALIGNED         1
 #define SPH_DETECT_LITTLE_ENDIAN     1
-#define SPH_DETECT_UPTR              uintptr_t
+#define SPH_DETECT_UPTR              sph_u64
 #ifdef __GNUC__
 #define SPH_DETECT_AMD64_GCC         1
 #endif
