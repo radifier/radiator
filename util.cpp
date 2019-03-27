@@ -2113,10 +2113,11 @@ bool tq_push(struct thread_q *tq, void *data)
 	}
 
 	ent->data = data;
-	INIT_LIST_HEAD(&ent->q_node);
 
 	pthread_mutex_lock(&tq->mutex);
 
+	INIT_LIST_HEAD(&ent->q_node);
+	
 	if(!tq->frozen)
 	{
 		list_add_tail(&ent->q_node, &tq->q);
