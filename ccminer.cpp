@@ -3036,8 +3036,18 @@ int main(int argc, char *argv[])
 	/* init stratum data.. */
 	memset(&stratum.url, 0, sizeof(stratum));
 
-	pthread_mutex_init(&stratum.sock_lock, NULL);
-	pthread_mutex_init(&stratum.work_lock, NULL);
+	int err = pthread_mutex_init(&stratum.sock_lock, NULL);
+	if(err != 0)
+	{
+		applog(LOG_ERR, "pthread_mutex_init error %d", err);
+		proper_exit(EXIT_FAILURE);
+	}
+	err = pthread_mutex_init(&stratum.work_lock, NULL);
+	if(err != 0)
+	{
+		applog(LOG_ERR, "pthread_mutex_init error %d", err);
+		proper_exit(EXIT_FAILURE);
+	}
 
 	if(curl_global_init(CURL_GLOBAL_ALL))
 	{
@@ -3295,12 +3305,23 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
+	int pterr;
 	for(i = 0; i < opt_n_threads; i++)
 	{
 		thr = &thr_info[i];
 		thr->gpu.monitor.sampling_flag = false;
-		pthread_mutex_init(&thr->gpu.monitor.lock, NULL);
-		pthread_cond_init(&thr->gpu.monitor.sampling_signal, NULL);
+		pterr = pthread_mutex_init(&thr->gpu.monitor.lock, NULL);
+		if(pterr != 0)
+		{
+			applog(LOG_ERR, "pthread_mutex_init error %d", pterr);
+			proper_exit(EXIT_FAILURE);
+		}
+		pterr = pthread_cond_init(&thr->gpu.monitor.sampling_signal, NULL);
+		if(pterr != 0)
+		{
+			applog(LOG_ERR, "pthread_cond_init error %d", pterr);
+			proper_exit(EXIT_FAILURE);
+		}
 	}
 
 #ifdef USE_WRAPNVML

@@ -2044,9 +2044,7 @@ out:
 
 struct thread_q *tq_new(void)
 {
-	struct thread_q *tq;
-
-	tq = (struct thread_q *)calloc(1, sizeof(*tq));
+	struct thread_q *tq = (struct thread_q *)calloc(1, sizeof(struct thread_q));
 	if(tq == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
@@ -2054,8 +2052,18 @@ struct thread_q *tq_new(void)
 	}
 
 	INIT_LIST_HEAD(&tq->q);
-	pthread_mutex_init(&tq->mutex, NULL);
-	pthread_cond_init(&tq->cond, NULL);
+	int err = pthread_mutex_init(&tq->mutex, NULL);
+	if(err != 0)
+	{
+		applog(LOG_ERR, "pthread_mutex_init error %d", err);
+		proper_exit(EXIT_FAILURE);
+	}
+	err = pthread_cond_init(&tq->cond, NULL);
+	if(err != 0)
+	{
+		applog(LOG_ERR, "pthread_cond_init error %d", err);
+		proper_exit(EXIT_FAILURE);
+	}
 
 	return tq;
 }
