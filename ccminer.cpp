@@ -78,17 +78,17 @@ void cuda_reset_device(int thr_id, bool *init);
 nvml_handle *hnvml = NULL;
 #endif
 
-enum workio_commands {
+enum workio_commands
+{
 	WC_GET_WORK,
 	WC_SUBMIT_WORK,
 };
 
-struct workio_cmd {
-	enum workio_commands	cmd;
-	struct thr_info		*thr;
-	union {
-		struct work	*work;
-	} u;
+struct workio_cmd
+{
+	struct thr_info *thr;
+	struct work	*work;
+	enum workio_commands cmd;
 };
 
 bool opt_debug_diff = false;
@@ -1036,7 +1036,7 @@ static void workio_cmd_free(struct workio_cmd *wc)
 	switch(wc->cmd)
 	{
 	case WC_SUBMIT_WORK:
-		free(wc->u.work);
+		free(wc->work);
 		break;
 	default: /* do nothing */
 		break;
@@ -1083,7 +1083,7 @@ static bool workio_submit_work(struct workio_cmd *wc, CURL *curl)
 	int failures = 0;
 
 	/* submit solution to bitcoin via JSON-RPC */
-	while(!submit_upstream_work(curl, wc->u.work))
+	while(!submit_upstream_work(curl, wc->work))
 	{
 		if(unlikely((opt_retries >= 0) && (++failures > opt_retries)))
 		{
@@ -1222,8 +1222,8 @@ static bool submit_work(struct thr_info *thr, const struct work *work_in)
 		proper_exit(EXIT_FAILURE);
 	}
 
-	wc->u.work = (struct work *)calloc(1, sizeof(*work_in));
-	if(wc->u.work == NULL)
+	wc->work = (struct work *)calloc(1, sizeof(*work_in));
+	if(wc->work == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
 		proper_exit(EXIT_FAILURE);
@@ -1231,7 +1231,7 @@ static bool submit_work(struct thr_info *thr, const struct work *work_in)
 
 	wc->cmd = WC_SUBMIT_WORK;
 	wc->thr = thr;
-	memcpy(wc->u.work, work_in, sizeof(*work_in));
+	memcpy(wc->work, work_in, sizeof(*work_in));
 
 	/* send solution to workio thread */
 	if(!tq_push(thr_info[work_thr_id].q, wc))
