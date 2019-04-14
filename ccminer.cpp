@@ -1037,6 +1037,11 @@ static void workio_cmd_free(struct workio_cmd *wc)
 	{
 	case WC_SUBMIT_WORK:
 		free(wc->work);
+		if(errno)
+		{
+			applog(LOG_ERR, "free() error in workio_cmd_free: %s", strerror(errno));
+			errno = 0;
+		}
 		break;
 	default: /* do nothing */
 		break;
@@ -1044,6 +1049,11 @@ static void workio_cmd_free(struct workio_cmd *wc)
 
 	memset(wc, 0, sizeof(*wc));	/* poison */
 	free(wc);
+	if(errno)
+	{
+		applog(LOG_ERR, "free() error in workio_cmd_free: %s", strerror(errno));
+		errno = 0;
+	}
 }
 
 static bool workio_get_work(struct workio_cmd *wc, CURL *curl)

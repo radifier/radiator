@@ -2086,6 +2086,11 @@ void tq_free(struct thread_q *tq)
 
 	memset(tq, 0, sizeof(*tq));	/* poison */
 	free(tq);
+	if(errno)
+	{
+		applog(LOG_ERR, "free() error in tq_free: %s", strerror(errno));
+		errno = 0;
+	}
 }
 
 static void tq_freezethaw(struct thread_q *tq, bool frozen)
@@ -2133,6 +2138,11 @@ bool tq_push(struct thread_q *tq, void *data)
 	else
 	{
 		free(ent);
+		if(errno)
+		{
+			applog(LOG_ERR, "free() error in tq_push: %s", strerror(errno));
+			errno = 0;
+		}
 		rc = false;
 	}
 
@@ -2168,6 +2178,11 @@ pop:
 
 	list_del(&ent->q_node);
 	free(ent);
+	if(errno)
+	{
+		applog(LOG_ERR, "free() error in tq_pop: %s", strerror(errno));
+		errno = 0;
+	}
 
 out:
 	pthread_mutex_unlock(&tq->mutex);
