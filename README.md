@@ -5,12 +5,9 @@ based on the Fork by tpruvot@github with X14,X15,X17,WHIRL,Blake256 and LYRA2 su
 Reforked and optimized by sp-hash@github and KlausT@github 
 
 * KlausT:
-    BTC 1QDwdLPrPYSoPqS7pB2kGG84YX6hEcQ4JN
-    BCH 1AH1u7B4KtDTUBgmT6NrXyahNEgTac3fL7
+    Sorry, no donation address. Maybe next year.
 * tpruvot:
     BTC donation address: 1AJdfCpLWPNoAMDfHF1wD5y8VgKSSTHxPo
-* sp-hash:
-    BTC donation address: 1CTiNJyoUmbdMRACtteRWXhGqtSETYd6Vd
 
 A part of the recent algos were originally written by [djm34](https://github.com/djm34).
 

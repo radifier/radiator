@@ -1,4 +1,4 @@
-ccMiner release 8.24(KlausT-mod) (February 7th, 2019)
+ccMiner release 8.25(KlausT-mod) (May 10th, 2019)
 ---------------------------------------------------------------
 
 ***************************************************************
@@ -264,6 +264,7 @@ features.
 2018-10-07 v8.23: skein bug fix (lost shares when mining with low difficulty)
                   fix small memory leak
 2019-02-07 v8.24: add lyra2v3 algo
+2019-05-10 v8.25: fix invalid share bug
 
 >>> AUTHORS <<<
 
