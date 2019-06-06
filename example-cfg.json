@@ -1,18 +1,12 @@
 {
-	"_comment" : "todo: support /* comments */",
-
-	"algo" : "blake",
-	"intensity": 19,
-	"diff": 0.5,
-
-	"api-bind": "0.0.0.0:4068",
-	"statsavg": 20,
-
-	"quiet" : false,
-	"debug" : false,
-	"protocol": false,
-
-	"url" : "stratum+tcp://www.hashharder.com:9585",
-	"user" : "NaEcVrdzoCWHUYXb7X8QoafoKS9UV69Yk4",
-	"pass" : "ccminer"
+"algo" : "lyra2v3",
+"intensity": 19,
+"api-bind": "0.0.0.0:4068",
+"hwmonitor": true,
+"quiet" : false,
+"debug" : false,
+"protocol": false,
+"url" : "stratum+tcp://lyra2rev3.eu.nicehash.com:3373",
+"user" : "12fsRcScJtcqytZJE3NdSAKBLu52PqDzzR",
+"pass" : "x"
 }
