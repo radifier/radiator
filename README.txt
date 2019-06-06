@@ -14,27 +14,7 @@ tpruvot:
 
 >>> Introduction <<<
 
-This is a CUDA accelerated mining application which handle :
-
-Bitcoin
-HeavyCoin & MjollnirCoin
-FugueCoin
-GroestlCoin & Myriad-Groestl
-JackpotCoin
-QuarkCoin family & AnimeCoin
-TalkCoin
-DarkCoin and other X11 coins
-NEOS blake (256 14-rounds)
-BlakeCoin (256 8-rounds)
-Deep, Doom and Qubit
-Keccak (Maxcoin)
-Pentablake (Blake 512 x5)
-S3 (OneCoin)
-Skein (Skein + SHA)
-Lyra2RE (new VertCoin algo)
-Neoscrypt
-
-where some of these coins have a VERY NOTABLE nVidia advantage
+This is a CUDA accelerated mining application where some of the algos have a VERY NOTABLE nVidia advantage
 over competing AMD (OpenCL Only) implementations.
 
 We did not take a big effort on improving usability, so please set
