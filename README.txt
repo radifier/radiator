@@ -151,17 +151,8 @@ its command line interface and options.
 
 >>> Examples <<<
 
-Example for Fuguecoin solo-mining with 4 gpu's in your system and a Fuguecoin-wallet running on localhost
-    ccminer -q -s 1 -t 4 -a fugue256 -o http://localhost:9089/ -u <<myusername>> -p <<mypassword>>
-
-
-Example for Fuguecoin pool mining on dwarfpool.com with all your GPUs
-    ccminer -q -a fugue256 -o stratum+tcp://erebor.dwarfpool.com:3340/ -u YOURWALLETADDRESS.1 -p YOUREMAILADDRESS
-
-
-Example for Groestlcoin solo mining
-    ccminer -q -s 1 -a groestl -o http://127.0.0.1:1441/ -u USERNAME -p PASSWORD
-
+Example for pool mining on nicehash.com with all your GPUs
+    ccminer -a lyra2v3 -O 12fsRcScJtcqytZJE3NdSAKBLu52PqDzzR:x -o stratum+tcp://lyra2rev3.eu.nicehash.com:3373 
 
 For solo-mining you typically use -o http://127.0.0.1:xxxx where xxxx represents
 the rpcport number specified in your wallet's .conf file and you have to pass the same username
