@@ -6,20 +6,9 @@ If you find this tool useful and like to support its continued
           development, then consider a donation.
 
 KlausT:
-  BTC 1QDwdLPrPYSoPqS7pB2kGG84YX6hEcQ4JN
-      bc1qpt7qnvjaqu8t24xqajgyfqan2v00hrdgrut0zq
-  BCH 1AH1u7B4KtDTUBgmT6NrXyahNEgTac3fL7
-      qpjupzv3nevqzlkyxx5d736xt78jvet7usm479kl73
-
+  Sorry, no donation address. Maybe next year.
 tpruvot:
   BTC 1AJdfCpLWPNoAMDfHF1wD5y8VgKSSTHxPo
-
-DJM34:
-  BTC donation address: 1NENYmxwZGHsKFmyjTc5WferTn5VTFb7Ze
-
-cbuchner:
-  LTC donation address: LKS1WDKGED647msBQfLBHV3Ls8sveGncnm
-  BTC donation address: 16hJF5mceSojnTD3ZTUDqdRhDyPJzoRakM
 
 ***************************************************************
 
