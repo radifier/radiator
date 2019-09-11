@@ -2935,20 +2935,23 @@ int main(int argc, char *argv[])
 	printf("using the Nvidia CUDA Toolkit %d.%d\n\n", CUDART_VERSION / 1000, (CUDART_VERSION % 1000) / 10);
 
 #ifdef WIN32
-	if(CUDART_VERSION == 8000 && _MSC_VER > 1900)
-		printf("WARNING! CUDA 8 is not compatible with Visual Studio versions newer than 2015\n\n");
+	if (CUDART_VERSION == 10010 && _MSC_VER > 1920)
+		printf("WARNING! CUDA 10.1 might not be compatible with Visual Studio versions newer than 2019 RTW\n\n");
+	if(CUDART_VERSION == 10000 && _MSC_VER >= 1920)
+		printf("WARNING! CUDA 10 is not compatible with Visual Studio versions newer than 2017\n\n");
+	if (CUDART_VERSION == 9020 && _MSC_VER > 1913)
+		printf("WARNING! CUDA 9.2 is not compatible with Visual Studio versions newer than 2017 Update 6\n\n");
 #endif
 #if !defined __clang__ && defined __GNUC__
-	if(CUDART_VERSION == 8000 && __GNUC__ > 5)
-	{
-		printf("WARNING! GCC %d IS NOT COMPATIBLE WITH CUDA 8!\n", __GNUC__);
-		printf("PLEASE USE GCC 5\n\n");
-	}
-	if((CUDART_VERSION == 9000 || CUDART_VERSION == 9010) && __GNUC__ > 6)
-	{
-		printf("WARNING! GCC %d IS NOT COMPATIBLE WITH CUDA 9!\n", __GNUC__);
-		printf("PLEASE USE GCC 6\n\n");
-	}
+#define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
+	if(CUDART_VERSION == 8000 && GCC_VERSION > 50000)
+		printf("WARNING! CUDA 8 IS NOT COMPATIBLE WITH GCC VERSION NEWER THAN 5!\n");
+	if((CUDART_VERSION == 9000 || CUDART_VERSION == 9010) && GCC_VERSION > 60000)
+		printf("WARNING! CUDA 9 AND 9.1 ARE NOT COMPATIBLE WITH GCC VERSION NEWER THAN 6!\n");
+	if ((CUDART_VERSION == 10000 || CUDART_VERSION == 9020) && GCC_VERSION > 70301)
+		printf("WARNING! CUDA 9.2 AND CUDA 10 ARE NOT COMPATIBLE WITH GCC VERSION NEWER THAN 7.3.1!\n");
+	if (CUDART_VERSION == 10010 && GCC_VERSION > 80201)
+		printf("WARNING! CUDA 10.1 IS NOT COMPATIBLE WITH GCC VERSION NEWER THAN 8.2.1!\n");
 #endif
 
 	long      sat[1];
