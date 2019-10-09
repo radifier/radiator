@@ -667,14 +667,12 @@ static int share_result(int result, const char *reason)
 	return 1;
 }
 
-static bool submit_upstream_work(CURL *curl, struct work *work)
+static bool submit_upstream_work(CURL *__restrict curl, struct work *__restrict work)
 {
-	json_t *val, *res, *reason;
-	bool stale_work = false;
 	char s[384];
 
 	/* discard if a newer block was received */
-	stale_work = !send_stale && (work->height && work->height < g_work.height);
+	bool stale_work = !send_stale && (work->height && work->height < g_work.height);
 	if(have_stratum && !stale_work)
 	{
 		pthread_mutex_lock(&g_work_lock);
@@ -687,8 +685,8 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 		}
 		if(!send_stale && stale_work)
 		{
-			if(opt_debug) applog(LOG_DEBUG, "outdated job %s, new %s",
-								 work->job_id + 8, g_work.job_id + 8);
+			if(opt_debug)
+				applog(LOG_DEBUG, "outdated job %s, new %s", work->job_id + 8, g_work.job_id + 8);
 		}
 		pthread_mutex_unlock(&g_work_lock);
 	}
@@ -718,7 +716,7 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 
 	if(have_stratum)
 	{
-		uint32_t sent = 0;
+		time_t  sent = 0;
 		uint32_t ntime, nonce;
 		char *ntimestr, *noncestr, *xnonce2str;
 
@@ -746,10 +744,10 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 			sent = hashlog_already_submittted(work->job_id, nonce);
 		if(sent > 0)
 		{
-			sent = (uint32_t)time(NULL) - sent;
+			sent = time(NULL) - sent;
 			if(!opt_quiet)
 			{
-				applog(LOG_WARNING, "nonce %s was already sent %u seconds ago", noncestr, sent);
+				applog(LOG_WARNING, "nonce %s was already sent %u seconds ago", noncestr, (uint32_t)sent);
 				hashlog_dump_job(work->job_id);
 			}
 			free(noncestr);
@@ -762,9 +760,8 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 
 		xnonce2str = bin2hex(work->xnonce2, work->xnonce2_len);
 
-		sprintf(s,
-				"{\"method\": \"mining.submit\", \"params\": [\"%s\", \"%s\", \"%s\", \"%s\", \"%s\"], \"id\":4}",
-				rpc_user, work->job_id + 8, xnonce2str, ntimestr, noncestr);
+		sprintf(s, "{\"method\": \"mining.submit\", \"params\": [\"%s\", \"%s\", \"%s\", \"%s\", \"%s\"], \"id\":4}",
+			    rpc_user, work->job_id + 8, xnonce2str, ntimestr, noncestr);
 		free(xnonce2str);
 		free(ntimestr);
 		free(noncestr);
@@ -784,10 +781,9 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 	{
 
 		/* build hex string */
-		char *str = NULL;
 		for(int i = 0; i < (work->datasize >> 2); i++)
 			le32enc(work->data + i, work->data[i]);
-		str = bin2hex((uchar*)work->data, work->datasize);
+		char* str = bin2hex((uchar*)work->data, work->datasize);
 		if(unlikely(!str))
 		{
 			applog(LOG_ERR, "submit_upstream_work OOM");
@@ -795,20 +791,19 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 		}
 
 		/* build JSON-RPC request */
-		sprintf(s,
-				"{\"method\": \"getwork\", \"params\": [\"%s\"], \"id\":4}\r\n",
+		sprintf(s, "{\"method\": \"getwork\", \"params\": [\"%s\"], \"id\":4}\r\n",
 				str);
 
 		/* issue JSON-RPC request */
-		val = json_rpc_call(curl, rpc_url, rpc_userpass, s, false, false, NULL);
+		json_t* val = json_rpc_call(curl, rpc_url, rpc_userpass, s, false, false, NULL);
 		if(unlikely(!val))
 		{
 			applog(LOG_ERR, "submit_upstream_work json_rpc_call failed");
 			return false;
 		}
 
-		res = json_object_get(val, "result");
-		reason = json_object_get(val, "reject-reason");
+		json_t* res = json_object_get(val, "result");
+		json_t* reason = json_object_get(val, "reject-reason");
 		if(!share_result(json_is_true(res), reason ? json_string_value(reason) : NULL))
 		{
 			if(check_dups)
@@ -1114,10 +1109,9 @@ static bool workio_submit_work(struct workio_cmd *wc, CURL *curl)
 static void *workio_thread(void *userdata)
 {
 	struct thr_info *mythr = (struct thr_info*)userdata;
-	CURL *curl;
 	bool ok = true;
 
-	curl = curl_easy_init();
+	CURL* curl = curl_easy_init();
 	if(unlikely(!curl))
 	{
 		applog(LOG_ERR, "CURL initialization failed");
@@ -1126,10 +1120,9 @@ static void *workio_thread(void *userdata)
 
 	while(ok && !stop_mining)
 	{
-		struct workio_cmd *wc;
 
 		/* wait for workio_cmd sent to us, on our queue */
-		wc = (struct workio_cmd *)tq_pop(mythr->q, NULL);
+		struct workio_cmd* wc = (struct workio_cmd *)tq_pop(mythr->q, NULL);
 		if(!wc)
 		{
 			ok = false;
@@ -1137,7 +1130,7 @@ static void *workio_thread(void *userdata)
 		}
 
 		/* process workio_cmd */
-		switch(wc->cmd)
+		switch (wc->cmd)
 		{
 		case WC_GET_WORK:
 			ok = workio_get_work(wc, curl);
@@ -1145,7 +1138,6 @@ static void *workio_thread(void *userdata)
 		case WC_SUBMIT_WORK:
 			ok = workio_submit_work(wc, curl);
 			break;
-
 		default:		/* should never happen */
 			ok = false;
 			break;
@@ -1223,35 +1215,37 @@ static bool get_work(struct thr_info *thr, struct work *work)
 
 static bool submit_work(struct thr_info *thr, const struct work *work_in)
 {
-	struct workio_cmd *wc;
+
 	/* fill out work request message */
-	wc = (struct workio_cmd *)calloc(1, sizeof(struct workio_cmd));
+	struct workio_cmd* wc = (struct workio_cmd *)calloc(1, sizeof(struct workio_cmd));
 	if(wc == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
 		proper_exit(EXIT_FAILURE);
 	}
-
-	wc->work = (struct work *)calloc(1, sizeof(*work_in));
-	if(wc->work == NULL)
+	else
 	{
-		applog(LOG_ERR, "Out of memory!");
-		proper_exit(EXIT_FAILURE);
+		wc->work = (struct work*)calloc(1, sizeof(*work_in));
+		if (wc->work == NULL)
+		{
+			applog(LOG_ERR, "Out of memory!");
+			proper_exit(EXIT_FAILURE);
+		}
+		else
+		{
+			wc->cmd = WC_SUBMIT_WORK;
+			wc->thr = thr;
+			memcpy(wc->work, work_in, sizeof(*work_in));
+
+			/* send solution to workio thread */
+			if (!tq_push(thr_info[work_thr_id].q, wc))
+			{
+				workio_cmd_free(wc);
+				return false;
+			}
+		}
 	}
-
-	wc->cmd = WC_SUBMIT_WORK;
-	wc->thr = thr;
-	memcpy(wc->work, work_in, sizeof(*work_in));
-
-	/* send solution to workio thread */
-	if(!tq_push(thr_info[work_thr_id].q, wc))
-		goto err_out;
-
 	return true;
-
-err_out:
-	workio_cmd_free(wc);
-	return false;
 }
 
 static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
