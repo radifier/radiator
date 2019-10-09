@@ -2115,66 +2115,68 @@ void tq_thaw(struct thread_q *tq)
 
 bool tq_push(struct thread_q *tq, void *data)
 {
-	struct tq_ent *ent;
 	bool rc = true;
 
-	ent = (struct tq_ent *)calloc(1, sizeof(*ent));
+	struct tq_ent* ent = (struct tq_ent *)calloc(1, sizeof(*ent));
 	if(ent == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
 		proper_exit(EXIT_FAILURE);
 	}
-
-	ent->data = data;
-
-	pthread_mutex_lock(&tq->mutex);
-
-	INIT_LIST_HEAD(&ent->q_node);
-	
-	if(!tq->frozen)
-	{
-		list_add_tail(&ent->q_node, &tq->q);
-	}
 	else
 	{
-		free(ent);
-		if(errno)
+		ent->data = data;
+
+		pthread_mutex_lock(&tq->mutex);
+
+		INIT_LIST_HEAD(&ent->q_node);
+
+		if (!tq->frozen)
 		{
-			applog(LOG_ERR, "free() error in tq_push: %s", strerror(errno));
-			errno = 0;
+			list_add_tail(&ent->q_node, &tq->q);
 		}
-		rc = false;
+		else
+		{
+			free(ent);
+			if (errno)
+			{
+				applog(LOG_ERR, "free() error in tq_push: %s", strerror(errno));
+				errno = 0;
+			}
+			rc = false;
+		}
+
+		pthread_cond_signal(&tq->cond);
+		pthread_mutex_unlock(&tq->mutex);
 	}
-
-	pthread_cond_signal(&tq->cond);
-	pthread_mutex_unlock(&tq->mutex);
-
 	return rc;
 }
 
 void *tq_pop(struct thread_q *tq, const struct timespec *abstime)
 {
-	struct tq_ent *ent;
-	void *rval = NULL;
-	int rc;
-
 	pthread_mutex_lock(&tq->mutex);
 
-	if(!list_empty(&tq->q))
-		goto pop;
+	if (list_empty(&tq->q))
+	{
+		int rc;
+		if (abstime)
+			rc = pthread_cond_timedwait(&tq->cond, &tq->mutex, abstime);
+		else
+			rc = pthread_cond_wait(&tq->cond, &tq->mutex);
+		if (rc)
+		{
+			pthread_mutex_unlock(&tq->mutex);
+			return NULL;
+		}
+		if (list_empty(&tq->q))
+		{
+			pthread_mutex_unlock(&tq->mutex);
+			return NULL;
+		}
+	}
 
-	if(abstime)
-		rc = pthread_cond_timedwait(&tq->cond, &tq->mutex, abstime);
-	else
-		rc = pthread_cond_wait(&tq->cond, &tq->mutex);
-	if(rc)
-		goto out;
-	if(list_empty(&tq->q))
-		goto out;
-
-pop:
-	ent = list_entry(tq->q.next, struct tq_ent, q_node);
-	rval = ent->data;
+	struct tq_ent* ent = list_entry(tq->q.next, struct tq_ent, q_node);
+	void* rval = ent->data;
 
 	list_del(&ent->q_node);
 	free(ent);
@@ -2184,7 +2186,6 @@ pop:
 		errno = 0;
 	}
 
-out:
 	pthread_mutex_unlock(&tq->mutex);
 	return rval;
 }
