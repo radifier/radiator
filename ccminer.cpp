@@ -14,7 +14,7 @@
 #else
 #include "ccminer-config-win.h"
 #endif
-#include "cuda_runtime_api.h"
+#include "cuda_runtime.h"
 
 #include <cstdio>
 #include <cstdlib>

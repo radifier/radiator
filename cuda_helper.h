@@ -14,7 +14,6 @@ using namespace std;
 #ifdef __INTELLISENSE__
 #define NOASM
 /* reduce vstudio warnings (__byteperm, blockIdx...) */
-#include <device_functions.h>
 #include <device_launch_parameters.h>
 #define __launch_bounds__(max_tpb, min_blocks)
 #define __CUDA_ARCH__ 610
