@@ -247,7 +247,7 @@
       <MaxRegCount>80</MaxRegCount>
       <PtxAsOptionV>false</PtxAsOptionV>
       <Keep>true</Keep>
-      <CodeGeneration>compute_60,sm_60;compute_61,sm_61;compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37;compute_70,sm_70;compute_75,sm_75</CodeGeneration>
+      <CodeGeneration>compute_60,sm_60;compute_61,sm_61;compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37;compute_70,sm_70;compute_75,sm_75;compute_80,sm_80</CodeGeneration>
       <Include>
       </Include>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -286,7 +286,7 @@
     <CudaCompile Include="lyra2\lyra2REv3.cpp" />
     <CudaCompile Include="neoscrypt\cuda_neoscrypt_tpruvot.cu">
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37</CodeGeneration>
-      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|x64'">compute_75,sm_75;compute_70,sm_70;compute_61,sm_61;compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37</CodeGeneration>
+      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|x64'">compute_80,sm_80;compute_75,sm_75;compute_70,sm_70;compute_61,sm_61;compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37</CodeGeneration>
     </CudaCompile>
     <CudaCompile Include="Sia\sia.cpp" />
     <ClCompile Include="nvapi.cpp" />
@@ -435,7 +435,7 @@
     <CudaCompile Include="Algo256\cuda_skein256.cu" />
     <CudaCompile Include="neoscrypt\cuda_neoscrypt.cu">
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37;</CodeGeneration>
-      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|x64'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37;compute_70,sm_70;compute_75,sm_75</CodeGeneration>
+      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|x64'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37;compute_70,sm_70;compute_75,sm_75;compute_80,sm_80</CodeGeneration>
     </CudaCompile>
     <CudaCompile Include="neoscrypt\neoscrypt.cpp">
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">compute_52,sm_52;compute_50,sm_50;compute_35,sm_35;compute_37,sm_37;</CodeGeneration>

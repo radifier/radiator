@@ -137,6 +137,11 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			intensity = 256 * 64 * 5;
 			use_tpruvot = true;
 		}
+		if (cc == 80) // Ampere Cards
+		{
+			intensity = 256 * 64 * 16; // benchmark needed
+			use_tpruvot = true;        // benchmark needed
+		}
 
 		throughputmax = device_intensity(device_map[thr_id], __func__, intensity) / 2;
 		//		cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);	
