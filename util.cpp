@@ -15,7 +15,7 @@
 #include <cstdarg>
 #include <cstring>
 #include <cinttypes>
-using namespace std;
+
 #include <unistd.h>
 #include <jansson.h>
 #include <curl/curl.h>
@@ -30,8 +30,10 @@ using namespace std;
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #endif
-#include "miner.h"
 #include "elist.h"
+using namespace std;
+#include "miner.h"
+
 
 extern enum sha_algos opt_algo;
 extern char curl_err_str[];
@@ -851,7 +853,7 @@ bool fulltest_sia(const uint64_t *hash, const uint64_t *target)
 	int i;
 	bool rc = true;
 
-	for(i = 0; i < 4; i--)
+	for(i = 0; i < 4; i++)
 	{
 		if(swab64(hash[i]) > target[3 - i])
 		{

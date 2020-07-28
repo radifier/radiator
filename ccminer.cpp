@@ -44,9 +44,6 @@
 #include <sys/sysctl.h>
 #endif
 #endif
-using namespace std;
-
-#include "miner.h"
 
 #ifdef WIN32
 #include <Mmsystem.h>
@@ -54,6 +51,9 @@ using namespace std;
 #include "compat/winansi.h"
 BOOL WINAPI ConsoleHandler(DWORD);
 #endif
+
+using namespace std;
+#include "miner.h"
 
 #define PROGRAM_NAME		"ccminer"
 #define LP_SCANTIME		25
@@ -159,7 +159,7 @@ static const bool opt_time = true;
 enum sha_algos opt_algo = ALGO_INVALID;
 int opt_n_threads = 0;
 int gpu_threads = 1;
-int opt_affinity = -1;
+int64_t opt_affinity = -1;
 int opt_priority = 0;
 static double opt_difficulty = 1; // CH
 static bool opt_extranonce = true;
@@ -404,14 +404,14 @@ static inline void drop_policy(void)
 		sched_setscheduler(0, SCHED_BATCH, &param);
 #endif
 }
-static void affine_to_cpu_mask(int id, uint8_t mask)
+static bool affine_to_cpu_mask(int id, int64_t mask)
 {
 	cpu_set_t set;
 	CPU_ZERO(&set);
 	for(uint8_t i = 0; i < num_cpus; i++)
 	{
 		// cpu mask
-		if(mask & (1 << i))
+		if(mask & (1LL << i))
 		{
 			CPU_SET(i, &set);
 		}
@@ -419,38 +419,51 @@ static void affine_to_cpu_mask(int id, uint8_t mask)
 	if(id == -1)
 	{
 		// process affinity
-		sched_setaffinity(0, sizeof(&set), &set);
+		if (sched_setaffinity(0, sizeof(&set), &set) != 0)
+			return false;
+		else
+			return true;
 	}
 	else
 	{
 		// thread only
-		pthread_setaffinity_np(thr_info[id].pth, sizeof(&set), &set);
+		if (pthread_setaffinity_np(thr_info[id].pth, sizeof(&set), &set) != 0)
+			return false;
+		else
+			return true;
 	}
 }
 #elif defined(__FreeBSD__) /* FreeBSD specific policy and affinity management */
 #include <sys/cpuset.h>
 static inline void drop_policy(void)
 {}
-static void affine_to_cpu_mask(int id, uint8_t mask)
+static bool affine_to_cpu_mask(int id, int64_t mask)
 {
 	cpuset_t set;
 	CPU_ZERO(&set);
 	for(uint8_t i = 0; i < num_cpus; i++)
 	{
-		if(mask & (1 << i)) CPU_SET(i, &set);
+		if(mask & (1LL << i)) CPU_SET(i, &set);
 	}
-	cpuset_setaffinity(CPU_LEVEL_WHICH, CPU_WHICH_TID, -1, sizeof(cpuset_t), &set);
+	if (cpuset_setaffinity(CPU_LEVEL_WHICH, CPU_WHICH_TID, -1, sizeof(cpuset_t), &set) != 0)
+		return false;
+	else
+		return true;
 }
 #else
 #ifdef WIN32
 static inline void drop_policy(void)
 {}
-static void affine_to_cpu_mask(int id, uint8_t mask)
+static bool affine_to_cpu_mask(int id, int64_t mask)
 {
+	bool ret = true;
 	if(id == -1)
-		SetProcessAffinityMask(GetCurrentProcess(), mask);
+		if(SetProcessAffinityMask(GetCurrentProcess(), mask) == false)
+			ret = false;
 	else
-		SetThreadAffinityMask(GetCurrentThread(), mask);
+		if(SetThreadAffinityMask(GetCurrentThread(), mask) == 0)
+			ret = false;
+	return ret;
 }
 #else // OSX is not linux
 static inline void drop_policy(void)
@@ -1449,16 +1462,16 @@ static void *miner_thread(void *userdata)
 		if(opt_affinity == -1)
 		{
 			if(opt_debug)
-				applog(LOG_DEBUG, "Binding thread %d to cpu %d (mask %x)", thr_id,
-				thr_id%num_cpus, (1 << (thr_id)));
-			affine_to_cpu_mask(thr_id, 1 << (thr_id));
+				applog(LOG_DEBUG, "Binding thread %d to cpu %d (mask %x)", thr_id, thr_id%num_cpus, (1 << (thr_id)));
+			if(affine_to_cpu_mask(thr_id, 1LL << (thr_id)) == false)
+				applog(LOG_WARNING, "Binding thread %d to gpu mask %llx failed", thr_id, 1LL << (thr_id));
 		}
-		else if(opt_affinity != -1)
+		else
 		{
 			if(opt_debug)
-				applog(LOG_DEBUG, "Binding thread %d to gpu mask %x", thr_id,
-				opt_affinity);
-			affine_to_cpu_mask(thr_id, opt_affinity);
+				applog(LOG_DEBUG, "Binding thread %d to gpu mask %llx", thr_id, opt_affinity);
+			if(affine_to_cpu_mask(thr_id, opt_affinity) == false)
+				applog(LOG_WARNING, "Binding thread %d to gpu mask %llx failed", thr_id, opt_affinity);
 		}
 	}
 
@@ -2556,13 +2569,16 @@ static void parse_arg(int key, char *arg)
 		}
 		break;
 	case 1020:
-		v = atoi(arg);
-		if(v < -1)
-			v = -1;
-		if(v >(1 << num_cpus) - 1)
-			v = -1;
-		opt_affinity = v;
+	{
+		char* stop;
+		int64_t w = strtoll(arg, &stop, 0);
+		if (w < -1)
+			w = -1;
+		if (w > (1LL << num_cpus) - 1)
+			w = -1;
+		opt_affinity = w;
 		break;
+	}
 	case 1021:
 		v = atoi(arg);
 		if(v < 0 || v > 5)	/* sanity check */
@@ -3154,8 +3170,9 @@ int main(int argc, char *argv[])
 	if(opt_affinity != -1)
 	{
 		if(!opt_quiet)
-			applog(LOG_DEBUG, "Binding process to cpu mask %x", opt_affinity);
-		affine_to_cpu_mask(-1, opt_affinity);
+			applog(LOG_DEBUG, "Binding process to cpu mask %llx", opt_affinity);
+		if(affine_to_cpu_mask(-1, opt_affinity) == false)
+			applog(LOG_WARNING, "Binding process to gpu mask %llx failed", opt_affinity);
 	}
 
 #ifdef HAVE_SYSLOG_H
