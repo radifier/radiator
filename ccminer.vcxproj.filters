@@ -478,9 +478,6 @@
     <CudaCompile Include="Algo256\cuda_fugue256.cu">
       <Filter>Source Files\CUDA\Algo256</Filter>
     </CudaCompile>
-    <CudaCompile Include="Algo256\cuda_groestl256.cu">
-      <Filter>Source Files\CUDA\Algo256</Filter>
-    </CudaCompile>
     <CudaCompile Include="Algo256\cuda_keccak256.cu">
       <Filter>Source Files\CUDA\Algo256</Filter>
     </CudaCompile>

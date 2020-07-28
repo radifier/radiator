@@ -428,7 +428,6 @@
     <CudaCompile Include="Algo256\keccak256.cpp" />
     <CudaCompile Include="Algo256\cuda_blake256.cu" />
     <CudaCompile Include="Algo256\cuda_fugue256.cu" />
-    <CudaCompile Include="Algo256\cuda_groestl256.cu" />
     <CudaCompile Include="Algo256\cuda_keccak256.cu">
       <MaxRegCount>92</MaxRegCount>
     </CudaCompile>

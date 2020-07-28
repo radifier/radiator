@@ -31,7 +31,7 @@ ccminer_SOURCES = elist.h miner.h compat.h \
 			  lyra2/Lyra2.c lyra2/Sponge.c \
 			  lyra2/lyra2REv2.cpp lyra2/cuda_lyra2v2.cu \
 			  lyra2/lyra2REv3.cpp lyra2/cuda_lyra2v3.cu \
-			  Algo256/cuda_blake256.cu Algo256/cuda_groestl256.cu Algo256/cuda_keccak256.cu Algo256/cuda_skein256.cu \
+			  Algo256/cuda_blake256.cu Algo256/cuda_keccak256.cu Algo256/cuda_skein256.cu \
 			  Algo256/cuda_bmw256.cu Algo256/cuda_cubehash256.cu \
 			  Algo256/blake256.cu Algo256/keccak256.cpp \
 			  JHA/jackpotcoin.cpp JHA/cuda_jha_keccak512.cu \
