@@ -56,15 +56,25 @@ int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 			intensity = 256 * 64 * 5;
 			use_tpruvot = true;
 		}
+		else if (strstr(props.name, "3090"))
+		{
+			intensity = 256 * 64 * 32;
+			use_tpruvot = true; // benchmark needed
+		}
+		else if (strstr(props.name, "3080"))
+		{
+			intensity = 256 * 64 * 32;
+			use_tpruvot = true; // benchmark needed
+		}
 		else if(strstr(props.name, "2080"))
 		{
 			intensity = 256 * 64 * 32;
-			use_tpruvot = true;
+			use_tpruvot = true; // benchmark needed
 		}
 		else if(strstr(props.name, "2070"))
 		{
 			intensity = 256 * 64 * 16;
-			use_tpruvot = true;  // benchmark needed
+			use_tpruvot = true;  
 		}
 		else if(strstr(props.name, "RTX"))
 		{
