@@ -1835,7 +1835,7 @@ void quark_keccak512_gpu_hash_64_final(uint32_t threads, uint32_t startNounce, u
 		tmp1 = s[20]; tmp2 = s[21]; s[20] = bitselect(s[20] ^ s[22], s[20], s[21]); s[21] = bitselect(s[21] ^ s[23], s[21], s[22]); s[22] = bitselect(s[22] ^ s[24], s[22], s[23]); s[23] = bitselect(s[23] ^ tmp1, s[23], s[24]); s[24] = bitselect(s[24] ^ tmp2, s[24], tmp1);
 		s[0].x ^= 1;
 
-#pragma nounroll
+#pragma unroll 1
 		for(int i = 1; i < 23; i++)
 		{
 

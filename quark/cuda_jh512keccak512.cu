@@ -63,7 +63,7 @@ __constant__ static __align__(16) uint32_t c_E8_bslice32[42][8] = {
 __device__ __forceinline__
 static void SWAP4(uint32_t *x)
 {
-#pragma nounroll
+#pragma unroll 1
 	// y is used as tmp register too
 	for(uint32_t y = 0; y<4; y++, ++x)
 	{
@@ -78,7 +78,7 @@ static void SWAP4(uint32_t *x)
 __device__ __forceinline__
 static void SWAP2(uint32_t *x)
 {
-#pragma nounroll
+#pragma unroll 1
 	// y is used as tmp register too
 	for(uint32_t y = 0; y<4; y++, ++x)
 	{
@@ -93,7 +93,7 @@ static void SWAP2(uint32_t *x)
 __device__ __forceinline__
 static void SWAP1(uint32_t *x)
 {
-#pragma nounroll
+#pragma unroll 1
 	// y is used as tmp register too
 	for(uint32_t y = 0; y<4; y++, ++x)
 	{

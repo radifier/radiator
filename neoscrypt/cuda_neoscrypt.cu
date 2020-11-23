@@ -751,7 +751,7 @@ static __forceinline__ __device__ uint16 salsa_small_scalar_rnd(const uint16 &X)
 static __device__ __forceinline__ uint16 chacha_small_parallel_rnd(const uint16 &X)
 {
 	uint16 st = X;
-#pragma nounroll 
+#pragma unroll 1 
 	for(int i = 0; i < 10; ++i)
 	{
 		CHACHA_CORE_PARALLEL(st);
@@ -955,7 +955,7 @@ static __forceinline__ __device__ void fastkdf32_v1(uint32_t thread, const  uint
 	uint32_t qbuf, rbuf, bitbuf;
 	__syncthreads();
 
-#pragma nounroll  
+#pragma unroll 1  
 	for(int i = 0; i < 31; i++)
 	{
 		Blake2S(input, input, key);
@@ -1166,7 +1166,7 @@ static __forceinline__ __device__ void fastkdf32_v3(uint32_t thread, const  uint
 	uint32_t qbuf, rbuf, bitbuf;
 	__syncthreads();
 
-#pragma nounroll  
+#pragma unroll 1  
 	for(int i = 0; i < 31; i++)
 	{
 		Blake2S_v2(input, input, key);
@@ -1295,7 +1295,7 @@ __global__ __launch_bounds__(TPB, 1) void neoscrypt_gpu_hash_chacha1_stream1(uin
 	for(int i = 0; i<8; i++)
 		X[i] = __ldg4(&(Input + shiftTr)[i]);
 
-#pragma nounroll  
+#pragma unroll 1  
 	for(int i = 0; i < 128; ++i)
 	{
 		uint32_t offset = shift + i * 8;
@@ -1321,7 +1321,7 @@ __global__ __launch_bounds__(TPB, 1) void neoscrypt_gpu_hash_chacha2_stream1(uin
 	for(int i = 0; i<8; i++)
 		X[i] = __ldg4(&(Tr + shiftTr)[i]);
 
-#pragma nounroll
+#pragma unroll 1
 	for(int t = 0; t < 128; t++)
 	{
 		int idx = (X[6].x.x & 0x7F) << 3;
@@ -1348,7 +1348,7 @@ __global__ __launch_bounds__(TPB, 1) void neoscrypt_gpu_hash_salsa1_stream1(uint
 	for(int i = 0; i<8; i++)
 		Z[i] = __ldg4(&(Input + shiftTr)[i]);
 
-#pragma nounroll
+#pragma unroll 1
 	for(int i = 0; i < 128; ++i)
 	{
 		for(int j = 0; j<8; j++)
@@ -1373,7 +1373,7 @@ __global__ __launch_bounds__(TPB, 1) void neoscrypt_gpu_hash_salsa2_stream1(uint
 	for(int i = 0; i<8; i++)
 		X[i] = __ldg4(&(Tr2 + shiftTr)[i]);
 
-#pragma nounroll 
+#pragma unroll 1 
 	for(int t = 0; t < 128; t++)
 	{
 		int idx = (X[6].x.x & 0x7F) << 3;

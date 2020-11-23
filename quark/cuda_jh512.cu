@@ -57,7 +57,7 @@ static uint32_t *d_found[MAX_GPUS];
 #ifndef NOASM
 __device__ __forceinline__
 static void SWAP4(uint32_t *x) {
-#pragma nounroll
+#pragma unroll 1
 	// y is used as tmp register too
 	for (uint32_t y = 0; y<4; y++, ++x) {
 		asm("and.b32 %1, %0, 0xF0F0F0F0;"
@@ -70,7 +70,7 @@ static void SWAP4(uint32_t *x) {
 
 __device__ __forceinline__
 static void SWAP2(uint32_t *x) {
-#pragma nounroll
+#pragma unroll 1
 	// y is used as tmp register too
 	for (uint32_t y = 0; y<4; y++, ++x) {
 		asm("and.b32 %1, %0, 0xCCCCCCCC;"
@@ -83,7 +83,7 @@ static void SWAP2(uint32_t *x) {
 
 __device__ __forceinline__
 static void SWAP1(uint32_t *x) {
-#pragma nounroll
+#pragma unroll 1
 	// y is used as tmp register too
 	for (uint32_t y = 0; y<4; y++, ++x) {
 		asm("and.b32 %1, %0, 0xAAAAAAAA;"

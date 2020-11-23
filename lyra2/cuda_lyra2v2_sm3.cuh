@@ -123,7 +123,7 @@ void reduceDuplexRowtV3(const int rowIn, const int rowInOut, const int rowOut, v
 	uint32_t ps2 = (memshift * rowInOut + Nrow * Ncol * memshift * thread);
 	uint32_t ps3 = (memshift * rowOut + Nrow * Ncol * memshift * thread);
 
-#pragma nounroll
+#pragma unroll 1
 	for(int i = 0; i < Ncol; i++)
 	{
 		uint32_t s1 = ps1 + Nrow * i*memshift;
