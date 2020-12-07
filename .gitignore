@@ -50,3 +50,7 @@ x64/Release/
 .cproject
 .buildpath
 
+
+/.vs/slnx.sqlite
+/.vs/VSWorkspaceState.json
+/.vs/ProjectSettings.json
