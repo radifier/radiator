@@ -1596,63 +1596,63 @@ static void *miner_thread(void *userdata)
 		else
 			max64time = (uint32_t)max((time_t)1, (time_t)scan_time + g_work_time - time(NULL));
 
-		max64 = max64time * (uint32_t)thr_hashrates[thr_id];
+		max64 = (uint64_t)max64time * (uint32_t)thr_hashrates[thr_id];
 
 		/* on start, max64 should not be 0,
 		*    before hashrate is computed */
 		switch(opt_algo)
 		{
 			case ALGO_KECCAK:
-				minmax = 83000000 * max64time;
+				minmax = 83000000ULL * max64time;
 				break;
 			case ALGO_BLAKE:
 			case ALGO_SIA:
-				minmax = 260000000 * max64time;
+				minmax = 260000000ULL * max64time;
 				break;
 			case ALGO_BLAKECOIN:
 			case ALGO_VANILLA:
-				minmax = 470000000 * max64time;
+				minmax = 470000000ULL * max64time;
 				break;
 			case ALGO_BITCOIN:
-				minmax = 100000000 * max64time;
+				minmax = 100000000ULL * max64time;
 				break;
 			case ALGO_QUBIT:
 			case ALGO_QUARK:
-				minmax = 3100000 * max64time;
+				minmax = 3100000ULL * max64time;
 				break;
 			case ALGO_JACKPOT:
-				minmax = 2800000 * max64time;
+				minmax = 2800000ULL * max64time;
 				break;
 			case ALGO_SKEIN:
 			case ALGO_WHCX:
 			case ALGO_DOOM:
 			case ALGO_LUFFA_DOOM:
-				minmax = 38000000 * max64time;
+				minmax = 38000000ULL * max64time;
 				break;
 			case ALGO_NIST5:
 			case ALGO_S3:
-				minmax = 4600000 * max64time;
+				minmax = 4600000ULL * max64time;
 				break;
 			case ALGO_X11:
 			case ALGO_C11:
-				minmax = 1500000 * max64time;
+				minmax = 1500000ULL * max64time;
 				break;
 			case ALGO_X13:
-				minmax = 1200000 * max64time;
+				minmax = 1200000ULL * max64time;
 				break;
 			case ALGO_X17:
 			case ALGO_X15:
-				minmax = 1000000 * max64time;
+				minmax = 1000000ULL * max64time;
 				break;
 			case ALGO_LYRA2v2:
 			case ALGO_LYRA2v3:
-				minmax = 1900000 * max64time;
+				minmax = 1900000ULL * max64time;
 				break;
 			case ALGO_NEO:
-				minmax = 90000 * max64time;
+				minmax = 90000ULL * max64time;
 				break;
 			default:
-				minmax = 4000 * max64time;
+				minmax = 4000ULL * max64time;
 		}
 		max64 = max(minmax, max64);
 
