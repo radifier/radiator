@@ -10,8 +10,8 @@
 #include <ctype.h>
 #include <cstdlib>
 #include <cstring>
-using namespace std;
-#include "miner.h"
+#include <cstdint>
+//#include "miner.h"
 
 #ifndef WIN32
 
@@ -86,7 +86,7 @@ float cpu_temp(int core)
 #endif
 }
 
-uint32_t cpu_clock(int core)
+std::uint32_t cpu_clock(int core)
 {
 #ifdef WIN32
 	return 0;

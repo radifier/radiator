@@ -20,7 +20,6 @@
 #ifdef __cplusplus
 #include <cstdint>
 #include <cstdio>
-using namespace std;
 #else
 #include <stdint.h>
 #include <stdio.h>

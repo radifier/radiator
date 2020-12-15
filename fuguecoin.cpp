@@ -1,15 +1,12 @@
 #include <string.h>
-#ifdef __cplusplus
 #include <cstdint>
-#else
-#include <stdint.h>
-#endif
+
+#include <cuda_runtime.h>
 
 #include "sph/sph_fugue.h"
-
 #include "miner.h"
 #include "cuda_fugue256.h"
-#include <cuda_runtime.h>
+
 extern bool stop_mining;
 extern volatile bool mining_has_stopped[MAX_GPUS];
 

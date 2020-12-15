@@ -28,11 +28,10 @@
 * This file was originally written by Colin Percival as part of the Tarsnap
 * online backup system.
 */
+#include <cstdio>
+#include <cuda_profiler_api.h>
 #include "miner.h"
 #include "cuda_helper.h"
-#include <cstdio>
-using namespace std;
-#include <cuda_profiler_api.h>
 #include "sia.h"
 
 extern void applog_hex(void *data, int len);

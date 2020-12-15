@@ -2,7 +2,6 @@
 #include <memory.h>
 #include <cstring>
 #include <map>
-using namespace std;
 #ifndef _WIN32
 #include <unistd.h>
 #endif
@@ -17,9 +16,8 @@ using namespace std;
 #endif
 
 #include "nvml.h"
-#include "miner.h"
-
 #include "cuda_runtime.h"
+#include "miner.h"
 
 cudaDeviceProp device_props[MAX_GPUS];
 cudaStream_t gpustream[MAX_GPUS] = { 0 };

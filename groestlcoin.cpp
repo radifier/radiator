@@ -6,13 +6,13 @@
 #include <stdint.h>
 #endif
 #include <openssl/sha.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
 
 #include "sph/sph_groestl.h"
 #include "cuda_groestlcoin.h"
 
 #include "miner.h"
-#include <cuda.h>
-#include <cuda_runtime.h>
 extern bool stop_mining;
 extern volatile bool mining_has_stopped[MAX_GPUS];
 

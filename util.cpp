@@ -31,7 +31,6 @@
 #include <netinet/tcp.h>
 #endif
 #include "elist.h"
-using namespace std;
 #include "miner.h"
 
 

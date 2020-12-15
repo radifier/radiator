@@ -26,11 +26,9 @@
 #include <cmath>
 #include <cstdarg>
 #include <cassert>
-using namespace std;
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "miner.h"
 #include "nvml.h"
 
 #ifndef WIN32
@@ -54,6 +52,7 @@ using namespace std;
 # define CLOSESOCKET closesocket
 # define in_addr_t uint32_t
 #endif
+#include "miner.h"
 
 #define GROUP(g) (toupper(g))
 #define PRIVGROUP GROUP('W')

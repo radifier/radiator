@@ -52,17 +52,12 @@
 BOOL WINAPI ConsoleHandler(DWORD);
 #endif
 
-using namespace std;
-#include "miner.h"
-
 #define PROGRAM_NAME		"ccminer"
 #define LP_SCANTIME		25
 #define MNR_BLKHDR_SZ 80
 
 double expectedblocktime(const uint32_t *target);
 
-extern void get_cuda_arch(int *version);
-extern int cuda_arch[MAX_GPUS];
 
 // from cuda.cpp
 int cuda_num_devices();
@@ -77,6 +72,11 @@ void cuda_reset_device(int thr_id, bool *init);
 #ifdef USE_WRAPNVML
 nvml_handle *hnvml = NULL;
 #endif
+
+#include "miner.h"
+
+extern void get_cuda_arch(int* version);
+extern int cuda_arch[MAX_GPUS];
 
 enum workio_commands
 {

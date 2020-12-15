@@ -402,7 +402,7 @@ static void neoscrypt_blkcpy(void *dstp, const void *srcp, uint len) {
 static void neoscrypt_blkswp(void *blkAp, void *blkBp, uint len) {
     ulong *blkA = (ulong *) blkAp;
     ulong *blkB = (ulong *) blkBp;
-    register ulong t0, t1, t2, t3;
+    ulong t0, t1, t2, t3;
     uint i;
 
     for(i = 0; i < (len / sizeof(ulong)); i += 4) {
@@ -903,7 +903,7 @@ void neoscrypt(const uchar *password, uchar *output, uint profile) {
         r = (1 << ((profile >> 5) & 0x7));
     }
     uchar *stack;
-    stack = (uchar*)malloc(((N + 3) * r * 2 * SCRYPT_BLOCK_SIZE + stack_align)*sizeof(uchar));
+    stack = (uchar*)malloc((((size_t)N + 3) * r * 2 * SCRYPT_BLOCK_SIZE + stack_align)*sizeof(uchar));
 	if(stack == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");

@@ -1,19 +1,12 @@
 #ifndef __MINER_H__
 #define __MINER_H__
 
-#ifndef WIN32
-#include "ccminer-config.h"
-#else
-#include "ccminer-config-win.h"
-#endif
-
 #ifdef __cplusplus
 #include <algorithm>
 #include <cstring>
 #include <cinttypes>
 #include <cstdlib>
 #include <cstddef>
-using namespace std;
 #else
 #include <string.h>
 #include <stdbool.h>
@@ -26,6 +19,12 @@ using namespace std;
 #include <pthread.h>
 #include <jansson.h>
 #include <curl/curl.h>
+
+#ifndef WIN32
+#include "ccminer-config.h"
+#else
+#include "ccminer-config-win.h"
+#endif
 
 #ifdef WIN32
 #ifndef __cplusplus
@@ -94,6 +93,9 @@ enum
 	LOG_HW = 0x20,
 	LOG_RAW = 0x99
 };
+#endif
+#ifdef __cplusplus
+using namespace std;
 #endif
 
 typedef unsigned char uchar;

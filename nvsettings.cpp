@@ -6,16 +6,16 @@
  */
 
 #include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h> // pid_t
-
-#include "miner.h"
-#include "nvml.h"
+#include <cstdint>
 #include "cuda_runtime.h"
+#include "nvml.h"
+#include "miner.h"
 
 #ifdef __linux__
 
