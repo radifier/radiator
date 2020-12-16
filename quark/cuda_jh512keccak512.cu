@@ -59,79 +59,6 @@ __constant__ static __align__(16) uint32_t c_E8_bslice32[42][8] = {
 	// 42 rounds...
 };
 
-#ifndef NOASM
-__device__ __forceinline__
-static void SWAP4(uint32_t *x)
-{
-#pragma unroll 1
-	// y is used as tmp register too
-	for(uint32_t y = 0; y<4; y++, ++x)
-	{
-		asm("and.b32 %1, %0, 0xF0F0F0F0;"
-			"xor.b32 %0, %0, %1;"
-			"shr.b32 %1, %1, 4;"
-			"vshl.u32.u32.u32.clamp.add %0, %0, 4, %1;\n\t"
-			: "+r"(*x) : "r"(y));
-	}
-}
-
-__device__ __forceinline__
-static void SWAP2(uint32_t *x)
-{
-#pragma unroll 1
-	// y is used as tmp register too
-	for(uint32_t y = 0; y<4; y++, ++x)
-	{
-		asm("and.b32 %1, %0, 0xCCCCCCCC;"
-			"xor.b32 %0, %0, %1;"
-			"shr.b32 %1, %1, 2;"
-			"vshl.u32.u32.u32.clamp.add %0, %0, 2, %1;\n\t"
-			: "+r"(*x) : "r"(y));
-	}
-}
-
-__device__ __forceinline__
-static void SWAP1(uint32_t *x)
-{
-#pragma unroll 1
-	// y is used as tmp register too
-	for(uint32_t y = 0; y<4; y++, ++x)
-	{
-		asm("and.b32 %1, %0, 0xAAAAAAAA;"
-			"xor.b32 %0, %0, %1;"
-			"shr.b32 %1, %1, 1;"
-			"vshl.u32.u32.u32.clamp.add %0, %0, 1, %1;\n\t"
-			: "+r"(*x) : "r"(y));
-	}
-}
-#else
-__device__ __forceinline__
-static void SWAP4(uint32_t *x)
-{
-	x[0] = ((x[0] & 0x0f0f0f0fu) << 4) | (x[0] & 0xF0F0F0F0u) >> 4;
-	x[1] = ((x[1] & 0x0f0f0f0fu) << 4) | (x[1] & 0xF0F0F0F0u) >> 4;
-	x[2] = ((x[2] & 0x0f0f0f0fu) << 4) | (x[2] & 0xF0F0F0F0u) >> 4;
-	x[3] = ((x[3] & 0x0f0f0f0fu) << 4) | (x[3] & 0xF0F0F0F0u) >> 4;
-}
-__device__ __forceinline__
-static void SWAP2(uint32_t *x)
-{
-	x[0] = ((x[0] & 0x33333333u) << 2) | (x[0] & 0xCCCCCCCCu) >> 2;
-	x[1] = ((x[1] & 0x33333333u) << 2) | (x[1] & 0xCCCCCCCCu) >> 2;
-	x[2] = ((x[2] & 0x33333333u) << 2) | (x[2] & 0xCCCCCCCCu) >> 2;
-	x[3] = ((x[3] & 0x33333333u) << 2) | (x[3] & 0xCCCCCCCCu) >> 2;
-}
-__device__ __forceinline__
-static void SWAP1(uint32_t *x)
-{
-	x[0] = ((x[0] & 0x55555555u) << 1) | (x[0] & 0xAAAAAAAAu) >> 1;
-	x[1] = ((x[1] & 0x55555555u) << 1) | (x[1] & 0xAAAAAAAAu) >> 1;
-	x[2] = ((x[2] & 0x55555555u) << 1) | (x[2] & 0xAAAAAAAAu) >> 1;
-	x[3] = ((x[3] & 0x55555555u) << 1) | (x[3] & 0xAAAAAAAAu) >> 1;
-}
-
-#endif
-
 /*swapping bits 16i||16i+1||......||16i+7  with bits 16i+8||16i+9||......||16i+15 of 32-bit x*/
 //#define SWAP8(x)   (x) = ((((x) & 0x00ff00ffUL) << 8) | (((x) & 0xff00ff00UL) >> 8));
 #define SWAP8(x) (x) = __byte_perm(x, x, 0x2301);
@@ -187,7 +114,10 @@ static __device__ __forceinline__ void RoundFunction0(uint32_t x[8][4], uint32_t
 #pragma unroll 4
 	for(int j = 1; j < 8; j = j + 2)
 	{
-		SWAP1(x[j]);
+		x[j][0] = ((x[j][0] & 0x55555555u) << 1) | (x[j][0] & 0xAAAAAAAAu) >> 1;
+		x[j][1] = ((x[j][1] & 0x55555555u) << 1) | (x[j][1] & 0xAAAAAAAAu) >> 1;
+		x[j][2] = ((x[j][2] & 0x55555555u) << 1) | (x[j][2] & 0xAAAAAAAAu) >> 1;
+		x[j][3] = ((x[j][3] & 0x55555555u) << 1) | (x[j][3] & 0xAAAAAAAAu) >> 1;
 	}
 }
 
@@ -198,7 +128,10 @@ static __device__ __forceinline__ void RoundFunction1(uint32_t x[8][4], uint32_t
 #pragma unroll 4
 	for(int j = 1; j < 8; j = j + 2)
 	{
-		SWAP2(x[j]);
+		x[j][0] = ((x[j][0] & 0x33333333u) << 2) | (x[j][0] & 0xCCCCCCCCu) >> 2;
+		x[j][1] = ((x[j][1] & 0x33333333u) << 2) | (x[j][1] & 0xCCCCCCCCu) >> 2;
+		x[j][2] = ((x[j][2] & 0x33333333u) << 2) | (x[j][2] & 0xCCCCCCCCu) >> 2;
+		x[j][3] = ((x[j][3] & 0x33333333u) << 2) | (x[j][3] & 0xCCCCCCCCu) >> 2;
 	}
 }
 
@@ -209,7 +142,10 @@ static __device__ __forceinline__ void RoundFunction2(uint32_t x[8][4], uint32_t
 #pragma unroll 4
 	for(int j = 1; j < 8; j = j + 2)
 	{
-		SWAP4(x[j]);
+		x[j][0] = ((x[j][0] & 0x0f0f0f0fu) << 4) | (x[j][0] & 0xF0F0F0F0u) >> 4;
+		x[j][1] = ((x[j][1] & 0x0f0f0f0fu) << 4) | (x[j][1] & 0xF0F0F0F0u) >> 4;
+		x[j][2] = ((x[j][2] & 0x0f0f0f0fu) << 4) | (x[j][2] & 0xF0F0F0F0u) >> 4;
+		x[j][3] = ((x[j][3] & 0x0f0f0f0fu) << 4) | (x[j][3] & 0xF0F0F0F0u) >> 4;
 	}
 }
 
