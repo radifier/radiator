@@ -1592,7 +1592,7 @@ static void *miner_thread(void *userdata)
 		/* adjust max_nonce to meet target scan time */
 		uint32_t max64time;
 		if(have_stratum)
-			max64time = LP_SCANTIME;
+			max64time = opt_scantime;
 		else
 			max64time = (uint32_t)max((time_t)1, (time_t)scan_time + g_work_time - time(NULL));
 
