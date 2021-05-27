@@ -154,8 +154,8 @@ extern int scanhash_x11(int thr_id, uint32_t *pdata,
 		if(strstr(props.name, "Titan"))		  intensity = (256 * 256 * 22);
 		else if(strstr(props.name, "970"))	  intensity = (256 * 256 * 22);
 		else if(strstr(props.name, "980"))    intensity = (256 * 256 * 22);
-		else if(strstr(props.name, "1070"))   intensity = (256 * 256 * 22);
-		else if(strstr(props.name, "1080"))   intensity = (256 * 256 * 22);
+		else if(strstr(props.name, "070"))   intensity = (256 * 256 * 22);
+		else if(strstr(props.name, "080"))   intensity = (256 * 256 * 22);
 		else if(strstr(props.name, "750 Ti")) intensity = (256 * 256 * 20);
 		else if(strstr(props.name, "750"))    intensity = (256 * 256 * 19);
 		else if(strstr(props.name, "960"))    intensity = (256 * 256 * 19);

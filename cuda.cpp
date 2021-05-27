@@ -30,13 +30,13 @@ int cuda_num_devices()
 	cudaError_t err = cudaDriverGetVersion(&version);
 	if (err != cudaSuccess)
 	{
-		applog(LOG_ERR, "Unable to query CUDA driver version! Is an nVidia driver installed?");
+		applog(LOG_ERR, "Unable to query CUDA driver version! Is an Nvidia driver installed?");
 		exit(1);
 	}
 
 	if (version < CUDART_VERSION)
 	{
-		applog(LOG_ERR, "Driver does not support CUDA %d.%d API! Update your nVidia driver!", CUDART_VERSION / 1000, (CUDART_VERSION % 1000) / 10);
+		applog(LOG_ERR, "Driver does not support CUDA %d.%d API! Update your Nvidia driver!", CUDART_VERSION / 1000, (CUDART_VERSION % 1000) / 10);
 		exit(1);
 	}
 
@@ -44,10 +44,12 @@ int cuda_num_devices()
 	err = cudaGetDeviceCount(&GPU_N);
 	if (err != cudaSuccess)
 	{
-		if(err!=cudaErrorNoDevice)
-			applog(LOG_ERR, "No CUDA device found!");
-		else
-			applog(LOG_ERR, "Unable to query number of CUDA devices!");
+		applog(LOG_ERR, "Unable to query number of CUDA devices! Error: %s", cudaGetErrorString(err));
+		exit(1);
+	}
+	if (GPU_N == 0)
+	{
+		applog(LOG_ERR, "No CUDA capable device found!", err);
 		exit(1);
 	}
 	return GPU_N;
