@@ -225,6 +225,7 @@ features.
                   fix small memory leak
 2019-02-07 v8.24: add lyra2v3 algo
 2019-05-10 v8.25: fix invalid share bug
+2021-07-08 v8.26: suppoort for more than 8 CPU cores, bugfix for for some coins
 
 >>> AUTHORS <<<
 
