@@ -130,7 +130,8 @@ const char *algo_names[] =
 	"x15",
 	"x17",
 	"vanilla",
-	"neoscrypt"
+	"neoscrypt",
+	"neoscrypt-xaya"
 };
 
 char curl_err_str[CURL_ERROR_SIZE];
@@ -254,7 +255,8 @@ Options:\n\
 			lyra2v2     Monacoin\n\
             lyra2v3     Vertcoin\n\
 			myr-gr      Myriad-Groestl\n\
-			neoscrypt   neoscrypt (FeatherCoin)\n\
+			neoscrypt   neoscrypt\n\
+			neoscrypt-xaya	Xaya\n\
 			nist5       NIST5 (TalkCoin)\n\
 			penta       Pentablake hash (5x Blake 512)\n\
 			quark       Quark\n\
@@ -1337,7 +1339,30 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 
 	/* Assemble block header */
 	memset(work->data, 0, sizeof(work->data));
-	if(opt_algo != ALGO_SIA)
+	if (opt_algo == ALGO_SIA)
+	{
+		for (i = 0; i < 8; i++)
+			work->data[i] = le32dec((uint32_t*)sctx->job.prevhash + i);
+		work->data[8] = 0; // nonce
+		work->data[9] = highnonce;
+		work->data[10] = le32dec(sctx->job.ntime);
+		work->data[11] = 0;
+		for (i = 0; i < 8; i++)
+			work->data[12 + i] = le32dec((uint32_t*)(merkle_root + 33) + i);
+	}
+	else if (opt_algo == ALGO_NEO_XAYA)
+	{
+		work->data[0] = le32dec(sctx->job.version);
+		for (i = 0; i < 8; i++)
+			work->data[1 + i] = le32dec((uint32_t*)sctx->job.prevhash + i);
+		for (i = 0; i < 8; i++)
+			work->data[9 + i] = swab32(be32dec((uint32_t*)merkle_root + i));
+		work->data[17] = le32dec(sctx->job.ntime);
+		work->data[18] = le32dec(sctx->job.nbits);
+		work->data[20] = 0x80000000;
+		work->data[31] = 0x00000280;
+	}
+	else
 	{
 		work->data[0] = le32dec(sctx->job.version);
 		for(i = 0; i < 8; i++)
@@ -1349,18 +1374,7 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 		work->data[20] = 0x80000000;
 		work->data[31] = 0x00000280;
 	}
-	else
-	{
-		for(i = 0; i < 8; i++)
-			work->data[i] = le32dec((uint32_t *)sctx->job.prevhash + i);
-		work->data[8] = 0; // nonce
-		work->data[9] = highnonce;
-		work->data[10] = le32dec(sctx->job.ntime);
-		work->data[11] = 0;
-		for(i = 0; i < 8; i++)
-			work->data[12 + i] = le32dec((uint32_t *)(merkle_root + 33) + i);
-	}
-
+	
 	pthread_mutex_unlock(&sctx->work_lock);
 	if(opt_debug)
 	{
@@ -1380,6 +1394,7 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 	{
 		case ALGO_JACKPOT:
 		case ALGO_NEO:
+		case ALGO_NEO_XAYA:
 			diff_to_target(work->target, sctx->job.diff / (65536.0 * opt_difficulty));
 			break;
 		case ALGO_DMD_GR:
@@ -1649,6 +1664,7 @@ static void *miner_thread(void *userdata)
 				minmax = 1900000ULL * max64time;
 				break;
 			case ALGO_NEO:
+			case ALGO_NEO_XAYA:
 				minmax = 90000ULL * max64time;
 				break;
 			default:
@@ -1845,6 +1861,7 @@ static void *miner_thread(void *userdata)
 			break;
 
 		case ALGO_NEO:
+		case ALGO_NEO_XAYA:
 			if(!have_stratum && work.datasize == 128)
 				rc = scanhash_neoscrypt(true, thr_id, work.data, work.target, max_nonce, &hashes_done);
 			else

@@ -680,7 +680,8 @@ enum sha_algos
 	ALGO_X15,
 	ALGO_X17,
 	ALGO_VANILLA,
-	ALGO_NEO
+	ALGO_NEO,
+	ALGO_NEO_XAYA
 };
 
 bool stratum_socket_full(struct stratum_ctx *sctx, int timeout);
