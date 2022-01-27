@@ -2907,10 +2907,15 @@ static int msver(void)
 		case 1800: version = 2013; break;
 		case 1900: version = 2015; break;
 		default:
-			if(_MSC_VER < 1920)
+		{
+			if (_MSC_VER < 1920)
 				version = 2017;
 			else
-				version = 2019;
+				if (_MSC_VER < 1930)
+					version = 2019;
+				else
+					version = 2022;
+		}
 	}
 #else
 	version = 0;
