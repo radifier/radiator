@@ -22,6 +22,11 @@ static const uint32_t sha256_h[8] = {
 	0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
 };
 
+static const uint32_t sha256t_h[8] = {
+	0xdfa9bf2cU, 0xb72074d4U, 0x6bb01122U, 0xd338e869U,
+	0xaa3ff126U, 0x475bbf30U, 0x8fd52e5bU, 0x9f75c9adU
+};
+
 static const uint32_t sha256_k[64] = {
 	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
 	0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -44,6 +49,11 @@ static const uint32_t sha256_k[64] = {
 void sha256_init(uint32_t *state)
 {
 	memcpy(state, sha256_h, 32);
+}
+
+void sha256t_init(uint32_t *state)
+{
+	memcpy(state, sha256t_h, 32);
 }
 
 /* Elementary functions used by SHA256 */

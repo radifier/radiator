@@ -108,6 +108,13 @@ static const sph_u64 H512[8] = {
 	SPH_C64(0x1F83D9ABFB41BD6B), SPH_C64(0x5BE0CD19137E2179)
 };
 
+static const sph_u64 H512_256[8] = {
+	SPH_C64(0x22312194FC2BF72C), SPH_C64(0x9F555FA3C84C64C2),
+	SPH_C64(0x2393B86B6F53B151), SPH_C64(0x963877195940EABD),
+	SPH_C64(0x96283EE2A88EFFE3), SPH_C64(0xBE5E1E2553863992),
+	SPH_C64(0x2B0199FC2C85B8AA), SPH_C64(0x0EB72DDC81C52CA2),
+};
+
 /*
  * This macro defines the body for a SHA-384 / SHA-512 compression function
  * implementation. The "in" parameter should evaluate, when applied to a
@@ -200,6 +207,16 @@ sph_sha512_init(void *cc)
 
 	sc = cc;
 	memcpy(sc->val, H512, sizeof H512);
+	sc->count = 0;
+}
+
+void
+sph_sha512_256_init(void *cc)
+{
+	sph_sha512_context *sc;
+
+	sc = cc;
+	memcpy(sc->val, H512_256, sizeof H512_256);
 	sc->count = 0;
 }
 

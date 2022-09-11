@@ -270,6 +270,12 @@
     <CudaCompile Include="bitcoin.cpp">
       <FileType>CppCode</FileType>
     </CudaCompile>
+    <CudaCompile Include="novo.cpp">
+      <FileType>CppCode</FileType>
+    </CudaCompile>
+    <CudaCompile Include="rad.cpp">
+      <FileType>CppCode</FileType>
+    </CudaCompile>
     <ClCompile Include="BlueMidnightWish_opt.c" />
     <ClCompile Include="compat\getopt\getopt_long.c" />
     <ClCompile Include="compat\gettimeofday.c" />

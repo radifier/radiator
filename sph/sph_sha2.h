@@ -311,6 +311,7 @@ typedef sph_sha384_context sph_sha512_context;
  *             a <code>sph_sha512_context</code>)
  */
 void sph_sha512_init(void *cc);
+void sph_sha512_256_init(void *cc);
 
 #ifdef DOXYGEN_IGNORE
 /**

@@ -270,6 +270,7 @@ extern "C" {
 #endif
 
 	void sha256_init(uint32_t *state);
+	void sha256t_init(uint32_t *state);
 	void sha256_transform(uint32_t *state, const uint32_t *block, int swap);
 	void sha256d(unsigned char *hash, const unsigned char *data, int len);
 
@@ -399,6 +400,15 @@ extern int scanhash_neoscrypt(bool stratum, int thr_id, uint32_t *pdata,
 extern int scanhash_sia(int thr_id, uint32_t *pdata,
 												uint32_t *ptarget, uint32_t max_nonce,
 												uint32_t *hashes_done);
+
+extern int scanhash_novo(int thr_id, uint32_t *pdata,
+	uint32_t *ptarget, uint32_t max_nonce,
+	uint32_t *hashes_done);
+
+extern int scanhash_rad(int thr_id, uint32_t *pdata,
+	uint32_t *ptarget, uint32_t max_nonce,
+	uint32_t *hashes_done);
+
 /* api related */
 void *api_thread(void *userdata);
 void api_set_throughput(int thr_id, uint32_t throughput);
@@ -649,39 +659,8 @@ struct work {
 enum sha_algos
 {
 	ALGO_INVALID,
-	ALGO_BITCOIN,
-	ALGO_BLAKE,
-	ALGO_BLAKECOIN,
-	ALGO_C11,
-	ALGO_DEEP,
-	ALGO_DMD_GR,
-	ALGO_DOOM,
-	ALGO_FRESH,
-	ALGO_FUGUE256,		/* Fugue256 */
-	ALGO_GROESTL,
-	ALGO_KECCAK,
-	ALGO_JACKPOT,
-	ALGO_LUFFA_DOOM,
-	ALGO_LYRA2v2,
-	ALGO_LYRA2v3,
-	ALGO_MYR_GR,
-	ALGO_NIST5,
-	ALGO_PENTABLAKE,
-	ALGO_QUARK,
-	ALGO_QUBIT,
-	ALGO_SIA,
-	ALGO_SKEIN,
-	ALGO_S3,
-	ALGO_WHC,
-	ALGO_WHCX,
-	ALGO_X11,
-	ALGO_X13,
-	ALGO_X14,
-	ALGO_X15,
-	ALGO_X17,
-	ALGO_VANILLA,
-	ALGO_NEO,
-	ALGO_NEO_XAYA
+	ALGO_NOVO,
+	ALGO_RAD
 };
 
 bool stratum_socket_full(struct stratum_ctx *sctx, int timeout);

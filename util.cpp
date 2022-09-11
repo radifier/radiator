@@ -1543,10 +1543,7 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 	if(!merkle_arr || !json_is_array(merkle_arr))
 		goto out;
 	merkle_count = (int)json_array_size(merkle_arr);
-	if(opt_algo != ALGO_SIA)
-		version = json_string_value(json_array_get(params, 5));
-	else
-		version = "00000001"; //unused
+	version = json_string_value(json_array_get(params, 5));
 	nbits = json_string_value(json_array_get(params, 6));
 	stime = (char *)json_string_value(json_array_get(params, 7));
 	clean = json_is_true(json_array_get(params, 8));
@@ -1558,29 +1555,15 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 		applog(LOG_ERR, "Stratum notify: invalid parameters");
 		goto out;
 	}
-	if(opt_algo == ALGO_SIA)
+	if(strlen(stime) != 8)
 	{
-		if(strlen(stime) != 16)
-		{
-			applog(LOG_ERR, "Stratum notify: invalid time parameter");
-			goto out;
-		}
-	}
-	else
-	{
-		if(strlen(stime) != 8)
-		{
-			applog(LOG_ERR, "Stratum notify: invalid time parameter");
-			goto out;
-		}
+		applog(LOG_ERR, "Stratum notify: invalid time parameter");
+		goto out;
 	}
 
 	/* store stratum server time diff */
 	hex2bin((uchar *)&ntime, stime, 4);
-	if(opt_algo!=ALGO_SIA)
-		ntime = swab32(ntime) - (uint32_t)time(0);
-	else
-		ntime = ntime - (uint32_t)time(0);
+	ntime = swab32(ntime) - (uint32_t)time(0);
 
 	pthread_mutex_lock(&sctx->work_lock);
 
@@ -1644,10 +1627,7 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 	sctx->job.job_id = strdup(job_id);
 	hex2bin(sctx->job.prevhash, prevhash, 32);
 
-	if(opt_algo != ALGO_SIA)
-		sctx->job.height = getblockheight(sctx);
-	else
-		sctx->job.height = 1;
+	sctx->job.height = getblockheight(sctx);
 	if(!opt_quiet)
 	{
 		applog(LOG_BLUE, "Received new %s block header", algo_names[opt_algo]);
@@ -2292,6 +2272,7 @@ void print_hash_tests(void)
 
 	printf(CL_WHT "CPU HASH ON EMPTY BUFFER RESULTS:" CL_N "\n");
 
+ /*
 	memset(hash, 0, sizeof hash);
 	blake256hash(&hash[0], &buf[0], 8);
 	printpfx("blakecoin", hash);
@@ -2378,6 +2359,7 @@ void print_hash_tests(void)
 	memset(hash, 0, sizeof hash);
 	x17hash(&hash[0], &buf[0]);
 	printpfx("X17", hash);
+	*/
 
 	printf("\n");
 
