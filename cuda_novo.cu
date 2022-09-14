@@ -1332,6 +1332,7 @@ void novo_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, const uin
 	dim3 grid((threads + TPB*NONCES_PER_THREAD - 1) / TPB / NONCES_PER_THREAD);
 	dim3 block(TPB);
 	novo_gpu_hash << <grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_result[thr_id], ms[0], ms[1], ms[2], ms[3], ms[4], ms[5], ms[6], ms[7], B, C, F, G, H, fW0, fW1, fW2, fW3, fW15, fW01r, D1A, C1addK5, B1addK6, W16addK16, W17addK17, PreVal4addT1, PreVal0);
+	cudaStreamSynchronize(gpustream[thr_id]);
 	CUDA_SAFE_CALL(cudaMemcpyAsync(h_nounce, d_result[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
 }
 

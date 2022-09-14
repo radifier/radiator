@@ -1690,6 +1690,7 @@ void rad_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, const uint
 	dim3 grid((threads + TPB*NONCES_PER_THREAD - 1) / TPB / NONCES_PER_THREAD);
 	dim3 block(TPB);
 	rad_gpu_hash << <grid, block, 0, gpustream[thr_id]>>> (threads, startNounce, d_result[thr_id], w0, w1, w2, w3, w4, w5, w6, w7, w8, w9, A, B, C, D, E, F, G, H, dXORe, w3s1);
+	cudaStreamSynchronize(gpustream[thr_id]);
 	CUDA_SAFE_CALL(cudaMemcpyAsync(h_nounce, d_result[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost, gpustream[thr_id])); cudaStreamSynchronize(gpustream[thr_id]);
 }
 
