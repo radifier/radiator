@@ -6,11 +6,6 @@ extern void rad_cpu_init(int thr_id);
 extern void rad_cpu_hash(int thr_id, uint32_t threads, uint32_t startNounce, const uint64_t *const data, uint32_t *const h_nounce);
 extern void rad_midstate(const uint32_t *data, uint32_t *midstate);
 
-uint32_t rotr64(uint32_t x, unsigned int n)
-{
-	return (x >> n) | (x << (32 - n));
-}
-
 void rad_hash(uint32_t *output, const uint32_t *data, uint32_t nonce)
 {
 	uint32_t header[20];
@@ -24,9 +19,6 @@ void rad_hash(uint32_t *output, const uint32_t *data, uint32_t nonce)
 	uint32_t hash1[16];
 	sph_sha512_close(&ctx, hash1);
 
-	unsigned char hex2[160];
-	cbin2hex((char*)hex2, (const char*)header, 80);
-
 	uint32_t hash2[16];
 	sph_sha512_256_init(&ctx);
 	sph_sha512(&ctx, hash1, 32);
@@ -35,9 +27,6 @@ void rad_hash(uint32_t *output, const uint32_t *data, uint32_t nonce)
 	for (int i = 0; i < 8; i++) {
 		output[i] = hash2[i];
 	}
-
-	unsigned char hex4[32];
-	cbin2hex((char*)hex4, (const char*)output, 32);
 }
 
 
