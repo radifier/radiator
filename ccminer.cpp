@@ -517,8 +517,11 @@ static bool work_decode(const json_t *val, struct work *work)
 
 	size_t data_size = jobj_binary(val, "data", work->data, sizeof(work->data));
 
-	applog(LOG_ERR, "JSON invalid data");
-	return false;
+	if(data_size != 128)
+	{
+		applog(LOG_ERR, "JSON invalid data");
+		return false;
+	}
 	work->datasize = data_size;
 	int adata_sz = (int)data_size / 4;
 
