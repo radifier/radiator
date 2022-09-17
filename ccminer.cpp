@@ -2809,7 +2809,7 @@ int main(int argc, char *argv[])
 		proper_exit(EXIT_FAILURE);
 	}
 
-	thr_info = (struct thr_info *)calloc(opt_n_threads + 4, sizeof(*thr));
+	thr_info = (struct thr_info *)calloc(opt_n_threads + 5, sizeof(*thr));
 	if(thr_info == NULL)
 	{
 		applog(LOG_ERR, "Out of memory!");
