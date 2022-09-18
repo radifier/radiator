@@ -1,4 +1,4 @@
-AC_INIT([ccminer], [0.1.1-Radiator])
+AC_INIT([ccminer], [1.0.0-Radiator])
 
 AC_PREREQ([2.59c])
 AC_CANONICAL_SYSTEM
