@@ -271,9 +271,11 @@
     <CudaCompile Include="bitcoin.cpp">
       <FileType>CppCode</FileType>
     </CudaCompile>
+    <CudaCompile Include="cuda_novo.cu" />
     <CudaCompile Include="novo.cpp">
       <FileType>CppCode</FileType>
     </CudaCompile>
+    <CudaCompile Include="cuda_rad.cu" />
     <CudaCompile Include="rad.cpp">
       <FileType>CppCode</FileType>
     </CudaCompile>
