@@ -44,7 +44,7 @@ static uint32_t *d_result[MAX_GPUS];
 
 __global__ __launch_bounds__(TPB, 2)
 
-void novo_gpu_hash(const uint32_t threads, const uint32_t startNounce, uint32_t *const result, const uint32_t state0, const uint state1, const uint state2, const uint state3, const uint32_t state4, const uint state5, const uint state6, const uint state7, const uint32_t b1, const uint c1, const uint32_t f1, const uint g1, const uint h1, const uint32_t fw0, const uint fw1, const uint fw2, const uint fw3, const uint fw15, const uint fw01r, const uint32_t D1A, const uint C1addK5, const uint B1addK6, const uint32_t W16addK16, const uint W17addK17, const uint32_t PreVal4addT1, const uint Preval0)
+void novo_gpu_hash(const uint32_t threads, const uint32_t startNounce, uint32_t *const result, const uint32_t state0, const uint32_t state1, const uint32_t state2, const uint32_t state3, const uint32_t state4, const uint32_t state5, const uint32_t state6, const uint32_t state7, const uint32_t b1, const uint32_t c1, const uint32_t f1, const uint32_t g1, const uint32_t h1, const uint32_t fw0, const uint32_t fw1, const uint32_t fw2, const uint32_t fw3, const uint32_t fw15, const uint32_t fw01r, const uint32_t D1A, const uint32_t C1addK5, const uint32_t B1addK6, const uint32_t W16addK16, const uint32_t W17addK17, const uint32_t PreVal4addT1, const uint32_t Preval0)
 {
 	const uint32_t threadindex = (blockDim.x * blockIdx.x + threadIdx.x);
 	if (threadindex < threads)

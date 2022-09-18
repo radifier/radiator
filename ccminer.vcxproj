@@ -247,7 +247,7 @@
       <MaxRegCount>80</MaxRegCount>
       <PtxAsOptionV>false</PtxAsOptionV>
       <Keep>true</Keep>
-      <CodeGeneration>compute_60,sm_60;compute_61,sm_61;compute_52,sm_52;compute_70,sm_70;compute_75,sm_75;compute_80,sm_80;compute_86,sm_86</CodeGeneration>
+      <CodeGeneration>compute_50,sm_50;compute_52,sm_52;compute_60,sm_60;compute_61,sm_61;compute_70,sm_70;compute_75,sm_75;compute_80,sm_80;compute_86,sm_86</CodeGeneration>
       <Include>
       </Include>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -271,9 +271,11 @@
     <CudaCompile Include="bitcoin.cpp">
       <FileType>CppCode</FileType>
     </CudaCompile>
+    <CudaCompile Include="cuda_novo.cu" />
     <CudaCompile Include="novo.cpp">
       <FileType>CppCode</FileType>
     </CudaCompile>
+    <CudaCompile Include="cuda_rad.cu" />
     <CudaCompile Include="rad.cpp">
       <FileType>CppCode</FileType>
     </CudaCompile>
