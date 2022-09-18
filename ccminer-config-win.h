@@ -156,16 +156,16 @@
 #define PACKAGE_NAME "ccminer"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ccminer 8.26-KlausT"
+#define PACKAGE_STRING "ccminer 1.0.0W-Radiator"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ccminer"
 
 /* Define to the home page for this package. */
-#define PACKAGE_URL ""
+#define PACKAGE_URL "https://github.com/radifier/radiator"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "8.26-KlausT"
+#define PACKAGE_VERSION "1.0.0W-Radiator"
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
@@ -188,7 +188,7 @@
 //#define USE_XOP 1
 
 /* Version number of package */
-#define VERSION "8.26-KlausT"
+#define VERSION "1.0.0W-Radiator"
 
 /* Define curl_free() as free() if our version of curl lacks curl_free. */
 /* #undef curl_free */
